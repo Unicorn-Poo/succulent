@@ -14,8 +14,8 @@ import { handleImageRequest } from './handleImageRequest';
 import { handleFBConnectRequest } from './handleFBConnectRequest';
 import { SchedulerAccount, SchedulerAccountRoot } from './workerAccount';
 import { handlePostUpdate } from './handlePostUpdate';
-import { logAccountState, logActuallyScheduled } from './logging';
 import { loadImageFile } from './loadImageFile';
+import { handleStateRequest } from './handleStateRequest';
 
 export type ActuallyScheduled = Map<
   Post['id'],
@@ -96,27 +96,19 @@ async function runner() {
     }
   });
 
-  setInterval(() => {
-    if (accountStateChanged) {
-      logAccountState(lastWorkerUpdate);
-      accountStateChanged = false;
-
-      console.log(new Date(), 'actuallyScheduled after workerUpdates');
-      logActuallyScheduled(actuallyScheduled);
-    }
-  }, 2000);
-
-  setInterval(() => {
-    for (const brand of lastWorkerUpdate?.brands || []) {
-    }
-  }, 2000);
-
   Bun.serve({
     async fetch(req) {
       if (req.url.includes('/connectFB')) {
         return handleFBConnectRequest(req, worker);
       } else if (req.url.includes('/image/')) {
         return handleImageRequest(req, loadedImages);
+      } else if (req.url.includes('/state')) {
+        return handleStateRequest(
+          req,
+          worker,
+          actuallyScheduled,
+          lastWorkerUpdate
+        );
       } else {
         return new Response('not found', { status: 404 });
       }
@@ -171,14 +163,8 @@ async function runner() {
 
   const tryLoadingImages = async () => {
     if (Date.now() - lastWorkerUpdateAt!.getTime() < 10_000) {
-      console.log(
-        new Date(),
-        'skipping loading images, last worker update less than 10s ago'
-      );
       return;
     }
-    console.log(new Date(), 'actuallyScheduled in tryLoadingImages');
-    logActuallyScheduled(actuallyScheduled);
 
     for (let [postId, state] of actuallyScheduled.entries()) {
       if (state.state === 'imagesNotLoaded') {
@@ -245,15 +231,8 @@ async function runner() {
 
   const tryPosting = async () => {
     if (Date.now() - lastWorkerUpdateAt!.getTime() < 10_000) {
-      console.log(
-        new Date(),
-        'skipping try posting, last worker update less than 10s ago'
-      );
       return;
     }
-
-    console.log(new Date(), 'actuallyScheduled in tryPosting');
-    logActuallyScheduled(actuallyScheduled);
 
     if (process.env.NODE_ENV === 'development') {
       console.log(new Date(), 'not actually posting in dev mode');
