@@ -216,9 +216,9 @@ export class PostHandler {
     while (!containerReady) {
       const containerStatus = (
         await this.client
-          .newGetContainerRequest(containerID, ContainerField.STATUS)
+          .newGetContainerRequest(containerID, ContainerField.STATUS_CODE)
           .execute()
-      ).getContainerStatus();
+      ).getContainerStatusCode();
       containerReady = containerStatus === 'FINISHED';
       if (!containerReady) {
         console.log(
@@ -284,10 +284,10 @@ export class PostHandler {
           await this.client
             .newGetContainerRequest(
               topContainerRequest.getId(),
-              ContainerField.STATUS
+              ContainerField.STATUS_CODE
             )
             .execute()
-        ).getContainerStatus() === 'FINISHED';
+        ).getContainerStatusCode() === 'FINISHED';
       if (!topContainerReady) {
         console.log(
           new Date(),
