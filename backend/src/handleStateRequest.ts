@@ -1,4 +1,5 @@
 import { ActuallyScheduled } from '.';
+import { CojsonInternalTypes, SessionID } from 'cojson';
 import { SchedulerAccount, SchedulerAccountRoot } from './workerAccount';
 
 export function handleStateRequest(
@@ -8,7 +9,7 @@ export function handleStateRequest(
   lastWorkerUpdate: SchedulerAccountRoot | null
 ) {
   return new Response(
-    `<h1>Jazz State</h1>` +
+    `<body style="color: white; background-color: black;"><h1>Jazz State</h1>` +
       Object.values(worker._raw.core.node.syncManager.peers)
         .map((peer) => `<p>${peer.id}</p>`)
         .join('') +
@@ -20,7 +21,23 @@ export function handleStateRequest(
       lastWorkerUpdate?.brands
         ?.map(
           (brand) =>
-            `<h2>${brand?.name} (${brand?.instagramPage?.id})</h2><table style="font-size: 10px; font-family: monospace; border: 1px solid black; border-spacing: 4px;">` +
+            `<h2>${brand?.name} (${brand?.instagramPage
+              ?.id})</h2>${Object.values(
+              worker._raw.core.node.syncManager.peers
+            )
+              .map(
+                (peer) =>
+                  '<p>' +
+                  (brand?.posts &&
+                    missingTxsComparedTo(
+                      brand.posts._raw.core.knownState(),
+                      peer.optimisticKnownStates[brand.posts.id]
+                    )) +
+                  ' behind</p>'
+              )
+              .join(
+                ''
+              )}<table style="font-size: 10px; font-family: monospace; border: 1px solid white; border-spacing: 8px;">` +
             brand?.posts
               ?.toSorted((a, b) => {
                 if (!a) return 1;
@@ -48,25 +65,38 @@ export function handleStateRequest(
                 (post) =>
                   `<tr>
     <td style="max-width: 15rem; white-space: nowrap; overflow: scroll;">${post?.content}</td>
-    <td>${post?.instagram.state}</td>
+    <td>${post?.instagram?.state}</td>
+    <td>${Object.values(worker._raw.core.node.syncManager.peers)
+      .map(
+        (peer) =>
+          (post &&
+            missingTxsComparedTo(
+              post._raw.core.knownState(),
+              peer.optimisticKnownStates[post.id]
+            )) + ' behind'
+      )
+      .join(',')}</td>
     <td>${
       post?.instagram?.state === 'posted'
         ? new Date(post.instagram.postedAt).toLocaleString()
-        : post?.instagram.state === 'notScheduled'
+        : post?.instagram?.state === 'notScheduled'
           ? '--'
-          : post?.instagram.scheduledAt &&
+          : post?.instagram?.scheduledAt &&
             new Date(post?.instagram.scheduledAt).toLocaleString()
     }</td>
     <td>images: ${
       post?.images
-        ?.map((image) =>
-          image?._refs.imageFile.value &&
-          image.imageFile &&
-          image.imageFile._refs[
-            `${image.imageFile.originalSize[0]}x${image.imageFile.originalSize[1]}`
-          ]?.value
-            ? '✅'
-            : '❌'
+        ?.map(
+          (image) =>
+            `<a href="/image/${image?._refs.imageFile.id}">${
+              image?._refs.imageFile.value &&
+              image.imageFile &&
+              image.imageFile._refs[
+                `${image.imageFile.originalSize[0]}x${image.imageFile.originalSize[1]}`
+              ]?.value
+                ? '✅'
+                : '❌'
+            }</a>`
         )
         .join('') || '...'
     }</td>
@@ -83,4 +113,29 @@ export function handleStateRequest(
       },
     }
   );
+}
+
+function missingTxsComparedTo(
+  ours: CojsonInternalTypes.CoValueKnownState,
+  theirs: CojsonInternalTypes.CoValueKnownState
+): number {
+  if (!theirs.header && ours.header) {
+    return 0;
+  }
+
+  const allSessions = new Set([
+    ...Object.keys(ours.sessions),
+    ...Object.keys(theirs.sessions),
+  ]);
+
+  return [...allSessions].reduce((acc, session) => {
+    return (
+      acc +
+      Math.max(
+        0,
+        (theirs.sessions[session as SessionID] || 0) -
+          (ours.sessions[session as SessionID] || 0)
+      )
+    );
+  }, 0);
 }

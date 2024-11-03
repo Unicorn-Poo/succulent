@@ -127,7 +127,7 @@ async function runner() {
     for (let brand of lastWorkerUpdate?.brands || []) {
       for (let post of brand?.posts || []) {
         if (post) {
-          if (post.instagram.state === 'scheduled') {
+          if (post.instagram?.state === 'scheduled') {
             const actuallyScheduledPost = actuallyScheduled.get(post.id);
             if (actuallyScheduledPost?.state === 'loadingImagesFailed') {
               // this should never happen
