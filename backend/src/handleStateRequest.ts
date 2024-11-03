@@ -1,11 +1,12 @@
-import { ActuallyScheduled } from '.';
-import { CojsonInternalTypes, SessionID } from 'cojson';
 import { SchedulerAccount, SchedulerAccountRoot } from './workerAccount';
+import {
+  missingTxsComparedTo,
+  syncedWithAllPeers,
+} from './missingTxsComparedTo';
 
 export function handleStateRequest(
   req: Request,
   worker: SchedulerAccount,
-  actuallyScheduled: ActuallyScheduled,
   lastWorkerUpdate: SchedulerAccountRoot | null
 ) {
   return new Response(
@@ -13,11 +14,6 @@ export function handleStateRequest(
       Object.values(worker._raw.core.node.syncManager.peers)
         .map((peer) => `<p>${peer.id}</p>`)
         .join('') +
-      `<h2>Actually Scheduled</h2><table>` +
-      [...actuallyScheduled.entries()]
-        .map(([id, entry]) => `<tr><td>${id}</td><td>${entry.state}</td></tr>`)
-        .join('') +
-      '</table>' +
       lastWorkerUpdate?.brands
         ?.map(
           (brand) =>
@@ -31,7 +27,7 @@ export function handleStateRequest(
                   (brand?.posts &&
                     missingTxsComparedTo(
                       brand.posts._raw.core.knownState(),
-                      peer.optimisticKnownStates[brand.posts.id]
+                      peer.optimisticKnownStates.get(brand.posts.id)
                     )) +
                   ' behind</p>'
               )
@@ -72,7 +68,7 @@ export function handleStateRequest(
           (post &&
             missingTxsComparedTo(
               post._raw.core.knownState(),
-              peer.optimisticKnownStates[post.id]
+              peer.optimisticKnownStates.get(post.id)
             )) + ' behind'
       )
       .join(',')}</td>
@@ -86,25 +82,26 @@ export function handleStateRequest(
     }</td>
     <td>images: ${
       post?.images
-        ?.map(
-          (image) =>
-            `<a href="/image/${image?._refs.imageFile.id}">${
-              image?._refs.imageFile.value &&
-              image.imageFile &&
-              image.imageFile._refs[
-                `${image.imageFile.originalSize[0]}x${image.imageFile.originalSize[1]}`
-              ]?.value
-                ? '✅'
-                : '❌'
-            }</a>`
-        )
+        ?.map((image) => {
+          const highestResStreamIfLoadedElsewhere =
+            image?._refs.imageFile.value &&
+            image.imageFile &&
+            image.imageFile._refs[
+              `${image.imageFile.originalSize[0]}x${image.imageFile.originalSize[1]}`
+            ]?.value;
+          return `<a href="/image/${image?._refs.imageFile.id}">${
+            highestResStreamIfLoadedElsewhere?.isBinaryStreamEnded()
+              ? '✅'
+              : '❌'
+          }</a>`;
+        })
         .join('') || '...'
     }</td>
     <td>${post?.id}</td>
 </tr>`
               )
               .join('') +
-            '</table>'
+            '</table><script type="text/javascript">setTimeout(() => window.location.reload(), 5000)</script>'
         )
         .join(''),
     {
@@ -113,29 +110,4 @@ export function handleStateRequest(
       },
     }
   );
-}
-
-function missingTxsComparedTo(
-  ours: CojsonInternalTypes.CoValueKnownState,
-  theirs: CojsonInternalTypes.CoValueKnownState
-): number {
-  if (!theirs.header && ours.header) {
-    return 0;
-  }
-
-  const allSessions = new Set([
-    ...Object.keys(ours.sessions),
-    ...Object.keys(theirs.sessions),
-  ]);
-
-  return [...allSessions].reduce((acc, session) => {
-    return (
-      acc +
-      Math.max(
-        0,
-        (theirs.sessions[session as SessionID] || 0) -
-          (ours.sessions[session as SessionID] || 0)
-      )
-    );
-  }, 0);
 }

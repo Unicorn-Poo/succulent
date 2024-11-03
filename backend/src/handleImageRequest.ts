@@ -1,27 +1,41 @@
-import { ID, ImageDefinition } from 'jazz-tools';
+import { ID, ImageDefinition, Account, BinaryCoStream } from 'jazz-tools';
 
-export function handleImageRequest(
-  req: Request,
-  loadedImages: Map<
-    ID<ImageDefinition>,
-    { mimeType?: string; chunks: Uint8Array[] }
-  >
-) {
+export async function handleImageRequest(req: Request, worker: Account) {
   console.log(new Date(), req.url);
   const imageFileId = req.url.split('/image/')[1];
   console.log(new Date(), imageFileId);
 
-  const streamInfo = loadedImages.get(imageFileId as ID<ImageDefinition>);
+  const imageFile = await ImageDefinition.load(
+    imageFileId as ID<ImageDefinition>,
+    worker,
+    {}
+  );
 
-  if (!streamInfo) return new Response('not found', { status: 404 });
-  if (!streamInfo.chunks || streamInfo.chunks.length === 0) {
-    console.error(new Date(), 'no chunks in image', streamInfo);
-    return new Response('no chunks in image', { status: 500 });
+  if (!imageFile) return new Response('not found', { status: 404 });
+
+  const highestRes =
+    `${imageFile.originalSize[0]}x${imageFile?.originalSize[1]}` as const;
+  const highestResStreamID = imageFile._refs[highestRes]?.id;
+  if (!highestResStreamID) {
+    console.error(new Date(), 'no stream for highest res', imageFile);
+    return new Response('not found - no stream for highest res', {
+      status: 404,
+    });
   }
 
-  return new Response(new Blob(streamInfo.chunks), {
+  const highestResBlob = await BinaryCoStream.loadAsBlob(
+    highestResStreamID,
+    worker
+  );
+
+  if (!highestResBlob) {
+    console.error(new Date(), "couldn't load image as blob");
+    return new Response("couldn't load image as blob", { status: 500 });
+  }
+
+  return new Response(highestResBlob, {
     headers: {
-      'Content-Type': streamInfo.mimeType || 'application/octet-stream',
+      'Content-Type': highestResBlob.type || 'application/octet-stream',
     },
   });
 }
