@@ -15,12 +15,18 @@ export function handleStateRequest(
         .map((peer) => `<p>${peer.id}</p>`)
         .join('') +
       lastWorkerUpdate?.brands
-        ?.map(
+        ?.toSorted(
+          (b1, b2) =>
+            (process.env.ARMED_BRANDS?.includes(b1?.id || '') ? 0 : 1) -
+            (process.env.ARMED_BRANDS?.includes(b2?.id || '') ? 0 : 1)
+        )
+        .map(
           (brand) =>
-            `<h2>${brand?.name} (${brand?.instagramPage
-              ?.id})</h2>${Object.values(
-              worker._raw.core.node.syncManager.peers
-            )
+            `<h2>${brand?.name} (${brand?.instagramPage?.id}) ${brand?.id} ${
+              brand && process.env.ARMED_BRANDS?.includes(brand.id)
+                ? '🚀'
+                : '❌'
+            }</h2>${Object.values(worker._raw.core.node.syncManager.peers)
               .map(
                 (peer) =>
                   '<p>' +

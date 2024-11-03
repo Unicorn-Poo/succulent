@@ -7,6 +7,12 @@ export async function handleFBConnectRequest(
   worker: SchedulerAccount
 ) {
   const code = new URL(req.url).searchParams.get('code');
+  console.log(
+    new Date(),
+    'got connect code',
+    code,
+    new URL(req.url).searchParams.get('state')
+  );
 
   if (!code) return new Response('no code');
 

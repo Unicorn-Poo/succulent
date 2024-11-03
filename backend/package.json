@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "dotenv": "^16.3.1",
+    "instagram-graph-api": "^7.0.0",
     "jazz-nodejs": "0.8.12"
   },
   "devDependencies": {

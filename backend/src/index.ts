@@ -9,14 +9,14 @@ import {
   InstagramScheduled,
   Post,
 } from './sharedDataModel';
-import { actuallyPost } from './actuallyPost';
 import { handleImageRequest } from './handleImageRequest';
 import { handleFBConnectRequest } from './handleFBConnectRequest';
 import { SchedulerAccount, SchedulerAccountRoot } from './workerAccount';
-import { handlePostUpdate } from './handlePostUpdate';
-import { loadImageFile } from './loadImageFile';
 import { handleStateRequest } from './handleStateRequest';
 import { syncedWithAllPeers } from './missingTxsComparedTo';
+import { PostHandler } from './PostHandler';
+import { Client as IGClient } from 'instagram-graph-api';
+const postHandlers: Record<ID<Brand>, Record<ID<Post>, PostHandler>> = {};
 
 async function runner() {
   const { worker } = await startWorker({
@@ -45,27 +45,45 @@ async function runner() {
         continue;
       }
 
-      for (let post of brand?.posts || []) {
-        if (!post) continue;
-        if (!syncedWithAllPeers(post)) {
-          console.log(
-            new Date(),
-            'post not synced with all peers yet',
-            post?.id
-          );
-          continue;
-        }
+      if (!process.env.ARMED_BRANDS?.includes(brand.id)) {
+        continue;
+      }
 
-        if (!post.images || !syncedWithAllPeers(post.images)) {
-          console.log(
-            new Date(),
-            'post not synced with all peers yet',
-            post.id
-          );
-          continue;
-        }
+      if (!brand.instagramPage) {
+        console.log(new Date(), 'brand has no instagram page', brand.id);
+        continue;
+      }
 
-        console.log(new Date(), 'post synced', post.id, post.instagram.state);
+      if (!brand.metaAPIConnection) {
+        console.log(new Date(), 'brand has no meta api connection', brand.id);
+        continue;
+      }
+
+      for (let post of brand?.posts._refs || []) {
+        if (!postHandlers[brand.id]?.[post.id]) {
+          postHandlers[brand.id] = {
+            ...postHandlers[brand.id],
+            [post.id]: new PostHandler(
+              worker,
+              post.id,
+              new IGClient(
+                brand.metaAPIConnection.longLivedToken,
+                brand.instagramPage.id
+              )
+            ),
+          };
+        }
+      }
+
+      const currentPostIDs = new Set([...brand.posts._refs].map((p) => p.id));
+
+      for (let handlerID of Object.keys(postHandlers[brand.id] || {}).map(
+        (id) => id as ID<Post>
+      )) {
+        if (!currentPostIDs.has(handlerID)) {
+          postHandlers[brand.id][handlerID].cancel();
+          delete postHandlers[brand.id][handlerID];
+        }
       }
     }
   });
