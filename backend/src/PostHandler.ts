@@ -181,20 +181,25 @@ export class PostHandler {
     userTags: Record<string, { x: number; y: number }> = {}
   ) {
     console.log(new Date(), 'creating container from image', postId, imageId);
-    const containerRequest = await this.client
-      .newPostPagePhotoMediaRequest(
-        backendAddr + '/image/' + imageId,
-        content,
-        undefined,
-        Object.entries(userTags).map(([username, { x, y }]) => ({
-          username,
-          x,
-          y,
-        }))
-      )
-      .execute();
+    const containerRequest = await this.client.newPostPagePhotoMediaRequest(
+      backendAddr + '/image/' + imageId,
+      content,
+      undefined,
+      Object.entries(userTags).map(([username, { x, y }]) => ({
+        username,
+        x,
+        y,
+      }))
+    );
+    console.log(
+      new Date(),
+      'executing container request',
+      containerRequest.config()
+    );
 
-    const containerID = containerRequest.getId();
+    const containerResponse = await containerRequest.execute();
+
+    const containerID = containerResponse.getId();
 
     if (!containerID) {
       console.error(
@@ -202,10 +207,10 @@ export class PostHandler {
         'no container ID',
         postId,
         imageId,
-        containerRequest.getData()
+        containerResponse.getData()
       );
       throw new Error(
-        (containerRequest.getData() as any).error.error_user_title
+        (containerResponse.getData() as any).error.error_user_title
       );
     }
 
