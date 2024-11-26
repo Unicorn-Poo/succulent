@@ -1657,26 +1657,25 @@ clsx@2.0.0, clsx@^2.0.0:
   resolved "https://registry.npmjs.org/clsx/-/clsx-2.0.0.tgz"
   integrity sha512-rQ1+kcj+ttHG0MKVGBUXwayCCF1oh39BF5COIpRzuCEv8Mwjv0XucrI2ExNTOn9IlLifGClWQcU9BrZORvtw6Q==
 
-cojson-storage-indexeddb@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/cojson-storage-indexeddb/-/cojson-storage-indexeddb-0.8.19.tgz#332298edbeadd76368834f01dfd1c67401aa5da5"
-  integrity sha512-vD3TIC4/SxKOpbrTFkHjYQYS73OkB4kdAfHv4fylxuaFCU5s0aP5C+K//fuBbmH1Pim9rDX4D8Dp1X5icoe6fw==
+cojson-storage-indexeddb@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/cojson-storage-indexeddb/-/cojson-storage-indexeddb-0.8.32.tgz#96f8db213bbcf2a9408203d3338e9d9756abad43"
+  integrity sha512-pkwi7KPYa6dqJGg9ZKnrBlHOHpFpx7glH3P4GOt7MPnmS/GEX6fptLUjglc+/GvBlXBdvhUf6auf0jR2a5s4vQ==
   dependencies:
-    cojson "0.8.19"
+    cojson "0.8.32"
+
+cojson-transport-ws@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/cojson-transport-ws/-/cojson-transport-ws-0.8.32.tgz#3cfbc0885c29226d667aab3eaf66865007ec99dd"
+  integrity sha512-eQtDMTGsy+cCHnQlidSv395mPoAu00z5nb/CQGd2nh4aDuEiaYxF8cQEv4Al4pFIx2q8MP/Wle0vwhHUp2jXuQ==
+  dependencies:
+    cojson "0.8.32"
     typescript "^5.3.3"
 
-cojson-transport-ws@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/cojson-transport-ws/-/cojson-transport-ws-0.8.19.tgz#a1871500547320f0c525970993ad09cb6a17aeea"
-  integrity sha512-Ru1J1q8PiKUstiyfKjQyoCN8ZtlHgco19MtzerW1SFmRh5ib2Jx/a5Q/Kfq0sozyw1KsR+VlVj+02UEe06fSQA==
-  dependencies:
-    cojson "0.8.19"
-    typescript "^5.3.3"
-
-cojson@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/cojson/-/cojson-0.8.19.tgz#dfd03267540e5c02f90fde1c68e96768be0894d1"
-  integrity sha512-FctZxMGKjjAWrqcPoAHX6Ds+OD6P3HY1JVSuIjWeNOuc2Bsq0CFdrEEqzKQZWD6psUNrCndhgP7EFg5UiT8KIA==
+cojson@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/cojson/-/cojson-0.8.32.tgz#348be6b1516867228930f8df80455a66c19bdd03"
+  integrity sha512-fqk6M0le44wct77FYEV+CY7OCJa2oE/cAgv25hhlnKFE3FdDnaDd0UwAneKzwdmWzBLNiWhTNi0pkrgtvKTygQ==
   dependencies:
     "@hazae41/berith" "^1.2.6"
     "@noble/ciphers" "^0.1.3"
@@ -2394,47 +2393,46 @@ jackspeak@^2.3.5:
   optionalDependencies:
     "@pkgjs/parseargs" "^0.11.0"
 
-jazz-browser-media-images@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/jazz-browser-media-images/-/jazz-browser-media-images-0.8.19.tgz#835152de06f2696ea4999f86784ce67dd820e593"
-  integrity sha512-cbEBi82UUld5uoyfjFNhcIfUH8v0tgYtkiT8VOnhMK8WYsaqpOP8mX3EaRLQnbT/+XMH79iAkx+q+8omZIst8w==
+jazz-browser-media-images@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/jazz-browser-media-images/-/jazz-browser-media-images-0.8.32.tgz#15b4a5655e7a88e4ea20eec2a87cd8301cff6260"
+  integrity sha512-mMfeTf/ZIs41QKuKEHdU9c3Xa0mVwIN2seM/5y9rT1ZBdq/zOgY8rxBeDoYk7wbji00iZl1kaBFjXuEn5ePx/A==
   dependencies:
     "@types/image-blob-reduce" "^4.1.1"
     image-blob-reduce "^4.1.0"
-    jazz-browser "0.8.19"
-    jazz-tools "0.8.19"
+    jazz-browser "0.8.32"
+    jazz-tools "0.8.32"
     pica "^9.0.1"
     typescript "^5.3.3"
 
-jazz-browser@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/jazz-browser/-/jazz-browser-0.8.19.tgz#9c792454117eea5443a9307e0487c3af534b8dbf"
-  integrity sha512-HcH7xLIe7dLPgh3k/XO61uH+wgJx+8IhraJ4U5hSr7D+fypGUUQ3tcWWrEv0gKTO6zpSs8oO5lDnxTbtqO4cyg==
+jazz-browser@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/jazz-browser/-/jazz-browser-0.8.32.tgz#5e12960ee91b3eb72d12335c993e724ce8fb0f6a"
+  integrity sha512-DMamrD3sUM4ub2ffnWFvA9NhG9LpYNSfWjQllZ7M5IkABWnutoNbdvBv69ZVcSGdtCoaLf/cS45o4QmoeWyEPA==
   dependencies:
     "@scure/bip39" "^1.3.0"
-    cojson "0.8.19"
-    cojson-storage-indexeddb "0.8.19"
-    cojson-transport-ws "0.8.19"
-    jazz-tools "0.8.19"
+    cojson "0.8.32"
+    cojson-storage-indexeddb "0.8.32"
+    cojson-transport-ws "0.8.32"
+    jazz-tools "0.8.32"
     typescript "^5.3.3"
 
-jazz-react@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/jazz-react/-/jazz-react-0.8.19.tgz#8c5fcb900082263e1a65772acedf0a1720723f05"
-  integrity sha512-4IOFUhLe1suwQr/Lib2+rEkA15x7gwY3LRdUTRZ478paN1XMlEJCs7TzijjiGEBK544+UZtBDugEbdAxLAB17w==
+jazz-react@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/jazz-react/-/jazz-react-0.8.32.tgz#1efec19d0196d3f3f3cb140b683d38bd3bc7c3b1"
+  integrity sha512-dOUYL/NcmzDEXX1jfd0jhOISAf3c9oy7nbF77AgH0/diGfcXCoCYJJho9D5bo7uElqNPtj/QRtW7mWCE3nbxzg==
   dependencies:
     "@scure/bip39" "^1.3.0"
-    cojson "0.8.19"
-    jazz-browser "0.8.19"
-    jazz-tools "0.8.19"
-    typescript "^5.3.3"
+    cojson "0.8.32"
+    jazz-browser "0.8.32"
+    jazz-tools "0.8.32"
 
-jazz-tools@0.8.19:
-  version "0.8.19"
-  resolved "https://registry.yarnpkg.com/jazz-tools/-/jazz-tools-0.8.19.tgz#42b40ebd463198790db32abe5266e137ed53c7f4"
-  integrity sha512-bdwWWD0QZlyxMlZ+0vmHfjK5uZmd/rOYjX9gNOrHkJLrRMu+5Pb64gxCOtSysp/zIlsYlEP6+qoDSbMkdP4JsQ==
+jazz-tools@0.8.32:
+  version "0.8.32"
+  resolved "https://registry.yarnpkg.com/jazz-tools/-/jazz-tools-0.8.32.tgz#f181ce69ad428f08fba075ea5b299629cd08b342"
+  integrity sha512-hbH+qOY0NDi3Zy43OZGQrdSCIkDxj2iEa/Ue/xcdHbNFsQVIgRly6M15xxKesSH8IV4f5K9LBYgTF3UNWJ+HBw==
   dependencies:
-    cojson "0.8.19"
+    cojson "0.8.32"
     fast-check "^3.17.2"
 
 jiti@^1.19.1:
@@ -3058,8 +3056,16 @@ source-map-js@^1.0.2:
   resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.0.2.tgz"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0:
-  name string-width-cjs
+"string-width-cjs@npm:string-width@^4.2.0":
+  version "4.2.3"
+  resolved "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz"
+  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
+  dependencies:
+    emoji-regex "^8.0.0"
+    is-fullwidth-code-point "^3.0.0"
+    strip-ansi "^6.0.1"
+
+string-width@^4.1.0:
   version "4.2.3"
   resolved "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -3077,7 +3083,14 @@ string-width@^5.0.1, string-width@^5.1.2:
     emoji-regex "^9.2.2"
     strip-ansi "^7.0.1"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz"
+  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
+  dependencies:
+    ansi-regex "^5.0.1"
+
+strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
