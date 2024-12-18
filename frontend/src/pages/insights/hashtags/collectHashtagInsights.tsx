@@ -29,7 +29,7 @@ export function collectHashtagInsights(brand: Brand) {
       Object.entries(hashtagsAndTheirPosts).map(([hashtag, posts]) => [
         hashtag,
         posts.reduce(
-          (acc, post) => acc + (post?.instagramInsights?.reach || 0),
+          (acc, post) => acc + (post?.insights?.instagram?.reach || 0),
           0
         ),
       ])
@@ -44,7 +44,7 @@ export function collectHashtagInsights(brand: Brand) {
     const postsWithoutThatHashtag =
       brand?.posts?.filter((post) => !post?.content?.includes(hashtag)) || [];
     const combinedReachWithoutHashtag = postsWithoutThatHashtag.reduce(
-      (acc, post) => acc + (post?.instagramInsights?.reach || 0),
+      (acc, post) => acc + (post?.insights?.instagram?.reach || 0),
       0
     );
     const avgReachWithoutHashtag =
@@ -60,8 +60,8 @@ export function collectHashtagInsights(brand: Brand) {
           posts.reduce(
             (acc, post) =>
               acc +
-              (post?.instagramInsights?.totalInteractions || 0) /
-                (post?.instagramInsights?.reach || 1),
+              (post?.insights?.instagram?.totalInteractions || 0) /
+                (post?.insights?.instagram?.reach || 1),
             0
           )) /
           posts.length,
