@@ -201,36 +201,38 @@ export async function getPostInsightsHelper(brand: Brand) {
             [breakdown: string]: number | undefined;
           };
 
-      post.instagramInsights = {
-        profileVisits: insights.data.find(
-          (insight: { name: string }) => insight.name === 'profile_visits'
-        )?.values[0].value,
-        impressions: insights.data.find(
-          (insight: { name: string }) => insight.name === 'impressions'
-        )?.values[0].value,
-        totalInteractions: insights.data.find(
-          (insight: { name: string }) => insight.name === 'total_interactions'
-        )?.values[0].value,
-        reach: insights.data.find(
-          (insight: { name: string }) => insight.name === 'reach'
-        )?.values[0].value,
-        likes: insights.data.find(
-          (insight: { name: string }) => insight.name === 'likes'
-        )?.values[0].value,
-        comments: insights.data.find(
-          (insight: { name: string }) => insight.name === 'comments'
-        )?.values[0].value,
-        saved: insights.data.find(
-          (insight: { name: string }) => insight.name === 'saved'
-        )?.values[0].value,
-        shares: insights.data.find(
-          (insight: { name: string }) => insight.name === 'shares'
-        )?.values[0].value,
-        follows: insights.data.find(
-          (insight: { name: string }) => insight.name === 'follows'
-        )?.values[0].value,
-        profileActivity: restructuredProfileActivity,
-      };
+      console.warn('saving post insights not yet implemented again');
+
+      // post.instagramInsights = {
+      //   profileVisits: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'profile_visits'
+      //   )?.values[0].value,
+      //   impressions: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'impressions'
+      //   )?.values[0].value,
+      //   totalInteractions: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'total_interactions'
+      //   )?.values[0].value,
+      //   reach: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'reach'
+      //   )?.values[0].value,
+      //   likes: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'likes'
+      //   )?.values[0].value,
+      //   comments: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'comments'
+      //   )?.values[0].value,
+      //   saved: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'saved'
+      //   )?.values[0].value,
+      //   shares: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'shares'
+      //   )?.values[0].value,
+      //   follows: insights.data.find(
+      //     (insight: { name: string }) => insight.name === 'follows'
+      //   )?.values[0].value,
+      //   profileActivity: restructuredProfileActivity,
+      // };
     }
   }
 }

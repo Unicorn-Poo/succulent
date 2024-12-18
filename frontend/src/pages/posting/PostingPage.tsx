@@ -40,7 +40,7 @@ export function PostingPage() {
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const brandId = useParams<{ brandId: ID<Brand> }>().brandId;
   const brand = useCoState(Brand, brandId, {
-    posts: [{ images: [], userTags: [] }],
+    posts: [{}],
   });
 
   const [filter, setFilter] = useState<string>();

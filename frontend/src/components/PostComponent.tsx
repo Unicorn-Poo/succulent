@@ -238,7 +238,7 @@ export function PostComponent({
                 };
               }}
             />
-            {editable && (
+            {true && (
               <Button
                 variant="ghost"
                 className="p-0 aspect-square hover:bg-red-500"

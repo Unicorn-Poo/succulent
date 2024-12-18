@@ -56,7 +56,7 @@ export const insightMeta = {
 };
 
 export function insightsForPost(post: Post) {
-  const insights = post.instagramInsights;
+  const insights = post.insights?.instagram;
   if (!insights) return;
 
   type Insights = keyof typeof insights;

@@ -39,7 +39,12 @@ export class Post<out S extends InstagramState = InstagramState> extends CoMap {
   instagram = co.json<S>();
   location = co.ref(Location, { optional: true });
   userTags = co.ref(UserTagMap, { optional: true });
-  instagramInsights? = co.json<{
+  instagramInsights? = co.json<{}>();
+  insights = co.ref(AllPostInsights, { optional: true });
+}
+
+export class AllPostInsights extends CoMap {
+  instagram = co.json<{
     profileVisits?: number;
     impressions?: number;
     totalInteractions?: number;
