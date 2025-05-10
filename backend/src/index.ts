@@ -30,63 +30,66 @@ async function runner() {
   let lastWorkerUpdate: SchedulerAccountRoot | null;
   let accountStateChanged = false;
 
-  worker.subscribe({ root: { brands: [{ posts: [] }] } }, (workerUpdate) => {
-    lastWorkerUpdateAt = new Date();
-    lastWorkerUpdate = workerUpdate?.root;
-    accountStateChanged = true;
+  worker.subscribe(
+    { resolve: { root: { brands: { $each: { posts: true } } } } },
+    (workerUpdate) => {
+      lastWorkerUpdateAt = new Date();
+      lastWorkerUpdate = workerUpdate?.root;
+      accountStateChanged = true;
 
-    for (let brand of workerUpdate.root.brands) {
-      if (!syncedWithAllPeers(brand)) {
-        console.log(
-          new Date(),
-          'brand not synced with all peers yet',
-          brand.id
-        );
-        continue;
-      }
-
-      if (!process.env.ARMED_BRANDS?.includes(brand.id)) {
-        continue;
-      }
-
-      if (!brand.instagramPage) {
-        console.log(new Date(), 'brand has no instagram page', brand.id);
-        continue;
-      }
-
-      if (!brand.metaAPIConnection) {
-        console.log(new Date(), 'brand has no meta api connection', brand.id);
-        continue;
-      }
-
-      for (let post of brand?.posts._refs || []) {
-        if (!postHandlers[brand.id]?.[post.id]) {
-          postHandlers[brand.id] = {
-            ...postHandlers[brand.id],
-            [post.id]: new PostHandler(
-              worker,
-              post.id,
-              new IGClient(
-                brand.metaAPIConnection.longLivedToken,
-                brand.instagramPage.id
-              )
-            ),
-          };
+      for (let brand of workerUpdate.root.brands) {
+        if (!syncedWithAllPeers(brand)) {
+          console.log(
+            new Date(),
+            'brand not synced with all peers yet',
+            brand.id
+          );
+          continue;
         }
-      }
 
-      const currentPostIDs = new Set([...brand.posts._refs].map((p) => p.id));
+        if (!process.env.ARMED_BRANDS?.includes(brand.id)) {
+          continue;
+        }
 
-      for (let handlerID of Object.keys(postHandlers[brand.id] || {}).map(
-        (id) => id as ID<Post>
-      )) {
-        if (!currentPostIDs.has(handlerID)) {
-          postHandlers[brand.id][handlerID].cancel();
-          delete postHandlers[brand.id][handlerID];
+        if (!brand.instagramPage) {
+          console.log(new Date(), 'brand has no instagram page', brand.id);
+          continue;
+        }
+
+        if (!brand.metaAPIConnection) {
+          console.log(new Date(), 'brand has no meta api connection', brand.id);
+          continue;
+        }
+
+        for (let post of brand?.posts._refs || []) {
+          if (!postHandlers[brand.id]?.[post.id]) {
+            postHandlers[brand.id] = {
+              ...postHandlers[brand.id],
+              [post.id]: new PostHandler(
+                worker,
+                post.id,
+                new IGClient(
+                  brand.metaAPIConnection.longLivedToken,
+                  brand.instagramPage.id
+                )
+              ),
+            };
+          }
+        }
+
+        const currentPostIDs = new Set([...brand.posts._refs].map((p) => p.id));
+
+        for (let handlerID of Object.keys(postHandlers[brand.id] || {}).map(
+          (id) => id as ID<Post>
+        )) {
+          if (!currentPostIDs.has(handlerID)) {
+            postHandlers[brand.id][handlerID].cancel();
+            delete postHandlers[brand.id][handlerID];
+          }
         }
       }
     }
-  });
+  );
 
   Bun.serve({
     async fetch(req) {

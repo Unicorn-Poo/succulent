@@ -7,7 +7,11 @@
   "dependencies": {
     "dotenv": "^16.3.1",
     "instagram-graph-api": "^7.0.0",
-    "jazz-nodejs": "0.8.41"
+    "jazz-nodejs": "0.13.23"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "bun run src/index.ts"
   },
   "devDependencies": {
     "bun-types": "^1.0.18"

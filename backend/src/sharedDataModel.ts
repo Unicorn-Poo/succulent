@@ -32,14 +32,13 @@ export type InstagramPosted = {
   permalink: string;
 };
 
-export class Post<out S extends InstagramState = InstagramState> extends CoMap {
+export class Post extends CoMap {
   inBrand: co<Brand | null> = co.ref(Brand);
   content? = co.string;
   images = co.ref(ListOfImages);
-  instagram = co.json<S>();
+  instagram = co.json<InstagramState>();
   location = co.ref(Location, { optional: true });
   userTags = co.ref(UserTagMap, { optional: true });
-  instagramInsights? = co.json<{}>();
   insights = co.ref(AllPostInsights, { optional: true });
 }
 
@@ -73,13 +72,17 @@ export class Brand extends CoMap {
   instagramInsights = co.ref(BrandInstagramInsights, { optional: true });
   instagramPage? = co.json<{ id: string; name: string }>();
   posts = co.ref(ListOfPosts);
-  usedLocations = co.ref(ListOfLocations);
-  usedUserTags = co.ref(UserTagList);
+  hashtagGroups = co.ref(ListOfHashtagGroups);
+  usertagGroups = co.ref(ListOfUsertagGroups);
 }
 
 export class MetaAPIConnection extends CoMap {
   longLivedToken = co.string;
   validUntil = co.encoded(Encoders.Date);
+
+  isValid() {
+    return this.validUntil > new Date();
+  }
 }
 
 export class ListOfBrands extends CoList.Of(co.ref(Brand)) {}
@@ -101,7 +104,19 @@ export class UserTagMap extends CoMap.Record(
   }>()
 ) {}
 
-export class UserTagList extends CoList.Of(co.string) {}
+export class HashtagGroup extends CoMap {
+  name = co.string;
+  hashtags = co.ref(HashtagList);
+}
+export class ListOfHashtagGroups extends CoList.Of(co.ref(HashtagGroup)) {}
+export class HashtagList extends CoList.Of(co.string) {} // without #
+
+export class UsertagGroup extends CoMap {
+  name = co.string;
+  usertags = co.ref(UsertagList);
+}
+export class ListOfUsertagGroups extends CoList.Of(co.ref(UsertagGroup)) {}
+export class UsertagList extends CoList.Of(co.string) {} // without @
 
 export type DayInsights = {
   impressions?: number;

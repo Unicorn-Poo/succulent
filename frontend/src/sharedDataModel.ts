@@ -32,14 +32,13 @@ export type InstagramPosted = {
   permalink: string;
 };
 
-export class Post<out S extends InstagramState = InstagramState> extends CoMap {
+export class Post extends CoMap {
   inBrand: co<Brand | null> = co.ref(Brand);
   content? = co.string;
   images = co.ref(ListOfImages);
-  instagram = co.json<S>();
+  instagram = co.json<InstagramState>();
   location = co.ref(Location, { optional: true });
   userTags = co.ref(UserTagMap, { optional: true });
-  instagramInsights? = co.json<{}>();
   insights = co.ref(AllPostInsights, { optional: true });
 }
 

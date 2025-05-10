@@ -41,11 +41,7 @@ export async function handleFBConnectRequest(
   if (!connectionOwnerId)
     return new Response('no connectionOwnerId', { status: 400 });
 
-  const connectionOwner = await Account.load(
-    connectionOwnerId as ID<Account>,
-    worker,
-    []
-  );
+  const connectionOwner = await Account.load(connectionOwnerId as ID<Account>);
   if (!connectionOwner)
     return new Response('no connectionOwner', { status: 500 });
 

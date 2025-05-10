@@ -15,9 +15,12 @@ export function DraftPostList({
   allUserTags,
   draggable,
 }: {
-  posts?: Post<
-    InstagramNotScheduled | InstagramScheduleDesired | InstagramScheduled
-  >[];
+  posts?: (Post & {
+    instagram:
+      | InstagramNotScheduled
+      | InstagramScheduleDesired
+      | InstagramScheduled;
+  })[];
   lastScheduledOrPostDate?: Date;
   allHashTags: HashtagInsights[];
   allUserTags: string[];

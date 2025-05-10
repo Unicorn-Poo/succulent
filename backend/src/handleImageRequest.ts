@@ -6,9 +6,7 @@ export async function handleImageRequest(req: Request, worker: Account) {
   console.log(new Date(), imageFileId);
 
   const imageFile = await ImageDefinition.load(
-    imageFileId as ID<ImageDefinition>,
-    worker,
-    {}
+    imageFileId as ID<ImageDefinition>
   );
 
   if (!imageFile) return new Response('not found', { status: 404 });
@@ -23,10 +21,7 @@ export async function handleImageRequest(req: Request, worker: Account) {
     });
   }
 
-  const highestResBlob = await BinaryCoStream.loadAsBlob(
-    highestResStreamID,
-    worker
-  );
+  const highestResBlob = await BinaryCoStream.loadAsBlob(highestResStreamID);
 
   if (!highestResBlob) {
     console.error(new Date(), "couldn't load image as blob");

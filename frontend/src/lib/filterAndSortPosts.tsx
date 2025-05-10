@@ -18,9 +18,12 @@ export function filterAndSortScheduledAndPostedPosts(
     .filter(
       (
         post
-      ): post is Post<
-        InstagramScheduleDesired | InstagramScheduled | InstagramPosted
-      > =>
+      ): post is Post & {
+        instagram:
+          | InstagramScheduleDesired
+          | InstagramScheduled
+          | InstagramPosted;
+      } =>
         !!(
           post &&
           post.instagram &&
@@ -44,8 +47,9 @@ export function filterAndSortScheduledAndPostedPosts(
 }
 
 export function filterDraftPosts(posts?: (Post | null)[] | null) {
-  return posts?.filter((post): post is Post<InstagramNotScheduled> =>
-    draftStates.includes(post?.instagram.state as string)
+  return posts?.filter(
+    (post): post is Post & { instagram: InstagramNotScheduled } =>
+      draftStates.includes(post?.instagram.state as string)
   );
 }
 
@@ -53,8 +57,11 @@ export function filterDraftAndScheduledPosts(posts?: (Post | null)[] | null) {
   return posts?.filter(
     (
       post
-    ): post is Post<
-      InstagramNotScheduled | InstagramScheduleDesired | InstagramScheduled
-    > => allDraftStates.includes(post?.instagram.state as string)
+    ): post is Post & {
+      instagram:
+        | InstagramNotScheduled
+        | InstagramScheduleDesired
+        | InstagramScheduled;
+    } => allDraftStates.includes(post?.instagram.state as string)
   );
 }

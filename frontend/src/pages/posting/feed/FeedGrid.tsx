@@ -14,9 +14,9 @@ export function FeedGrid({
   allHashtags,
   allUsertags,
 }: {
-  posts: Post<
-    InstagramPosted | InstagramScheduleDesired | InstagramScheduled
-  >[];
+  posts: (Post & {
+    instagram: InstagramPosted | InstagramScheduleDesired | InstagramScheduled;
+  })[];
   showInsights: boolean;
   deleteDraft: (post: Post) => void;
   createDraft: () => void;

@@ -1,4 +1,4 @@
-import { ID, ImageDefinition, DeeplyLoaded } from 'jazz-tools';
+import { ID, ImageDefinition, Resolved } from 'jazz-tools';
 import { syncedWithAllPeers } from './missingTxsComparedTo';
 import { Post } from './sharedDataModel';
 import { SchedulerAccount } from './workerAccount';
@@ -16,7 +16,7 @@ export class PostHandler {
   postID: ID<Post>;
   posting: boolean = false;
   lastValidState:
-    | DeeplyLoaded<Post, { images: [{}]; userTags: {} }>
+    | Resolved<Post, { images: { $each: true }; userTags: true }>
     | undefined;
   cancelSubscription: () => void;
   interval: ReturnType<typeof setInterval> | undefined;
@@ -31,8 +31,7 @@ export class PostHandler {
 
     this.cancelSubscription = Post.subscribe(
       postID,
-      worker,
-      { images: [{}], userTags: {} },
+      { resolve: { images: { $each: true }, userTags: true } },
       (post) => {
         if (
           syncedWithAllPeers(post) &&
@@ -122,7 +121,7 @@ export class PostHandler {
   }
 
   private async actuallyPost(
-    post: DeeplyLoaded<Post, { images: [{}]; userTags: {} }>
+    post: Resolved<Post, { images: { $each: true }; userTags: true }>
   ) {
     let topLevelContainerID: string | undefined;
 
@@ -244,7 +243,7 @@ export class PostHandler {
   }
 
   private async createCarouselFromImages(
-    post: DeeplyLoaded<Post, { images: [{}]; userTags: {} }>,
+    post: Resolved<Post, { images: { $each: true }; userTags: true }>,
     content: string,
     userTags: Record<string, { x: number; y: number }> = {}
   ) {

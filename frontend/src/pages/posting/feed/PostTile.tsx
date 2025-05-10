@@ -22,11 +22,13 @@ export function PostTile({
   allUsertags,
   alwaysShowInsights,
 }: {
-  post: Post<InstagramPosted | InstagramScheduleDesired | InstagramScheduled>;
+  post: Post & {
+    instagram: InstagramPosted | InstagramScheduleDesired | InstagramScheduled;
+  };
   isFirst: boolean;
-  olderPost?: Post<
-    InstagramPosted | InstagramScheduleDesired | InstagramScheduled
-  >;
+  olderPost?: Post & {
+    instagram: InstagramPosted | InstagramScheduleDesired | InstagramScheduled;
+  };
   alwaysShowInsights: boolean;
   allHashtags?: HashtagInsights[];
   allUsertags?: string[];
@@ -77,9 +79,6 @@ export function PostTile({
             {post.instagram.state !== 'posted' && (
               <div className="absolute -top-px -left-px bg-stone-700 border-black w-[1rem] border-l-[1rem] border-b-[1rem] group-hover:border-l-[1.5rem] group-hover:border-b-[1.5rem] border-b-transparent transition-[border] rounded-br "></div>
             )}
-            <div className="absolute top-0 left-0 right-0 bg-red-500 z-10">
-              {post._edits.instagramInsights?.all.length}
-            </div>
             <PostImage post={post} />
             <div className="showOnScroll opacity-0 pointer-events-none transition-opacity absolute top-0 right-2 text-lg md:text-xl [text-shadow:_0_1px_2px_rgb(0_0_0_/_80%)]">
               {post.instagram.state === 'posted'
