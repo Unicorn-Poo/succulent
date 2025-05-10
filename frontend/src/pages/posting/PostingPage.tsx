@@ -40,7 +40,11 @@ export function PostingPage() {
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const brandId = useParams<{ brandId: ID<Brand> }>().brandId;
   const brand = useCoState(Brand, brandId, {
-    posts: [{}],
+    posts: [
+      {
+        images: [{ imageFile: {} }],
+      },
+    ],
   });
 
   const [filter, setFilter] = useState<string>();
@@ -48,10 +52,10 @@ export function PostingPage() {
     useState<boolean>(false);
   const filteredPosts = useMemo(
     () =>
-      brand?.posts?.filter(
-        (post): post is NonNullable<typeof post> =>
+      brand?.posts.filter(
+        (post) =>
           !filter ||
-          post?.content?.toLowerCase().includes(filter.toLowerCase()) ||
+          post.content?.toLowerCase().includes(filter.toLowerCase()) ||
           false
       ),
     [brand?.posts, filter]

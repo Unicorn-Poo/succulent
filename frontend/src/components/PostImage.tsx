@@ -37,7 +37,7 @@ export function PostImage({ post, idx }: { post: Post; idx?: number }) {
 
   return (
     <div ref={containerRef} className={'w-full h-full relative'}>
-      {isDraftOrScheduled && (
+      {/* {isDraftOrScheduled && (
         // we're not actually rendering the image in full res, but make sure it is loaded
         <ProgressiveImg
           image={post.images?.[idx || 0]?.imageFile}
@@ -52,7 +52,7 @@ export function PostImage({ post, idx }: { post: Post; idx?: number }) {
             ) : undefined
           }
         </ProgressiveImg>
-      )}
+      )} */}
       <ProgressiveImg
         image={post.images?.[idx || 0]?.imageFile}
         maxWidth={visible ? 1024 : 0}
