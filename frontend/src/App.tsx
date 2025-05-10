@@ -1,17 +1,16 @@
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from './components/ui/toaster';
 import { router } from './router';
-import { useAcceptInvite, useAccount } from './main';
 import { Brand } from './sharedDataModel';
-
+import { useAccount, useAcceptInvite } from 'jazz-react';
 function App() {
-  const { me } = useAccount({ root: { brands: [] } });
+  const { me } = useAccount({ resolve: { root: { brands: true } } });
 
   useAcceptInvite<Brand>({
     invitedObjectSchema: Brand,
     onAccept: async (brandID) => {
       if (!me) return;
-      const brand = await Brand.load(brandID, me, {});
+      const brand = await Brand.load(brandID);
 
       if (!brand) {
         console.log('Failed to accept invite');

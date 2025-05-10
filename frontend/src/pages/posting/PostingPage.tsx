@@ -13,7 +13,6 @@ import { DragToScheduleContext } from './DragToScheduleContext';
 import { FeedGrid } from './feed/FeedGrid';
 import { DraftPostList } from './DraftPostList';
 import { ID } from 'jazz-tools';
-import { useCoState } from '@/main';
 import {
   CalendarIcon,
   EyeIcon,
@@ -31,6 +30,7 @@ import { collectHashtagInsights } from '../insights/hashtags/collectHashtagInsig
 import { useBreakpoint } from '@/lib/useBreakpoint';
 import { getPostInsightsHelper } from '@/lib/importPostsHelper';
 import { useDebouncedMemo } from '@/lib/debouncedUseMemo';
+import { useCoState } from 'jazz-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // let lastInstanceIds: any;
@@ -40,11 +40,17 @@ export function PostingPage() {
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const brandId = useParams<{ brandId: ID<Brand> }>().brandId;
   const brand = useCoState(Brand, brandId, {
-    posts: [
-      {
-        images: [{ imageFile: {} }],
+    resolve: {
+      posts: {
+        $each: {
+          images: {
+            $each: {
+              imageFile: true,
+            },
+          },
+        },
       },
-    ],
+    },
   });
 
   const [filter, setFilter] = useState<string>();
@@ -294,7 +300,7 @@ function PostingToolbar({
 }: {
   isMd: boolean;
   mobileShowFilterBar: boolean;
-  brand: Brand | undefined;
+  brand: Brand | null | undefined;
   filter: string | undefined;
   setFilter: (filter: string | undefined) => void;
   setMobileShowFilterBar: (show: boolean) => void;

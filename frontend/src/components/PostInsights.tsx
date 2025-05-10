@@ -1,7 +1,7 @@
 import { Post } from '@/sharedDataModel';
 import { insightMeta, insightsForPost } from '@/lib/postInsights';
 import { formatDateTime } from '@/lib/dates';
-import { useAccount } from '@/main';
+import { useAccount } from 'jazz-react';
 import { insightTypes } from '@/pages/settings/PreferencesPage';
 
 export function PostInsights(props: { post: Post; full?: boolean }) {

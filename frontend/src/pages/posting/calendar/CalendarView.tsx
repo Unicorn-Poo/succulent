@@ -5,7 +5,7 @@ import { DraftPostComponent } from '../../../components/draftPost/DraftPost';
 import { useCallback, useState } from 'react';
 import { importPostsHelper } from '../../../lib/importPostsHelper';
 import { ID } from 'jazz-tools';
-import { useCoState } from '@/main';
+import { useCoState } from 'jazz-react';
 
 export function CalendarView() {
   const brandId = useParams<{ brandId: ID<Brand> }>().brandId;

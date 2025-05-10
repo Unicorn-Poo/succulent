@@ -45,7 +45,7 @@ export class SucculentAccount extends Account {
         { owner: this }
       );
     }
-    const root = (await this.ensureLoaded({ root: true }))!.root;
+    const root = (await this.ensureLoaded({ resolve: { root: true } }))!.root;
     if (!root._refs.settings) {
       root.settings = Settings.create(
         {
@@ -54,7 +54,9 @@ export class SucculentAccount extends Account {
         { owner: this }
       );
     }
-    const rootWithBrands = await root.ensureLoaded({ brands: [{}] });
+    const rootWithBrands = await root.ensureLoaded({
+      resolve: { brands: { $each: true } },
+    });
     if (!rootWithBrands) throw new Error('rootWithBrands not loaded');
 
     for (const brand of rootWithBrands.brands) {
@@ -69,5 +71,11 @@ export class SucculentAccount extends Account {
         });
       }
     }
+  }
+}
+
+declare module 'jazz-react' {
+  interface Register {
+    Account: SucculentAccount;
   }
 }

@@ -18,7 +18,7 @@ export function DragToScheduleContext({
   brand,
   children,
 }: {
-  brand: Brand | undefined;
+  brand: Brand | undefined | null;
   children: React.ReactNode;
 }) {
   const { isMd } = useBreakpoint('md');

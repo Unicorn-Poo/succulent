@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Brand, BrandInstagramInsights } from '../../../sharedDataModel';
 import { InsightsChartView } from './InsightsChartView';
-import { useCoState } from '../../../main';
+import { useCoState } from 'jazz-react';
 import { ID } from 'jazz-tools';
 import { LayoutWithNav } from '../../../Nav';
 import { fetchBrandInsights } from '../../../lib/fetchBrandInsights';

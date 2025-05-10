@@ -433,34 +433,6 @@
   resolved "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.1.6.tgz"
   integrity sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==
 
-"@hazae41/berith@^1.2.6":
-  version "1.2.6"
-  resolved "https://registry.npmjs.org/@hazae41/berith/-/berith-1.2.6.tgz"
-  integrity sha512-TQLkisoolGD2kdSQVtTVXNwmsotA9dLmUgXcpHTNzssmN11Mp+vHVf4Myn3+Q4U18Na3UzGi6DZqogZFqjPPvg==
-  dependencies:
-    "@hazae41/box" "^1.0.5"
-
-"@hazae41/box@^1.0.5":
-  version "1.0.14"
-  resolved "https://registry.npmjs.org/@hazae41/box/-/box-1.0.14.tgz"
-  integrity sha512-RevIMZBVRmp0BDkpBpL77sr3Rk7XdqzBZcw+UsfUT4JAly/sryM/NDzJa80sMyO6aERJkjHUQaxH5DYDznPhkw==
-  dependencies:
-    "@hazae41/result" "^1.1.11"
-
-"@hazae41/option@^1.0.27":
-  version "1.0.27"
-  resolved "https://registry.npmjs.org/@hazae41/option/-/option-1.0.27.tgz"
-  integrity sha512-5hD+XtEwLAx54Z93alEa2B8ZurVs/HqZolc6C4OI3gJbaSmnypo0o5b8QSB98O8lcPwypa+8YcQtWffTF2J2mw==
-  dependencies:
-    "@hazae41/result" "^1.1.9"
-
-"@hazae41/result@^1.1.11", "@hazae41/result@^1.1.9":
-  version "1.1.12"
-  resolved "https://registry.npmjs.org/@hazae41/result/-/result-1.1.12.tgz"
-  integrity sha512-UpbOL30LmEyUXbrp2+Ndhd0n4iw5bSloOWyMdpXZiKxuooT0Ga4Go30ZcETAlF1gb7G9ZmRdC1KoYkM2WVn7+w==
-  dependencies:
-    "@hazae41/option" "^1.0.27"
-
 "@humanwhocodes/config-array@^0.11.13":
   version "0.11.13"
   resolved "https://registry.npmjs.org/@humanwhocodes/config-array/-/config-array-0.11.13.tgz"
@@ -694,7 +666,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opentelemetry/api@^1.0.0", "@opentelemetry/api@^1.9.0":
+"@opentelemetry/api@^1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.9.0.tgz#d03eba68273dc0f7509e2a3d5cba21eae10379fe"
   integrity sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==
@@ -1161,10 +1133,10 @@
   resolved "https://registry.npmjs.org/@remix-run/router/-/router-1.14.1.tgz"
   integrity sha512-Qg4DMQsfPNAs88rb2xkdk03N3bjK4jgX5fR24eHCTR9q6PrhZQZ4UJBPzCHJkIpTRN1UKxx2DzjZmnC+7Lj0Ow==
 
-"@scure/base@^1.1.1":
-  version "1.1.5"
-  resolved "https://registry.npmjs.org/@scure/base/-/base-1.1.5.tgz"
-  integrity sha512-Brj9FiG2W1MRQSTB212YVPRrcbjkv48FoZi/u4l/zds/ieRrqsh7aUf6CLwkAq61oKXr/ZlTzlY66gLIj3TFTQ==
+"@scure/base@1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.2.1.tgz#dd0b2a533063ca612c17aa9ad26424a2ff5aa865"
+  integrity sha512-DGmGtC8Tt63J5GfHgfl5CuAXh96VF/LD8K9Hr/Gv0J2lAoRGlPOMpqMpMbCTOoOJMZCk2Xt+DskdDyn6dEFdzQ==
 
 "@scure/base@~1.1.6":
   version "1.1.6"
@@ -1662,41 +1634,39 @@ clsx@2.0.0, clsx@^2.0.0:
   resolved "https://registry.npmjs.org/clsx/-/clsx-2.0.0.tgz"
   integrity sha512-rQ1+kcj+ttHG0MKVGBUXwayCCF1oh39BF5COIpRzuCEv8Mwjv0XucrI2ExNTOn9IlLifGClWQcU9BrZORvtw6Q==
 
-cojson-storage-indexeddb@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/cojson-storage-indexeddb/-/cojson-storage-indexeddb-0.8.41.tgz#6931c1ff15108b9b57c26907ef11cfb99bdd0feb"
-  integrity sha512-GUyhQVGtCR9MOACNs3M0+dAEudJgJm+LsubOEg8DZDTvGeMlDIMKdGUSjj8D3zloxH5YnH/+q64yLNjQLNFdew==
+cojson-storage-indexeddb@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/cojson-storage-indexeddb/-/cojson-storage-indexeddb-0.13.23.tgz#02ce2471f4911a55fc6253b716bde5872875a837"
+  integrity sha512-SWUNO1+CijdXrXJAooycD9lmJJWyIg18HkwRxYazEDR+paSm/7rZBSB2Bm5UcB3dStksZIRDtB/UdH6R6m3JVw==
   dependencies:
-    cojson "0.8.41"
-    cojson-storage "0.8.41"
+    cojson "0.13.23"
+    cojson-storage "0.13.23"
 
-cojson-storage@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/cojson-storage/-/cojson-storage-0.8.41.tgz#ce9e8a3c38bbaa4378c01fcc6f06f5e8034d3ba4"
-  integrity sha512-csvk+tCFO37RTGliXeFdgS3yZY0Fgx8XRCmNCjSiO6/koZZ9trwWd3HTUGPysHXVsuAVDZuoobo6HblRx2EF2w==
+cojson-storage@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/cojson-storage/-/cojson-storage-0.13.23.tgz#de5ca24120c4c99c791db707f9d19436fdf0f2d9"
+  integrity sha512-t9c8eoYpaH05vHVHFH0TZqq9jdwq50BktMdjnTSSCMy04u3AYPJ3yNX1hXV41KumJH6P1hSWnNPOg1TGBJqP1A==
   dependencies:
-    cojson "0.8.41"
+    cojson "0.13.23"
 
-cojson-transport-ws@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/cojson-transport-ws/-/cojson-transport-ws-0.8.41.tgz#b061fcae3be8aa0c52c8a168fb7339abe9863591"
-  integrity sha512-aTXiR0ONGslXrtLK91II5DaIaPwXgsIjT8IOsNYgben6MuOq0mvaqQfYMtFp8mf2ZwgvEiMo+2/P0kMoeqTiKA==
+cojson-transport-ws@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/cojson-transport-ws/-/cojson-transport-ws-0.13.23.tgz#ca7e39ab88827fddf9058febf039733291f8816a"
+  integrity sha512-aiZbDOMiqJcbPW5+3Tb8t/6ZyMdFd0yywP6elYwhV2Kn+lxHZ8tjH3vtoRBrfyZjhEL+vXKYr7MUepBhd0BoJg==
   dependencies:
-    cojson "0.8.41"
-    typescript "~5.6.2"
+    cojson "0.13.23"
 
-cojson@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/cojson/-/cojson-0.8.41.tgz#62870cc8a6c70855ec824ad99911ab2622804393"
-  integrity sha512-eR9ASui13+ZU+8tbu5tnKk8OxQZDyGCadxQLzG9CJQg4eLHYtwD68mNpRF/hTkEzy/eCzxdrOHgVog/KPKMmBA==
+cojson@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/cojson/-/cojson-0.13.23.tgz#3bfd4f3583b1daa8f5f7b6d1cdf9516e4a594689"
+  integrity sha512-6Iiv279PdLsWfIjNKmml6Vh4WiFsNnqRwHAn2fC/i/UnGTCvQkY5/7bXeB02UBYvoEaUGu+RTPe2unZ8ojWpJg==
   dependencies:
-    "@hazae41/berith" "^1.2.6"
     "@noble/ciphers" "^0.1.3"
     "@noble/curves" "^1.3.0"
     "@noble/hashes" "^1.4.0"
-    "@opentelemetry/api" "^1.0.0"
-    "@scure/base" "^1.1.1"
-    hash-wasm "^4.9.0"
+    "@opentelemetry/api" "^1.9.0"
+    "@scure/base" "1.2.1"
+    jazz-crypto-rs "0.0.7"
     neverthrow "^7.0.1"
     queueueue "^4.1.2"
 
@@ -2085,13 +2055,6 @@ esutils@^2.0.2:
   resolved "https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
 
-fast-check@^3.17.2:
-  version "3.17.2"
-  resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-3.17.2.tgz#5b0ed6a2ff875ec58fef4ddf468b81c93af4d0bc"
-  integrity sha512-+3DPTxtxABLgmmVpYxrash3DHoq0cMa1jjLYNp3qqokKKhqVEaS4lbnaDKqWU5Dd6C2pEudPPBAEEQ9nUou9OQ==
-  dependencies:
-    pure-rand "^6.1.0"
-
 fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
   resolved "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz"
@@ -2122,6 +2085,11 @@ fast-list@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/fast-list/-/fast-list-1.0.3.tgz#f5d5754a7c1cbf682a15961ef9a063897571eaa1"
   integrity sha512-Lm56Ci3EqefHNdIneRFuzhpPcpVVBz9fgqVmG3UQIxAefJv1mEYsZ1WQLTWqmdqeGEwbI2t6fbZgp9TqTYARuA==
+
+fast-myers-diff@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/fast-myers-diff/-/fast-myers-diff-3.2.0.tgz#e16ac218f311a99e3f76ad7ed8f61c0cda3da847"
+  integrity sha512-DxNm4a3gnV35AluvqjeAV3Zx3CAySs0tsaDjnex5JhnJAa2rxEUVCwmaL2gpz42ea1B+IJorlo7XLThXUaTQog==
 
 fastq@^1.6.0:
   version "1.16.0"
@@ -2285,11 +2253,6 @@ has-flag@^4.0.0:
   resolved "https://registry.npmjs.org/has-flag/-/has-flag-4.0.0.tgz"
   integrity sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==
 
-hash-wasm@^4.9.0:
-  version "4.11.0"
-  resolved "https://registry.npmjs.org/hash-wasm/-/hash-wasm-4.11.0.tgz"
-  integrity sha512-HVusNXlVqHe0fzIzdQOGolnFN6mX/fqcrSAOcTBXdvzrXVHwTz11vXeKRmkR5gTuwVpvHZEIyKoePDvuAR+XwQ==
-
 hasown@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/hasown/-/hasown-2.0.0.tgz"
@@ -2407,47 +2370,60 @@ jackspeak@^2.3.5:
   optionalDependencies:
     "@pkgjs/parseargs" "^0.11.0"
 
-jazz-browser-media-images@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/jazz-browser-media-images/-/jazz-browser-media-images-0.8.41.tgz#bf82437ab614d03c38aac18811130e2d45709678"
-  integrity sha512-Sc4GoaVbgm8e1uBN2UkoXYM9IIEOUXRJHGI+cb3JbKMORX1C4tGqZ2WSO1Fv8EO7QO88S7sLvARGvlkxCuT3jA==
+jazz-browser-media-images@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/jazz-browser-media-images/-/jazz-browser-media-images-0.13.23.tgz#952a94435a260e85becd70c96c599c2840f12727"
+  integrity sha512-40EjC6dw7/ZJoImonQz4ikqxfQAOq8SmAKg9nrxeG2NllgcuEH+cnMhccwRQzZL4MVSuqMNmgAfYfCsZKzGoVw==
   dependencies:
     "@types/image-blob-reduce" "^4.1.1"
     image-blob-reduce "^4.1.0"
-    jazz-browser "0.8.41"
-    jazz-tools "0.8.41"
+    jazz-browser "0.13.23"
+    jazz-tools "0.13.23"
     pica "^9.0.1"
-    typescript "~5.6.2"
 
-jazz-browser@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/jazz-browser/-/jazz-browser-0.8.41.tgz#6261769a3e4b5cc3a19783eee07290f7ded61145"
-  integrity sha512-vvSALbSAaa2rlqwub/NWYTgIn/k7olBEVIBuSPLBAmTqZDtdqqHtzOzlRLZTfhSI5Q9WCLNaIhWZfbBVECcDTA==
+jazz-browser@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/jazz-browser/-/jazz-browser-0.13.23.tgz#8d631eeb899c471d6de30356ca5bb711938bf001"
+  integrity sha512-XlHDrIHKqrNiAYXq4PDfzguob82US135aZFpbEWQICR9kXq7LAF/AZUvc9ZjhPQoKdqfRsGuqG/nft8BoSRQ0Q==
+  dependencies:
+    cojson "0.13.23"
+    cojson-storage-indexeddb "0.13.23"
+    cojson-transport-ws "0.13.23"
+    jazz-tools "0.13.23"
+
+jazz-crypto-rs@0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/jazz-crypto-rs/-/jazz-crypto-rs-0.0.7.tgz#263ff3f1c4f9a531006637c874a499b8a62fa316"
+  integrity sha512-Pzs8Zu1zgKVURkBVvqqF1B2r78FaSZdwPbmeCWx0Nb3nibzPuB/kSKEO7LJsKnb3P5HO0v+lTIJ53mGC5H1urQ==
+
+jazz-react-core@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/jazz-react-core/-/jazz-react-core-0.13.23.tgz#da2f2662bb4bebca025c1a497e56857a63feea66"
+  integrity sha512-JCIczburWt2+J+AsDBfkwhzRiBZE4M2Z8X4JbtDoqSls1iXfVnQYXbK57aTXCq5lF1jWaVVPBuSKOZICe8vmzA==
+  dependencies:
+    cojson "0.13.23"
+    jazz-tools "0.13.23"
+
+jazz-react@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/jazz-react/-/jazz-react-0.13.23.tgz#f566b97b1bf8ce98e22974bd72dc1162572f407d"
+  integrity sha512-JJNKmf17JB7dwg+GnkXd6r9N0UnG2Tgbeo11DBdgeu3+hE1QP4V7QyBQVFgaMRYDLCbaSOiSp0iUjktyLSfieQ==
   dependencies:
     "@scure/bip39" "^1.3.0"
-    cojson "0.8.41"
-    cojson-storage-indexeddb "0.8.41"
-    cojson-transport-ws "0.8.41"
-    jazz-tools "0.8.41"
-    typescript "~5.6.2"
+    cojson "0.13.23"
+    jazz-browser "0.13.23"
+    jazz-browser-media-images "0.13.23"
+    jazz-react-core "0.13.23"
+    jazz-tools "0.13.23"
 
-jazz-react@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/jazz-react/-/jazz-react-0.8.41.tgz#c5e21038d20bdab81570d510e56b2e5101cb02e9"
-  integrity sha512-wCIDYT8i5gcYtreoyCF/Fezl3Te4tXlc54B36uWDldCx2wk+C3UCkABB+F90jrExUSYZcpVhOrTmRj+h7CZ3wg==
+jazz-tools@0.13.23:
+  version "0.13.23"
+  resolved "https://registry.yarnpkg.com/jazz-tools/-/jazz-tools-0.13.23.tgz#8a7d958bc260e31663d2832e26030557666c98c0"
+  integrity sha512-kRgqxGC80QtpP9NnpbBCUVb2cAavFMsXDYqjySTNn/l0aCDt5TqzSh8w/A/Tg1f8hNfCfXbFRbj+BH64E017XQ==
   dependencies:
     "@scure/bip39" "^1.3.0"
-    cojson "0.8.41"
-    jazz-browser "0.8.41"
-    jazz-tools "0.8.41"
-
-jazz-tools@0.8.41:
-  version "0.8.41"
-  resolved "https://registry.yarnpkg.com/jazz-tools/-/jazz-tools-0.8.41.tgz#03eae0343a876888401f8f26fe2469877ea98363"
-  integrity sha512-Mf9NGAgtXUGbfjKLtRVVJG7e235RikrTIcggRKc045tYmLvP88t5xdDZyyNEmk4VopNzqdohZmTdOsFmalN/uw==
-  dependencies:
-    cojson "0.8.41"
-    fast-check "^3.17.2"
+    cojson "0.13.23"
+    fast-myers-diff "^3.2.0"
 
 jiti@^1.19.1:
   version "1.21.0"
@@ -2850,11 +2826,6 @@ punycode@^2.1.0:
   resolved "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
-pure-rand@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/pure-rand/-/pure-rand-6.1.0.tgz#d173cf23258231976ccbdb05247c9787957604f2"
-  integrity sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==
-
 queue-microtask@^1.2.2:
   version "1.2.3"
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
@@ -3251,7 +3222,7 @@ type-fest@^0.20.2:
   resolved "https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz"
   integrity sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==
 
-typescript@^5.6.3, typescript@~5.6.2:
+typescript@^5.6.3:
   version "5.6.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.6.3.tgz#5f3449e31c9d94febb17de03cc081dd56d81db5b"
   integrity sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==

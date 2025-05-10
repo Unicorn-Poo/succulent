@@ -5,7 +5,7 @@ import {
 } from '@/sharedDataModel';
 import { Input } from './ui/input';
 import { ID } from 'jazz-tools';
-import { useCoState } from '@/main';
+import { useCoState } from 'jazz-react';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
@@ -36,7 +36,7 @@ export function UsertagManager({
   const usertagGroups = useCoState(
     ListOfUsertagGroups,
     usertagGroupIds || undefined,
-    [{ usertags: [] }]
+    { resolve: { $each: { usertags: true } } }
   );
 
   const mainInputRef = useRef<HTMLTextAreaElement>(null);

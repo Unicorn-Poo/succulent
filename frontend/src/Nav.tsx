@@ -6,7 +6,7 @@ import {
 } from './components/ui/dropdown-menu';
 import { NavLink, useParams } from 'react-router-dom';
 import { ID } from 'jazz-tools';
-import { useAccount, useCoState } from './main';
+import { useAccount, useCoState } from 'jazz-react';
 import { Brand } from './sharedDataModel';
 import { LineChartIcon, RadioTowerIcon, UserIcon } from 'lucide-react';
 

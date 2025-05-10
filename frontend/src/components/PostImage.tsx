@@ -1,6 +1,6 @@
 import { Post } from '@/sharedDataModel';
 import { ProgressiveImg } from 'jazz-react';
-import { CheckIcon } from 'lucide-react';
+// import { CheckIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export function PostImage({ post, idx }: { post: Post; idx?: number }) {
@@ -8,10 +8,10 @@ export function PostImage({ post, idx }: { post: Post; idx?: number }) {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isDraftOrScheduled =
-    post.instagram?.state === 'notScheduled' ||
-    post.instagram?.state === 'scheduleDesired' ||
-    post.instagram?.state === 'scheduled';
+  // const isDraftOrScheduled =
+  //   post.instagram?.state === 'notScheduled' ||
+  //   post.instagram?.state === 'scheduleDesired' ||
+  //   post.instagram?.state === 'scheduled';
 
   // use intersection observer
   useEffect(() => {

@@ -3,7 +3,7 @@ import { InviteButton } from '../../components/InviteButton';
 import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Link } from 'react-router-dom';
-import { useAccount } from '@/main';
+import { useAccount } from 'jazz-react';
 import { filterAndSortScheduledAndPostedPosts } from '@/lib/filterAndSortPosts';
 import { ProgressiveImg } from 'jazz-react';
 import { InstagramIcon, TrashIcon } from 'lucide-react';

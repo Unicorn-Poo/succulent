@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { ArrowUpDown } from 'lucide-react';
 import { ID } from 'jazz-tools';
-import { useCoState } from '../../../main';
+import { useCoState } from 'jazz-react';
 import { LayoutWithNav } from '@/Nav';
 import {
   HashtagInsights,

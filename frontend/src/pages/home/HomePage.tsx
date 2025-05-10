@@ -8,7 +8,7 @@ import {
 } from '../../sharedDataModel';
 import { BrandView } from './BrandView';
 import { Account, Group, ID } from 'jazz-tools';
-import { useAccount } from '../../main';
+import { useAccount } from 'jazz-react';
 
 const scopes = [
   'instagram_basic',
@@ -50,7 +50,7 @@ export function HomePage() {
             const el = event.currentTarget;
             const brandName = el.brand.value;
 
-            const scheduleWorker = await Account.load(scheduleWorkerId, me, {});
+            const scheduleWorker = await Account.load(scheduleWorkerId);
             if (!scheduleWorker) {
               throw new Error('scheduleWorker unavailable');
             }

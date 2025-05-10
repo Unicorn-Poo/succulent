@@ -1,4 +1,4 @@
-import { useAccount, useCoState } from '@/main';
+import { useAccount, useCoState } from 'jazz-react';
 import { MetaAPIConnection } from '@/sharedDataModel';
 import { ID } from 'jazz-tools';
 import { useEffect } from 'react';

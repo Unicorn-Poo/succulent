@@ -6,11 +6,11 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableItem } from '@/pages/settings/SortableItem';
 import { LayoutWithNav } from '../../Nav';
-import { useAccount } from '@/main';
 import { useParams } from 'react-router-dom';
 import { ID } from 'jazz-tools';
 import { Brand } from '@/sharedDataModel';
 import { PersonalBrandSettings } from '@/dataModel';
+import { useAccount } from 'jazz-react';
 
 export const insightTypes = [
   'likes',

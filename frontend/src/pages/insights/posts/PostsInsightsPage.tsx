@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useAccount, useCoState } from '@/main';
+import { useAccount, useCoState } from 'jazz-react';
 import { useMemo, useState } from 'react';
 import { PostImage } from '@/components/PostImage';
 import { formatDateTime } from '@/lib/dates';
@@ -29,9 +29,13 @@ import { Button } from '@/components/ui/button';
 
 export function PostsInsightsPage() {
   const brandId = useParams<{ brandId: ID<Brand> }>().brandId;
-  const brand = useCoState(Brand, brandId, { posts: [{}] });
+  const brand = useCoState(Brand, brandId, {
+    resolve: { posts: { $each: true } },
+  });
   const { me } = useAccount({
-    root: { settings: { perBrand: { [brandId || '']: {} } } },
+    resolve: {
+      root: { settings: { perBrand: { [brandId || '']: true } } },
+    },
   });
   //   const brand2 = useCoState(Brand, brandId, { });
 
