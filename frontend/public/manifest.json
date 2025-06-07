@@ -1,5 +1,6 @@
 {
-  "name": "App",
+  "name": "Succulent",
+  "display": "standalone",
   "icons": [
     {
       "src": "/android-icon-36x36.png",
