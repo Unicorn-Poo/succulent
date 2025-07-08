@@ -1,8 +1,10 @@
 "use client";
 import { Button } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
-// import InstagramIcon from "../public/instagram.svg";
+import { useState } from "react";
+import { Plus, Users } from "lucide-react";
 import Image from "next/image";
+import AccountGroupCreation from "../components/account-group-creation";
 
 const svgImageIcon = (icon: any) => {
 	return <Image src={icon} alt="icon" width={20} height={20} />;
@@ -14,7 +16,19 @@ export const platformIcons = {
 	twitter: svgImageIcon("/icons8-twitter.svg"),
 };
 
-export const accountGroup1 = {
+interface AccountGroup {
+	id: string;
+	name: string;
+	accounts: Record<string, {
+		id: string;
+		platform: string;
+		name: string;
+		apiUrl: string;
+	}>;
+	posts: any[];
+}
+
+export const accountGroup1: AccountGroup = {
 	id: "1",
 	name: "Account Group 1",
 	accounts: {
@@ -77,30 +91,86 @@ export const accountGroup1 = {
 		},
 	],
 };
-export const accountGroups = [accountGroup1];
 
 export default function Home() {
 	const router = useRouter();
+	const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([accountGroup1]);
+	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+	const handleCreateGroup = (groupData: { name: string; accounts: Array<{ id: string; platform: string; name: string; apiUrl: string; }> }) => {
+		const newGroup: AccountGroup = {
+			id: (accountGroups.length + 1).toString(),
+			name: groupData.name,
+			accounts: groupData.accounts.reduce((acc, account) => {
+				acc[account.name] = {
+					id: account.id,
+					platform: account.platform,
+					name: account.name,
+					apiUrl: account.apiUrl,
+				};
+				return acc;
+			}, {} as Record<string, { id: string; platform: string; name: string; apiUrl: string; }>),
+			posts: [],
+		};
+		
+		setAccountGroups([...accountGroups, newGroup]);
+	};
 
 	return (
-		<main className="">
-			<h1 className="text-2xl font-bold">Welcome to Succulent</h1>
-			{/* Account Group */}
-			{accountGroups.map((group) => (
+		<main className="w-full max-w-4xl">
+			<div className="flex justify-between items-center mb-6">
+				<h1 className="text-2xl font-bold">Welcome to Succulent</h1>
 				<Button
-					className="border-2 border-gray-300 text-bold rounded-md p-4 cursor-pointer"
-					key={group.id}
-					onClick={() => {
-						console.log(group);
-						router.push(`/account-group/${group.id}`);
-					}}
+					onClick={() => setIsCreateDialogOpen(true)}
+					className="flex items-center gap-2"
 				>
-					<h2>{group.name}</h2>
-					{/* {Object.entries(group.accounts).map(([key, account]) => (
-              <div key={account.id}>{account.name}</div>
-            ))} */}
+					<Plus className="w-4 h-4" />
+					Create Account Group
 				</Button>
-			))}
+			</div>
+
+			{/* Account Groups */}
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{accountGroups.map((group) => (
+					<div
+						key={group.id}
+						className="border-2 border-gray-300 rounded-lg p-4 hover:border-gray-400 transition-colors cursor-pointer"
+						onClick={() => {
+							console.log(group);
+							router.push(`/account-group/${group.id}`);
+						}}
+					>
+						<h2 className="text-lg font-semibold mb-2">{group.name}</h2>
+						<div className="text-sm text-gray-600 mb-2">
+							{Object.keys(group.accounts).length} account(s)
+						</div>
+						<div className="text-sm text-gray-600">
+							{group.posts.length} post(s)
+						</div>
+					</div>
+				))}
+			</div>
+
+			{/* Empty State */}
+			{accountGroups.length === 0 && (
+				<div className="text-center py-12">
+					<div className="text-gray-500 mb-4">
+						<Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+						<p>No account groups yet.</p>
+						<p className="text-sm">Create your first account group to get started!</p>
+					</div>
+				</div>
+			)}
+
+			{/* Account Group Creation Dialog */}
+			<AccountGroupCreation
+				isOpen={isCreateDialogOpen}
+				onOpenChange={setIsCreateDialogOpen}
+				onSave={handleCreateGroup}
+			/>
 		</main>
 	);
 }
+
+
+export const accountGroups = [accountGroup1];
