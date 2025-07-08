@@ -62,10 +62,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [postingInterval, setPostingInterval] = useState(5);
 	const [showSettings, setShowSettings] = useState(false);
 	const [showSaveButton, setShowSaveButton] = useState(false);
+	const [showPublishButton, setShowPublishButton] = useState(false);
 	const [contextText, setContextText] = useState<string | null>(null);
 	const [showAddAccountDialog, setShowAddAccountDialog] = useState(false);
 	const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
 	const [isScheduling, setIsScheduling] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 	const [errors, setErrors] = useState<string[]>([]);
 	const [success, setSuccess] = useState("");
 	const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([]);
@@ -90,11 +92,34 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		[accountGroup.accounts, selectedPlatforms]
 	);
 
+	// Check if current content is different from saved content
+	const hasUnsavedChanges = useMemo(() => {
+		if (!contextText) return false; // No changes if no context text
+		const savedContent = post.variants[activeTab]?.text?.toString() || "";
+		return contextText !== savedContent;
+	}, [contextText, post.variants, activeTab]);
+
+	// Check if post variant has content that can be published
+	const canPublish = useMemo(() => {
+		const content = post.variants[activeTab]?.text?.toString() || "";
+		return content.trim().length > 0 && selectedPlatforms.length > 1; // More than just "base"
+	}, [post.variants, activeTab, selectedPlatforms]);
+
 	// Initialize selected platforms from post variants
 	useEffect(() => {
 		const platforms = Object.keys(post.variants).filter(key => key !== "title");
 		setSelectedPlatforms(platforms);
 	}, [post.variants]);
+
+	// Update save button visibility based on unsaved changes
+	useEffect(() => {
+		setShowSaveButton(hasUnsavedChanges);
+	}, [hasUnsavedChanges]);
+
+	// Update publish button visibility based on content availability
+	useEffect(() => {
+		setShowPublishButton(canPublish && !hasUnsavedChanges);
+	}, [canPublish, hasUnsavedChanges]);
 
 	// Thread preview generation with useCallback for performance
 	const updateThreadPreview = useCallback((text: string) => {
@@ -109,18 +134,60 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	useEffect(() => {
 		if (contextText) {
 			updateThreadPreview(contextText);
+		} else {
+			// Update thread preview with saved content if no context text
+			const savedContent = post.variants[activeTab]?.text?.toString() || "";
+			updateThreadPreview(savedContent);
 		}
-	}, [contextText, updateThreadPreview]);
+	}, [contextText, post.variants, activeTab, updateThreadPreview]);
 
-	const handleSave = useCallback(async () => {
-		setShowSaveButton(false);
-		setContextText(null);
+	// Save content to post variant (not publishing)
+	const handleSaveContent = useCallback(async () => {
+		if (!contextText) return;
+
+		setIsSaving(true);
+		setErrors([]);
+		setSuccess("");
+
+		try {
+			// Update post variant with new content
+			if (post.variants[activeTab]) {
+				post.variants[activeTab] = {
+					...post.variants[activeTab],
+					text: contextText,
+					edited: true,
+					lastModified: new Date().toISOString(),
+				} as Post['variants'][keyof Post['variants']];
+			}
+
+			// Clear context text since it's now saved
+			setContextText(null);
+			setSuccess("Content saved successfully!");
+
+			// Here you would typically save to your backend/database
+			// await savePostToDatabase(post);
+
+		} catch (error) {
+			console.error('Error saving content:', error);
+			setErrors([handleApiError(error)]);
+		} finally {
+			setIsSaving(false);
+		}
+	}, [contextText, post.variants, activeTab]);
+
+	// Publish post to social media platforms
+	const handlePublishPost = useCallback(async () => {
+		setIsScheduling(true);
 		setErrors([]);
 		setSuccess("");
 
 		try {
 			const platforms = selectedPlatforms.filter(p => p !== "base");
-			const postText = contextText || post.variants[activeTab]?.text?.toString() || "";
+			const postText = post.variants[activeTab]?.text?.toString() || "";
+
+			if (!postText.trim()) {
+				throw new Error("Post content cannot be empty");
+			}
 
 			// Prepare media URLs
 			const mediaUrls = post.variants[activeTab]?.media?.map(m => 
@@ -134,8 +201,6 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				...(mediaUrls.length > 0 && { mediaUrls }),
 				...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
 			};
-
-			setIsScheduling(true);
 
 			let result;
 
@@ -161,24 +226,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			setSuccess("Post published successfully!");
 			
-			// Update post state
-			if (post.variants[activeTab]) {
-				post.variants[activeTab] = {
-					...post.variants[activeTab],
-					text: postText,
-					edited: true,
-				} as Post['variants'][keyof Post['variants']];
-			}
+			// Post published successfully - no need to modify the post object
+			// as publishing status would typically be handled by your backend/database
 
 		} catch (error) {
-			console.error('Error saving post:', error);
+			console.error('Error publishing post:', error);
 			setErrors([handleApiError(error)]);
 		} finally {
 			setIsScheduling(false);
 		}
 	}, [
 		selectedPlatforms, 
-		contextText, 
 		post.variants, 
 		activeTab, 
 		scheduledDate, 
@@ -188,6 +246,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		threadPosts, 
 		postingInterval
 	]);
+
+	const handleContentChange = useCallback((newContent: string) => {
+		setContextText(newContent);
+		// Clear any previous success messages when editing
+		setSuccess("");
+	}, []);
 
 	const handleTitleSave = useCallback(() => {
 		setIsEditingTitle(false);
@@ -287,6 +351,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										height={16}
 									/>
 									{displayName}
+									{post.variants[platform]?.edited && (
+										<Badge variant="soft" color="orange" className="ml-1">
+											•
+										</Badge>
+									)}
 								</Button>
 								{platform !== "base" && (
 									<Button
@@ -465,22 +534,27 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 					{/* Content Editor */}
 					<div className="space-y-4">
-						{post.variants[activeTab]?.edited && (
-							<div className="flex justify-end">
-								<Badge variant="soft" color="orange">
-									<Edit3 className="w-3 h-3 mr-1" />
-									Edited
-								</Badge>
+						<div className="flex justify-between items-center">
+							<div className="flex items-center gap-2">
+								{post.variants[activeTab]?.edited && (
+									<Badge variant="soft" color="orange">
+										<Edit3 className="w-3 h-3 mr-1" />
+										Edited
+									</Badge>
+								)}
 							</div>
-						)}
+							
+							{hasUnsavedChanges && (
+								<Text size="1" color="orange">
+									Unsaved changes
+								</Text>
+							)}
+						</div>
 
 						<div className="relative">
 							<TextArea
 								value={contextText || post.variants[activeTab]?.text?.toString() || ""}
-								onChange={(e) => {
-									setContextText(e.target.value);
-									setShowSaveButton(true);
-								}}
+								onChange={(e) => handleContentChange(e.target.value)}
 								placeholder="What's happening?"
 								className="min-h-32 resize-none text-lg leading-relaxed"
 								rows={6}
@@ -498,25 +572,50 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								{/* Additional controls can go here */}
 							</div>
 							
-							{showSaveButton && (
-								<Button
-									onClick={handleSave}
-									disabled={isScheduling}
-									className="flex items-center gap-2"
-								>
-									{isScheduling ? (
-										<>
-											<Loader2 className="w-4 h-4 animate-spin" />
-											{scheduledDate ? "Scheduling..." : "Publishing..."}
-										</>
-									) : (
-										<>
-											<Save className="w-4 h-4" />
-											{scheduledDate ? "Schedule Post" : "Publish Post"}
-										</>
-									)}
-								</Button>
-							)}
+							<div className="flex gap-2">
+								{/* Save Button - appears when there are unsaved changes */}
+								{showSaveButton && (
+									<Button
+										onClick={handleSaveContent}
+										disabled={isSaving}
+										variant="soft"
+										className="flex items-center gap-2"
+									>
+										{isSaving ? (
+											<>
+												<Loader2 className="w-4 h-4 animate-spin" />
+												Saving...
+											</>
+										) : (
+											<>
+												<Save className="w-4 h-4" />
+												Save
+											</>
+										)}
+									</Button>
+								)}
+								
+								{/* Publish Button - appears when content is saved and ready to publish */}
+								{showPublishButton && (
+									<Button
+										onClick={handlePublishPost}
+										disabled={isScheduling}
+										className="flex items-center gap-2"
+									>
+										{isScheduling ? (
+											<>
+												<Loader2 className="w-4 h-4 animate-spin" />
+												{scheduledDate ? "Scheduling..." : "Publishing..."}
+											</>
+										) : (
+											<>
+												<Globe className="w-4 h-4" />
+												{scheduledDate ? "Schedule Post" : "Publish Post"}
+											</>
+										)}
+									</Button>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
