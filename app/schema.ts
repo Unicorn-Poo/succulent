@@ -34,7 +34,7 @@ export const Content = co.map({
 	media: z.optional(co.list(MediaItem)),
 	replyTo: z.optional(z.string()),
 	thread: z.optional(co.list(ThreadItem)),
-  edited: z.optional(z.boolean()),
+  edited: z.boolean(),
 });
 
 export const Post = co.map({
