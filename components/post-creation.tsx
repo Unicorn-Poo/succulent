@@ -452,8 +452,60 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				<div className="p-4 space-y-4">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
-							<Globe className="w-5 h-5 text-gray-500" />
-							<Text weight="medium">Post Type</Text>
+							{/* <Globe className="w-5 h-5 text-gray-500" /> */}
+							{/* <Text weight="medium">Post Type</Text> */}
+
+              {/* Post Type Dropdown */}
+              <div className="space-y-2">
+                <div className="relative" ref={dropdownRef}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
+                    className="w-full max-w-xs flex items-center justify-between py-2 px-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const currentOption = postTypeOptions.find(option => option.value === currentPostType);
+                        const IconComponent = currentOption?.icon || Hash;
+                        return (
+                          <>
+                            <IconComponent className="w-4 h-4" />
+                            <span>{currentOption?.label || "Standard Post"}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                  
+                  {showPostTypeDropdown && (
+                    <Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
+                      <div className="p-2 space-y-1">
+                        {postTypeOptions.map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <Button
+                              key={option.value}
+                              variant={currentPostType === option.value ? "soft" : "ghost"}
+                              onClick={() => {
+                                handlePostTypeChange(option.value);
+                                setShowPostTypeDropdown(false);
+                              }}
+                              className="w-full flex items-center justify-start gap-2 p-2 h-auto py-2 px-4"
+                            >
+                              <IconComponent className="w-4 h-4 flex-shrink-0" />
+                              <div className="text-left">
+                                <div className="font-medium">{option.label}</div>
+                                <div className="text-sm text-gray-500">{option.description}</div>
+                              </div>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              </div>
 						</div>
 						<Button
 							variant="outline"
@@ -463,58 +515,6 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Calendar className="w-4 h-4" />
 							Schedule
 						</Button>
-					</div>
-
-					{/* Post Type Dropdown */}
-					<div className="space-y-2">
-						<div className="relative" ref={dropdownRef}>
-							<Button
-								variant="outline"
-								onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
-								className="w-full max-w-xs flex items-center justify-between"
-							>
-								<div className="flex items-center gap-2">
-									{(() => {
-										const currentOption = postTypeOptions.find(option => option.value === currentPostType);
-										const IconComponent = currentOption?.icon || Hash;
-										return (
-											<>
-												<IconComponent className="w-4 h-4" />
-												<span>{currentOption?.label || "Standard Post"}</span>
-											</>
-										);
-									})()}
-								</div>
-								<ChevronDown className="w-4 h-4" />
-							</Button>
-							
-							{showPostTypeDropdown && (
-								<Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
-									<div className="p-2 space-y-1">
-										{postTypeOptions.map((option) => {
-											const IconComponent = option.icon;
-											return (
-												<Button
-													key={option.value}
-													variant={currentPostType === option.value ? "solid" : "ghost"}
-													onClick={() => {
-														handlePostTypeChange(option.value);
-														setShowPostTypeDropdown(false);
-													}}
-													className="w-full flex items-center justify-start gap-2 p-2 h-auto"
-												>
-													<IconComponent className="w-4 h-4 flex-shrink-0" />
-													<div className="text-left">
-														<div className="font-medium">{option.label}</div>
-														<div className="text-sm text-gray-500">{option.description}</div>
-													</div>
-												</Button>
-											);
-										})}
-									</div>
-								</Card>
-							)}
-						</div>
 					</div>
 
 					{/* Post Type Descriptions */}
