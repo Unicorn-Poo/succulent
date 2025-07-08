@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button, Card, TextArea, TextField, Dialog, Box, Text, Badge } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import { Input } from "./input";
@@ -25,11 +25,19 @@ import { Post, PostFullyLoaded } from "../app/schema";
 import Image from "next/image";
 import { MediaItem } from "../app/schema";
 
-type SeriesType = "reply" | "multi";
+// Import utility functions
+import { platformIcons, platformLabels } from "../utils/postConstants";
+import { validateReplyUrl, detectPlatformFromUrl } from "../utils/postValidation";
+import { generateThreadPreview, ThreadPost } from "../utils/threadUtils";
+import { 
+	handleStandardPost, 
+	handleReplyPost, 
+	handleMultiPosts, 
+	handleApiError,
+	PostData 
+} from "../utils/apiHandlers";
 
-// Ayrshare API configuration
-const AYRSHARE_API_KEY = process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
-const AYRSHARE_API_URL = "https://app.ayrshare.com/api";
+type SeriesType = "reply" | "multi";
 
 interface PostCreationProps {
 	post: PostFullyLoaded;
@@ -45,34 +53,14 @@ interface PostCreationProps {
 	};
 }
 
-const platformIcons = {
-	base: "/sprout.svg",
-	x: "/icons8-twitter.svg",
-	instagram: "/icons8-instagram.svg",
-	youtube: "/icons8-youtube-logo.svg",
-	facebook: "/icons8-facebook.svg",
-	linkedin: "/icons8-linkedin.svg",
-};
-
-const platformLabels = {
-	base: "Base",
-	x: "X/Twitter",
-	instagram: "Instagram",
-	youtube: "YouTube",
-	facebook: "Facebook",
-	linkedin: "LinkedIn",
-};
-
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
 	const [activeTab, setActiveTab] = useState("base");
 	const [seriesType, setSeriesType] = useState<SeriesType | null>(null);
 	const [title, setTitle] = useState(post.title?.toString() || "");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [replyUrl, setReplyUrl] = useState("");
-	const [isValidReplyUrl, setIsValidReplyUrl] = useState(false);
 	const [postingInterval, setPostingInterval] = useState(5);
 	const [showSettings, setShowSettings] = useState(false);
-	const [showReplyDialog, setShowReplyDialog] = useState(false);
 	const [showSaveButton, setShowSaveButton] = useState(false);
 	const [contextText, setContextText] = useState<string | null>(null);
 	const [showAddAccountDialog, setShowAddAccountDialog] = useState(false);
@@ -80,9 +68,27 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [isScheduling, setIsScheduling] = useState(false);
 	const [errors, setErrors] = useState<string[]>([]);
 	const [success, setSuccess] = useState("");
-	const [threadPosts, setThreadPosts] = useState<string[]>([]);
+	const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([]);
 	const [showThreadPreview, setShowThreadPreview] = useState(false);
 	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+
+	// Memoized values for performance
+	const isValidReplyUrl = useMemo(() => 
+		replyUrl ? validateReplyUrl(replyUrl) : false, 
+		[replyUrl]
+	);
+
+	const detectedPlatform = useMemo(() => 
+		replyUrl ? detectPlatformFromUrl(replyUrl) : null, 
+		[replyUrl]
+	);
+
+	const availableAccounts = useMemo(() => 
+		Object.entries(accountGroup.accounts).filter(
+			([key]) => !selectedPlatforms.includes(key)
+		), 
+		[accountGroup.accounts, selectedPlatforms]
+	);
 
 	// Initialize selected platforms from post variants
 	useEffect(() => {
@@ -90,55 +96,23 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		setSelectedPlatforms(platforms);
 	}, [post.variants]);
 
-	// Reply URL validation
-	useEffect(() => {
-		if (replyUrl) {
-			const isValid = validateReplyUrl(replyUrl);
-			setIsValidReplyUrl(isValid);
+	// Thread preview generation with useCallback for performance
+	const updateThreadPreview = useCallback((text: string) => {
+		if (seriesType === "multi" && text) {
+			const threads = generateThreadPreview(text, activeTab);
+			setThreadPosts(threads);
 		} else {
-			setIsValidReplyUrl(false);
+			setThreadPosts([]);
 		}
-	}, [replyUrl]);
+	}, [seriesType, activeTab]);
 
-	// Thread preview generation
 	useEffect(() => {
-		if (seriesType === "multi" && contextText) {
-			generateThreadPreview(contextText);
+		if (contextText) {
+			updateThreadPreview(contextText);
 		}
-	}, [seriesType, contextText]);
+	}, [contextText, updateThreadPreview]);
 
-	const validateReplyUrl = (url: string): boolean => {
-		const patterns = [
-			/^https:\/\/(www\.)?twitter\.com\/\w+\/status\/\d+/,
-			/^https:\/\/(www\.)?x\.com\/\w+\/status\/\d+/,
-			/^https:\/\/(www\.)?instagram\.com\/p\/[\w-]+/,
-			/^https:\/\/(www\.)?facebook\.com\/\w+\/posts\/\d+/,
-			/^https:\/\/(www\.)?linkedin\.com\/posts\/[\w-]+/,
-			/^https:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
-		];
-		return patterns.some(pattern => pattern.test(url));
-	};
-
-	const generateThreadPreview = (text: string) => {
-		const maxLength = activeTab === "x" ? 280 : 2200;
-		const paragraphs = text.split('\n\n').filter(p => p.trim());
-		const threads: string[] = [];
-		let currentThread = "";
-
-		paragraphs.forEach(paragraph => {
-			if (currentThread.length + paragraph.length + 2 <= maxLength) {
-				currentThread += (currentThread ? '\n\n' : '') + paragraph;
-			} else {
-				if (currentThread) threads.push(currentThread);
-				currentThread = paragraph;
-			}
-		});
-
-		if (currentThread) threads.push(currentThread);
-		setThreadPosts(threads);
-	};
-
-	const handleSave = async () => {
+	const handleSave = useCallback(async () => {
 		setShowSaveButton(false);
 		setContextText(null);
 		setErrors([]);
@@ -148,64 +122,44 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			const platforms = selectedPlatforms.filter(p => p !== "base");
 			const postText = contextText || post.variants[activeTab]?.text?.toString() || "";
 
-			// Prepare platform-specific options
-			const platformOptions: any = {};
-			
-			// Handle reply functionality
-			if (seriesType === "reply" && replyUrl) {
-				if (platforms.includes("x")) {
-					// For Twitter, extract tweet ID from URL
-					const tweetIdMatch = replyUrl.match(/status\/(\d+)/);
-					if (tweetIdMatch) {
-						platformOptions.twitterOptions = {
-							replyToTweetId: tweetIdMatch[1]
-						};
-					}
-				}
-				// For other platforms, this becomes a comment (handled differently)
-			}
-
-			// Handle threading/multi-post
-			if (seriesType === "multi") {
-				if (platforms.includes("x")) {
-					platformOptions.twitterOptions = {
-						...platformOptions.twitterOptions,
-						thread: true,
-						threadNumber: true,
-					};
-				}
-				// For other platforms, we'll create multiple posts
-			}
-
 			// Prepare media URLs
 			const mediaUrls = post.variants[activeTab]?.media?.map(m => 
 				m?.type === "image" ? m?.image?.toString() : m?.video?.toString()
-			) || [];
+			)?.filter((url): url is string => Boolean(url)) || [];
 
-			// Prepare post data for Ayrshare
-			const postData: any = {
+			// Prepare base post data
+			const basePostData: PostData = {
 				post: postText,
 				platforms: platforms,
 				...(mediaUrls.length > 0 && { mediaUrls }),
 				...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
-				...platformOptions
 			};
 
 			setIsScheduling(true);
 
+			let result;
+
 			// Handle different post types
-			if (seriesType === "reply" && replyUrl && !platforms.includes("x")) {
-				// For non-Twitter platforms, post as comment
-				await handleCommentPost(postData);
-			} else if (seriesType === "multi" && !platforms.includes("x")) {
-				// For non-Twitter platforms, create multiple posts
-				await handleMultiPosts(postData);
+			if (seriesType === "reply" && replyUrl && isValidReplyUrl) {
+				result = await handleReplyPost(basePostData, replyUrl);
+			} else if (seriesType === "multi" && threadPosts.length > 1) {
+				if (platforms.includes("x")) {
+					// Use native Twitter threading
+					const twitterPostData = {
+						...basePostData,
+						twitterOptions: { thread: true, threadNumber: true }
+					};
+					result = await handleStandardPost(twitterPostData);
+				} else {
+					// Use multi-post for other platforms
+					result = await handleMultiPosts(basePostData, threadPosts, postingInterval);
+				}
 			} else {
-				// Standard post or Twitter threading
-				await handleStandardPost(postData);
+				// Standard post
+				result = await handleStandardPost(basePostData);
 			}
 
-			setSuccess("Post saved successfully!");
+			setSuccess("Post published successfully!");
 			
 			// Update post state
 			if (post.variants[activeTab]) {
@@ -218,94 +172,53 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 		} catch (error) {
 			console.error('Error saving post:', error);
-			setErrors([error instanceof Error ? error.message : 'Failed to save post']);
+			setErrors([handleApiError(error)]);
 		} finally {
 			setIsScheduling(false);
 		}
-	};
+	}, [
+		selectedPlatforms, 
+		contextText, 
+		post.variants, 
+		activeTab, 
+		scheduledDate, 
+		seriesType, 
+		replyUrl, 
+		isValidReplyUrl, 
+		threadPosts, 
+		postingInterval
+	]);
 
-	const handleStandardPost = async (postData: any) => {
-		const response = await fetch(`${AYRSHARE_API_URL}/post`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-			},
-			body: JSON.stringify(postData)
-		});
-
-		const result = await response.json();
-		
-		if (!response.ok) {
-			throw new Error(result.message || 'Failed to publish post');
-		}
-
-		console.log('Post published successfully:', result);
-	};
-
-	const handleCommentPost = async (postData: any) => {
-		// For platforms that don't support direct replies, we create a comment
-		// This would require additional API calls to the comments endpoint
-		console.log('Comment post functionality would be implemented here');
-	};
-
-	const handleMultiPosts = async (postData: any) => {
-		// Create multiple posts for platforms that don't support threading
-		const promises = threadPosts.map((threadText, index) => {
-			const threadData = {
-				...postData,
-				post: `${threadText} ${index + 1}/${threadPosts.length}`,
-				// Add delay between posts
-				...(index > 0 && { scheduleDate: new Date(Date.now() + (index * postingInterval * 60000)).toISOString() })
-			};
-			
-			return fetch(`${AYRSHARE_API_URL}/post`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-				},
-				body: JSON.stringify(threadData)
-			});
-		});
-
-		const results = await Promise.all(promises);
-		const responses = await Promise.all(results.map(r => r.json()));
-		
-		console.log('Multi-posts created:', responses);
-	};
-
-	const handleTitleSave = () => {
+	const handleTitleSave = useCallback(() => {
 		setIsEditingTitle(false);
-		// Update post title (you might want to save this to your backend)
 		console.log('Title updated:', title);
-	};
+	}, [title]);
 
-	const handleAddAccount = (platform: string) => {
+	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
-			setSelectedPlatforms([...selectedPlatforms, platform]);
+			setSelectedPlatforms(prev => [...prev, platform]);
 		}
 		setShowAddAccountDialog(false);
-	};
+	}, [selectedPlatforms]);
 
-	const handleRemoveAccount = (platform: string) => {
-		setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
+	const handleRemoveAccount = useCallback((platform: string) => {
+		setSelectedPlatforms(prev => prev.filter(p => p !== platform));
 		if (activeTab === platform) {
 			setActiveTab("base");
 		}
-	};
+	}, [activeTab]);
 
-	const getReplyDescription = () => {
+	const getReplyDescription = useCallback(() => {
 		if (!seriesType || seriesType !== "reply") return "";
 		
-		if (activeTab === "x") {
+		if (detectedPlatform === "x") {
 			return "This will be posted as a reply to the specified tweet.";
 		} else {
 			return "This will be posted as a comment on the specified post.";
 		}
-	};
+	}, [seriesType, detectedPlatform]);
 
-	const getMultiDescription = () => {
+	const getMultiDescription = useCallback(() => {
 		if (!seriesType || seriesType !== "multi") return "";
 		
 		if (activeTab === "x") {
@@ -313,11 +226,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		} else {
 			return "This will be posted as multiple connected posts with numbering.";
 		}
-	};
-
-	const availableAccounts = Object.entries(accountGroup.accounts).filter(
-		([key, account]) => !selectedPlatforms.includes(key)
-	);
+	}, [seriesType, activeTab]);
 
 	return (
 		<div className="w-full max-w-4xl mx-auto p-6 space-y-6">
@@ -492,7 +401,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									{isValidReplyUrl ? (
 										<>
 											<Check className="w-4 h-4 text-green-500" />
-											<span className="text-green-600">Valid URL detected</span>
+											<span className="text-green-600">Valid {detectedPlatform} URL detected</span>
 										</>
 									) : (
 										<>
@@ -530,10 +439,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								{threadPosts.map((thread, index) => (
 									<div key={index} className="bg-gray-50 p-3 rounded border-l-4 border-blue-500">
 										<div className="flex items-center gap-2 mb-2">
-											<Badge variant="soft" size="1">{index + 1}/{threadPosts.length}</Badge>
-											<Text size="1" color="gray">{thread.length} characters</Text>
+											<Badge variant="soft" size="1">{thread.index}/{thread.total}</Badge>
+											<Text size="1" color="gray">{thread.characterCount} characters</Text>
 										</div>
-										<Text size="2">{thread}</Text>
+										<Text size="2">{thread.content}</Text>
 									</div>
 								))}
 							</div>
