@@ -38,6 +38,7 @@ import {
 	handleApiError,
 	PostData 
 } from "../utils/apiHandlers";
+import { PreviewModal } from "./preview-modal";
 
 type SeriesType = "reply" | "multi";
 
@@ -98,6 +99,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([]);
 	const [showThreadPreview, setShowThreadPreview] = useState(false);
 	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+	const [showPreviewModal, setShowPreviewModal] = useState(false);
 
 	// Ref for dropdown to handle clicks outside
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -361,6 +363,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 	}, [seriesType, activeTab]);
 
+	// Handle preview functionality
+	const handlePreview = useCallback(() => {
+		setShowPreviewModal(true);
+	}, []);
+
+	// Helper function to extract username from URL
+	const extractUsernameFromUrl = useCallback((url: string) => {
+		if (url.includes('twitter.com') || url.includes('x.com')) {
+			const match = url.match(/\/([^\/]+)\/status/);
+			return match ? match[1] : 'user';
+		}
+		return 'user';
+	}, []);
+
 	return (
 		<div className="space-y-6">
 			{/* Header with Title and Platform Tabs */}
@@ -515,10 +531,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Button
 								variant="outline"
 								size="2"
-								onClick={() => {
-									// TODO: Add preview functionality
-									console.log("Preview post");
-								}}
+								onClick={handlePreview}
 							>
 								<Eye className="w-4 h-4 mr-2" />
 								<span className="hidden sm:inline">Preview</span>
@@ -674,10 +687,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			<Card>
 				<div className="p-6 space-y-6">
 					{/* Media Display */}
-					{post.variants[activeTab]?.media?.map((mediaItem, imageIndex) => (
+					{post.variants[activeTab]?.media?.filter(Boolean).map((mediaItem, imageIndex) => (
 						<div key={imageIndex} className="space-y-4">
 							<div className="flex justify-center">
-								{mediaItem && <MediaComponent mediaItem={mediaItem} />}
+								{mediaItem && <MediaComponent mediaItem={mediaItem as MediaItem} />}
 							</div>
 						</div>
 					))}
@@ -880,6 +893,22 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>
+
+			{/* Preview Modal */}
+			<PreviewModal
+				isOpen={showPreviewModal}
+				onClose={() => setShowPreviewModal(false)}
+				content={contextText || post.variants[activeTab]?.text?.toString() || ""}
+				selectedPlatforms={selectedPlatforms}
+				accountGroup={accountGroup}
+				activeTab={activeTab}
+				media={post.variants[activeTab]?.media?.filter(Boolean) as MediaItem[] || []}
+				isReply={seriesType === "reply"}
+				replyToUsername={detectedPlatform === "x" ? extractUsernameFromUrl(replyUrl) : undefined}
+				isThread={seriesType === "multi"}
+				threadPosts={threadPosts}
+				replyUrl={replyUrl}
+			/>
 		</div>
 	);
 }
