@@ -4,13 +4,18 @@ import { useParams } from "next/navigation";
 import { accountGroups } from "../../page";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@radix-ui/themes";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
+import { Plus, ArrowLeft, Edit3, Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function AccountGroupPage() {
 	const params = useParams();
 	const router = useRouter();
+	const [showCreateDialog, setShowCreateDialog] = useState(false);
+	const [newPostTitle, setNewPostTitle] = useState("");
+	const [newPostText, setNewPostText] = useState("");
+	
 	const accountGroup = accountGroups.find(
 		(group) => group.id === params.groupId
 	);
@@ -30,6 +35,37 @@ export default function AccountGroupPage() {
 		);
 	}
 
+	const handleCreatePost = () => {
+		if (newPostTitle.trim()) {
+			// Create a new post ID
+			const newPostId = Date.now().toString();
+			
+			// Create the new post object
+			const newPost = {
+				title: newPostTitle,
+				variants: {
+					base: {
+						id: newPostId,
+						text: newPostText,
+						postDate: new Date(),
+						edited: false,
+					},
+				},
+			};
+			
+			// Add the post to the account group (in a real app, this would be saved to backend)
+			accountGroup.posts.push(newPost);
+			
+			// Navigate to the new post
+			router.push(`/account-group/${accountGroup.id}/post/${newPostId}`);
+			
+			// Reset form
+			setNewPostTitle("");
+			setNewPostText("");
+			setShowCreateDialog(false);
+		}
+	};
+
 	return (
 		<div className="w-full max-w-4xl">
 			<div className="flex justify-between items-center mb-6">
@@ -44,7 +80,7 @@ export default function AccountGroupPage() {
 					</Button>
 					<h1 className="text-2xl font-bold">{accountGroup.name}</h1>
 				</div>
-				<Button>
+				<Button onClick={() => setShowCreateDialog(true)}>
 					<Plus className="w-4 h-4 mr-2" />
 					Create New Post
 				</Button>
@@ -73,7 +109,7 @@ export default function AccountGroupPage() {
 							<p className="text-lg mb-2">No posts yet</p>
 							<p className="text-sm">Create your first post to get started!</p>
 						</div>
-						<Button>
+						<Button onClick={() => setShowCreateDialog(true)}>
 							<Plus className="w-4 h-4 mr-2" />
 							Create First Post
 						</Button>
@@ -109,6 +145,50 @@ export default function AccountGroupPage() {
 					</div>
 				)}
 			</div>
+
+			{/* Create New Post Dialog */}
+			<Dialog.Root open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+				<Dialog.Content style={{ maxWidth: 500 }}>
+					<Dialog.Title>Create New Post</Dialog.Title>
+					<Dialog.Description>
+						Create a new post for {accountGroup.name}
+					</Dialog.Description>
+					
+					<div className="space-y-4 mt-4">
+						<div>
+							<label className="block text-sm font-medium mb-1">Post Title</label>
+							<TextField.Root
+								value={newPostTitle}
+								onChange={(e) => setNewPostTitle(e.target.value)}
+								placeholder="Enter a title for your post..."
+							/>
+						</div>
+						
+						<div>
+							<label className="block text-sm font-medium mb-1">Initial Content (optional)</label>
+							<TextArea
+								value={newPostText}
+								onChange={(e) => setNewPostText(e.target.value)}
+								placeholder="Start writing your post..."
+								rows={4}
+							/>
+						</div>
+					</div>
+
+					<div className="flex justify-end gap-2 mt-6">
+						<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
+							Cancel
+						</Button>
+						<Button 
+							onClick={handleCreatePost}
+							disabled={!newPostTitle.trim()}
+						>
+							<Edit3 className="w-4 h-4 mr-2" />
+							Create Post
+						</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Root>
 		</div>
 	);
 }
