@@ -5,9 +5,10 @@ import { accountGroups } from "../../page";
 import Image from "next/image";
 import Link from "next/link";
 import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
-import { Plus, ArrowLeft, Edit3, Calendar } from "lucide-react";
+import { Plus, Edit3, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Navigation from "../../../components/navigation";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -27,7 +28,7 @@ export default function AccountGroupPage() {
 					<h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
 					<p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
 					<Button onClick={() => router.push("/")}>
-						<ArrowLeft className="w-4 h-4 mr-2" />
+						<Home className="w-4 h-4 mr-2" />
 						Back to Home
 					</Button>
 				</div>
@@ -67,24 +68,10 @@ export default function AccountGroupPage() {
 	};
 
 	return (
-		<div className="w-full max-w-4xl">
-			<div className="flex justify-between items-center mb-6">
-				<div>
-					<Button 
-						variant="ghost" 
-						onClick={() => router.push("/")}
-						className="mb-2"
-					>
-						<ArrowLeft className="w-4 h-4 mr-2" />
-						Back to Home
-					</Button>
-					<h1 className="text-2xl font-bold">{accountGroup.name}</h1>
-				</div>
-				<Button onClick={() => setShowCreateDialog(true)}>
-					<Plus className="w-4 h-4 mr-2" />
-					Create New Post
-				</Button>
-			</div>
+		<div className="w-full max-w-4xl mx-auto p-6">
+			<Navigation 
+				title={accountGroup.name}
+			/>
 
 			{/* Account Group Info */}
 			<div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -101,7 +88,13 @@ export default function AccountGroupPage() {
 
 			{/* Posts */}
 			<div className="mb-4">
-				<h2 className="text-xl font-semibold mb-4">Posts ({accountGroup.posts.length})</h2>
+				<div className="flex justify-between items-center mb-4">
+					<h2 className="text-xl font-semibold">Posts ({accountGroup.posts.length})</h2>
+					<Button onClick={() => setShowCreateDialog(true)}>
+						<Plus className="w-4 h-4 mr-2" />
+						Create New Post
+					</Button>
+				</div>
 				
 				{accountGroup.posts.length === 0 ? (
 					<div className="text-center py-12 bg-gray-50 rounded-lg">

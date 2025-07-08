@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Plus, Users } from "lucide-react";
 import Image from "next/image";
 import AccountGroupCreation from "../components/account-group-creation";
+import Navigation from "../components/navigation";
 
 const svgImageIcon = (icon: any) => {
 	return <Image src={icon} alt="icon" width={20} height={20} />;
@@ -117,9 +118,11 @@ export default function Home() {
 	};
 
 	return (
-		<main className="w-full max-w-4xl">
-			<div className="flex justify-between items-center mb-6">
-				<h1 className="text-2xl font-bold">Welcome to Succulent</h1>
+		<div className="w-full max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold my-3">Welcome to Succulent</h1>
+
+			{/* Account Groups */}
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 				<Button
 					onClick={() => setIsCreateDialogOpen(true)}
 					className="flex items-center gap-2"
@@ -127,10 +130,7 @@ export default function Home() {
 					<Plus className="w-4 h-4" />
 					Create Account Group
 				</Button>
-			</div>
 
-			{/* Account Groups */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 				{accountGroups.map((group) => (
 					<div
 						key={group.id}
@@ -168,7 +168,7 @@ export default function Home() {
 				onOpenChange={setIsCreateDialogOpen}
 				onSave={handleCreateGroup}
 			/>
-		</main>
+		</div>
 	);
 }
 

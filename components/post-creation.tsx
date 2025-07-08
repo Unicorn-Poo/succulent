@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button, Card, TextArea, TextField, Dialog, Box, Text, Badge } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import { Input } from "./input";
@@ -53,6 +53,28 @@ interface PostCreationProps {
 	};
 }
 
+// Post type options with icons and descriptions
+const postTypeOptions = [
+	{
+		value: "standard",
+		label: "Standard Post",
+		icon: Hash,
+		description: "Regular single post"
+	},
+	{
+		value: "reply",
+		label: "Reply/Comment",
+		icon: MessageSquare,
+		description: "Reply to existing post"
+	},
+	{
+		value: "multi",
+		label: "Thread/Multi-Post",
+		icon: ListOrdered,
+		description: "Multiple connected posts"
+	}
+];
+
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
 	const [activeTab, setActiveTab] = useState("base");
 	const [seriesType, setSeriesType] = useState<SeriesType | null>(null);
@@ -61,6 +83,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [replyUrl, setReplyUrl] = useState("");
 	const [postingInterval, setPostingInterval] = useState(5);
 	const [showSettings, setShowSettings] = useState(false);
+	const [showPostTypeDropdown, setShowPostTypeDropdown] = useState(false);
 	const [showSaveButton, setShowSaveButton] = useState(false);
 	const [showPublishButton, setShowPublishButton] = useState(false);
 	const [contextText, setContextText] = useState<string | null>(null);
@@ -73,6 +96,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([]);
 	const [showThreadPreview, setShowThreadPreview] = useState(false);
 	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+
+	// Ref for dropdown to handle clicks outside
+	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	// Memoized values for performance
 	const isValidReplyUrl = useMemo(() => 
@@ -104,6 +130,42 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		const content = post.variants[activeTab]?.text?.toString() || "";
 		return content.trim().length > 0 && selectedPlatforms.length > 1; // More than just "base"
 	}, [post.variants, activeTab, selectedPlatforms]);
+
+	// Get current post type for dropdown
+	const currentPostType = useMemo(() => {
+		if (seriesType === "reply") return "reply";
+		if (seriesType === "multi") return "multi";
+		return "standard";
+	}, [seriesType]);
+
+	// Handle post type change from dropdown
+	const handlePostTypeChange = useCallback((value: string) => {
+		switch (value) {
+			case "reply":
+				setSeriesType("reply");
+				break;
+			case "multi":
+				setSeriesType("multi");
+				break;
+			default:
+				setSeriesType(null);
+				break;
+		}
+	}, []);
+
+	// Handle clicks outside dropdown to close it
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setShowPostTypeDropdown(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
 
 	// Initialize selected platforms from post variants
 	useEffect(() => {
@@ -293,7 +355,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	}, [seriesType, activeTab]);
 
 	return (
-		<div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+		<div className="space-y-6">
 			{/* Header with Title and Platform Tabs */}
 			<div className="space-y-4">
 				{/* Editable Title */}
@@ -403,31 +465,56 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						</Button>
 					</div>
 
-					<div className="flex gap-2">
-						<Button
-							variant={seriesType === null ? "solid" : "outline"}
-							size="2"
-							onClick={() => setSeriesType(null)}
-						>
-							<Hash className="w-4 h-4" />
-							Standard Post
-						</Button>
-						<Button
-							variant={seriesType === "reply" ? "solid" : "outline"}
-							size="2"
-							onClick={() => setSeriesType("reply")}
-						>
-							<MessageSquare className="w-4 h-4" />
-							Reply/Comment
-						</Button>
-						<Button
-							variant={seriesType === "multi" ? "solid" : "outline"}
-							size="2"
-							onClick={() => setSeriesType("multi")}
-						>
-							<ListOrdered className="w-4 h-4" />
-							Thread/Multi-Post
-						</Button>
+					{/* Post Type Dropdown */}
+					<div className="space-y-2">
+						<div className="relative" ref={dropdownRef}>
+							<Button
+								variant="outline"
+								onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
+								className="w-full max-w-xs flex items-center justify-between"
+							>
+								<div className="flex items-center gap-2">
+									{(() => {
+										const currentOption = postTypeOptions.find(option => option.value === currentPostType);
+										const IconComponent = currentOption?.icon || Hash;
+										return (
+											<>
+												<IconComponent className="w-4 h-4" />
+												<span>{currentOption?.label || "Standard Post"}</span>
+											</>
+										);
+									})()}
+								</div>
+								<ChevronDown className="w-4 h-4" />
+							</Button>
+							
+							{showPostTypeDropdown && (
+								<Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
+									<div className="p-2 space-y-1">
+										{postTypeOptions.map((option) => {
+											const IconComponent = option.icon;
+											return (
+												<Button
+													key={option.value}
+													variant={currentPostType === option.value ? "solid" : "ghost"}
+													onClick={() => {
+														handlePostTypeChange(option.value);
+														setShowPostTypeDropdown(false);
+													}}
+													className="w-full flex items-center justify-start gap-2 p-2 h-auto"
+												>
+													<IconComponent className="w-4 h-4 flex-shrink-0" />
+													<div className="text-left">
+														<div className="font-medium">{option.label}</div>
+														<div className="text-sm text-gray-500">{option.description}</div>
+													</div>
+												</Button>
+											);
+										})}
+									</div>
+								</Card>
+							)}
+						</div>
 					</div>
 
 					{/* Post Type Descriptions */}
