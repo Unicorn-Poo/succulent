@@ -1,10 +1,11 @@
 "use client";
 
 import { Card, Avatar, Text, Badge, Button, Box } from "@radix-ui/themes";
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { ThreadPost } from "../utils/threadUtils";
 import { MediaItem } from "../app/schema";
+import { useState } from "react";
 
 interface BasePreviewProps {
 	content: string;
@@ -85,30 +86,7 @@ export const TwitterPreview = ({
 						{/* Media */}
 						{media.length > 0 && (
 							<div className="mb-3 rounded-2xl overflow-hidden border">
-								{media.map((item, index) => (
-									<div key={index} className="relative">
-										{item.type === "image" ? (
-											<Image
-												src={item.image?.toString() || ""}
-												alt={item.alt?.toString() || ""}
-												width={500}
-												height={300}
-												className="w-full h-auto object-cover"
-											/>
-										) : (
-											<div className="relative bg-black">
-												<video
-													src={item.video?.toString() || ""}
-													className="w-full h-auto"
-													controls={false}
-												/>
-												<div className="absolute inset-0 flex items-center justify-center">
-													<Play className="w-12 h-12 text-white" />
-												</div>
-											</div>
-										)}
-									</div>
-								))}
+								<MultiImageViewer media={media} platform="twitter" />
 							</div>
 						)}
 
@@ -200,29 +178,7 @@ export const InstagramPreview = ({
 			{/* Media */}
 			{media.length > 0 && (
 				<div className="relative aspect-square bg-gray-100">
-					{media.map((item, index) => (
-						<div key={index} className="relative w-full h-full">
-							{item.type === "image" ? (
-								<Image
-									src={item.image?.toString() || ""}
-									alt={item.alt?.toString() || ""}
-									fill
-									className="object-cover"
-								/>
-							) : (
-								<div className="relative w-full h-full bg-black">
-									<video
-										src={item.video?.toString() || ""}
-										className="w-full h-full object-cover"
-										controls={false}
-									/>
-									<div className="absolute inset-0 flex items-center justify-center">
-										<Play className="w-12 h-12 text-white" />
-									</div>
-								</div>
-							)}
-						</div>
-					))}
+					<MultiImageViewer media={media} platform="instagram" />
 				</div>
 			)}
 
@@ -338,30 +294,7 @@ export const FacebookPreview = ({
 				{/* Media */}
 				{media.length > 0 && (
 					<div className="mb-3 rounded-lg overflow-hidden border">
-						{media.map((item, index) => (
-							<div key={index} className="relative">
-								{item.type === "image" ? (
-									<Image
-										src={item.image?.toString() || ""}
-										alt={item.alt?.toString() || ""}
-										width={500}
-										height={300}
-										className="w-full h-auto object-cover"
-									/>
-								) : (
-									<div className="relative bg-black">
-										<video
-											src={item.video?.toString() || ""}
-											className="w-full h-auto"
-											controls={false}
-										/>
-										<div className="absolute inset-0 flex items-center justify-center">
-											<Play className="w-12 h-12 text-white" />
-										</div>
-									</div>
-								)}
-							</div>
-						))}
+						<MultiImageViewer media={media} platform="facebook" />
 					</div>
 				)}
 
@@ -459,30 +392,7 @@ export const LinkedInPreview = ({
 				{/* Media */}
 				{media.length > 0 && (
 					<div className="mb-3 rounded-lg overflow-hidden border">
-						{media.map((item, index) => (
-							<div key={index} className="relative">
-								{item.type === "image" ? (
-									<Image
-										src={item.image?.toString() || ""}
-										alt={item.alt?.toString() || ""}
-										width={500}
-										height={300}
-										className="w-full h-auto object-cover"
-									/>
-								) : (
-									<div className="relative bg-black">
-										<video
-											src={item.video?.toString() || ""}
-											className="w-full h-auto"
-											controls={false}
-										/>
-										<div className="absolute inset-0 flex items-center justify-center">
-											<Play className="w-12 h-12 text-white" />
-										</div>
-									</div>
-								)}
-							</div>
-						))}
+						<MultiImageViewer media={media} platform="linkedin" />
 					</div>
 				)}
 
@@ -583,30 +493,7 @@ export const YouTubePreview = ({
 				{/* Media */}
 				{media.length > 0 && (
 					<div className="mb-3 rounded-lg overflow-hidden border">
-						{media.map((item, index) => (
-							<div key={index} className="relative">
-								{item.type === "image" ? (
-									<Image
-										src={item.image?.toString() || ""}
-										alt={item.alt?.toString() || ""}
-										width={500}
-										height={300}
-										className="w-full h-auto object-cover"
-									/>
-								) : (
-									<div className="relative bg-black">
-										<video
-											src={item.video?.toString() || ""}
-											className="w-full h-auto"
-											controls={false}
-										/>
-										<div className="absolute inset-0 flex items-center justify-center">
-											<Play className="w-12 h-12 text-white" />
-										</div>
-									</div>
-								)}
-							</div>
-						))}
+						<MultiImageViewer media={media} platform="youtube" />
 					</div>
 				)}
 
@@ -677,4 +564,114 @@ export const PlatformPreview = (props: PreviewProps) => {
 		default:
 			return <TwitterPreview {...baseProps} />;
 	}
+}; 
+
+const MultiImageViewer = ({ media, platform }: { media: MediaItem[], platform: string }) => {
+	const [currentIndex, setCurrentIndex] = useState(0);
+
+	if (platform === 'twitter' && media.length > 1) {
+		const gridClasses = {
+			2: 'grid-cols-2 grid-rows-1',
+			3: 'grid-cols-2 grid-rows-2',
+			4: 'grid-cols-2 grid-rows-2',
+		};
+		const gridClass = gridClasses[media.length as keyof typeof gridClasses] || 'grid-cols-2 grid-rows-2';
+
+		return (
+			<div className={`grid ${gridClass} gap-0.5`}>
+				{media.slice(0, 4).map((item, index) => (
+					<div
+						key={index}
+						className={`relative ${
+							media.length === 3 && index === 0 ? 'row-span-2' : ''
+						} ${
+							media.length === 3 && index !== 0 ? 'col-start-2' : ''
+						}`}
+						style={{ paddingTop: '100%' }}
+					>
+						<MediaItemRenderer item={item} />
+					</div>
+				))}
+			</div>
+		);
+	}
+
+	// Default to carousel for other platforms or single image on Twitter
+	return (
+		<div className="relative w-full h-full">
+			<div className="overflow-hidden w-full h-full">
+				<div
+					className="flex transition-transform duration-300 ease-in-out h-full"
+					style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+				>
+					{media.map((item, index) => (
+						<div key={index} className="flex-shrink-0 w-full h-full">
+							<MediaItemRenderer item={item} isCarousel />
+						</div>
+					))}
+				</div>
+			</div>
+			{media.length > 1 && (
+				<>
+					<Button
+						variant="soft"
+						size="1"
+						onClick={(e) => { e.stopPropagation(); setCurrentIndex(p => p === 0 ? media.length - 1 : p - 1); }}
+						className="absolute top-1/2 left-2 transform -translate-y-1/2 !rounded-full !w-8 !h-8 z-10"
+					>
+						<ChevronLeft className="w-4 h-4" />
+					</Button>
+					<Button
+						variant="soft"
+						size="1"
+						onClick={(e) => { e.stopPropagation(); setCurrentIndex(p => p === media.length - 1 ? 0 : p + 1); }}
+						className="absolute top-1/2 right-2 transform -translate-y-1/2 !rounded-full !w-8 !h-8 z-10"
+					>
+						<ChevronRight className="w-4 h-4" />
+					</Button>
+					<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+						{media.map((_, index) => (
+							<button
+								key={index}
+								onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+								className={`w-2 h-2 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-gray-400'}`}
+							/>
+						))}
+					</div>
+				</>
+			)}
+		</div>
+	);
+};
+
+const MediaItemRenderer = ({ item, isCarousel }: { item: MediaItem, isCarousel?: boolean }) => {
+	const commonClass = isCarousel ? "absolute inset-0 w-full h-full object-cover" : "absolute inset-0 w-full h-full object-cover";
+
+	if (item.type === 'image') {
+		return (
+			<Image
+				src={item.image?.toString() || ""}
+				alt={item.alt?.toString() || ""}
+				layout="fill"
+				className={commonClass}
+			/>
+		);
+	}
+
+	if (item.type === 'video') {
+		return (
+			<div className="relative w-full h-full bg-black">
+				<video
+					src={item.video?.toString() || ""}
+					className={commonClass}
+					controls={false}
+				/>
+				<div className="absolute inset-0 flex items-center justify-center">
+					<Play className="w-12 h-12 text-white" />
+				</div>
+			</div>
+		);
+	}
+
+	return null;
 }; 

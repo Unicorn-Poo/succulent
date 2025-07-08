@@ -21,7 +21,10 @@ import {
 	ChevronDown,
 	ChevronUp,
 	Globe,
-	Eye
+	Eye,
+	Upload,
+	ChevronLeft,
+	ChevronRight
 } from "lucide-react";
 import { Post, PostFullyLoaded } from "../app/schema";
 import Image from "next/image";
@@ -65,16 +68,16 @@ const postTypeOptions = [
 		description: "Regular single post"
 	},
 	{
-		value: "reply",
-		label: "Reply/Comment",
-		icon: MessageSquare,
-		description: "Reply to existing post"
-	},
-	{
 		value: "multi",
 		label: "Thread/Multi-Post",
 		icon: ListOrdered,
 		description: "Multiple connected posts"
+	},
+	{
+		value: "reply",
+		label: "Reply/Comment",
+		icon: MessageSquare,
+		description: "Reply to existing post"
 	}
 ];
 
@@ -264,7 +267,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			const basePostData: PostData = {
 				post: postText,
 				platforms: platforms,
-				...(mediaUrls.length > 0 && { mediaUrls }),
+				...((seriesType !== 'reply' && mediaUrls.length > 0) && { mediaUrls }),
 				...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
 			};
 
@@ -376,6 +379,44 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 		return 'user';
 	}, []);
+
+	const handleImageUpload = useCallback(() => {
+		// This is a placeholder for a real file upload.
+		const newImage = {
+			type: 'image',
+			image: `https://source.unsplash.com/random/800x600?sig=${Math.random()}`,
+			alt: 'A randomly uploaded image',
+		} as unknown as MediaItem;
+
+		const variant = post.variants[activeTab];
+		if (variant) {
+			const currentMedia = (variant.media || []) as MediaItem[];
+			
+			const updatedPost = {
+				...post,
+				variants: {
+					...post.variants,
+					[activeTab]: {
+						...variant,
+						media: [...currentMedia, newImage],
+					},
+				},
+			};
+
+			setPost(updatedPost as unknown as PostFullyLoaded);
+		}
+	}, [activeTab, post]);
+	
+	const setPost = (newPost: PostFullyLoaded) => {
+		// This function would ideally update the post object in a central state management store.
+		// For this example, we're assuming the `post` prop can be updated this way to trigger re-renders.
+		// In a real Jazz app, mutations to CoValues automatically trigger re-renders.
+		// To simulate this, we'll log it and expect the parent component to handle state updates.
+		console.log('Post updated (mock):', newPost);
+		// Note: To make this fully work without a real state management solution,
+		// we would need to lift state up or use a context. For now, this will
+		// log the change, and the UI will depend on how the parent handles the `post` prop.
+	};
 
 	return (
 		<div className="space-y-6">
@@ -597,7 +638,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					{seriesType === "reply" && (
 						<Box className="bg-blue-50 p-3 rounded-lg">
 							<Text size="2" color="blue">
-								{getReplyDescription()}
+								{getReplyDescription()} Replies do not support media.
 							</Text>
 						</Box>
 					)}
@@ -687,13 +728,33 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			<Card>
 				<div className="p-6 space-y-6">
 					{/* Media Display */}
-					{post.variants[activeTab]?.media?.filter(Boolean).map((mediaItem, imageIndex) => (
-						<div key={imageIndex} className="space-y-4">
-							<div className="flex justify-center">
-								{mediaItem && <MediaComponent mediaItem={mediaItem as MediaItem} />}
-							</div>
+					{seriesType !== 'reply' && (
+						<div className="space-y-2">
+							{(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
+								<div className="relative group">
+									<MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as MediaItem[]} />
+									<Button
+										variant="soft"
+										size="1"
+										onClick={handleImageUpload}
+										className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+									>
+										<Plus className="w-4 h-4" />
+									</Button>
+								</div>
+							) : (
+								<div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
+									<Button
+										variant="soft"
+										onClick={handleImageUpload}
+									>
+										<Upload className="w-4 h-4 mr-2" />
+										Add Media
+									</Button>
+								</div>
+							)}
 						</div>
-					))}
+					)}
 
 					{/* Content Editor */}
 					<div className="space-y-4">
@@ -732,9 +793,6 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 						{/* Action Buttons */}
 						<div className="flex justify-between items-center">
-							<div className="flex gap-2">
-								{/* Additional controls can go here */}
-							</div>
 							
 							<div className="flex gap-2">
 								{/* Save Button - appears when there are unsaved changes */}
@@ -913,7 +971,70 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	);
 }
 
+const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
+	const [currentIndex, setCurrentIndex] = useState(0);
+
+	const handlePrev = () => {
+		setCurrentIndex((prevIndex) => (prevIndex === 0 ? media.length - 1 : prevIndex - 1));
+	};
+
+	const handleNext = () => {
+		setCurrentIndex((prevIndex) => (prevIndex === media.length - 1 ? 0 : prevIndex + 1));
+	};
+
+	if (!media || media.length === 0) return null;
+
+	return (
+		<div className="relative max-w-lg mx-auto">
+			<div className="overflow-hidden rounded-lg shadow-md">
+				<div
+					className="flex transition-transform duration-300 ease-in-out"
+					style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+				>
+					{media.map((mediaItem, index) => (
+						<div key={index} className="flex-shrink-0 w-full">
+							<MediaComponent mediaItem={mediaItem} />
+						</div>
+					))}
+				</div>
+			</div>
+
+			{media.length > 1 && (
+				<>
+					<Button
+						variant="soft"
+						size="1"
+						onClick={handlePrev}
+						className="absolute top-1/2 left-2 transform -translate-y-1/2 !rounded-full !w-8 !h-8"
+					>
+						<ChevronLeft className="w-4 h-4" />
+					</Button>
+					<Button
+						variant="soft"
+						size="1"
+						onClick={handleNext}
+						className="absolute top-1/2 right-2 transform -translate-y-1/2 !rounded-full !w-8 !h-8"
+					>
+						<ChevronRight className="w-4 h-4" />
+					</Button>
+					<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
+						{media.map((_, index) => (
+							<button
+								key={index}
+								onClick={() => setCurrentIndex(index)}
+								className={`w-2 h-2 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-gray-400'}`}
+							/>
+						))}
+					</div>
+				</>
+			)}
+		</div>
+	);
+};
+
 const MediaComponent = ({ mediaItem }: { mediaItem: MediaItem }) => {
+	if (!mediaItem) return null;
+
 	return (
 		<div className="max-w-lg mx-auto">
 			{mediaItem.type === "image" && (
@@ -922,7 +1043,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: MediaItem }) => {
 					alt={mediaItem.alt?.toString() ?? "image"}
 					width={500}
 					height={500}
-					className="rounded-lg shadow-md"
+					className="rounded-lg shadow-md w-full object-cover"
 				/>
 			)}
 			{mediaItem.type === "video" && (
