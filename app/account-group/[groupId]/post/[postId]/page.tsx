@@ -5,7 +5,7 @@ import PostCreationComponent from "../../../../../components/post-creation";
 import Navigation from "../../../../../components/navigation";
 import { PostFullyLoaded } from "../../../../schema";
 import { Button } from "@radix-ui/themes";
-import { Home, Users, Share2, Calendar } from "lucide-react";
+import { Home, Users } from "lucide-react";
 
 export default function PostPage() {
   const params = useParams();
@@ -47,33 +47,6 @@ export default function PostPage() {
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
       <Navigation />
-      
-      {/* Page Actions */}
-      <div className="flex justify-end gap-2 mb-6">
-        <Button
-          variant="outline"
-          size="2"
-          onClick={() => {
-            // TODO: Add preview functionality
-            console.log("Preview post");
-          }}
-        >
-          <Share2 className="w-4 h-4 mr-2" />
-          Preview
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="2"
-          onClick={() => {
-            // TODO: Add schedule functionality
-            console.log("Schedule post");
-          }}
-        >
-          <Calendar className="w-4 h-4 mr-2" />
-          Schedule
-        </Button>
-      </div>
       
       <PostCreationComponent 
         post={post as unknown as PostFullyLoaded} 

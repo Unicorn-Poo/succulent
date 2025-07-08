@@ -9,6 +9,7 @@ import {
 	Save,
 	Plus,
 	Calendar,
+	CalendarDays,
 	MessageSquare,
 	ListOrdered,
 	X,
@@ -19,7 +20,8 @@ import {
 	Hash,
 	ChevronDown,
 	ChevronUp,
-	Globe
+	Globe,
+	Eye
 } from "lucide-react";
 import { Post, PostFullyLoaded } from "../app/schema";
 import Image from "next/image";
@@ -57,7 +59,7 @@ interface PostCreationProps {
 const postTypeOptions = [
 	{
 		value: "standard",
-		label: "Standard Post",
+		label: "Standard",
 		icon: Hash,
 		description: "Regular single post"
 	},
@@ -320,6 +322,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		console.log('Title updated:', title);
 	}, [title]);
 
+	const handleClearSchedule = useCallback(() => {
+		setScheduledDate(null);
+		setShowSettings(false);
+	}, []);
+
 	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
 			setSelectedPlatforms(prev => [...prev, platform]);
@@ -413,7 +420,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										height={16}
 									/>
 									{displayName}
-									{post.variants[platform]?.edited && (
+									{/* Don't show edited badge on base component */}
+									{platform !== "base" && post.variants[platform]?.edited && (
 										<Badge variant="soft" color="orange" className="ml-1">
 											•
 										</Badge>
@@ -447,74 +455,129 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				</div>
 			</div>
 
-			{/* Post Type Selection */}
+			{/* Post Type Selection & Actions */}
 			<Card>
 				<div className="p-4 space-y-4">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							{/* <Globe className="w-5 h-5 text-gray-500" /> */}
-							{/* <Text weight="medium">Post Type</Text> */}
-
-              {/* Post Type Dropdown */}
-              <div className="space-y-2">
-                <div className="relative" ref={dropdownRef}>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
-                    className="w-full max-w-xs flex items-center justify-between py-2 px-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const currentOption = postTypeOptions.find(option => option.value === currentPostType);
-                        const IconComponent = currentOption?.icon || Hash;
-                        return (
-                          <>
-                            <IconComponent className="w-4 h-4" />
-                            <span>{currentOption?.label || "Standard Post"}</span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                  
-                  {showPostTypeDropdown && (
-                    <Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
-                      <div className="p-2 space-y-1">
-                        {postTypeOptions.map((option) => {
-                          const IconComponent = option.icon;
-                          return (
-                            <Button
-                              key={option.value}
-                              variant={currentPostType === option.value ? "soft" : "ghost"}
-                              onClick={() => {
-                                handlePostTypeChange(option.value);
-                                setShowPostTypeDropdown(false);
-                              }}
-                              className="w-full flex items-center justify-start gap-2 p-2 h-auto py-2 px-4"
-                            >
-                              <IconComponent className="w-4 h-4 flex-shrink-0" />
-                              <div className="text-left">
-                                <div className="font-medium">{option.label}</div>
-                                <div className="text-sm text-gray-500">{option.description}</div>
-                              </div>
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  )}
-                </div>
-              </div>
+					<div className="flex items-start justify-between gap-2">
+						{/* Post Type Dropdown */}
+						<div className="relative" ref={dropdownRef}>
+							<Button
+								variant="outline"
+								onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
+								className="w-full max-w-xs flex items-center justify-between py-2 px-4"
+							>
+								<div className="flex items-center gap-2">
+									{(() => {
+										const currentOption = postTypeOptions.find(option => option.value === currentPostType);
+										const IconComponent = currentOption?.icon || Hash;
+										return (
+											<>
+												<IconComponent className="w-4 h-4" />
+												<span className="hidden sm:inline">{currentOption?.label || "Standard"}</span>
+											</>
+										);
+									})()}
+								</div>
+								<ChevronDown className="w-4 h-4" />
+							</Button>
+							
+							{showPostTypeDropdown && (
+								<Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
+									<div className="p-2 space-y-1">
+										{postTypeOptions.map((option) => {
+											const IconComponent = option.icon;
+											return (
+												<Button
+													key={option.value}
+													variant={currentPostType === option.value ? "soft" : "ghost"}
+													onClick={() => {
+														handlePostTypeChange(option.value);
+														setShowPostTypeDropdown(false);
+													}}
+													className="w-full flex items-center justify-start gap-2 p-2 h-auto py-2 px-4"
+												>
+													<IconComponent className="w-4 h-4 flex-shrink-0" />
+													<div className="text-left">
+														<div className="font-medium">{option.label}</div>
+														<div className="text-sm text-gray-500">{option.description}</div>
+													</div>
+												</Button>
+											);
+										})}
+									</div>
+								</Card>
+							)}
 						</div>
-						<Button
-							variant="outline"
-							size="1"
-							onClick={() => setShowSettings(true)}
-						>
-							<Calendar className="w-4 h-4" />
-							Schedule
-						</Button>
+
+						{/* Action Buttons */}
+						<div className="flex items-center gap-2 ml-auto">
+							{/* Preview Button */}
+							<Button
+								variant="outline"
+								size="2"
+								onClick={() => {
+									// TODO: Add preview functionality
+									console.log("Preview post");
+								}}
+							>
+								<Eye className="w-4 h-4 mr-2" />
+								<span className="hidden sm:inline">Preview</span>
+							</Button>
+							
+							{/* Schedule Button */}
+							<Button
+								variant="outline"
+								size="2"
+								onClick={() => setShowSettings(true)}
+								className="flex items-center gap-2"
+							>
+								{scheduledDate ? (
+									<>
+										<CalendarDays className="w-4 h-4" />
+										<span className="hidden sm:inline">
+											{scheduledDate.toLocaleDateString(undefined, { 
+												month: 'short', 
+												day: 'numeric',
+												hour: '2-digit',
+												minute: '2-digit'
+											})}
+										</span>
+										<span className="sm:hidden">
+											{scheduledDate.toLocaleDateString(undefined, { 
+												month: 'short', 
+												day: 'numeric'
+											})}
+										</span>
+									</>
+								) : (
+									<>
+										<Calendar className="w-4 h-4" />
+										<span className="hidden sm:inline">Schedule</span>
+									</>
+								)}
+							</Button>
+
+							{/* Publish Button - appears when content is saved and ready to publish */}
+							{showPublishButton && (
+								<Button
+									onClick={handlePublishPost}
+									disabled={isScheduling}
+									className="flex items-center gap-2"
+								>
+									{isScheduling ? (
+										<>
+											<Loader2 className="w-4 h-4 animate-spin" />
+											<span className="hidden sm:inline">{scheduledDate ? "Scheduling..." : "Publishing..."}</span>
+										</>
+									) : (
+										<>
+											<Globe className="w-4 h-4" />
+											<span className="hidden sm:inline">{scheduledDate ? "Schedule" : "Publish"}</span>
+										</>
+									)}
+								</Button>
+							)}
+						</div>
 					</div>
 
 					{/* Post Type Descriptions */}
@@ -623,7 +686,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					<div className="space-y-4">
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
-								{post.variants[activeTab]?.edited && (
+								{/* Don't show edited badge on base component */}
+								{activeTab !== "base" && post.variants[activeTab]?.edited && (
 									<Badge variant="soft" color="orange">
 										<Edit3 className="w-3 h-3 mr-1" />
 										Edited
@@ -677,27 +741,6 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											<>
 												<Save className="w-4 h-4" />
 												Save
-											</>
-										)}
-									</Button>
-								)}
-								
-								{/* Publish Button - appears when content is saved and ready to publish */}
-								{showPublishButton && (
-									<Button
-										onClick={handlePublishPost}
-										disabled={isScheduling}
-										className="flex items-center gap-2"
-									>
-										{isScheduling ? (
-											<>
-												<Loader2 className="w-4 h-4 animate-spin" />
-												{scheduledDate ? "Scheduling..." : "Publishing..."}
-											</>
-										) : (
-											<>
-												<Globe className="w-4 h-4" />
-												{scheduledDate ? "Schedule Post" : "Publish Post"}
 											</>
 										)}
 									</Button>
@@ -773,15 +816,21 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				<Dialog.Content style={{ maxWidth: 500 }}>
 					<Dialog.Title>Post Settings</Dialog.Title>
 					<Dialog.Description>
-						Configure scheduling and advanced options.
+						Configure scheduling and advanced options for your post.
 					</Dialog.Description>
 					
 					<div className="space-y-4 mt-4">
 						<div>
 							<Label.Root htmlFor="schedule">Schedule Post</Label.Root>
+							{scheduledDate && (
+								<div className="text-sm text-gray-600 mb-2">
+									Currently scheduled for: {scheduledDate.toLocaleString()}
+								</div>
+							)}
 							<Input
 								id="schedule"
 								type="datetime-local"
+								value={scheduledDate ? scheduledDate.toISOString().slice(0, 16) : ""}
 								onChange={(e) => setScheduledDate(new Date(e.target.value))}
 								className="mt-1"
 							/>
@@ -792,6 +841,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								<Label.Root htmlFor="interval">
 									Posting Interval (minutes)
 								</Label.Root>
+								<div className="text-sm text-gray-500 mb-1">
+									Time between posts for multi-post sequences
+								</div>
 								<Input
 									id="interval"
 									type="number"
@@ -805,13 +857,26 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						)}
 					</div>
 
-					<div className="flex justify-end gap-2 mt-6">
-						<Button variant="soft" onClick={() => setShowSettings(false)}>
-							Cancel
-						</Button>
-						<Button onClick={() => setShowSettings(false)}>
-							Save Settings
-						</Button>
+					<div className="flex justify-between gap-2 mt-6">
+						<div>
+							{scheduledDate && (
+								<Button 
+									variant="outline" 
+									onClick={handleClearSchedule}
+									className="text-red-600 border-red-300 hover:bg-red-50"
+								>
+									Clear Schedule
+								</Button>
+							)}
+						</div>
+						<div className="flex gap-2">
+							<Button variant="soft" onClick={() => setShowSettings(false)}>
+								Cancel
+							</Button>
+							<Button onClick={() => setShowSettings(false)}>
+								Save Settings
+							</Button>
+						</div>
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>
