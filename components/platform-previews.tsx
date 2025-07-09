@@ -6,15 +6,28 @@ import Image from "next/image";
 import { ThreadPost } from "../utils/threadUtils";
 import { MediaItem } from "../app/schema";
 import { useState } from "react";
+import { ReplyPreview } from "./reply-preview";
+
+interface AccountInfo {
+	id: string;
+	platform: string;
+	name: string;
+	apiUrl: string;
+	avatar: string;
+	username: string;
+	displayName: string;
+	url: string;
+}
 
 interface BasePreviewProps {
 	content: string;
 	platform: string;
-	accountName: string;
+	account?: AccountInfo;
 	timestamp?: Date;
 	media?: MediaItem[];
 	isReply?: boolean;
-	replyToUsername?: string;
+	isQuote?: boolean;
+	replyTo?: any; 
 	isThread?: boolean;
 	threadPosts?: ThreadPost[];
 	currentThreadIndex?: number;
@@ -23,11 +36,12 @@ interface BasePreviewProps {
 // Twitter/X Preview Component
 export const TwitterPreview = ({ 
 	content, 
-	accountName, 
+	account, 
 	timestamp = new Date(), 
 	media = [],
 	isReply = false,
-	replyToUsername,
+	isQuote = false,
+	replyTo,
 	isThread = false,
 	threadPosts = [],
 	currentThreadIndex = 0
@@ -43,30 +57,19 @@ export const TwitterPreview = ({
 	return (
 		<Card className="max-w-2xl mx-auto bg-white">
 			<div className="p-4">
-				{/* Reply indicator */}
-				{isReply && replyToUsername && (
-					<div className="flex items-center text-gray-500 text-sm mb-2">
-						<MessageCircle className="w-4 h-4 mr-1" />
-						<span>Replying to @{replyToUsername}</span>
-					</div>
-				)}
-
 				{/* Main tweet content */}
 				<div className="flex gap-3">
-					{/* Avatar */}
 					<Avatar
 						size="2"
-						src={`https://avatar.vercel.sh/${accountName}`}
-						fallback={accountName[0]?.toUpperCase()}
+						src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+						fallback={account?.displayName ? account.displayName[0] : 'U'}
 						className="flex-shrink-0"
 					/>
 					
-					{/* Content */}
 					<div className="flex-1 min-w-0">
-						{/* Header */}
 						<div className="flex items-center gap-2 mb-1">
-							<Text weight="bold" size="2">{accountName}</Text>
-							<Text size="2" color="gray">@{accountName.toLowerCase()}</Text>
+							<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
+							<Text size="2" color="gray">@{account?.username || 'user'}</Text>
 							<span className="text-gray-500">·</span>
 							<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 							{threadInfo && (
@@ -76,21 +79,24 @@ export const TwitterPreview = ({
 							)}
 						</div>
 						
-						{/* Tweet text */}
-						<div className="mb-3">
-							<Text size="2" className="whitespace-pre-wrap">
-								{displayContent.replace(/\\n/g, "\n")}
-							</Text>
+						<div className="mb-3 whitespace-pre-wrap">
+							{displayContent}
 						</div>
 
-						{/* Media */}
+						{isQuote && replyTo && (
+							<ReplyPreview 
+								htmlContent={replyTo.authorPostContent} 
+								author={replyTo.author}
+								username={replyTo.authorUsername}
+							/>
+						)}
+
 						{media.length > 0 && (
 							<div className="mb-3 rounded-2xl overflow-hidden border">
 								<MultiImageViewer media={media} platform="twitter" />
 							</div>
 						)}
 
-						{/* Thread continuation indicator */}
 						{isThread && threadPosts.length > 1 && currentThreadIndex < threadPosts.length - 1 && (
 							<div className="flex items-center text-blue-500 text-sm mb-3">
 								<div className="w-0.5 h-4 bg-blue-500 mr-2"></div>
@@ -98,7 +104,6 @@ export const TwitterPreview = ({
 							</div>
 						)}
 
-						{/* Actions */}
 						<div className="flex items-center justify-between max-w-md text-gray-500">
 							<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500">
 								<MessageCircle className="w-4 h-4 mr-2" />
@@ -121,7 +126,6 @@ export const TwitterPreview = ({
 						</div>
 					</div>
 
-					{/* More options */}
 					<Button variant="ghost" size="1" className="flex-shrink-0">
 						<MoreHorizontal className="w-4 h-4" />
 					</Button>
@@ -134,11 +138,9 @@ export const TwitterPreview = ({
 // Instagram Preview Component
 export const InstagramPreview = ({ 
 	content, 
-	accountName, 
+	account, 
 	timestamp = new Date(), 
 	media = [],
-	isReply = false,
-	replyToUsername,
 	isThread = false,
 	threadPosts = [],
 	currentThreadIndex = 0
@@ -158,11 +160,11 @@ export const InstagramPreview = ({
 				<div className="flex items-center gap-3">
 					<Avatar
 						size="2"
-						src={`https://avatar.vercel.sh/${accountName}`}
-						fallback={accountName[0]?.toUpperCase()}
+						src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+						fallback={account?.displayName ? account.displayName[0] : 'U'}
 					/>
 					<div>
-						<Text weight="bold" size="2">{accountName}</Text>
+						<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
 						{threadInfo && (
 							<Badge variant="soft" size="1" color="purple" className="ml-2">
 								{threadInfo}
@@ -207,8 +209,8 @@ export const InstagramPreview = ({
 				{/* Caption */}
 				<div className="space-y-1">
 					<Text size="2">
-						<span className="font-semibold">{accountName}</span>{" "}
-						<span className="whitespace-pre-wrap">{displayContent.replace(/\\n/g, "\n")}</span>
+						<span className="font-semibold">{account?.displayName || 'User'}</span>{" "}
+						<span className="whitespace-pre-wrap">{displayContent}</span>
 					</Text>
 					
 					{/* Thread continuation */}
@@ -231,11 +233,12 @@ export const InstagramPreview = ({
 // Facebook Preview Component
 export const FacebookPreview = ({ 
 	content, 
-	accountName, 
+	account, 
 	timestamp = new Date(), 
 	media = [],
 	isReply = false,
-	replyToUsername,
+	isQuote = false,
+	replyTo,
 	isThread = false,
 	threadPosts = [],
 	currentThreadIndex = 0
@@ -256,11 +259,11 @@ export const FacebookPreview = ({
 					<div className="flex items-center gap-3">
 						<Avatar
 							size="2"
-							src={`https://avatar.vercel.sh/${accountName}`}
-							fallback={accountName[0]?.toUpperCase()}
+							src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+							fallback={account?.displayName ? account.displayName[0] : 'U'}
 						/>
 						<div>
-							<Text weight="bold" size="2">{accountName}</Text>
+							<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
 							<div className="flex items-center gap-2">
 								<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 								{threadInfo && (
@@ -277,18 +280,16 @@ export const FacebookPreview = ({
 				</div>
 
 				{/* Reply indicator */}
-				{isReply && replyToUsername && (
-					<div className="flex items-center text-gray-500 text-sm mb-2">
-						<MessageCircle className="w-4 h-4 mr-1" />
-						<span>Replying to {replyToUsername}</span>
+				{isReply && !isQuote && replyTo && (
+					<div className="border rounded-lg p-3 mt-3">
+						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
+						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
 				{/* Content */}
 				<div className="mb-3">
-					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent.replace(/\\n/g, "\n")}
-					</Text>
+					<Text size="2" className="whitespace-pre-wrap">{displayContent}</Text>
 				</div>
 
 				{/* Media */}
@@ -328,11 +329,12 @@ export const FacebookPreview = ({
 // LinkedIn Preview Component
 export const LinkedInPreview = ({ 
 	content, 
-	accountName, 
+	account, 
 	timestamp = new Date(), 
 	media = [],
 	isReply = false,
-	replyToUsername,
+	isQuote = false,
+	replyTo,
 	isThread = false,
 	threadPosts = [],
 	currentThreadIndex = 0
@@ -353,11 +355,11 @@ export const LinkedInPreview = ({
 					<div className="flex items-center gap-3">
 						<Avatar
 							size="2"
-							src={`https://avatar.vercel.sh/${accountName}`}
-							fallback={accountName[0]?.toUpperCase()}
+							src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+							fallback={account?.displayName ? account.displayName[0] : 'U'}
 						/>
 						<div>
-							<Text weight="bold" size="2">{accountName}</Text>
+							<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
 							<Text size="1" color="gray">Professional Title</Text>
 							<div className="flex items-center gap-2">
 								<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
@@ -375,18 +377,16 @@ export const LinkedInPreview = ({
 				</div>
 
 				{/* Reply indicator */}
-				{isReply && replyToUsername && (
-					<div className="flex items-center text-gray-500 text-sm mb-2">
-						<MessageCircle className="w-4 h-4 mr-1" />
-						<span>Replying to {replyToUsername}</span>
+				{isReply && !isQuote && replyTo && (
+					<div className="border rounded-lg p-3 mt-3">
+						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
+						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
 				{/* Content */}
 				<div className="mb-3">
-					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent.replace(/\\n/g, "\n")}
-					</Text>
+					<Text size="2" className="whitespace-pre-wrap">{displayContent}</Text>
 				</div>
 
 				{/* Media */}
@@ -430,11 +430,12 @@ export const LinkedInPreview = ({
 // YouTube Preview Component (Community Post)
 export const YouTubePreview = ({ 
 	content, 
-	accountName, 
+	account, 
 	timestamp = new Date(), 
 	media = [],
 	isReply = false,
-	replyToUsername,
+	isQuote = false,
+	replyTo,
 	isThread = false,
 	threadPosts = [],
 	currentThreadIndex = 0
@@ -455,11 +456,11 @@ export const YouTubePreview = ({
 					<div className="flex items-center gap-3">
 						<Avatar
 							size="2"
-							src={`https://avatar.vercel.sh/${accountName}`}
-							fallback={accountName[0]?.toUpperCase()}
+							src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+							fallback={account?.displayName ? account.displayName[0] : 'U'}
 						/>
 						<div>
-							<Text weight="bold" size="2">{accountName}</Text>
+							<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
 							<div className="flex items-center gap-2">
 								<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 								{threadInfo && (
@@ -476,18 +477,16 @@ export const YouTubePreview = ({
 				</div>
 
 				{/* Reply indicator */}
-				{isReply && replyToUsername && (
-					<div className="flex items-center text-gray-500 text-sm mb-2">
-						<MessageCircle className="w-4 h-4 mr-1" />
-						<span>Replying to {replyToUsername}</span>
+				{isReply && !isQuote && replyTo && (
+					<div className="border rounded-lg p-3 mt-3">
+						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
+						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
 				{/* Content */}
 				<div className="mb-3">
-					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent.replace(/\\n/g, "\n")}
-					</Text>
+					<Text size="2" className="whitespace-pre-wrap">{displayContent}</Text>
 				</div>
 
 				{/* Media */}
@@ -528,22 +527,25 @@ export const YouTubePreview = ({
 interface PreviewProps {
 	platform: string;
 	content: string;
-	accountName: string;
+	account?: AccountInfo;
 	timestamp?: Date;
 	media?: MediaItem[];
 	isReply?: boolean;
-	replyToUsername?: string;
+	isQuote?: boolean;
+	replyTo?: any; 
 	isThread?: boolean;
 	threadPosts?: ThreadPost[];
 	currentThreadIndex?: number;
 }
 
 export const PlatformPreview = (props: PreviewProps) => {
+	const account = props.account;
 	const baseProps = {
 		...props,
 		timestamp: props.timestamp || new Date(),
 		media: props.media || [],
 		isReply: props.isReply || false,
+		isQuote: props.isQuote || false,
 		isThread: props.isThread || false,
 		threadPosts: props.threadPosts || [],
 		currentThreadIndex: props.currentThreadIndex || 0,

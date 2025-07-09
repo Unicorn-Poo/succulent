@@ -22,12 +22,17 @@ interface PreviewModalProps {
 			platform: string;
 			name: string;
 			apiUrl: string;
+			avatar?: string;
+			username?: string;
+			displayName?: string;
+			url?: string;
 		}>;
 	};
 	activeTab: string;
 	media?: MediaItem[];
 	isReply?: boolean;
-	replyToUsername?: string;
+	isQuote?: boolean;
+	replyTo?: any;
 	isThread?: boolean;
 	threadPosts?: ThreadPost[];
 	replyUrl?: string;
@@ -42,7 +47,8 @@ export const PreviewModal = ({
 	activeTab,
 	media = [],
 	isReply = false,
-	replyToUsername,
+	isQuote = false,
+	replyTo,
 	isThread = false,
 	threadPosts = [],
 	replyUrl
@@ -53,8 +59,17 @@ export const PreviewModal = ({
 	// Get the current platform info
 	const currentPlatform = activeTab === 'base' ? 'x' : activeTab;
 	const currentAccount = accountGroup.accounts[currentPlatform];
-	const currentAccountName = currentAccount?.name || 'User';
-	const currentPlatformName = currentAccount?.platform || currentPlatform;
+	const currentAccountInfo = {
+		...currentAccount,
+		id: currentAccount?.id || '',
+		platform: currentAccount?.platform || 'x',
+		name: currentAccount?.name || 'User',
+		username: currentAccount?.username || 'user',
+		displayName: currentAccount?.displayName || 'User',
+		avatar: currentAccount?.avatar || '',
+		apiUrl: currentAccount?.apiUrl || '',
+		url: currentAccount?.url || '',
+	};
 
 	// Filter platforms to show previews for (exclude 'base')
 	const previewPlatforms = selectedPlatforms.filter(platform => platform !== 'base');
@@ -94,7 +109,7 @@ export const PreviewModal = ({
 		return 'user';
 	};
 
-	const extractedReplyUsername = replyUrl ? extractUsernameFromUrl(replyUrl) : replyToUsername || 'user';
+	const extractedReplyUsername = replyUrl ? extractUsernameFromUrl(replyUrl) : replyTo?.username || 'user';
 
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={onClose}>
@@ -182,28 +197,29 @@ export const PreviewModal = ({
 							<div className="mb-4">
 								<div className="flex items-center gap-2 mb-2">
 									<Image
-										src={getPlatformIcon(currentPlatformName)}
-										alt={currentPlatformName}
+										src={getPlatformIcon(currentAccountInfo.platform)}
+										alt={currentAccountInfo.platform}
 										width={24}
 										height={24}
 									/>
 									<Text size="3" weight="medium">
-										{platformLabels[currentPlatformName as keyof typeof platformLabels] || currentPlatformName}
+										{platformLabels[currentAccountInfo.platform as keyof typeof platformLabels] || currentAccountInfo.platform}
 									</Text>
 								</div>
 								<Text size="1" color="gray">
-									@{currentAccountName}
+									@{currentAccountInfo.name}
 								</Text>
 							</div>
 							
 							<PlatformPreview
-								platform={currentPlatformName}
+								platform={currentAccountInfo.platform}
 								content={content}
-								accountName={currentAccountName}
+								account={currentAccountInfo}
 								timestamp={new Date()}
 								media={media}
 								isReply={isReply}
-								replyToUsername={extractedReplyUsername}
+								isQuote={isQuote}
+								replyTo={replyTo}
 								isThread={isThread}
 								threadPosts={threadPosts}
 								currentThreadIndex={currentThreadIndex}
@@ -214,34 +230,44 @@ export const PreviewModal = ({
 						<div className="space-y-8">
 							{previewPlatforms.map((platform) => {
 								const account = accountGroup.accounts[platform];
-								const platformName = account?.platform || platform;
-								const accountName = account?.name || 'User';
-								
+								const accountInfo = {
+									...account,
+									id: account?.id || '',
+									platform: account?.platform || 'x',
+									name: account?.name || 'User',
+									username: account?.username || 'user',
+									displayName: account?.displayName || 'User',
+      								avatar: account?.avatar || '',
+									apiUrl: account?.apiUrl || '',
+									url: account?.url || '',
+								};
+
 								return (
 									<div key={platform} className="space-y-4">
 										<div className="flex items-center gap-2">
 											<Image
-												src={getPlatformIcon(platformName)}
-												alt={platformName}
+												src={getPlatformIcon(accountInfo.platform)}
+												alt={accountInfo.platform}
 												width={24}
 												height={24}
 											/>
 											<Text size="3" weight="medium">
-												{platformLabels[platformName as keyof typeof platformLabels] || platformName}
+												{platformLabels[accountInfo.platform as keyof typeof platformLabels] || accountInfo.platform}
 											</Text>
 											<Text size="1" color="gray">
-												@{accountName}
+												@{accountInfo.name}
 											</Text>
 										</div>
 										
 										<PlatformPreview
-											platform={platformName}
+											platform={accountInfo.platform}
 											content={content}
-											accountName={accountName}
+											account={accountInfo}
 											timestamp={new Date()}
 											media={media}
 											isReply={isReply}
-											replyToUsername={extractedReplyUsername}
+											isQuote={isQuote}
+											replyTo={replyTo}
 											isThread={isThread}
 											threadPosts={threadPosts}
 											currentThreadIndex={currentThreadIndex}
@@ -258,7 +284,7 @@ export const PreviewModal = ({
 					<div className="flex items-center gap-2 text-sm text-gray-500">
 						<Text size="1">
 							{previewMode === 'current' 
-								? `Previewing for ${platformLabels[currentPlatformName as keyof typeof platformLabels] || currentPlatformName}`
+								? `Previewing for ${platformLabels[currentAccountInfo.platform as keyof typeof platformLabels] || currentAccountInfo.platform}`
 								: `Previewing for ${previewPlatforms.length} platform${previewPlatforms.length === 1 ? '' : 's'}`
 							}
 						</Text>

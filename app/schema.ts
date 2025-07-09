@@ -64,6 +64,10 @@ export const PlatformAccount = co.map({
 	name: z.string(),
 	apiUrl: z.string(),
   platform: z.enum(PlatformNames),
+  avatar: z.string(),
+  username: z.string(),
+  displayName: z.string(),
+  url: z.string(),
 });
 
 export const PlatformGroup = co.map({

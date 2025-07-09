@@ -51,6 +51,7 @@ import {
 	TooltipTrigger,
   } from "./tooltip"
 import { PlatformPreview } from "./platform-previews";
+import { ReplyPreview } from "./reply-preview";
 import parse, { domToReact, HTMLReactParserOptions } from 'html-react-parser';
 
 type SeriesType = "reply" | "multi";
@@ -93,6 +94,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [manualThreadMode, setManualThreadMode] = useState(false);
 	const [isFetchingReply, setIsFetchingReply] = useState(false);
 	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
+	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 
 	const hasMultipleAccounts = useMemo(() => {
 		return selectedPlatforms.filter(p => p !== 'base').length > 1;
@@ -696,6 +698,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									)}
 								</Tooltip>
 							</TooltipProvider>
+
+							{/* Quote Tweet Toggle */}
+							{seriesType === 'reply' && detectedPlatform === 'x' && (
+								<div className="flex items-center gap-2">
+									<Label.Root htmlFor="quote-tweet-toggle" className="text-sm font-medium">
+										Quote Tweet
+									</Label.Root>
+									<Switch
+										id="quote-tweet-toggle"
+										checked={isQuoteTweet}
+										onCheckedChange={setIsQuoteTweet}
+									/>
+								</div>
+							)}
 						</div>
 
 						{/* Action Buttons & Toggles */}
@@ -842,7 +858,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								{fetchReplyError}
 							</Box>
 						)}
-						<ReplyToPostPreview replyTo={post.variants[activeTab]?.replyTo} />
+						<ReplyPreview 
+							htmlContent={post.variants[activeTab]?.replyTo?.authorPostContent}
+							author={post.variants[activeTab]?.replyTo?.author}
+							username={post.variants[activeTab]?.replyTo?.authorUsername}
+						/>
 					</div>
 				</Card>
 			)}
@@ -1124,38 +1144,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				activeTab={activeTab}
 				media={post.variants[activeTab]?.media?.filter(Boolean) as MediaItem[] || []}
 				isReply={seriesType === "reply"}
-				replyToUsername={detectedPlatform === "x" ? extractUsernameFromUrl(replyUrl) : undefined}
+				isQuote={isQuoteTweet}
+				replyTo={post.variants[activeTab]?.replyTo}
 				isThread={isThread}
 				threadPosts={threadPosts}
 				replyUrl={replyUrl}
 			/>
 		</div>
 	);
-}
-
-const ReplyToPostPreview = ({ replyTo }: { replyTo: any }) => {
-	if (!replyTo?.authorPostContent) return null;
-
-	useEffect(() => {
-		// Ensure the Twitter widget script is loaded and run
-		if (window.twttr?.widgets?.load) {
-			window.twttr.widgets.load();
-		}
-	}, [replyTo.authorPostContent]);
-
-	// Directly render the raw HTML. The Twitter script will handle the rest.
-	return (
-		<div 
-			className="mt-4 [&>blockquote]:!m-0"
-			dangerouslySetInnerHTML={{ __html: replyTo.authorPostContent }}
-		/>
-	);
-};
-
-declare global {
-	interface Window {
-		twttr?: any;
-	}
 }
 
 const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
