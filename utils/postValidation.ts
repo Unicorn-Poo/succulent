@@ -48,6 +48,40 @@ export const detectPlatformFromUrl = (url: string): string | null => {
 };
 
 /**
+ * Extracts a post ID from a social media URL.
+ * This is a best-effort parser and may not cover all URL formats.
+ * @param url - The social media post URL
+ * @returns The extracted post ID or null.
+ */
+export const extractPostIdFromUrl = (url: string): string | null => {
+	const platform = detectPlatformFromUrl(url);
+	let match;
+
+	switch (platform) {
+		case 'x':
+		case 'twitter':
+			return extractTweetId(url);
+		case 'facebook':
+			match = url.match(/posts\/(\d+)/) || 
+					url.match(/story_fbid=(\d+)/) || 
+					url.match(/videos\/(\d+)/);
+			return match ? match[1] : null;
+		case 'instagram':
+			match = url.match(/\/p\/([\w-]+)/);
+			return match ? match[1] : null;
+		case 'linkedin':
+			match = url.match(/\/posts\/([\w-]+)/) || 
+					url.match(/urn:li:activity:(\d+)/);
+			return match ? match[1] : null;
+		case 'youtube':
+			match = url.match(/watch\?v=([\w-]+)/);
+			return match ? match[1] : null;
+		default:
+			return null;
+	}
+};
+
+/**
  * Validates post content based on platform-specific rules
  * @param content - Post content
  * @param platform - Target platform

@@ -1,5 +1,5 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
-import { extractTweetId } from './postValidation';
+import { extractTweetId, detectPlatformFromUrl, extractPostIdFromUrl } from './postValidation';
 import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
 
 /**
@@ -14,6 +14,7 @@ export interface PostData {
 		thread?: boolean;
 		threadNumber?: boolean;
 		replyToTweetId?: string;
+		mediaUrls?: string[];
 	};
 	instagramOptions?: any;
 	facebookOptions?: any;
@@ -45,36 +46,58 @@ export const handleStandardPost = async (postData: PostData) => {
 };
 
 /**
+ * Fetches the content of a public social media post from its URL.
+ * NOTE: This assumes a hypothetical Ayrshare endpoint (`/utils/url-info`) exists 
+ * for scraping post data, as this is not explicitly in the public documentation.
+ * @param url - The URL of the post to fetch.
+ * @returns The structured content of the post.
+ */
+export const fetchPostContent = async (url: string) => {
+	const response = await fetch(`/api/url-info?url=${encodeURIComponent(url)}`);
+
+	if (!response.ok) {
+		const errorData = await response.json();
+		throw new Error(errorData.error || 'Failed to fetch post content.');
+	}
+
+	const result = await response.json();
+	return result;
+};
+
+/**
  * Handles reply functionality for different platforms
  * @param postData - Post data
  * @param replyUrl - URL of post to reply to
  * @returns API response
  */
 export const handleReplyPost = async (postData: PostData, replyUrl: string) => {
-	const updatedPostData = { ...postData };
+	const detectedPlatform = detectPlatformFromUrl(replyUrl);
 
-	// Handle Twitter/X replies
-	if (postData.platforms.includes('x') || postData.platforms.includes('twitter')) {
+	if (!detectedPlatform) {
+		throw new Error("Could not detect a supported platform from the provided URL.");
+	}
+
+	if (!postData.platforms.includes(detectedPlatform)) {
+		throw new Error(`To reply, you must select the platform corresponding to the URL (${detectedPlatform}).`);
+	}
+
+	// We are only replying on the detected platform.
+	const replyPostData: PostData = { ...postData, platforms: [detectedPlatform] };
+
+	if (detectedPlatform === 'x' || detectedPlatform === 'twitter') {
 		const tweetId = extractTweetId(replyUrl);
-		if (tweetId) {
-			updatedPostData.twitterOptions = {
-				...updatedPostData.twitterOptions,
-				replyToTweetId: tweetId
-			};
-		}
+		if (!tweetId) throw new Error("Could not extract Tweet ID from the URL.");
+		
+		replyPostData.twitterOptions = { ...replyPostData.twitterOptions, replyToTweetId: tweetId };
+		return handleStandardPost(replyPostData);
+	} else {
+		// For other platforms, use the comment endpoint
+		const postId = extractPostIdFromUrl(replyUrl);
+		if (!postId) throw new Error(`Could not extract Post ID from the URL for ${detectedPlatform}.`);
+		
+		// The /comment endpoint needs `id` and `post` (comment content).
+		return handleCommentPost({ post: replyPostData.post, platforms: [detectedPlatform] }, postId, detectedPlatform);
 	}
-
-	// For other platforms, replies are handled as comments
-	// This would require additional API calls to the comments endpoint
-	const nonTwitterPlatforms = postData.platforms.filter(p => p !== 'x' && p !== 'twitter');
-	
-	if (nonTwitterPlatforms.length > 0) {
-		// TODO: Implement comment posting for non-Twitter platforms
-		console.log('Comment posting for platforms:', nonTwitterPlatforms);
-		// This would involve calling the /comments endpoint after the original post
-	}
-
-	return handleStandardPost(updatedPostData);
 };
 
 /**

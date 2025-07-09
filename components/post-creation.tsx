@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Button, Card, TextArea, TextField, Dialog, Box, Text, Badge } from "@radix-ui/themes";
+import { Button, Card, TextArea, TextField, Dialog, Box, Text, Badge, Switch, Avatar } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import { Input } from "./input";
 import {
@@ -24,7 +24,8 @@ import {
 	Eye,
 	Upload,
 	ChevronLeft,
-	ChevronRight
+	ChevronRight,
+	ListTree
 } from "lucide-react";
 import { Post, PostFullyLoaded } from "../app/schema";
 import Image from "next/image";
@@ -39,9 +40,18 @@ import {
 	handleReplyPost, 
 	handleMultiPosts, 
 	handleApiError,
-	PostData 
+	PostData,
+	fetchPostContent
 } from "../utils/apiHandlers";
 import { PreviewModal } from "./preview-modal";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+  } from "./tooltip"
+import { PlatformPreview } from "./platform-previews";
+import parse, { domToReact, HTMLReactParserOptions } from 'html-react-parser';
 
 type SeriesType = "reply" | "multi";
 
@@ -58,22 +68,6 @@ interface PostCreationProps {
 		}>;
 	};
 }
-
-// Post type options with icons and descriptions
-const postTypeOptions = [
-	{
-		value: "standard",
-		label: "Standard",
-		icon: Hash,
-		description: "Regular single post. Use double line breaks to create a thread."
-	},
-	{
-		value: "reply",
-		label: "Reply/Comment",
-		icon: MessageSquare,
-		description: "Reply to existing post"
-	}
-];
 
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
 	const [activeTab, setActiveTab] = useState("base");
@@ -94,26 +88,48 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [errors, setErrors] = useState<string[]>([]);
 	const [success, setSuccess] = useState("");
 	const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([]);
-	const [showThreadPreview, setShowThreadPreview] = useState(false);
 	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 	const [showPreviewModal, setShowPreviewModal] = useState(false);
+	const [manualThreadMode, setManualThreadMode] = useState(false);
+	const [isFetchingReply, setIsFetchingReply] = useState(false);
+	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
+
+	const hasMultipleAccounts = useMemo(() => {
+		return selectedPlatforms.filter(p => p !== 'base').length > 1;
+	}, [selectedPlatforms]);
 
 	// Ref for dropdown to handle clicks outside
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	const isThread = useMemo(() => {
-		const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
-		return content.includes('\n\n');
-	}, [contextText, post.variants, activeTab]);
+	const handleToggleReplyMode = useCallback(() => {
+		setSeriesType(prev => prev === 'reply' ? null : 'reply');
+	}, []);
 
-	const isImplicitTwitterThread = useMemo(() => {
-		const currentPlatform = accountGroup.accounts[activeTab]?.platform;
-		if (seriesType !== null || (currentPlatform !== 'x' && currentPlatform !== 'twitter')) {
-			return false;
-		}
+	const isExplicitThread = useMemo(() => {
 		const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
-		return content.length > PLATFORM_CHARACTER_LIMITS.x;
-	}, [activeTab, seriesType, contextText, post.variants, accountGroup.accounts]);
+		return manualThreadMode && content.includes('\n\n');
+	}, [manualThreadMode, contextText, post.variants, activeTab]);
+
+	const isImplicitThread = useMemo(() => {
+		const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
+		const platform = accountGroup.accounts[activeTab]?.platform || 'default';
+		const limit = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
+		return content.length > limit;
+	}, [contextText, post.variants, activeTab, accountGroup.accounts]);
+
+	const isThread = isExplicitThread || isImplicitThread;
+
+	// Sync component state with the post variant's replyTo data
+	useEffect(() => {
+		const replyToData = post.variants[activeTab]?.replyTo;
+		if (replyToData?.url) {
+			setReplyUrl(replyToData.url);
+			setSeriesType('reply');
+		} else {
+			setReplyUrl('');
+			setSeriesType(null);
+		}
+	}, [activeTab, post.variants]);
 
 	// Memoized values for performance
 	const isValidReplyUrl = useMemo(() => 
@@ -193,13 +209,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Thread preview generation with useCallback for performance
 	const updateThreadPreview = useCallback((text: string) => {
-		if (isThread || isImplicitTwitterThread) {
+		if (isThread) {
 			const threads = generateThreadPreview(text, activeTab);
 			setThreadPosts(threads);
 		} else {
 			setThreadPosts([]);
 		}
-	}, [isThread, isImplicitTwitterThread, activeTab]);
+	}, [isThread, activeTab]);
 
 	useEffect(() => {
 		if (contextText) {
@@ -213,13 +229,73 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	useEffect(() => {
 		const text = contextText ?? post.variants[activeTab]?.text?.toString() ?? '';
-		if (isThread || isImplicitTwitterThread) {
+		if (isThread) {
 			const threads = generateThreadPreview(text, activeTab);
 			setThreadPosts(threads);
 		} else {
 			setThreadPosts([]);
 		}
-	}, [contextText, post.variants, activeTab, isThread, isImplicitTwitterThread]);
+	}, [contextText, post.variants, activeTab, isThread]);
+
+	useEffect(() => {
+		const replyToData = post.variants[activeTab]?.replyTo;
+
+		// Only fetch if the URL is valid and we don't already have the content for this URL
+		if (isValidReplyUrl && (!replyToData || replyToData.url !== replyUrl || !replyToData.authorPostContent)) {
+			const fetchContent = async () => {
+				setIsFetchingReply(true);
+				setFetchReplyError(null);
+				try {
+					const postContent = await fetchPostContent(replyUrl);
+					// Save the fetched data to Jazz
+					const variant = post.variants[activeTab];
+					if (variant) {
+						variant.replyTo = {
+							url: replyUrl,
+							platform: detectedPlatform || undefined,
+							author: postContent.author,
+							authorUsername: postContent.authorUsername,
+							authorPostContent: postContent.authorPostContent,
+							authorAvatar: postContent.avatar,
+						};
+					}
+				} catch (error) {
+					setFetchReplyError(error instanceof Error ? error.message : "Failed to fetch post.");
+				} finally {
+					setIsFetchingReply(false);
+				}
+			};
+	
+			// Debounce the fetch
+			const handler = setTimeout(() => {
+				fetchContent();
+			}, 500); // 500ms delay
+	
+			return () => {
+				clearTimeout(handler);
+			};
+		} else if (!isValidReplyUrl) {
+			setFetchReplyError(null);
+			const variant = post.variants[activeTab];
+			if (variant && variant.replyTo) {
+				// Clear replyTo data if the URL is cleared or invalid
+				variant.replyTo = {};
+			}
+		}
+	}, [replyUrl, isValidReplyUrl, activeTab, post.variants, detectedPlatform]);
+
+	useEffect(() => {
+		// When a platform is detected from the reply URL, switch to that tab
+		if (detectedPlatform && seriesType === 'reply') {
+			// Find the account key that matches the detected platform
+			const accountKey = Object.keys(accountGroup.accounts).find(
+				key => accountGroup.accounts[key].platform === detectedPlatform
+			);
+			if (accountKey) {
+				setActiveTab(accountKey);
+			}
+		}
+	}, [detectedPlatform, seriesType, accountGroup.accounts]);
 
 	// Save content to post variant (not publishing)
 	const handleSaveContent = useCallback(async () => {
@@ -274,47 +350,63 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				m?.type === "image" ? m?.image?.toString() : m?.video?.toString()
 			)?.filter((url): url is string => Boolean(url)) || [];
 
-			// Prepare base post data
-			const basePostData: PostData = {
-				post: postText,
-				platforms: platforms,
-				...((seriesType !== 'reply' && mediaUrls.length > 0) && { mediaUrls }),
-				...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
-			};
-
-			let result;
-
-			const isTwitterPlatform = (p: string) => p === 'x' || p === 'twitter';
-			const twitterPlatforms = platforms.filter(isTwitterPlatform);
-			const otherPlatforms = platforms.filter(p => !isTwitterPlatform(p));
-
-			// Handle Twitter posts
-			if (twitterPlatforms.length > 0) {
-				const isTwitterThread = isThread || isImplicitTwitterThread;
-				const twitterPostData = {
-					...basePostData,
-					platforms: twitterPlatforms,
-					mediaUrls: undefined,
-					...(isTwitterThread && {
-						twitterOptions: {
-							thread: true,
-							threadNumber: true,
-							mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
-						}
-					}),
+			// Handle different post types and platforms
+			if (seriesType === "reply" && replyUrl && isValidReplyUrl) {
+				const replyData = {
+					post: postText,
+					platforms,
+					...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
 				};
-				await handleStandardPost(twitterPostData);
-			}
+				await handleReplyPost(replyData, replyUrl);
+			} else {
+				const twitterPlatforms = platforms.filter(p => p === 'x' || p === 'twitter');
+				const otherPlatforms = platforms.filter(p => p !== 'x' && p !== 'twitter');
+				const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
 
-			// Handle other platforms
-			if (otherPlatforms.length > 0) {
-				const otherPlatformsPostData = { ...basePostData, platforms: otherPlatforms };
-				if (isThread) {
-					// Post as a thread (main post + comments)
-					await handleMultiPosts(otherPlatformsPostData, threadPosts);
-				} else {
-					// Post as a standard post
-					await handleStandardPost(otherPlatformsPostData);
+				// Handle Twitter
+				if (twitterPlatforms.length > 0) {
+					const isTwitterThread = (manualThreadMode && content.includes('\n\n')) || content.length > PLATFORM_CHARACTER_LIMITS.x;
+					const twitterPostData: PostData = {
+						post: content,
+						platforms: twitterPlatforms,
+						...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
+						...(isTwitterThread && {
+							twitterOptions: {
+								thread: true,
+								threadNumber: true,
+								mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+							}
+						}),
+						...(!isTwitterThread && mediaUrls.length > 0 && { mediaUrls }),
+					};
+					await handleStandardPost(twitterPostData);
+				}
+
+				// Handle other platforms
+				if (otherPlatforms.length > 0) {
+					const threadedPlatforms: string[] = [];
+					const standardPlatforms: string[] = [];
+
+					otherPlatforms.forEach(platformKey => {
+						const platformInfo = accountGroup.accounts[platformKey];
+						const platformName = platformInfo?.platform || 'default';
+						const limit = PLATFORM_CHARACTER_LIMITS[platformName as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
+						
+						if ((manualThreadMode && content.includes('\n\n')) || content.length > limit) {
+							threadedPlatforms.push(platformKey);
+						} else {
+							standardPlatforms.push(platformKey);
+						}
+					});
+
+					if (standardPlatforms.length > 0) {
+						await handleStandardPost({ post: content, platforms: standardPlatforms, mediaUrls, ...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) });
+					}
+			
+					if (threadedPlatforms.length > 0) {
+						const threads = generateThreadPreview(content, 'default');
+						await handleMultiPosts({ post: content, platforms: threadedPlatforms, mediaUrls, ...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) }, threads);
+					}
 				}
 			}
 
@@ -339,8 +431,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		isValidReplyUrl, 
 		threadPosts, 
 		postingInterval,
-		isImplicitTwitterThread,
-		isThread
+		isThread,
+		manualThreadMode,
 	]);
 
 	const handleContentChange = useCallback((newContent: string) => {
@@ -348,6 +440,26 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		// Clear any previous success messages when editing
 		setSuccess("");
 	}, []);
+
+	const handleReplyUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const newUrl = e.target.value;
+		setReplyUrl(newUrl);
+
+		// Immediately update the URL in the Jazz object
+		const variant = post.variants[activeTab];
+		if (variant) {
+			if (!variant.replyTo) {
+				variant.replyTo = {};
+			}
+			variant.replyTo.url = newUrl;
+			// Clear old content when URL changes
+			if (!newUrl) {
+				variant.replyTo = {};
+			} else {
+				variant.replyTo.authorPostContent = undefined; 
+			}
+		}
+	};
 
 	const handleTitleSave = useCallback(() => {
 		setIsEditingTitle(false);
@@ -488,53 +600,80 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						const displayName = platform === "base" 
 							? "Base" 
 							: account?.name || platform;
+						const isReplyAndNotBase = seriesType === 'reply' && platform !== 'base';
+						const isDisabled = seriesType === 'reply' && platform !== 'base' && detectedPlatform !== account?.platform;
 
 						return (
-							<div key={platform} className="flex items-center">
-								<Button
-									variant={activeTab === platform ? "solid" : "outline"}
-									size="2"
-									onClick={() => setActiveTab(platform)}
-									className="flex items-center gap-2"
-								>
-									<Image
-										src={platformIcon}
-										alt={platform}
-										width={16}
-										height={16}
-									/>
-									{displayName}
-									{/* Don't show edited badge on base component */}
-									{platform !== "base" && post.variants[platform]?.edited && (
-										<Badge variant="soft" color="orange" className="ml-1">
-											•
-										</Badge>
+							<TooltipProvider key={platform}>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<div className="flex items-center">
+											<Button
+												variant={activeTab === platform ? "solid" : "outline"}
+												size="2"
+												onClick={() => !isDisabled && setActiveTab(platform)}
+												className="flex items-center gap-2"
+												disabled={isDisabled}
+											>
+												<Image
+													src={platformIcon}
+													alt={platform}
+													width={16}
+													height={16}
+												/>
+												{displayName}
+												{/* Hide edited badge in reply mode */}
+												{seriesType !== 'reply' && platform !== "base" && post.variants[platform]?.edited && (
+													<Badge variant="soft" color="orange" className="ml-1">
+														•
+													</Badge>
+												)}
+												{platform !== "base" && (
+													<span
+														onClick={(e) => {
+															e.stopPropagation(); // Prevent tab switch
+															handleRemoveAccount(platform);
+														}}
+														className="ml-1 p-0.5 rounded-full hover:bg-gray-500/20"
+													>
+														<X className="w-3 h-3" />
+													</span>
+												)}
+											</Button>
+										</div>
+									</TooltipTrigger>
+									{isDisabled && (
+										<TooltipContent>
+											<p>Replies are only available for the detected platform.</p>
+										</TooltipContent>
 									)}
-								</Button>
-								{platform !== "base" && (
-									<Button
-										size="1"
-										variant="ghost"
-										onClick={() => handleRemoveAccount(platform)}
-										className="ml-1"
-									>
-										<X className="w-3 h-3" />
-									</Button>
-								)}
-							</div>
+								</Tooltip>
+							</TooltipProvider>
 						);
 					})}
 					
 					{availableAccounts.length > 0 && (
-						<Button
-							variant="outline"
-							size="2"
-							onClick={() => setShowAddAccountDialog(true)}
-							className="flex items-center gap-2"
-						>
-							<Plus className="w-4 h-4" />
-							Add Account
-						</Button>
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										variant="outline"
+										size="2"
+										onClick={() => setShowAddAccountDialog(true)}
+										className="flex items-center gap-2"
+										disabled={seriesType === 'reply'}
+									>
+										<Plus className="w-4 h-4" />
+										Add Account
+									</Button>
+								</TooltipTrigger>
+								{seriesType === 'reply' && (
+									<TooltipContent>
+										<p>You cannot add accounts while in reply mode.</p>
+									</TooltipContent>
+								)}
+							</Tooltip>
+						</TooltipProvider>
 					)}
 				</div>
 			</div>
@@ -543,127 +682,114 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			<Card>
 				<div className="p-4 space-y-4">
 					<div className="flex items-start justify-between gap-2">
-						{/* Post Type Dropdown */}
-						<div className="relative" ref={dropdownRef}>
-							<Button
-								variant="outline"
-								onClick={() => setShowPostTypeDropdown(!showPostTypeDropdown)}
-								className="w-full max-w-xs flex items-center justify-between py-2 px-4"
-							>
-								<div className="flex items-center gap-2">
-									{(() => {
-										const currentOption = postTypeOptions.find(option => option.value === currentPostType);
-										const IconComponent = currentOption?.icon || Hash;
-										return (
-											<>
-												<IconComponent className="w-4 h-4" />
-												<span className="hidden sm:inline">{currentOption?.label || "Standard"}</span>
-											</>
-										);
-									})()}
-								</div>
-								<ChevronDown className="w-4 h-4" />
-							</Button>
-							
-							{showPostTypeDropdown && (
-								<Card className="absolute top-full mt-1 w-full max-w-xs z-50 shadow-lg">
-									<div className="p-2 space-y-1">
-										{postTypeOptions.map((option) => {
-											const IconComponent = option.icon;
-											return (
-												<Button
-													key={option.value}
-													variant={currentPostType === option.value ? "soft" : "ghost"}
-													onClick={() => {
-														handlePostTypeChange(option.value);
-														setShowPostTypeDropdown(false);
-													}}
-													className="w-full flex items-center justify-start gap-2 p-2 h-auto py-2 px-4"
-												>
-													<IconComponent className="w-4 h-4 flex-shrink-0" />
-													<div className="text-left">
-														<div className="font-medium">{option.label}</div>
-														<div className="text-sm text-gray-500">{option.description}</div>
-													</div>
-												</Button>
-											);
-										})}
-									</div>
-								</Card>
-							)}
+						{/* Post Type Actions */}
+						<div className="flex items-center gap-2">
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant={seriesType === 'reply' ? 'soft' : 'outline'}
+											onClick={handleToggleReplyMode}
+											disabled={hasMultipleAccounts}
+										>
+											<MessageSquare className="w-4 h-4" />
+											<span className="hidden sm:inline ml-2">Reply</span>
+										</Button>
+									</TooltipTrigger>
+									{hasMultipleAccounts && (
+										<TooltipContent>
+											<p>Replies can only be sent from a single account.</p>
+										</TooltipContent>
+									)}
+								</Tooltip>
+							</TooltipProvider>
 						</div>
 
-						{/* Action Buttons */}
-						<div className="flex items-center gap-2 ml-auto">
-							{/* Preview Button */}
-							<Button
-								variant="outline"
-								size="2"
-								onClick={handlePreview}
-							>
-								<Eye className="w-4 h-4 mr-2" />
-								<span className="hidden sm:inline">Preview</span>
-							</Button>
-							
-							{/* Schedule Button */}
-							<Button
-								variant="outline"
-								size="2"
-								onClick={() => setShowSettings(true)}
-								className="flex items-center gap-2"
-							>
-								{scheduledDate ? (
-									<>
-										<CalendarDays className="w-4 h-4" />
-										<span className="hidden sm:inline">
-											{scheduledDate.toLocaleDateString(undefined, { 
-												month: 'short', 
-												day: 'numeric',
-												hour: '2-digit',
-												minute: '2-digit'
-											})}
-										</span>
-										<span className="sm:hidden">
-											{scheduledDate.toLocaleDateString(undefined, { 
-												month: 'short', 
-												day: 'numeric'
-											})}
-										</span>
-									</>
-								) : (
-									<>
-										<Calendar className="w-4 h-4" />
-										<span className="hidden sm:inline">Schedule</span>
-									</>
-								)}
-							</Button>
+						{/* Action Buttons & Toggles */}
+						<div className="flex items-center justify-end gap-4">
+							{/* Thread Toggle */}
+							<div className="flex items-center gap-2">
+								<Label.Root htmlFor="thread-toggle" className="text-sm font-medium">
+									Create Thread
+								</Label.Root>
+								<Switch
+									id="thread-toggle"
+									checked={manualThreadMode}
+									onCheckedChange={setManualThreadMode}
+								/>
+							</div>
 
-							{/* Publish Button - appears when content is saved and ready to publish */}
-							{showPublishButton && (
+							<div className="flex items-center gap-2">
+								{/* Preview Button */}
 								<Button
-									onClick={handlePublishPost}
-									disabled={isScheduling}
+									variant="outline"
+									size="2"
+									onClick={handlePreview}
+								>
+									<Eye className="w-4 h-4 mr-2" />
+									<span className="hidden sm:inline">Preview</span>
+								</Button>
+								
+								{/* Schedule Button */}
+								<Button
+									variant="outline"
+									size="2"
+									onClick={() => setShowSettings(true)}
 									className="flex items-center gap-2"
 								>
-									{isScheduling ? (
+									{scheduledDate ? (
 										<>
-											<Loader2 className="w-4 h-4 animate-spin" />
-											<span className="hidden sm:inline">{scheduledDate ? "Scheduling..." : "Publishing..."}</span>
+											<CalendarDays className="w-4 h-4" />
+											<span className="hidden sm:inline">
+												{scheduledDate.toLocaleDateString(undefined, { 
+													month: 'short', 
+													day: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit'
+												})}
+											</span>
+											<span className="sm:hidden">
+												{scheduledDate.toLocaleDateString(undefined, { 
+													month: 'short', 
+													day: 'numeric'
+												})}
+											</span>
 										</>
 									) : (
 										<>
-											<Globe className="w-4 h-4" />
-											<span className="hidden sm:inline">{scheduledDate ? "Schedule" : "Publish"}</span>
+											<Calendar className="w-4 h-4" />
+											<span className="hidden sm:inline">Schedule</span>
 										</>
 									)}
 								</Button>
-							)}
+
+								{/* Publish Button - appears when content is saved and ready to publish */}
+								{showPublishButton && (
+									<Button
+										onClick={handlePublishPost}
+										disabled={isScheduling}
+										className="flex items-center gap-2"
+									>
+										{isScheduling ? (
+											<>
+												<Loader2 className="w-4 h-4 animate-spin" />
+												<span className="hidden sm:inline">{scheduledDate ? "Scheduling..." : "Publishing..."}</span>
+											</>
+										) : (
+											<>
+												<Globe className="w-4 h-4" />
+												<span className="hidden sm:inline">{scheduledDate ? "Schedule" : "Publish"}</span>
+											</>
+										)}
+									</Button>
+								)}
+							</div>
 						</div>
 					</div>
 
 					{/* Post Type Descriptions */}
 					{seriesType === "reply" && (
-						<Box className="bg-blue-50 p-3 rounded-lg">
+						<Box className="bg-blue-50 p-3 rounded-lg mt-4">
 							<Text size="2" color="blue">
 								{getReplyDescription()} Replies do not support media.
 							</Text>
@@ -693,11 +819,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								type="url"
 								placeholder="Paste the URL of the post you want to reply to..."
 								value={replyUrl}
-								onChange={(e) => setReplyUrl(e.target.value)}
+								onChange={handleReplyUrlChange}
 								className={isValidReplyUrl ? "border-green-500" : replyUrl ? "border-red-500" : ""}
 							/>
 							{replyUrl && (
-								<div className="flex items-center gap-2 text-sm">
+								<div className="flex items-center gap-2 text-sm mt-2">
 									{isValidReplyUrl ? (
 										<>
 											<Check className="w-4 h-4 text-green-500" />
@@ -712,81 +838,61 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</div>
 							)}
 						</div>
+						{isFetchingReply && (
+							<Box className="flex items-center gap-2 text-sm text-gray-500">
+								<Loader2 className="w-4 h-4 animate-spin" />
+								<span>Fetching post...</span>
+							</Box>
+						)}
+						{fetchReplyError && (
+							 <Box className="text-sm text-red-600">
+								{fetchReplyError}
+							</Box>
+						)}
+						<ReplyToPostPreview replyTo={post.variants[activeTab]?.replyTo} />
 					</div>
 				</Card>
 			)}
 
-			{/* Thread Preview */}
-			{isThread && (
-				<Card>
-					<div className="p-4 space-y-3">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<ListOrdered className="w-4 h-4" />
-								<Text weight="medium">Thread Preview ({threadPosts.length} posts)</Text>
-							</div>
-							<Button
-								variant="ghost"
-								size="1"
-								onClick={() => setShowThreadPreview(!showThreadPreview)}
-							>
-								{showThreadPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-							</Button>
-						</div>
-						
-						{showThreadPreview && (
-							<div className="space-y-2 max-h-60 overflow-y-auto">
-								{threadPosts.map((thread, index) => (
-									<div key={index} className="bg-gray-50 p-3 rounded border-l-4 border-blue-500">
-										<div className="flex items-center gap-2 mb-2">
-											<Badge variant="soft" size="1">{thread.index}/{thread.total}</Badge>
-											<Text size="1" color="gray">{thread.characterCount} characters</Text>
-										</div>
-										<Text size="2">{thread.content}</Text>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-				</Card>
-			)}
 
 			{/* Main Post Content */}
 			<Card>
 				<div className="p-6 space-y-6">
 					{/* Media Display */}
-					{(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
+					{seriesType !== 'reply' ? (
 						<div className="space-y-2">
-							<div className="relative group">
-								<MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as MediaItem[]} />
-								<Button
-									variant="soft"
-									size="1"
-									onClick={handleImageUpload}
-									className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-								>
-									<Plus className="w-4 h-4" />
-								</Button>
-							</div>
+							{(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
+								<div className="relative group">
+									<MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as MediaItem[]} />
+									<Button
+										variant="soft"
+										size="1"
+										onClick={handleImageUpload}
+										className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+									>
+										<Plus className="w-4 h-4" />
+									</Button>
+								</div>
+							) : (
+								<div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
+									<Button
+										variant="soft"
+										onClick={handleImageUpload}
+									>
+										<Upload className="w-4 h-4 mr-2" />
+										Add Media
+									</Button>
+								</div>
+							)}
 						</div>
-					) : (
-						<div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
-							<Button
-								variant="soft"
-								onClick={handleImageUpload}
-							>
-								<Upload className="w-4 h-4 mr-2" />
-								Add Media
-							</Button>
-						</div>
-					)}
+					) : null}
 
 					{/* Content Editor */}
 					<div className="space-y-4">
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								{/* Don't show edited badge on base component */}
-								{activeTab !== "base" && post.variants[activeTab]?.edited && (
+								{seriesType !== 'reply' && activeTab !== "base" && post.variants[activeTab]?.edited && (
 									<Badge variant="soft" color="orange">
 										<Edit3 className="w-3 h-3 mr-1" />
 										Edited
@@ -812,10 +918,16 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							
 							{/* Character count */}
 							<div className="absolute bottom-2 right-2 text-sm text-gray-500 flex items-center gap-2">
-								{isThread && (
+								{isImplicitThread && (
 									<Badge color="blue" variant="soft">
-										<ListOrdered className="w-3 h-3 mr-1" />
-										Auto-Thread
+										<ListTree className="w-3 h-3 mr-1" />
+										Auto-threaded
+									</Badge>
+								)}
+								{isExplicitThread && (
+									<Badge color="green" variant="soft">
+										<ListTree className="w-3 h-3 mr-1" />
+										Thread
 									</Badge>
 								)}
 								<span>{(contextText || post.variants[activeTab]?.text?.toString() || "").length} characters</span>
@@ -852,6 +964,32 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					</div>
 				</div>
 			</Card>
+
+			{/* Thread Preview */}
+			{isThread && threadPosts.length > 1 && (
+				<Card>
+					<div className="p-4 space-y-3">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<ListOrdered className="w-4 h-4" />
+								<Text weight="medium">Thread Preview ({threadPosts.length} posts)</Text>
+							</div>
+						</div>
+						
+						<div className="space-y-2 max-h-60 overflow-y-auto">
+							{threadPosts.map((thread, index) => (
+								<div key={index} className="bg-gray-50 p-3 rounded border-l-4 border-blue-500">
+									<div className="flex items-center gap-2 mb-2">
+										<Badge variant="soft" size="1">{thread.index}/{thread.total}</Badge>
+										<Text size="1" color="gray">{thread.characterCount} characters</Text>
+									</div>
+									<Text size="2">{thread.content}</Text>
+								</div>
+							))}
+						</div>
+					</div>
+				</Card>
+			)}
 
 			{/* Status Messages */}
 			{errors.length > 0 && (
@@ -994,13 +1132,78 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				media={post.variants[activeTab]?.media?.filter(Boolean) as MediaItem[] || []}
 				isReply={seriesType === "reply"}
 				replyToUsername={detectedPlatform === "x" ? extractUsernameFromUrl(replyUrl) : undefined}
-				isThread={isThread || isImplicitTwitterThread}
+				isThread={isThread}
 				threadPosts={threadPosts}
 				replyUrl={replyUrl}
 			/>
 		</div>
 	);
 }
+
+const ReplyToPostPreview = ({ replyTo }: { replyTo: any }) => {
+	if (!replyTo?.authorPostContent) return null;
+
+	const decodedText = replyTo.authorPostContent;
+	const isTwitter = replyTo.platform === 'x' || replyTo.platform === 'twitter';
+
+	const parserOptions: HTMLReactParserOptions = {
+		replace: (domNode: any) => {
+			if (domNode.type === 'tag' && domNode.name === 'a') {
+				return (
+					<a href={domNode.attribs.href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+						{domToReact(domNode.children, parserOptions)}
+					</a>
+				);
+			}
+			if (domNode.type === 'tag' && domNode.name === 'br') {
+				return <br />;
+			}
+		}
+	};
+	
+	const formattedText = parse(decodedText, parserOptions);
+
+	return (
+		<div className="mt-4">
+      {isTwitter ? (
+        <>
+          {/* <div className="flex items-center mb-2">
+            <Avatar
+              size="2"
+              src={replyTo.authorAvatar || `https://avatar.vercel.sh/${replyTo.authorUsername}`}
+              fallback={replyTo.author ? replyTo.author[0] : 'U'}
+              className="mr-3"
+            />
+            <div>
+              <Text weight="bold" size="2">{replyTo.author}</Text>
+              <Text size="2" color="gray">@{replyTo.authorUsername}</Text>
+            </div>
+          </div> */}
+          <Text as="p" size="2" className="whitespace-pre-wrap">{formattedText}</Text>
+          {/* <PlatformPreview platform={replyTo.platform} content={formattedText} /> */}
+        </>
+      ) : (
+        <>
+          <Text size="1" color="gray" className="mb-2 block">Replying to:</Text>
+          <div className="flex gap-3">
+            <Avatar
+              size="2"
+              src={replyTo.authorAvatar}
+              fallback={replyTo.author ? replyTo.author[0] : 'U'}
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Text weight="bold" size="2">{replyTo.author}</Text>
+                <Text size="2" color="gray">@{replyTo.authorUsername}</Text>
+              </div>
+              <Text as="p" size="2" className="mt-1 whitespace-pre-wrap">{formattedText}</Text>
+            </div>
+          </div>
+        </>
+      )}
+		</div>
+	);
+};
 
 const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
