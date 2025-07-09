@@ -201,6 +201,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 								authorUsername: postContent.authorUsername,
 								authorPostContent: postContent.authorPostContent,
 								authorAvatar: postContent.authorAvatar,
+								likesCount: postContent.likesCount,
 							};
 						}
 						return newPost;

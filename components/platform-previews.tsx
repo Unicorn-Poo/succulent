@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Avatar, Text, Badge, Button, Box } from "@radix-ui/themes";
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { ThreadPost } from "../utils/threadUtils";
 import { MediaItem } from "../app/schema";
@@ -76,6 +76,8 @@ export const TwitterPreview = ({
 							htmlContent={replyTo.authorPostContent} 
 							author={replyTo.author}
 							username={replyTo.authorUsername}
+							platform={replyTo.platform}
+							authorAvatar={replyTo.authorAvatar}
 						/>
 					</div>
 				)}
@@ -98,6 +100,8 @@ export const TwitterPreview = ({
 						htmlContent={replyTo.authorPostContent}
 						author={replyTo.author}
 						username={replyTo.authorUsername}
+						platform={replyTo.platform}
+						authorAvatar={replyTo.authorAvatar}
 					/>
 					<div className="flex gap-3 mt-4">
 						<Avatar
@@ -135,15 +139,104 @@ export const InstagramPreview = ({
 	media = [],
 	isThread = false,
 	threadPosts = [],
-	currentThreadIndex = 0
+	currentThreadIndex = 0,
+	isReply,
+	replyTo
 }: BasePreviewProps) => {
 	const formatTimestamp = (date: Date) => {
 		return date.toLocaleDateString();
 	};
 
+	if (isReply && replyTo) {
+		let username = replyTo.authorUsername || 'unknown';
+		const avatar = replyTo.authorAvatar;
+		let likes = replyTo.likesCount || '0';
+		let commentsCount = '0';
+		let postDate = 'Recently';
+		let caption = '';
+	
+		if (replyTo.authorPostContent) {
+			const rawContent = replyTo.authorPostContent;
+			const likesMatch = rawContent.match(/(\d+)\s*likes/);
+			const commentsMatch = rawContent.match(/(\d+)\s*comments/);
+			const userMatch = rawContent.match(/-\s*(\w+)\s*on/);
+			const dateMatch = rawContent.match(/on\s+(.*?):/);
+			const captionMatch = rawContent.match(/:\s*(.*)/);
+	
+			if (likesMatch) likes = likesMatch[1];
+			if (commentsMatch) commentsCount = commentsMatch[1];
+			if (userMatch) username = userMatch[1];
+			if (dateMatch) postDate = dateMatch[1].toUpperCase();
+			if (captionMatch) {
+				caption = captionMatch[1].trim().replace(/^"/, '').replace(/"\.*$/, '').replace(/&quot;/g, '');
+			}
+		}
+
+		return (
+			<Card className="max-w-md mx-auto bg-white shadow-lg rounded-lg">
+				{/* Header */}
+				<div className="flex items-center justify-between p-3 border-b border-gray-200">
+					<div className="flex items-center gap-3">
+						<Avatar size="2" src={avatar} fallback={username.charAt(0).toUpperCase()} radius="full" />
+						<Text weight="bold" size="2">{username}</Text>
+					</div>
+					<Button variant="ghost" size="1"><MoreHorizontal className="w-5 h-5 text-gray-500" /></Button>
+				</div>
+	
+				{/* Media Area */}
+				<div className="relative aspect-square bg-gray-100 flex items-center justify-center">
+					 <ImageIcon className="w-20 h-20 text-gray-300" />
+				</div>
+	
+				{/* Actions & Details */}
+				<div className="p-3">
+					<div className="flex items-center justify-between mb-3 text-gray-600">
+						<div className="flex items-center gap-4">
+							<Heart className="w-6 h-6" />
+							<MessageCircle className="w-6 h-6" />
+							<Send className="w-6 h-6" />
+						</div>
+						<Bookmark className="w-6 h-6" />
+					</div>
+	
+					<Text size="2" weight="bold" className="block mb-1">{likes} likes</Text>
+					
+					 <div className="space-y-1 mb-2">
+						<Text size="2" as="p">
+							<span className="font-semibold">{username}</span>{" "}
+							<span className="whitespace-pre-wrap">{caption}</span>
+						</Text>
+					</div>
+	
+					<Text size="1" color="gray" className="block cursor-pointer mb-2 hover:underline">View all {commentsCount} comments</Text>
+
+					<div className="mt-2">
+						<Text size="2" as="p">
+							<span className="font-semibold">{account?.displayName || account?.username || 'you'}</span>
+							<span className="whitespace-pre-wrap"> {content}</span>
+						</Text>
+					</div>
+
+					<Text size="1" color="gray" className="block mt-2 uppercase">{postDate}</Text>
+				</div>
+			</Card>
+		);
+	}
+
 	const currentPost = isThread && threadPosts.length > 0 ? threadPosts[currentThreadIndex] : null;
 	const displayContent = currentPost ? currentPost.content : content;
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
+	
+	const authorName = isReply ? replyTo?.author : account?.displayName || 'User';
+	const authorUsername = isReply ? replyTo?.authorUsername : account?.username || 'username';
+	const authorAvatar = isReply ? replyTo?.authorAvatar : account?.avatar;
+	
+	let postContentForDisplay = isReply ? replyTo?.authorPostContent : displayContent;
+	if (isReply && postContentForDisplay) {
+		postContentForDisplay = postContentForDisplay.replace(/"/g, '').replace(/\.$/, '');
+	}
+	
+	const likes = isReply ? (replyTo?.likesCount || '48') : "123";
 
 	return (
 		<Card className="max-w-md mx-auto bg-white">
@@ -152,12 +245,12 @@ export const InstagramPreview = ({
 				<div className="flex items-center gap-3">
 					<Avatar
 						size="2"
-						src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
-						fallback={account?.displayName ? account.displayName[0] : 'U'}
+						src={authorAvatar || `https://avatar.vercel.sh/${authorUsername}`}
+						fallback={authorName ? authorName[0] : 'U'}
 					/>
 					<div>
-						<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
-						{threadInfo && (
+						<Text weight="bold" size="2">{authorUsername}</Text>
+						{isThread && threadInfo && (
 							<Badge variant="soft" size="1" color="purple" className="ml-2">
 								{threadInfo}
 							</Badge>
@@ -169,12 +262,16 @@ export const InstagramPreview = ({
 				</Button>
 			</div>
 
-			{/* Media */}
-			{media.length > 0 && (
-				<div className="relative aspect-square bg-gray-100">
+			{/* Media or Post Content */}
+			<div className="relative aspect-square bg-gray-100 flex items-center justify-center">
+				{isReply && postContentForDisplay ? (
+					<div className="p-4 text-center" dangerouslySetInnerHTML={{ __html: postContentForDisplay }}/>
+				) : media.length > 0 ? (
 					<MultiImageViewer media={media} platform="instagram" />
-				</div>
-			)}
+				) : (
+					<ImageIcon className="w-16 h-16 text-gray-300" />
+				)}
+			</div>
 
 			{/* Actions */}
 			<div className="p-4">
@@ -196,13 +293,13 @@ export const InstagramPreview = ({
 				</div>
 
 				{/* Likes */}
-				<Text size="2" weight="bold" className="block mb-2">0 likes</Text>
+				<Text size="2" weight="bold" className="block mb-2">{likes} likes</Text>
 
 				{/* Caption */}
 				<div className="space-y-1">
 					<Text size="2">
-						<span className="font-semibold">{account?.displayName || 'User'}</span>{" "}
-						<span className="whitespace-pre-wrap">{displayContent}</span>
+						<span className="font-semibold">{authorUsername}</span>{" "}
+						<span className="whitespace-pre-wrap">{postContentForDisplay}</span>
 					</Text>
 					
 					{/* Thread continuation */}
@@ -217,10 +314,16 @@ export const InstagramPreview = ({
 				<Text size="1" color="gray" className="block mt-2">
 					{formatTimestamp(timestamp)}
 				</Text>
+				{isReply && (
+					<div className="mt-4 pt-2 border-t border-gray-200">
+						<p className="text-sm text-gray-500">Replying to <span className="font-semibold">{authorUsername}</span></p>
+					</div>
+				)}
 			</div>
 		</Card>
 	);
 };
+
 
 // Facebook Preview Component
 export const FacebookPreview = ({ 
