@@ -240,14 +240,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	useEffect(() => {
 		const replyToData = post.variants[activeTab]?.replyTo;
 
-		// Only fetch if the URL is valid and we don't already have the content for this URL
-		if (isValidReplyUrl && (!replyToData || replyToData.url !== replyUrl || !replyToData.authorPostContent)) {
+		const shouldFetch = isValidReplyUrl && seriesType === 'reply' && (!replyToData || replyToData.url !== replyUrl || !replyToData.authorPostContent);
+
+		if (shouldFetch) {
 			const fetchContent = async () => {
 				setIsFetchingReply(true);
 				setFetchReplyError(null);
 				try {
 					const postContent = await fetchPostContent(replyUrl);
-					// Save the fetched data to Jazz
 					const variant = post.variants[activeTab];
 					if (variant) {
 						variant.replyTo = {
@@ -256,7 +256,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							author: postContent.author,
 							authorUsername: postContent.authorUsername,
 							authorPostContent: postContent.authorPostContent,
-							authorAvatar: postContent.avatar,
+							authorAvatar: postContent.authorAvatar,
 						};
 					}
 				} catch (error) {
@@ -265,24 +265,18 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					setIsFetchingReply(false);
 				}
 			};
-	
-			// Debounce the fetch
-			const handler = setTimeout(() => {
-				fetchContent();
-			}, 500); // 500ms delay
-	
-			return () => {
-				clearTimeout(handler);
-			};
-		} else if (!isValidReplyUrl) {
-			setFetchReplyError(null);
+
+			const handler = setTimeout(fetchContent, 500);
+			return () => clearTimeout(handler);
+		}
+
+		if (!isValidReplyUrl && replyToData?.url) {
 			const variant = post.variants[activeTab];
 			if (variant && variant.replyTo) {
-				// Clear replyTo data if the URL is cleared or invalid
 				variant.replyTo = {};
 			}
 		}
-	}, [replyUrl, isValidReplyUrl, activeTab, post.variants, detectedPlatform]);
+	}, [replyUrl, isValidReplyUrl, seriesType, activeTab, post.variants, detectedPlatform]);
 
 	useEffect(() => {
 		// When a platform is detected from the reply URL, switch to that tab
@@ -452,11 +446,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				variant.replyTo = {};
 			}
 			variant.replyTo.url = newUrl;
-			// Clear old content when URL changes
 			if (!newUrl) {
 				variant.replyTo = {};
 			} else {
-				variant.replyTo.authorPostContent = undefined; 
+				variant.replyTo.authorPostContent = undefined;
 			}
 		}
 	};
@@ -1143,67 +1136,27 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 const ReplyToPostPreview = ({ replyTo }: { replyTo: any }) => {
 	if (!replyTo?.authorPostContent) return null;
 
-	const decodedText = replyTo.authorPostContent;
-	const isTwitter = replyTo.platform === 'x' || replyTo.platform === 'twitter';
-
-	const parserOptions: HTMLReactParserOptions = {
-		replace: (domNode: any) => {
-			if (domNode.type === 'tag' && domNode.name === 'a') {
-				return (
-					<a href={domNode.attribs.href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-						{domToReact(domNode.children, parserOptions)}
-					</a>
-				);
-			}
-			if (domNode.type === 'tag' && domNode.name === 'br') {
-				return <br />;
-			}
+	useEffect(() => {
+		// Ensure the Twitter widget script is loaded and run
+		if (window.twttr?.widgets?.load) {
+			window.twttr.widgets.load();
 		}
-	};
-	
-	const formattedText = parse(decodedText, parserOptions);
+	}, [replyTo.authorPostContent]);
 
+	// Directly render the raw HTML. The Twitter script will handle the rest.
 	return (
-		<div className="mt-4">
-      {isTwitter ? (
-        <>
-          {/* <div className="flex items-center mb-2">
-            <Avatar
-              size="2"
-              src={replyTo.authorAvatar || `https://avatar.vercel.sh/${replyTo.authorUsername}`}
-              fallback={replyTo.author ? replyTo.author[0] : 'U'}
-              className="mr-3"
-            />
-            <div>
-              <Text weight="bold" size="2">{replyTo.author}</Text>
-              <Text size="2" color="gray">@{replyTo.authorUsername}</Text>
-            </div>
-          </div> */}
-          <Text as="p" size="2" className="whitespace-pre-wrap">{formattedText}</Text>
-          {/* <PlatformPreview platform={replyTo.platform} content={formattedText} /> */}
-        </>
-      ) : (
-        <>
-          <Text size="1" color="gray" className="mb-2 block">Replying to:</Text>
-          <div className="flex gap-3">
-            <Avatar
-              size="2"
-              src={replyTo.authorAvatar}
-              fallback={replyTo.author ? replyTo.author[0] : 'U'}
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Text weight="bold" size="2">{replyTo.author}</Text>
-                <Text size="2" color="gray">@{replyTo.authorUsername}</Text>
-              </div>
-              <Text as="p" size="2" className="mt-1 whitespace-pre-wrap">{formattedText}</Text>
-            </div>
-          </div>
-        </>
-      )}
-		</div>
+		<div 
+			className="mt-4 [&>blockquote]:!m-0"
+			dangerouslySetInnerHTML={{ __html: replyTo.authorPostContent }}
+		/>
 	);
 };
+
+declare global {
+	interface Window {
+		twttr?: any;
+	}
+}
 
 const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
