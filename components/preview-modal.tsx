@@ -56,20 +56,23 @@ export const PreviewModal = ({
 	const [currentThreadIndex, setCurrentThreadIndex] = useState(0);
 	const [previewMode, setPreviewMode] = useState<'current' | 'all'>('current');
 
-	// Get the current platform info
-	const currentPlatform = activeTab === 'base' ? 'x' : activeTab;
-	const currentAccount = accountGroup.accounts[currentPlatform];
-	const currentAccountInfo = {
-		...currentAccount,
-		id: currentAccount?.id || '',
-		platform: currentAccount?.platform || 'x',
-		name: currentAccount?.name || 'User',
-		username: currentAccount?.username || 'user',
-		displayName: currentAccount?.displayName || 'User',
-		avatar: currentAccount?.avatar || '',
-		apiUrl: currentAccount?.apiUrl || '',
-		url: currentAccount?.url || '',
-	};
+	// Determine the account to display for the preview.
+	let displayAccount: any;
+	if (isReply && replyTo?.platform) {
+		// For replies, find the account that matches the platform.
+		displayAccount = Object.values(accountGroup.accounts).find(acc => acc.platform === replyTo.platform);
+	} else if (activeTab !== 'base') {
+		// For a specific tab, use that account.
+		displayAccount = accountGroup.accounts[activeTab];
+	} else {
+		// For the 'base' tab, use the first account as a default for preview.
+		displayAccount = Object.values(accountGroup.accounts)[0];
+	}
+
+	// Fallback to a dummy account object if no accounts exist at all.
+	if (!displayAccount) {
+		displayAccount = { platform: 'x', name: 'User', username: 'user', displayName: 'User', avatar: '' };
+	}
 
 	// Filter platforms to show previews for (exclude 'base')
 	const previewPlatforms = selectedPlatforms.filter(platform => platform !== 'base');
@@ -117,25 +120,27 @@ export const PreviewModal = ({
 				<div className="flex items-center justify-between mb-4">
 					<Dialog.Title>Preview Post</Dialog.Title>
 					<div className="flex items-center gap-2">
-						{/* Preview Mode Toggle */}
-						<div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-							<Button
-								variant={previewMode === 'current' ? 'solid' : 'ghost'}
-								size="1"
-								onClick={() => setPreviewMode('current')}
-							>
-								<Smartphone className="w-4 h-4 mr-1" />
-								Current
-							</Button>
-							<Button
-								variant={previewMode === 'all' ? 'solid' : 'ghost'}
-								size="1"
-								onClick={() => setPreviewMode('all')}
-							>
-								<Grid className="w-4 h-4 mr-1" />
-								All Platforms
-							</Button>
-						</div>
+						{/* Preview Mode Toggle - Hide for replies */}
+						{!isReply && (
+							<div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+								<Button
+									variant={previewMode === 'current' ? 'solid' : 'ghost'}
+									size="1"
+									onClick={() => setPreviewMode('current')}
+								>
+									<Smartphone className="w-4 h-4 mr-1" />
+									Current
+								</Button>
+								<Button
+									variant={previewMode === 'all' ? 'solid' : 'ghost'}
+									size="1"
+									onClick={() => setPreviewMode('all')}
+								>
+									<Grid className="w-4 h-4 mr-1" />
+									All Platforms
+								</Button>
+							</div>
+						)}
 						
 						<Button variant="ghost" size="1" onClick={onClose}>
 							<X className="w-4 h-4" />
@@ -197,24 +202,24 @@ export const PreviewModal = ({
 							<div className="mb-4">
 								<div className="flex items-center gap-2 mb-2">
 									<Image
-										src={getPlatformIcon(currentAccountInfo.platform)}
-										alt={currentAccountInfo.platform}
+										src={getPlatformIcon(displayAccount.platform)}
+										alt={displayAccount.platform}
 										width={24}
 										height={24}
 									/>
 									<Text size="3" weight="medium">
-										{platformLabels[currentAccountInfo.platform as keyof typeof platformLabels] || currentAccountInfo.platform}
+										{platformLabels[displayAccount.platform as keyof typeof platformLabels] || displayAccount.platform}
 									</Text>
 								</div>
 								<Text size="1" color="gray">
-									@{currentAccountInfo.name}
+									@{displayAccount.name}
 								</Text>
 							</div>
 							
 							<PlatformPreview
-								platform={currentAccountInfo.platform}
+								platform={displayAccount.platform}
 								content={content}
-								account={currentAccountInfo}
+								account={displayAccount}
 								timestamp={new Date()}
 								media={media}
 								isReply={isReply}
@@ -283,8 +288,10 @@ export const PreviewModal = ({
 				<div className="flex justify-between items-center mt-4 pt-4 border-t">
 					<div className="flex items-center gap-2 text-sm text-gray-500">
 						<Text size="1">
-							{previewMode === 'current' 
-								? `Previewing for ${platformLabels[currentAccountInfo.platform as keyof typeof platformLabels] || currentAccountInfo.platform}`
+							{previewMode === 'current' && !isReply
+								? `Previewing for ${platformLabels[displayAccount.platform as keyof typeof platformLabels] || displayAccount.platform}`
+								: isReply
+								? `Replying on ${platformLabels[replyTo?.platform as keyof typeof platformLabels] || 'platform'}`
 								: `Previewing for ${previewPlatforms.length} platform${previewPlatforms.length === 1 ? '' : 's'}`
 							}
 						</Text>

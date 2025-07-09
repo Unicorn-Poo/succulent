@@ -54,82 +54,74 @@ export const TwitterPreview = ({
 	const displayContent = currentPost ? currentPost.content : content;
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
 
+	const MainTweet = () => (
+		<div className="flex gap-3">
+			<Avatar
+				size="2"
+				src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+				fallback={account?.displayName ? account.displayName[0] : 'U'}
+				className="flex-shrink-0"
+			/>
+			<div className="flex-1 min-w-0">
+				<div className="flex items-center gap-2 mb-1">
+					<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
+					<Text size="2" color="gray">@{account?.username || 'user'}</Text>
+					<span className="text-gray-500">·</span>
+					<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
+				</div>
+				<div className="mb-3 whitespace-pre-wrap">{displayContent}</div>
+				{isQuote && replyTo && (
+					<div className="border rounded-xl mt-3">
+						<ReplyPreview 
+							htmlContent={replyTo.authorPostContent} 
+							author={replyTo.author}
+							username={replyTo.authorUsername}
+						/>
+					</div>
+				)}
+				<div className="flex items-center justify-between max-w-md text-gray-500">
+					<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500"><MessageCircle className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-green-50 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-red-50 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500"><Share className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-gray-50"><Bookmark className="w-4 h-4" /></Button>
+				</div>
+			</div>
+		</div>
+	);
+
+	if (isReply && !isQuote && replyTo) {
+		return (
+			<Card className="max-w-2xl mx-auto bg-white">
+				<div className="p-4">
+					<ReplyPreview 
+						htmlContent={replyTo.authorPostContent}
+						author={replyTo.author}
+						username={replyTo.authorUsername}
+					/>
+					<div className="flex gap-3 mt-4">
+						<Avatar
+							size="2"
+							src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
+							fallback={account?.displayName ? account.displayName[0] : 'U'}
+							className="flex-shrink-0"
+						/>
+						<div className="flex-1">
+							<Text as="p" color="gray" size="2" className="mb-2">
+								Replying to <a href="#" className="text-blue-500">@{replyTo.authorUsername}</a>
+							</Text>
+							<div className="whitespace-pre-wrap">{displayContent}</div>
+						</div>
+					</div>
+				</div>
+			</Card>
+		);
+	}
+
 	return (
 		<Card className="max-w-2xl mx-auto bg-white">
 			<div className="p-4">
-				{/* Main tweet content */}
-				<div className="flex gap-3">
-					<Avatar
-						size="2"
-						src={account?.avatar || `https://avatar.vercel.sh/${account?.username}`}
-						fallback={account?.displayName ? account.displayName[0] : 'U'}
-						className="flex-shrink-0"
-					/>
-					
-					<div className="flex-1 min-w-0">
-						<div className="flex items-center gap-2 mb-1">
-							<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
-							<Text size="2" color="gray">@{account?.username || 'user'}</Text>
-							<span className="text-gray-500">·</span>
-							<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
-							{threadInfo && (
-								<Badge variant="soft" size="1" color="blue">
-									{threadInfo}
-								</Badge>
-							)}
-						</div>
-						
-						<div className="mb-3 whitespace-pre-wrap">
-							{displayContent}
-						</div>
-
-						{isQuote && replyTo && (
-							<ReplyPreview 
-								htmlContent={replyTo.authorPostContent} 
-								author={replyTo.author}
-								username={replyTo.authorUsername}
-							/>
-						)}
-
-						{media.length > 0 && (
-							<div className="mb-3 rounded-2xl overflow-hidden border">
-								<MultiImageViewer media={media} platform="twitter" />
-							</div>
-						)}
-
-						{isThread && threadPosts.length > 1 && currentThreadIndex < threadPosts.length - 1 && (
-							<div className="flex items-center text-blue-500 text-sm mb-3">
-								<div className="w-0.5 h-4 bg-blue-500 mr-2"></div>
-								<Text size="1">Show this thread</Text>
-							</div>
-						)}
-
-						<div className="flex items-center justify-between max-w-md text-gray-500">
-							<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500">
-								<MessageCircle className="w-4 h-4 mr-2" />
-								<span>0</span>
-							</Button>
-							<Button variant="ghost" size="1" className="hover:bg-green-50 hover:text-green-500">
-								<Repeat2 className="w-4 h-4 mr-2" />
-								<span>0</span>
-							</Button>
-							<Button variant="ghost" size="1" className="hover:bg-red-50 hover:text-red-500">
-								<Heart className="w-4 h-4 mr-2" />
-								<span>0</span>
-							</Button>
-							<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500">
-								<Share className="w-4 h-4" />
-							</Button>
-							<Button variant="ghost" size="1" className="hover:bg-gray-50">
-								<Bookmark className="w-4 h-4" />
-							</Button>
-						</div>
-					</div>
-
-					<Button variant="ghost" size="1" className="flex-shrink-0">
-						<MoreHorizontal className="w-4 h-4" />
-					</Button>
-				</div>
+				<MainTweet />
 			</div>
 		</Card>
 	);
