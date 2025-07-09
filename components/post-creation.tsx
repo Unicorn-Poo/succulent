@@ -862,6 +862,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							htmlContent={post.variants[activeTab]?.replyTo?.authorPostContent}
 							author={post.variants[activeTab]?.replyTo?.author}
 							username={post.variants[activeTab]?.replyTo?.authorUsername}
+							platform={post.variants[activeTab]?.replyTo?.platform}
 						/>
 					</div>
 				</Card>
