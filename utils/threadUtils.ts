@@ -21,8 +21,19 @@ export const generateThreadPreview = (text: string, platform: string = 'default'
 		return [];
 	}
 
+	// If the user manually uses thread breaks, respect them above all else.
+	if (text.includes('\n\n')) {
+		const threads = text.split('\n\n').map(content => content.trim());
+		return threads.map((content, index) => ({
+			content,
+			characterCount: content.length,
+			index: index + 1,
+			total: threads.length
+		}));
+	}
+
 	const maxLength = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
-	const paragraphs = text.split('\n\n').filter(p => p.trim());
+	const paragraphs = text.split('\n').filter(p => p.trim());
 	const threads: string[] = [];
 	let currentThread = "";
 

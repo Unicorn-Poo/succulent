@@ -78,53 +78,62 @@ export const handleReplyPost = async (postData: PostData, replyUrl: string) => {
 };
 
 /**
- * Handles multi-post creation for platforms that don't support native threading
+ * Handles multi-post creation by posting the first item and then commenting with the rest.
  * @param postData - Base post data
  * @param threadPosts - Array of thread posts
- * @param intervalMinutes - Minutes between posts
  * @returns Array of API responses
  */
 export const handleMultiPosts = async (
 	postData: PostData, 
-	threadPosts: ThreadPost[], 
-	intervalMinutes: number = 5
+	threadPosts: ThreadPost[]
 ) => {
-	const promises = threadPosts.map((threadPost, index) => {
-		const threadData: PostData = {
-			...postData,
-			post: formatThreadWithNumbering(threadPost.content, threadPost.index, threadPost.total),
-			// Add delay between posts (except for the first one)
-			...(index > 0 && { 
-				scheduleDate: new Date(Date.now() + (index * intervalMinutes * 60000)).toISOString() 
-			})
-		};
-		
-		return fetch(`${AYRSHARE_API_URL}/post`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-			},
-			body: JSON.stringify(threadData)
-		});
-	});
+	if (threadPosts.length === 0) {
+		throw new Error("No content available to post.");
+	}
 
-	const results = await Promise.all(promises);
-	const responses = await Promise.all(results.map(r => r.json()));
-	
-	// Check for any failures
-	results.forEach((result, index) => {
-		if (!result.ok) {
-			console.error(`Failed to create post ${index + 1}:`, responses[index]);
+	// 1. Post the first item in the thread as the main post
+	const firstPostData: PostData = {
+		...postData,
+		post: threadPosts[0].content,
+	};
+	const firstPostResult = await handleStandardPost(firstPostData);
+
+	// 2. Extract post IDs from the first post's response
+	const postIds = firstPostResult.postIds || {};
+	const successfulPlatforms = Object.keys(postIds);
+
+	if (successfulPlatforms.length === 0) {
+		throw new Error("Initial post failed, cannot post comments.");
+	}
+
+	// 3. Post the remaining items as comments
+	const commentPromises = [];
+	for (let i = 1; i < threadPosts.length; i++) {
+		const commentText = threadPosts[i].content;
+
+		for (const platform of successfulPlatforms) {
+			const platformPostId = postIds[platform];
+			if (platformPostId) {
+				const commentData: PostData = {
+					post: commentText,
+					platforms: [platform],
+				};
+				// We'll post each comment as a reply to the original post.
+				// For a true chain, we'd need to get the comment ID and reply to it,
+				// but this is a solid implementation for most platforms.
+				commentPromises.push(handleCommentPost(commentData, platformPostId, platform));
+			}
 		}
-	});
-	
-	return responses;
+	}
+
+	const commentResults = await Promise.all(commentPromises);
+
+	return [firstPostResult, ...commentResults];
 };
 
 /**
  * Handles comment posting for platforms that support it
- * @param postData - Post data
+ * @param postData - Post data for the comment
  * @param originalPostId - ID of the original post to comment on
  * @param platform - Target platform
  * @returns API response
@@ -134,17 +143,26 @@ export const handleCommentPost = async (
 	originalPostId: string, 
 	platform: string
 ) => {
-	// This is a placeholder for comment functionality
-	// The actual implementation would depend on Ayrshare's comments API
-	console.log('Comment post functionality would be implemented here', {
-		postData,
-		originalPostId,
-		platform
+	const response = await fetch(`${AYRSHARE_API_URL}/comment`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+		},
+		body: JSON.stringify({
+			...postData,
+			id: originalPostId,
+			platforms: [platform] // Ensure we only target one platform per comment
+		})
 	});
+
+	const result = await response.json();
 	
-	// For now, we'll just post as a regular post
-	// In a real implementation, you'd use the /comments endpoint
-	return handleStandardPost(postData);
+	if (!response.ok) {
+		throw new Error(result.message || `Failed to post comment on ${platform}`);
+	}
+
+	return result;
 };
 
 /**

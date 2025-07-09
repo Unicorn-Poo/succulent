@@ -31,7 +31,7 @@ import Image from "next/image";
 import { MediaItem } from "../app/schema";
 
 // Import utility functions
-import { platformIcons, platformLabels } from "../utils/postConstants";
+import { platformIcons, platformLabels, PLATFORM_CHARACTER_LIMITS } from "../utils/postConstants";
 import { validateReplyUrl, detectPlatformFromUrl } from "../utils/postValidation";
 import { generateThreadPreview, ThreadPost } from "../utils/threadUtils";
 import { 
@@ -65,13 +65,7 @@ const postTypeOptions = [
 		value: "standard",
 		label: "Standard",
 		icon: Hash,
-		description: "Regular single post"
-	},
-	{
-		value: "multi",
-		label: "Thread/Multi-Post",
-		icon: ListOrdered,
-		description: "Multiple connected posts"
+		description: "Regular single post. Use double line breaks to create a thread."
 	},
 	{
 		value: "reply",
@@ -83,7 +77,7 @@ const postTypeOptions = [
 
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
 	const [activeTab, setActiveTab] = useState("base");
-	const [seriesType, setSeriesType] = useState<SeriesType | null>(null);
+	const [seriesType, setSeriesType] = useState<"reply" | null>(null);
 	const [title, setTitle] = useState(post.title?.toString() || "");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [replyUrl, setReplyUrl] = useState("");
@@ -106,6 +100,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Ref for dropdown to handle clicks outside
 	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	const isThread = useMemo(() => {
+		const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
+		return content.includes('\n\n');
+	}, [contextText, post.variants, activeTab]);
+
+	const isImplicitTwitterThread = useMemo(() => {
+		const currentPlatform = accountGroup.accounts[activeTab]?.platform;
+		if (seriesType !== null || (currentPlatform !== 'x' && currentPlatform !== 'twitter')) {
+			return false;
+		}
+		const content = contextText ?? post.variants[activeTab]?.text?.toString() ?? "";
+		return content.length > PLATFORM_CHARACTER_LIMITS.x;
+	}, [activeTab, seriesType, contextText, post.variants, accountGroup.accounts]);
 
 	// Memoized values for performance
 	const isValidReplyUrl = useMemo(() => 
@@ -141,22 +149,15 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	// Get current post type for dropdown
 	const currentPostType = useMemo(() => {
 		if (seriesType === "reply") return "reply";
-		if (seriesType === "multi") return "multi";
 		return "standard";
 	}, [seriesType]);
 
 	// Handle post type change from dropdown
 	const handlePostTypeChange = useCallback((value: string) => {
-		switch (value) {
-			case "reply":
-				setSeriesType("reply");
-				break;
-			case "multi":
-				setSeriesType("multi");
-				break;
-			default:
-				setSeriesType(null);
-				break;
+		if (value === 'reply') {
+			setSeriesType("reply");
+		} else {
+			setSeriesType(null);
 		}
 	}, []);
 
@@ -192,13 +193,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Thread preview generation with useCallback for performance
 	const updateThreadPreview = useCallback((text: string) => {
-		if (seriesType === "multi" && text) {
+		if (isThread || isImplicitTwitterThread) {
 			const threads = generateThreadPreview(text, activeTab);
 			setThreadPosts(threads);
 		} else {
 			setThreadPosts([]);
 		}
-	}, [seriesType, activeTab]);
+	}, [isThread, isImplicitTwitterThread, activeTab]);
 
 	useEffect(() => {
 		if (contextText) {
@@ -209,6 +210,16 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			updateThreadPreview(savedContent);
 		}
 	}, [contextText, post.variants, activeTab, updateThreadPreview]);
+
+	useEffect(() => {
+		const text = contextText ?? post.variants[activeTab]?.text?.toString() ?? '';
+		if (isThread || isImplicitTwitterThread) {
+			const threads = generateThreadPreview(text, activeTab);
+			setThreadPosts(threads);
+		} else {
+			setThreadPosts([]);
+		}
+	}, [contextText, post.variants, activeTab, isThread, isImplicitTwitterThread]);
 
 	// Save content to post variant (not publishing)
 	const handleSaveContent = useCallback(async () => {
@@ -273,24 +284,38 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			let result;
 
-			// Handle different post types
-			if (seriesType === "reply" && replyUrl && isValidReplyUrl) {
-				result = await handleReplyPost(basePostData, replyUrl);
-			} else if (seriesType === "multi" && threadPosts.length > 1) {
-				if (platforms.includes("x")) {
-					// Use native Twitter threading
-					const twitterPostData = {
-						...basePostData,
-						twitterOptions: { thread: true, threadNumber: true }
-					};
-					result = await handleStandardPost(twitterPostData);
+			const isTwitterPlatform = (p: string) => p === 'x' || p === 'twitter';
+			const twitterPlatforms = platforms.filter(isTwitterPlatform);
+			const otherPlatforms = platforms.filter(p => !isTwitterPlatform(p));
+
+			// Handle Twitter posts
+			if (twitterPlatforms.length > 0) {
+				const isTwitterThread = isThread || isImplicitTwitterThread;
+				const twitterPostData = {
+					...basePostData,
+					platforms: twitterPlatforms,
+					mediaUrls: undefined,
+					...(isTwitterThread && {
+						twitterOptions: {
+							thread: true,
+							threadNumber: true,
+							mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+						}
+					}),
+				};
+				await handleStandardPost(twitterPostData);
+			}
+
+			// Handle other platforms
+			if (otherPlatforms.length > 0) {
+				const otherPlatformsPostData = { ...basePostData, platforms: otherPlatforms };
+				if (isThread) {
+					// Post as a thread (main post + comments)
+					await handleMultiPosts(otherPlatformsPostData, threadPosts);
 				} else {
-					// Use multi-post for other platforms
-					result = await handleMultiPosts(basePostData, threadPosts, postingInterval);
+					// Post as a standard post
+					await handleStandardPost(otherPlatformsPostData);
 				}
-			} else {
-				// Standard post
-				result = await handleStandardPost(basePostData);
 			}
 
 			setSuccess("Post published successfully!");
@@ -313,7 +338,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		replyUrl, 
 		isValidReplyUrl, 
 		threadPosts, 
-		postingInterval
+		postingInterval,
+		isImplicitTwitterThread,
+		isThread
 	]);
 
 	const handleContentChange = useCallback((newContent: string) => {
@@ -357,14 +384,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	}, [seriesType, detectedPlatform]);
 
 	const getMultiDescription = useCallback(() => {
-		if (!seriesType || seriesType !== "multi") return "";
+		if (!isThread) return "";
 		
 		if (activeTab === "x") {
 			return "This will be posted as a Twitter thread with automatic numbering.";
 		} else {
 			return "This will be posted as multiple connected posts with numbering.";
 		}
-	}, [seriesType, activeTab]);
+	}, [isThread, activeTab]);
 
 	// Handle preview functionality
 	const handlePreview = useCallback(() => {
@@ -643,10 +670,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						</Box>
 					)}
 
-					{seriesType === "multi" && (
+					{isThread && seriesType !== 'reply' && (
 						<Box className="bg-green-50 p-3 rounded-lg">
 							<Text size="2" color="green">
-								{getMultiDescription()}
+								This post will be published as a thread.
 							</Text>
 						</Box>
 					)}
@@ -690,7 +717,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			)}
 
 			{/* Thread Preview */}
-			{seriesType === "multi" && threadPosts.length > 1 && (
+			{isThread && (
 				<Card>
 					<div className="p-4 space-y-3">
 						<div className="flex items-center justify-between">
@@ -728,31 +755,29 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			<Card>
 				<div className="p-6 space-y-6">
 					{/* Media Display */}
-					{seriesType !== 'reply' && (
+					{(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
 						<div className="space-y-2">
-							{(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
-								<div className="relative group">
-									<MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as MediaItem[]} />
-									<Button
-										variant="soft"
-										size="1"
-										onClick={handleImageUpload}
-										className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-									>
-										<Plus className="w-4 h-4" />
-									</Button>
-								</div>
-							) : (
-								<div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
-									<Button
-										variant="soft"
-										onClick={handleImageUpload}
-									>
-										<Upload className="w-4 h-4 mr-2" />
-										Add Media
-									</Button>
-								</div>
-							)}
+							<div className="relative group">
+								<MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as MediaItem[]} />
+								<Button
+									variant="soft"
+									size="1"
+									onClick={handleImageUpload}
+									className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+								>
+									<Plus className="w-4 h-4" />
+								</Button>
+							</div>
+						</div>
+					) : (
+						<div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
+							<Button
+								variant="soft"
+								onClick={handleImageUpload}
+							>
+								<Upload className="w-4 h-4 mr-2" />
+								Add Media
+							</Button>
 						</div>
 					)}
 
@@ -780,14 +805,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<TextArea
 								value={contextText || post.variants[activeTab]?.text?.toString() || ""}
 								onChange={(e) => handleContentChange(e.target.value)}
-								placeholder="What's happening?"
+								placeholder="What's happening? Use double line breaks for threads."
 								className="min-h-32 resize-none text-lg leading-relaxed"
 								rows={6}
 							/>
 							
 							{/* Character count */}
-							<div className="absolute bottom-2 right-2 text-sm text-gray-500">
-								{(contextText || post.variants[activeTab]?.text?.toString() || "").length} characters
+							<div className="absolute bottom-2 right-2 text-sm text-gray-500 flex items-center gap-2">
+								{isThread && (
+									<Badge color="blue" variant="soft">
+										<ListOrdered className="w-3 h-3 mr-1" />
+										Auto-Thread
+									</Badge>
+								)}
+								<span>{(contextText || post.variants[activeTab]?.text?.toString() || "").length} characters</span>
 							</div>
 						</div>
 
@@ -907,7 +938,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							/>
 						</div>
 						
-						{seriesType === "multi" && (
+						{isThread && (
 							<div>
 								<Label.Root htmlFor="interval">
 									Posting Interval (minutes)
@@ -963,7 +994,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				media={post.variants[activeTab]?.media?.filter(Boolean) as MediaItem[] || []}
 				isReply={seriesType === "reply"}
 				replyToUsername={detectedPlatform === "x" ? extractUsernameFromUrl(replyUrl) : undefined}
-				isThread={seriesType === "multi"}
+				isThread={isThread || isImplicitTwitterThread}
 				threadPosts={threadPosts}
 				replyUrl={replyUrl}
 			/>

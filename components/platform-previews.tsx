@@ -79,7 +79,7 @@ export const TwitterPreview = ({
 						{/* Tweet text */}
 						<div className="mb-3">
 							<Text size="2" className="whitespace-pre-wrap">
-								{displayContent}
+								{displayContent.replace(/\\n/g, "\n")}
 							</Text>
 						</div>
 
@@ -208,7 +208,7 @@ export const InstagramPreview = ({
 				<div className="space-y-1">
 					<Text size="2">
 						<span className="font-semibold">{accountName}</span>{" "}
-						<span className="whitespace-pre-wrap">{displayContent}</span>
+						<span className="whitespace-pre-wrap">{displayContent.replace(/\\n/g, "\n")}</span>
 					</Text>
 					
 					{/* Thread continuation */}
@@ -287,7 +287,7 @@ export const FacebookPreview = ({
 				{/* Content */}
 				<div className="mb-3">
 					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent}
+						{displayContent.replace(/\\n/g, "\n")}
 					</Text>
 				</div>
 
@@ -385,7 +385,7 @@ export const LinkedInPreview = ({
 				{/* Content */}
 				<div className="mb-3">
 					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent}
+						{displayContent.replace(/\\n/g, "\n")}
 					</Text>
 				</div>
 
@@ -486,7 +486,7 @@ export const YouTubePreview = ({
 				{/* Content */}
 				<div className="mb-3">
 					<Text size="2" className="whitespace-pre-wrap">
-						{displayContent}
+						{displayContent.replace(/\\n/g, "\n")}
 					</Text>
 				</div>
 
