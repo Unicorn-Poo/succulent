@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Card, Dialog, TextField, Select, Text, Heading, Flex, Box } from "@radix-ui/themes";
-import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2, Globe } from "lucide-react";
+import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2, Globe, Trash2 } from "lucide-react";
 import { Input } from "./input";
 import { PlatformNames } from "../app/schema";
 import Image from "next/image";
@@ -47,12 +47,19 @@ const platformLabels = {
   linkedin: "LinkedIn",
 };
 
+const availablePlatforms = Object.keys(platformLabels) as (keyof typeof platformLabels)[];
+
 export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: AccountGroupCreationProps) {
   const [groupName, setGroupName] = useState("");
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [linkingStatus, setLinkingStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  
+  // Form state for adding new accounts
+  const [showAddAccountForm, setShowAddAccountForm] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountPlatform, setNewAccountPlatform] = useState<keyof typeof platformLabels>("instagram");
 
   const ayrshareConfigured = validateAyrshareConfig();
   const businessPlanMode = isBusinessPlanMode();
@@ -78,21 +85,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
     try {
       const result = await createFreeAccountGroup(groupName);
-      
       setLinkingStatus(result.message);
-
-      // Create simple account entries (no profile keys for free accounts)
-      const enabledPlatforms: typeof PlatformNames[number][] = ["instagram", "facebook", "x", "linkedin", "youtube"];
-      const newAccounts: PlatformAccount[] = enabledPlatforms.map(platform => ({
-        id: `${platform}-${Date.now()}`,
-        platform,
-        name: `${groupName} ${platformLabels[platform]}`,
-        isLinked: false, // Will be set to true when user manually links
-        status: "pending" as const,
-      }));
-
-      setAccounts(newAccounts);
-
     } catch (error) {
       console.error('Error creating account group:', error);
       setError(`Failed to create account group: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -101,12 +94,42 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
     }
   };
 
+  const handleAddAccount = () => {
+    if (!newAccountName.trim()) {
+      setError("Please enter an account name");
+      return;
+    }
+
+    const newAccount: PlatformAccount = {
+      id: `${newAccountPlatform}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      platform: newAccountPlatform,
+      name: newAccountName.trim(),
+      isLinked: false,
+      status: "pending" as const,
+    };
+
+    setAccounts(prev => [...prev, newAccount]);
+    setNewAccountName("");
+    setNewAccountPlatform("instagram");
+    setShowAddAccountForm(false);
+    setError("");
+  };
+
+  const handleRemoveAccount = (accountId: string) => {
+    setAccounts(prev => prev.filter(account => account.id !== accountId));
+  };
+
   const handleOpenDashboard = () => {
     window.open("https://app.ayrshare.com/dashboard", '_blank');
     setLinkingStatus("Link your accounts in the Ayrshare dashboard, then refresh to check status.");
   };
 
   const handleCheckAccountStatus = async () => {
+    if (accounts.length === 0) {
+      setError("Please add some accounts first");
+      return;
+    }
+
     setLinkingStatus("Checking linked accounts...");
     
     try {
@@ -117,7 +140,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
         
         // Update account statuses based on what's linked
         const updatedAccounts = accounts.map(account => {
-          const isLinked = linkedPlatforms.includes(account.platform === 'x' ? 'twitter' : account.platform);
+          const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
+          const isLinked = linkedPlatforms.includes(platformKey);
           return {
             ...account,
             isLinked,
@@ -126,7 +150,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
         });
         
         setAccounts(updatedAccounts);
-        setLinkingStatus(`${linkedPlatforms.length} account(s) detected as linked!`);
+        setLinkingStatus(`${linkedPlatforms.length} platform(s) detected as linked!`);
       } else {
         setLinkingStatus("No linked accounts found. Please link accounts in the dashboard first.");
       }
@@ -164,18 +188,13 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
       setLinkingStatus("Profile created! Ready to link accounts.");
 
-      // Create account entries for enabled platforms
-      const enabledPlatforms: typeof PlatformNames[number][] = ["instagram", "facebook", "x", "linkedin", "youtube"];
-      const newAccounts: PlatformAccount[] = enabledPlatforms.map(platform => ({
-        id: `${platform}-${Date.now()}`,
-        platform,
-        name: `${groupName} ${platformLabels[platform]}`,
+      // Update all accounts with the profile key
+      const updatedAccounts = accounts.map(account => ({
+        ...account,
         profileKey: profile.profileKey,
-        isLinked: false,
-        status: "pending" as const,
       }));
 
-      setAccounts(newAccounts);
+      setAccounts(updatedAccounts);
 
     } catch (error) {
       console.error('Error creating Ayrshare profile:', error);
@@ -226,7 +245,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             if (linkedPlatforms.length > 0) {
               // Update account statuses
               const updatedAccounts = accounts.map(account => {
-                const isLinked = linkedPlatforms.includes(account.platform === 'x' ? 'twitter' : account.platform);
+                const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
+                const isLinked = linkedPlatforms.includes(platformKey);
                 return {
                   ...account,
                   isLinked,
@@ -273,6 +293,9 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       setAccounts([]);
       setError("");
       setLinkingStatus("");
+      setShowAddAccountForm(false);
+      setNewAccountName("");
+      setNewAccountPlatform("instagram");
       onOpenChange(false);
     }
   };
@@ -282,15 +305,19 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
     setAccounts([]);
     setError("");
     setLinkingStatus("");
+    setShowAddAccountForm(false);
+    setNewAccountName("");
+    setNewAccountPlatform("instagram");
     onOpenChange(false);
   };
 
   const linkedAccountsCount = accounts.filter(account => account.isLinked).length;
   const canSave = groupName.trim() && accounts.length > 0;
+  const groupCreated = !isCreatingProfile && linkingStatus.includes("Account group created");
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
-      <Dialog.Content style={{ maxWidth: 600 }}>
+      <Dialog.Content style={{ maxWidth: 700 }}>
         <Dialog.Title>Create Account Group</Dialog.Title>
         <Dialog.Description>
           {businessPlanMode 
@@ -309,7 +336,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                   <Text weight="medium" color="blue">Development Mode (Free Account)</Text>
                 </div>
                 <Text size="2" className="text-blue-700">
-                  Using simplified workflow. Link accounts manually in Ayrshare dashboard.
+                  Using simplified workflow. Add accounts manually, then link them in Ayrshare dashboard.
                 </Text>
               </div>
             </Card>
@@ -322,7 +349,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="e.g., Personal Accounts, Business Brand, Client Name"
-              disabled={isCreatingProfile || accounts.length > 0}
+              disabled={isCreatingProfile}
             />
           </div>
 
@@ -341,8 +368,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             </Card>
           )}
 
-          {/* Create Profile Button */}
-          {!accounts.length && (
+          {/* Create Group Button */}
+          {!groupCreated && (
             <Button 
               onClick={handleCreateFreeAccountGroup}
               disabled={!groupName.trim() || !ayrshareConfigured || isCreatingProfile}
@@ -362,62 +389,163 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             </Button>
           )}
 
-          {/* Account Management (Free Mode) */}
-          {accounts.length > 0 && (
+          {/* Account Management */}
+          {groupCreated && (
             <Card>
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <Text weight="medium">Social Media Accounts</Text>
-                  <Text size="2" color="gray">
-                    {linkedAccountsCount} of {accounts.length} linked
-                  </Text>
+                  <div className="flex items-center gap-2">
+                    <Text size="2" color="gray">
+                      {linkedAccountsCount} of {accounts.length} linked
+                    </Text>
+                    <Button 
+                      size="1" 
+                      variant="soft" 
+                      onClick={() => setShowAddAccountForm(true)}
+                      disabled={showAddAccountForm}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add Account
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {accounts.map((account) => (
-                    <div key={account.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="relative">
-                        <Image
-                          src={platformIcons[account.platform as keyof typeof platformIcons] || "/sprout.svg"}
-                          alt={account.platform}
-                          width={20}
-                          height={20}
-                        />
-                        {account.isLinked && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Text size="2" weight="medium" className="truncate">
-                          {platformLabels[account.platform as keyof typeof platformLabels]}
-                        </Text>
-                        <Text size="1" color={account.isLinked ? "green" : "gray"}>
-                          {account.isLinked ? "Linked" : "Not linked"}
-                        </Text>
+                {/* Add Account Form */}
+                {showAddAccountForm && (
+                  <Card className="mb-4">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <Text size="2" weight="medium" className="mb-3 block">Add New Account</Text>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Platform</label>
+                          <Select.Root 
+                            value={newAccountPlatform} 
+                            onValueChange={(value) => setNewAccountPlatform(value as keyof typeof platformLabels)}
+                          >
+                            <Select.Trigger className="w-full" />
+                            <Select.Content>
+                              {availablePlatforms.map(platform => (
+                                <Select.Item key={platform} value={platform}>
+                                  <div className="flex items-center gap-2">
+                                    <Image
+                                      src={platformIcons[platform]}
+                                      alt={platform}
+                                      width={16}
+                                      height={16}
+                                    />
+                                    {platformLabels[platform]}
+                                  </div>
+                                </Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select.Root>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Account Name</label>
+                          <TextField.Root
+                            value={newAccountName}
+                            onChange={(e) => setNewAccountName(e.target.value)}
+                            placeholder="@username or display name"
+                            size="2"
+                          />
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <Button 
+                            size="2" 
+                            onClick={handleAddAccount}
+                            disabled={!newAccountName.trim()}
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add
+                          </Button>
+                          <Button 
+                            size="2" 
+                            variant="soft" 
+                            onClick={() => {
+                              setShowAddAccountForm(false);
+                              setNewAccountName("");
+                              setNewAccountPlatform("instagram");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </Card>
+                )}
 
-                <div className="space-y-2">
-                  <Button 
-                    onClick={handleOpenDashboard}
-                    variant="soft"
-                    className="w-full"
-                  >
-                    <Globe className="w-4 h-4 mr-2" />
-                    Open Ayrshare Dashboard to Link Accounts
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleCheckAccountStatus}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Check Account Status
-                  </Button>
-                </div>
+                {/* Accounts List */}
+                {accounts.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {accounts.map((account) => (
+                      <div key={account.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
+                        <div className="relative">
+                          <Image
+                            src={platformIcons[account.platform as keyof typeof platformIcons] || "/sprout.svg"}
+                            alt={account.platform}
+                            width={20}
+                            height={20}
+                          />
+                          {account.isLinked && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <Text size="2" weight="medium" className="truncate">
+                            {account.name}
+                          </Text>
+                          <div className="flex items-center gap-2">
+                            <Text size="1" color="gray">
+                              {platformLabels[account.platform as keyof typeof platformLabels]}
+                            </Text>
+                            <Text size="1" color={account.isLinked ? "green" : "gray"}>
+                              • {account.isLinked ? "Linked" : "Not linked"}
+                            </Text>
+                          </div>
+                        </div>
+                        <Button
+                          size="1"
+                          variant="ghost"
+                          color="red"
+                          onClick={() => handleRemoveAccount(account.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <Text size="2">No accounts added yet</Text>
+                    <Text size="1" className="block mt-1">Click "Add Account" to get started</Text>
+                  </div>
+                )}
+
+                {/* Actions */}
+                {accounts.length > 0 && (
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={handleOpenDashboard}
+                      variant="soft"
+                      className="w-full"
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      Open Ayrshare Dashboard to Link Accounts
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleCheckAccountStatus}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Check Account Status
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
           )}
