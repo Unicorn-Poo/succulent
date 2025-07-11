@@ -2,65 +2,14 @@
 import { co, z } from "jazz-tools";
 
 export const PlatformNames = [
-	"x",
-	"instagram",
-	"youtube",
-	"facebook",
-	"linkedin",
-] as const; // 'tiktok', 'threads', 'pinterest', 'reddit', 'snapchat', 'twitch', 'website', 'other']
+	"instagram", "facebook", "x", "linkedin", "youtube", "tiktok", "pinterest", "reddit", "telegram", "threads", "bluesky", "google"
+] as const;
 
-export const ThreadItem = co.map({
-	text: co.plainText(),
-	postDate: z.date(),
-});
-
-export const ImageItem = co.map({
-	type: z.literal("image"),
-	image: co.image(),
-	alt: z.optional(co.plainText()),
-});
-
-export const VideoItem = co.map({
-	type: z.literal("video"),
-	video: co.fileStream(),
-});
-
-export const MediaItem = z.discriminatedUnion("type", [ImageItem, VideoItem]);
-export type MediaItem = co.loaded<typeof MediaItem>;
-
-export const Content = co.map({
-	text: co.plainText(),
-	postDate: z.date(),
-	media: z.optional(co.list(MediaItem)),
-	replyTo: {
-    url: z.optional(z.string()),
-    platform: z.optional(z.enum(PlatformNames)),
-    author: z.optional(z.string()),
-    // authorUrl: z.optional(z.string()),
-    authorAvatar: z.optional(z.string()),
-    authorUsername: z.optional(z.string()),
-    authorDisplayName: z.optional(z.string()),
-    authorPostContent: z.optional(z.string()),
-    authorPostDate: z.optional(z.date()),
-    // authorBio: z.optional(z.string()),
-    // authorLocation: z.optional(z.string()),
-  },
-	thread: z.optional(co.list(ThreadItem)),
-  edited: z.boolean(),
-});
-
-export const Post = co.map({
-  title: z.string(),
-  variants: co.record(z.string(), Content),
-});
-export type Post = co.loaded<typeof Post>;
-export type PostFullyLoaded = co.loaded<typeof Post, {
-  variants: { $each: true }
-}>;
+// =============================================================================
+// 🎭 PLATFORM ACCOUNT SCHEMA (JAZZ INTEGRATED)
+// =============================================================================
 
 export const PlatformAccount = co.map({
-	type: z.enum(PlatformNames),
-	id: z.string(),
 	name: z.string(),
 	platform: z.enum(PlatformNames),
 	
@@ -83,18 +32,107 @@ export const PlatformAccount = co.map({
 	lastError: z.optional(z.string()),
 });
 
-export const PlatformGroup = co.map({
-	id: z.string(),
-	name: z.string(),
-	accounts: co.list(PlatformAccount),
-	posts: co.list(Post),
+// =============================================================================
+// 📝 POST RELATED SCHEMAS
+// =============================================================================
+
+export const ReplyTo = co.map({
+	url: z.optional(z.string()),
+	platform: z.optional(z.enum(PlatformNames)),
+	author: z.optional(z.string()),
+	authorUsername: z.optional(z.string()),
+	authorPostContent: z.optional(z.string()),
+	authorAvatar: z.optional(z.string()),
+	likesCount: z.optional(z.number()),
 });
 
-export const AccountRoot = co.map({
-	platformGroups: co.list(PlatformGroup),
+export const ImageMedia = co.map({
+	type: z.literal("image"),
+	image: co.image(),
+	alt: z.optional(co.plainText()),
 });
+
+export const VideoMedia = co.map({
+	type: z.literal("video"),
+	video: co.fileStream(),
+	alt: z.optional(co.plainText()),
+});
+
+export const MediaItem = z.discriminatedUnion("type", [ImageMedia, VideoMedia]);
+
+export const PostVariant = co.map({
+	text: co.plainText(),
+	postDate: z.date(),
+	media: co.list(MediaItem),
+	replyTo: ReplyTo,
+	// New fields for better tracking
+	edited: z.boolean(),
+	lastModified: z.optional(z.string()),
+});
+
+export const Post = co.map({
+	title: co.plainText(),
+	variants: co.record(z.string(), PostVariant),
+});
+
+export type PostFullyLoaded = co.loaded<typeof Post, {
+	variants: { $each: true }
+}>;
+
+// =============================================================================
+// 🏢 ACCOUNT GROUP SCHEMA (JAZZ INTEGRATED)
+// =============================================================================
+
+export const AccountGroup = co.map({
+	name: z.string(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+	
+	// Accounts stored as a collaborative list
+	accounts: co.list(PlatformAccount),
+	
+	// Posts associated with this account group
+	posts: co.list(Post),
+	
+	// Group metadata
+	description: z.optional(z.string()),
+	tags: z.optional(z.array(z.string())),
+	
+	// Ayrshare Integration (Business Plan)
+	ayrshareProfileKey: z.optional(z.string()),
+	ayrshareProfileTitle: z.optional(z.string()),
+});
+
+export type AccountGroupType = co.loaded<typeof AccountGroup, {
+	accounts: { $each: true },
+	posts: { $each: true }
+}>;
+
+// =============================================================================
+// 📂 ROOT ACCOUNT STRUCTURE
+// =============================================================================
+
+export const AccountRoot = co.map({
+	accountGroups: co.list(AccountGroup),
+});
+
+export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
+	accountGroups: { $each: { 
+		accounts: { $each: true },
+		posts: { $each: true }
+	}}
+}>;
 
 export const MyAppAccount = co.account({
 	root: AccountRoot,
 	profile: co.map({ name: z.string() }),
 });
+
+export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
+	root: {
+		accountGroups: { $each: {
+			accounts: { $each: true },
+			posts: { $each: true }
+		}}
+	}
+}>;

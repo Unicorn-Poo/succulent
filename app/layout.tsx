@@ -32,20 +32,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
       >
         <Theme>
-          <JazzWrapper>{children}</JazzWrapper>
+          <JazzProvider
+            sync={{ peer: `wss://cloud.jazz.tools/?key=${process.env.NEXT_PUBLIC_JAZZ_API_KEY}` }}
+            AccountSchema={MyAppAccount}
+          >
+            {children}
+          </JazzProvider>
         </Theme>
       </body>
     </html>
-  );
-}
-
-export function JazzWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <JazzProvider
-      sync={{ peer: process.env.NEXT_PUBLIC_JAZZ_PEER as `wss://${string}` }}
-      AccountSchema={MyAppAccount}
-    >
-      {children}
-    </JazzProvider>
   );
 }

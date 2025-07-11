@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Button, Card, Dialog, TextField, Select, Text, Heading, Flex, Box } from "@radix-ui/themes";
 import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2, Globe, Trash2 } from "lucide-react";
 import { Input } from "./input";
-import { PlatformNames } from "../app/schema";
+import { PlatformNames, PlatformAccount, AccountGroup, AccountGroupType } from "../app/schema";
 import Image from "next/image";
+import { co } from "jazz-tools";
 import { 
   // Business Plan functions (commented out)
   // createAyrshareProfile, generateLinkingJWT, getConnectedAccounts, 
@@ -15,8 +16,7 @@ import {
   getFreeConnectedAccounts
 } from "../utils/ayrshareIntegration";
 
-interface PlatformAccount {
-  id: string;
+interface PlatformAccountData {
   platform: typeof PlatformNames[number];
   name: string;
   profileKey?: string;
@@ -26,7 +26,17 @@ interface PlatformAccount {
 }
 
 interface AccountGroupCreationProps {
-  onSave: (groupData: { name: string; accounts: PlatformAccount[] }) => void;
+  onSave: (groupData: { 
+    name: string; 
+    accounts: Array<{
+      platform: string;
+      name: string;
+      profileKey?: string;
+      isLinked: boolean;
+      status: "pending" | "linked" | "error" | "expired";
+      lastError?: string;
+    }>;
+  }) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -51,7 +61,7 @@ const availablePlatforms = Object.keys(platformLabels) as (keyof typeof platform
 
 export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: AccountGroupCreationProps) {
   const [groupName, setGroupName] = useState("");
-  const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
+  const [accounts, setAccounts] = useState<PlatformAccountData[]>([]);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [linkingStatus, setLinkingStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -100,8 +110,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       return;
     }
 
-    const newAccount: PlatformAccount = {
-      id: `${newAccountPlatform}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    const newAccount: PlatformAccountData = {
       platform: newAccountPlatform,
       name: newAccountName.trim(),
       isLinked: false,
@@ -115,8 +124,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
     setError("");
   };
 
-  const handleRemoveAccount = (accountId: string) => {
-    setAccounts(prev => prev.filter(account => account.id !== accountId));
+  const handleRemoveAccount = (platform: string, name: string) => {
+    setAccounts(prev => prev.filter(account => !(account.platform === platform && account.name === name)));
   };
 
   const handleOpenDashboard = () => {
@@ -160,6 +169,10 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       setLinkingStatus("");
     }
   };
+
+  // =============================================================================
+  // 💾 JAZZ INTEGRATION - CREATE COLLABORATIVE ACCOUNT GROUP
+  // =============================================================================
 
   // =============================================================================
   // 🚀 BUSINESS PLAN MODE (DISABLED FOR DEVELOPMENT)
@@ -284,10 +297,12 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
   const handleSaveGroup = () => {
     if (groupName && accounts.length > 0) {
+      // Pass raw form data to parent
       onSave({
         name: groupName,
         accounts: accounts,
       });
+      
       // Reset form
       setGroupName("");
       setAccounts([]);
@@ -480,7 +495,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                 {accounts.length > 0 ? (
                   <div className="space-y-2 mb-4">
                     {accounts.map((account) => (
-                      <div key={account.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
+                      <div key={account.platform + account.name} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
                         <div className="relative">
                           <Image
                             src={platformIcons[account.platform as keyof typeof platformIcons] || "/sprout.svg"}
@@ -509,7 +524,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                           size="1"
                           variant="ghost"
                           color="red"
-                          onClick={() => handleRemoveAccount(account.id)}
+                          onClick={() => handleRemoveAccount(account.platform, account.name)}
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
