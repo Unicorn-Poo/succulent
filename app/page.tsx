@@ -9,7 +9,7 @@ import Navigation from "../components/navigation";
 import AccountGroupCreation from "../components/account-group-creation";
 import { AccountGroup, AccountGroupType, PlatformAccount, MyAppAccount, AccountRoot, Post } from "./schema";
 import { useAccount, useAcceptInvite } from "jazz-react";
-import { ID } from "jazz-tools";
+import { Group, ID } from "jazz-tools";
 import { co } from "jazz-tools";
 
 // =============================================================================
@@ -135,77 +135,45 @@ export default function HomePage() {
   // =============================================================================
   // 🎵 JAZZ ACCOUNT INTEGRATION (WITH PROPER LOADING)
   // =============================================================================
-  
-  // First, get the account without deep resolution to initialize root if needed
-  const { me: basicAccount, logOut } = useAccount(MyAppAccount);
-
-  // =============================================================================
-  // 🔧 JAZZ ROOT INITIALIZATION
-  // =============================================================================
-  useEffect(() => {
-    const initializeRoot = async () => {
-      if (basicAccount && !basicAccount.root) {
-        console.log('Jazz account exists but root is missing - initializing...');
-        try {
-          // Create a new AccountRoot with properly initialized empty co-list
-          const newRoot = AccountRoot.create({
-            accountGroups: co.list(AccountGroup).create([], { owner: basicAccount })
-          }, { owner: basicAccount });
-          
-          // Assign the root to the account
-          basicAccount.root = newRoot;
-          
-          console.log('✅ Jazz root initialized successfully');
-        } catch (error) {
-          console.error('❌ Failed to initialize Jazz root:', error);
-        }
-      }
-    };
-
-    initializeRoot();
-  }, [basicAccount]);
 
   // Now get the account with deep loading for collaborative data
   const { me } = useAccount(MyAppAccount, {
-    resolve: basicAccount?.root ? {
+    resolve: {
       root: {
         accountGroups: { $each: {
           accounts: { $each: true },
           posts: { $each: true }
         }}
       }
-    } : undefined
+    }
   });
-
-  // Use the deeply loaded account if available, otherwise use basic account
-  const currentAccount = me || basicAccount;
 
   // Debug logging to understand what's happening with accounts
   useEffect(() => {
     console.log('🎵 Jazz Account Status:');
-    console.log('- Account exists:', !!currentAccount);
-    console.log('- Account ID:', currentAccount?.id);
-    console.log('- Root exists:', !!currentAccount?.root);
-    console.log('- Account groups count:', currentAccount?.root?.accountGroups?.length || 0);
+    console.log('- Account exists:', !!me);
+    console.log('- Account ID:', me?.id);
+    console.log('- Root exists:', !!me?.root);
+    console.log('- Account groups count:', me?.root?.accountGroups?.length || 0);
     
     // Debug the actual account groups
-    if (currentAccount?.root?.accountGroups) {
-      console.log('- Account groups details:', currentAccount.root.accountGroups.map((g: any) => ({
+    if (me?.root?.accountGroups) {
+      console.log('- Account groups details:', me.root.accountGroups.map((g: any) => ({
         id: g.id,
         name: g.name,
         accountsCount: g.accounts?.length || 0
       })));
     }
     
-    if (currentAccount) {
+    if (me) {
       // Store account ID in localStorage for debugging
-      localStorage.setItem('lastJazzAccountId', currentAccount.id);
+      localStorage.setItem('lastJazzAccountId', me.id);
       const previousAccountId = localStorage.getItem('previousJazzAccountId');
       console.log('- Previous account ID:', previousAccountId);
-      console.log('- Same account as before:', previousAccountId === currentAccount.id);
-      localStorage.setItem('previousJazzAccountId', currentAccount.id);
+      console.log('- Same account as before:', previousAccountId === me.id);
+      localStorage.setItem('previousJazzAccountId', me.id);
     }
-  }, [currentAccount, currentAccount?.root?.accountGroups]); // Add dependency on account groups
+  }, [me, me?.root?.accountGroups]); // Add dependency on account groups
 
   const handleCreatePost = async () => {
     // Navigate to the demo account group page
@@ -225,31 +193,34 @@ export default function HomePage() {
   }) => {
     console.log('🎯 SAVING ACCOUNT GROUP - START');
     console.log('Jazz Account Group data received:', groupData);
-    console.log('Jazz account connected:', !!currentAccount);
-    console.log('Jazz account ID:', currentAccount?.id);
-    console.log('Jazz root exists:', !!currentAccount?.root);
-    console.log('Current account groups before save:', currentAccount?.root?.accountGroups?.length || 0);
+    console.log('Jazz account connected:', !!me);
+    console.log('Jazz account ID:', me?.id);
+    console.log('Jazz root exists:', !!me?.root);
+    console.log('Current account groups before save:', me?.root?.accountGroups?.length || 0);
     
-    if (!currentAccount || !currentAccount.root) {
+    if (!me || !me.root) {
       console.error('❌ Jazz account or root not available');
       return;
     }
 
     try {
       console.log('🔧 Creating Jazz AccountGroup...');
+
+      // to manage permissions
+      const accountGroupGroup = Group.create();
       
       // Create Jazz AccountGroup with properly initialized empty co-lists
       const jazzAccountGroup = AccountGroup.create({
         name: groupData.name,
         createdAt: new Date(),
         updatedAt: new Date(),
-        accounts: co.list(PlatformAccount).create([], { owner: currentAccount }),
-        posts: co.list(Post).create([], { owner: currentAccount }),
+        accounts: co.list(PlatformAccount).create([], { owner: accountGroupGroup }),
+        posts: co.list(Post).create([], { owner: accountGroupGroup }),
         description: undefined,
         tags: undefined,
         ayrshareProfileKey: undefined,
         ayrshareProfileTitle: undefined,
-      }, { owner: currentAccount });
+      }, { owner: accountGroupGroup });
 
       console.log('✅ Jazz AccountGroup created:', jazzAccountGroup.id);
 
@@ -270,35 +241,35 @@ export default function HomePage() {
           url: undefined,
           status: accountData.status,
           lastError: accountData.lastError,
-        }, { owner: currentAccount });
+        }, { owner: accountGroupGroup });
 
         jazzAccountGroup.accounts.push(platformAccount);
         console.log(`✅ Account ${index + 1} added successfully`);
       });
 
       console.log('🔧 Adding account group to root...');
-      console.log('Root account groups before push:', currentAccount.root.accountGroups.length);
+      console.log('Root account groups before push:', me.root.accountGroups.length);
       
       // Add the account group to the root
-      currentAccount.root.accountGroups.push(jazzAccountGroup);
+      me.root.accountGroups.push(jazzAccountGroup);
       
       console.log('✅ Account group added to root');
-      console.log('Root account groups after push:', currentAccount.root.accountGroups.length);
+      console.log('Root account groups after push:', me.root.accountGroups.length);
 
       console.log('✅ Jazz Account Group created successfully!');
       console.log('Jazz Account Group ID:', jazzAccountGroup.id);
-      console.log('Total account groups:', currentAccount.root.accountGroups.length);
+      console.log('Total account groups:', me.root.accountGroups.length);
       
       // Wait for Jazz to sync the data
       console.log('⏳ Waiting for Jazz sync...');
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Check if data is still there after sync wait
-      console.log('🔄 Post-sync check - Account groups count:', currentAccount?.root?.accountGroups?.length || 0);
+      console.log('🔄 Post-sync check - Account groups count:', me?.root?.accountGroups?.length || 0);
       
       // Force a small delay to let Jazz sync
       setTimeout(() => {
-        console.log('🔄 Post-save check - Account groups count:', currentAccount?.root?.accountGroups?.length || 0);
+        console.log('🔄 Post-save check - Account groups count:', me?.root?.accountGroups?.length || 0);
       }, 1000);
       
     } catch (error) {
@@ -386,7 +357,7 @@ export default function HomePage() {
           ))}
 
           {/* Jazz Account Groups - Persistent Display */}
-          {currentAccount?.root?.accountGroups?.map((group: any, index: number) => (
+          {me?.root?.accountGroups?.map((group: any, index: number) => (
             <div key={group.id || `jazz-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">{group.name}</h3>
@@ -441,7 +412,7 @@ export default function HomePage() {
         </div>
 
         {/* Jazz Account Status */}
-        {!currentAccount && (
+        {!me && (
           <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-800">
               🎵 Connecting to Jazz collaborative system...
@@ -449,10 +420,10 @@ export default function HomePage() {
           </div>
         )}
 
-        {currentAccount && (
+        {me && (
           <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-800">
-              ✅ Jazz Foundation Complete! Account: {currentAccount.id}
+              ✅ Jazz Foundation Complete! Account: {me.id}
             </p>
             <p className="text-xs text-blue-600 mt-1">
               🎯 Account system connected | Freeform account creation working | Ayrshare ready

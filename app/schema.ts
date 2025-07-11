@@ -126,6 +126,12 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 export const MyAppAccount = co.account({
 	root: AccountRoot,
 	profile: co.map({ name: z.string() }),
+}).withMigration(account => {
+  if (account.root === undefined) {
+    account.root = AccountRoot.create({
+      accountGroups: co.list(AccountGroup).create([])
+    })
+  }
 });
 
 export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
