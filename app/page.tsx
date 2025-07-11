@@ -24,25 +24,40 @@ interface AccountGroup {
 		id: string;
 		platform: string;
 		name: string;
-		apiUrl: string;
+		profileKey?: string;
+		isLinked: boolean;
+		status: "pending" | "linked" | "error" | "expired";
+		lastError?: string;
+		// Legacy fields for backward compatibility
+		apiUrl?: string;
+		avatar?: string;
+		username?: string;
+		displayName?: string;
+		url?: string;
 	}>;
 	posts: any[];
 }
 
 export const accountGroup1: AccountGroup = {
 	id: "1",
-	name: "Account Group 1",
+	name: "Demo Account Group",
 	accounts: {
-		sammiisparkle: {
+		sammiisparkle_ig: {
 			id: "1",
 			platform: "instagram",
 			name: "sammiisparkle",
+			profileKey: "demo-profile-key-123",
+			isLinked: true,
+			status: "linked",
 			apiUrl: "https://www.instagram.com/sammiisparkle/",
 		},
-		sammiisparkle2: {
+		sammiisparkle_x: {
 			id: "2",
-			platform: "twitter",
+			platform: "x",
 			name: "sammiisparkle",
+			profileKey: "demo-profile-key-123",
+			isLinked: true,
+			status: "linked",
 			apiUrl: "https://www.twitter.com/sammiisparkle/",
 		},
 	},
@@ -61,7 +76,7 @@ export const accountGroup1: AccountGroup = {
 						},
 					],
 				},
-				sammiisparkle: {
+				sammiisparkle_ig: {
 					id: "1",
 					text: "Hello, world! 🧚‍♀️",
 					postDate: new Date(),
@@ -98,19 +113,30 @@ export default function Home() {
 	const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([accountGroup1]);
 	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-	const handleCreateGroup = (groupData: { name: string; accounts: Array<{ id: string; platform: string; name: string; apiUrl: string; }> }) => {
+	const handleCreateGroup = (groupData: { name: string; accounts: Array<{ 
+		id: string; 
+		platform: string; 
+		name: string; 
+		profileKey?: string;
+		isLinked: boolean;
+		status: "pending" | "linked" | "error" | "expired";
+		lastError?: string;
+	}> }) => {
 		const newGroup: AccountGroup = {
 			id: (accountGroups.length + 1).toString(),
 			name: groupData.name,
 			accounts: groupData.accounts.reduce((acc, account) => {
-				acc[account.name] = {
+				acc[account.id] = {
 					id: account.id,
 					platform: account.platform,
 					name: account.name,
-					apiUrl: account.apiUrl,
+					profileKey: account.profileKey,
+					isLinked: account.isLinked,
+					status: account.status,
+					lastError: account.lastError,
 				};
 				return acc;
-			}, {} as Record<string, { id: string; platform: string; name: string; apiUrl: string; }>),
+			}, {} as Record<string, AccountGroup['accounts'][string]>),
 			posts: [],
 		};
 		

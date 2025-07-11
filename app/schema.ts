@@ -62,12 +62,25 @@ export const PlatformAccount = co.map({
 	type: z.enum(PlatformNames),
 	id: z.string(),
 	name: z.string(),
-	apiUrl: z.string(),
-  platform: z.enum(PlatformNames),
-  avatar: z.string(),
-  username: z.string(),
-  displayName: z.string(),
-  url: z.string(),
+	platform: z.enum(PlatformNames),
+	
+	// Legacy field for backward compatibility
+	apiUrl: z.optional(z.string()),
+	
+	// Ayrshare Integration Fields
+	profileKey: z.optional(z.string()), // Ayrshare User Profile Key
+	isLinked: z.boolean(), // Whether the account is linked to Ayrshare
+	linkedAt: z.optional(z.date()), // When the account was linked
+	
+	// Social Account Details
+	avatar: z.optional(z.string()),
+	username: z.optional(z.string()),
+	displayName: z.optional(z.string()),
+	url: z.optional(z.string()),
+	
+	// Connection Status
+	status: z.enum(["pending", "linked", "error", "expired"]),
+	lastError: z.optional(z.string()),
 });
 
 export const PlatformGroup = co.map({

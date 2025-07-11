@@ -1,6 +1,7 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 import { extractTweetId, detectPlatformFromUrl, extractPostIdFromUrl } from './postValidation';
 import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
+import { INTERNAL_TO_AYRSHARE_PLATFORM } from './ayrshareIntegration';
 
 /**
  * Interface for post data sent to Ayrshare API
@@ -8,6 +9,7 @@ import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
 export interface PostData {
 	post: string;
 	platforms: string[];
+	profileKey?: string; // Added profile key for multi-user support
 	mediaUrls?: string[];
 	scheduleDate?: string;
 	twitterOptions?: {
@@ -22,18 +24,38 @@ export interface PostData {
 }
 
 /**
+ * Maps internal platform names to Ayrshare platform names
+ */
+const mapPlatformsForAyrshare = (platforms: string[]): string[] => {
+	return platforms.map(platform => INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform);
+};
+
+/**
  * Standard post handler for regular posts and Twitter threading
  * @param postData - Post data to send to API
  * @returns API response
  */
 export const handleStandardPost = async (postData: PostData) => {
+	// Map platform names for Ayrshare compatibility
+	const mappedPlatforms = mapPlatformsForAyrshare(postData.platforms);
+	
+	const headers: Record<string, string> = {
+		'Content-Type': 'application/json',
+		'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+	};
+
+	// Add Profile-Key header if provided (for multi-user support)
+	if (postData.profileKey) {
+		headers['Profile-Key'] = postData.profileKey;
+	}
+
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-		},
-		body: JSON.stringify(postData)
+		headers,
+		body: JSON.stringify({
+			...postData,
+			platforms: mappedPlatforms
+		})
 	});
 
 	const result = await response.json();
@@ -77,14 +99,21 @@ export const handleReplyPost = async (postData: PostData, replyUrl: string) => {
 		throw new Error("Could not detect a supported platform from the provided URL.");
 	}
 
-	if (!postData.platforms.includes(detectedPlatform)) {
+	// Map internal platform to Ayrshare platform
+	const ayrshareDetectedPlatform = INTERNAL_TO_AYRSHARE_PLATFORM[detectedPlatform] || detectedPlatform;
+	const ayrsharePostPlatforms = mapPlatformsForAyrshare(postData.platforms);
+
+	if (!ayrsharePostPlatforms.includes(ayrshareDetectedPlatform)) {
 		throw new Error(`To reply, you must select the platform corresponding to the URL (${detectedPlatform}).`);
 	}
 
 	// We are only replying on the detected platform.
-	const replyPostData: PostData = { ...postData, platforms: [detectedPlatform] };
+	const replyPostData: PostData = { 
+		...postData, 
+		platforms: [ayrshareDetectedPlatform] 
+	};
 
-	if (detectedPlatform === 'x' || detectedPlatform === 'twitter') {
+	if (ayrshareDetectedPlatform === 'twitter') {
 		const tweetId = extractTweetId(replyUrl);
 		if (!tweetId) throw new Error("Could not extract Tweet ID from the URL.");
 		
@@ -96,7 +125,11 @@ export const handleReplyPost = async (postData: PostData, replyUrl: string) => {
 		if (!postId) throw new Error(`Could not extract Post ID from the URL for ${detectedPlatform}.`);
 		
 		// The /comment endpoint needs `id` and `post` (comment content).
-		return handleCommentPost({ post: replyPostData.post, platforms: [detectedPlatform] }, postId, detectedPlatform);
+		return handleCommentPost({ 
+			post: replyPostData.post, 
+			platforms: [ayrshareDetectedPlatform],
+			profileKey: replyPostData.profileKey
+		}, postId, ayrshareDetectedPlatform);
 	}
 };
 
@@ -140,6 +173,7 @@ export const handleMultiPosts = async (
 				const commentData: PostData = {
 					post: commentText,
 					platforms: [platform],
+					profileKey: postData.profileKey
 				};
 				// We'll post each comment as a reply to the original post.
 				// For a true chain, we'd need to get the comment ID and reply to it,
@@ -166,12 +200,19 @@ export const handleCommentPost = async (
 	originalPostId: string, 
 	platform: string
 ) => {
+	const headers: Record<string, string> = {
+		'Content-Type': 'application/json',
+		'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+	};
+
+	// Add Profile-Key header if provided
+	if (postData.profileKey) {
+		headers['Profile-Key'] = postData.profileKey;
+	}
+
 	const response = await fetch(`${AYRSHARE_API_URL}/comment`, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-		},
+		headers,
 		body: JSON.stringify({
 			...postData,
 			id: originalPostId,

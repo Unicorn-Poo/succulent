@@ -304,6 +304,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("Post content cannot be empty");
 			}
 
+			// Get profile key from the first account (assuming all accounts in a group share the same profile)
+			const firstAccount = Object.values(accountGroup.accounts)[0];
+			const profileKey = firstAccount?.profileKey;
+
+			if (!profileKey) {
+				throw new Error("No Ayrshare profile found. Please create and link your accounts first.");
+			}
+
 			const mediaUrls = currentPost.variants[activeTab]?.media?.map(m => 
 				m?.type === "image" ? m?.image?.toString() : m?.video?.toString()
 			)?.filter((url): url is string => Boolean(url)) || [];
@@ -312,12 +320,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				const replyData = {
 					post: postText,
 					platforms,
+					profileKey,
 					...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
 				};
 				await handleReplyPost(replyData, replyUrl);
 			} else {
-				const twitterPlatforms = platforms.filter(p => p === 'x' || p === 'twitter');
-				const otherPlatforms = platforms.filter(p => p !== 'x' && p !== 'twitter');
+				// Convert platform keys to actual platform names for posting
+				const platformNames = platforms.map(platformKey => {
+					const account = accountGroup.accounts[platformKey];
+					return account?.platform || platformKey;
+				});
+
+				const twitterPlatforms = platformNames.filter(p => p === 'x' || p === 'twitter');
+				const otherPlatforms = platformNames.filter(p => p !== 'x' && p !== 'twitter');
 				const content = contextText ?? currentPost.variants[activeTab]?.text?.toString() ?? "";
 
 				if (twitterPlatforms.length > 0) {
@@ -325,6 +340,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					const twitterPostData: PostData = {
 						post: content,
 						platforms: twitterPlatforms,
+						profileKey,
 						...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
 						...(isTwitterThread && {
 							twitterOptions: {
@@ -342,25 +358,35 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					const threadedPlatforms: string[] = [];
 					const standardPlatforms: string[] = [];
 
-					otherPlatforms.forEach(platformKey => {
-						const platformInfo = accountGroup.accounts[platformKey];
-						const platformName = platformInfo?.platform || 'default';
-						const limit = PLATFORM_CHARACTER_LIMITS[platformName as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
+					otherPlatforms.forEach(platform => {
+						const limit = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
 						
 						if ((manualThreadMode && content.includes('\n\n')) || content.length > limit) {
-							threadedPlatforms.push(platformKey);
+							threadedPlatforms.push(platform);
 						} else {
-							standardPlatforms.push(platformKey);
+							standardPlatforms.push(platform);
 						}
 					});
 
 					if (standardPlatforms.length > 0) {
-						await handleStandardPost({ post: content, platforms: standardPlatforms, mediaUrls, ...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) });
+						await handleStandardPost({ 
+							post: content, 
+							platforms: standardPlatforms, 
+							profileKey,
+							mediaUrls, 
+							...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) 
+						});
 					}
 			
 					if (threadedPlatforms.length > 0) {
 						const threads = generateThreadPreview(content, 'default');
-						await handleMultiPosts({ post: content, platforms: threadedPlatforms, mediaUrls, ...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) }, threads);
+						await handleMultiPosts({ 
+							post: content, 
+							platforms: threadedPlatforms, 
+							profileKey,
+							mediaUrls, 
+							...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) 
+						}, threads);
 					}
 				}
 			}

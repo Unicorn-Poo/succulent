@@ -2,25 +2,24 @@
 
 import { useState } from "react";
 import { Button, Card, Dialog, TextField, Select, Text, Heading, Flex, Box } from "@radix-ui/themes";
-import { Plus, X, Save, Users } from "lucide-react";
+import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2 } from "lucide-react";
 import { Input } from "./input";
 import { PlatformNames } from "../app/schema";
 import Image from "next/image";
+import { createAyrshareProfile, generateLinkingJWT, getConnectedAccounts, validateAyrshareConfig } from "../utils/ayrshareIntegration";
 
 interface PlatformAccount {
   id: string;
   platform: typeof PlatformNames[number];
   name: string;
-  apiUrl: string;
-}
-
-interface AccountGroupFormData {
-  name: string;
-  accounts: PlatformAccount[];
+  profileKey?: string;
+  isLinked: boolean;
+  status: "pending" | "linked" | "error" | "expired";
+  lastError?: string;
 }
 
 interface AccountGroupCreationProps {
-  onSave: (groupData: AccountGroupFormData) => void;
+  onSave: (groupData: { name: string; accounts: PlatformAccount[] }) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -33,32 +32,141 @@ const platformIcons = {
   linkedin: "/icons8-linkedin.svg",
 };
 
+const platformLabels = {
+  x: "X (Twitter)",
+  instagram: "Instagram", 
+  youtube: "YouTube",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+};
+
 export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: AccountGroupCreationProps) {
   const [groupName, setGroupName] = useState("");
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
-  const [showAddAccount, setShowAddAccount] = useState(false);
-  const [newAccount, setNewAccount] = useState({
-    platform: "instagram" as typeof PlatformNames[number],
-    name: "",
-    apiUrl: "",
-  });
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [linkingStatus, setLinkingStatus] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  const handleAddAccount = () => {
-    if (newAccount.name && newAccount.apiUrl) {
-      const account: PlatformAccount = {
-        id: Date.now().toString(),
-        platform: newAccount.platform,
-        name: newAccount.name,
-        apiUrl: newAccount.apiUrl,
-      };
-      setAccounts([...accounts, account]);
-      setNewAccount({ platform: "instagram", name: "", apiUrl: "" });
-      setShowAddAccount(false);
+  const ayrshareConfigured = validateAyrshareConfig();
+
+  const handleCreateAccountGroup = async () => {
+    if (!groupName.trim()) {
+      setError("Please enter a group name");
+      return;
+    }
+
+    if (!ayrshareConfigured) {
+      setError("Ayrshare API is not configured. Please check your environment variables.");
+      return;
+    }
+
+    setIsCreatingProfile(true);
+    setError("");
+    setLinkingStatus("Creating Ayrshare profile...");
+
+    try {
+      // Create Ayrshare User Profile
+      const profile = await createAyrshareProfile({
+        title: groupName
+      });
+
+      setLinkingStatus("Profile created! Ready to link accounts.");
+
+      // Create account entries for enabled platforms
+      const enabledPlatforms: typeof PlatformNames[number][] = ["instagram", "facebook", "x", "linkedin", "youtube"];
+      const newAccounts: PlatformAccount[] = enabledPlatforms.map(platform => ({
+        id: `${platform}-${Date.now()}`,
+        platform,
+        name: `${groupName} ${platformLabels[platform]}`,
+        profileKey: profile.profileKey,
+        isLinked: false,
+        status: "pending" as const,
+      }));
+
+      setAccounts(newAccounts);
+
+    } catch (error) {
+      console.error('Error creating Ayrshare profile:', error);
+      setError(`Failed to create Ayrshare profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingProfile(false);
+      setLinkingStatus("");
     }
   };
 
-  const handleRemoveAccount = (id: string) => {
-    setAccounts(accounts.filter(account => account.id !== id));
+  const handleLinkAccounts = async () => {
+    if (!accounts.length || !accounts[0].profileKey) {
+      setError("No profile created yet");
+      return;
+    }
+
+    setLinkingStatus("Generating account linking URL...");
+    setError("");
+
+    try {
+      // Generate JWT for account linking
+      const jwtResponse = await generateLinkingJWT({
+        profileKey: accounts[0].profileKey,
+        logout: true, // Force logout for clean linking
+      });
+
+      setLinkingStatus("Opening account linking page...");
+
+      // Open the social linking page in a new window
+      const linkingWindow = window.open(jwtResponse.url, '_blank', 'width=800,height=600');
+
+      if (!linkingWindow) {
+        setError("Please allow popups to link your social accounts");
+        return;
+      }
+
+      // Focus on the new window
+      linkingWindow.focus();
+
+      // Check for linked accounts periodically
+      const checkInterval = setInterval(async () => {
+        try {
+          const connectedAccounts = await getConnectedAccounts(accounts[0].profileKey!);
+          
+          if (connectedAccounts.user?.socialMediaAccounts) {
+            const linkedPlatforms = Object.keys(connectedAccounts.user.socialMediaAccounts);
+            
+            if (linkedPlatforms.length > 0) {
+              // Update account statuses
+              const updatedAccounts = accounts.map(account => {
+                const isLinked = linkedPlatforms.includes(account.platform === 'x' ? 'twitter' : account.platform);
+                return {
+                  ...account,
+                  isLinked,
+                  status: isLinked ? "linked" as const : "pending" as const,
+                };
+              });
+              
+              setAccounts(updatedAccounts);
+              setLinkingStatus(`${linkedPlatforms.length} account(s) linked successfully!`);
+              
+              // Stop checking if we have linked accounts
+              clearInterval(checkInterval);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking linked accounts:', error);
+        }
+      }, 3000);
+
+      // Stop checking after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (linkingStatus.includes("Generating")) {
+          setLinkingStatus("Account linking window opened. Close this dialog when done linking.");
+        }
+      }, 300000);
+
+    } catch (error) {
+      console.error('Error generating JWT:', error);
+      setError(`Failed to generate linking URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setLinkingStatus("");
+    }
   };
 
   const handleSaveGroup = () => {
@@ -70,6 +178,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       // Reset form
       setGroupName("");
       setAccounts([]);
+      setError("");
+      setLinkingStatus("");
       onOpenChange(false);
     }
   };
@@ -77,183 +187,154 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
   const handleCancel = () => {
     setGroupName("");
     setAccounts([]);
-    setShowAddAccount(false);
+    setError("");
+    setLinkingStatus("");
     onOpenChange(false);
   };
+
+  const linkedAccountsCount = accounts.filter(account => account.isLinked).length;
+  const canSave = groupName.trim() && accounts.length > 0;
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 600 }}>
-        <Dialog.Title>
-          <Flex align="center" gap="2">
-            <Users className="w-5 h-5" />
-            Create Account Group
-          </Flex>
-        </Dialog.Title>
+        <Dialog.Title>Create Account Group</Dialog.Title>
         <Dialog.Description>
-          Create a new account group and add your social media accounts to it.
+          Create a new account group and link social media accounts via Ayrshare
         </Dialog.Description>
 
-        <Flex direction="column" gap="4" mt="4">
+        <div className="space-y-6 mt-6">
           {/* Group Name */}
-          <Box>
-            <Text size="2" weight="medium" as="label">
-              Group Name
-            </Text>
+          <div>
+            <label className="block text-sm font-medium mb-2">Group Name</label>
             <TextField.Root
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Enter group name (e.g., Personal Brand, Company Social)"
-              mt="1"
+              placeholder="e.g., Personal Accounts, Business Brand, Client Name"
+              disabled={isCreatingProfile || accounts.length > 0}
             />
-          </Box>
+          </div>
 
-          {/* Accounts List */}
-          <Box>
-            <Flex justify="between" align="center" mb="2">
-              <Text size="2" weight="medium">
-                Accounts ({accounts.length})
-              </Text>
-              <Button
-                variant="soft"
-                size="1"
-                onClick={() => setShowAddAccount(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Add Account
-              </Button>
-            </Flex>
-
-            {accounts.length === 0 ? (
-              <Card>
-                <Text size="2" color="gray">
-                  No accounts added yet. Click "Add Account" to get started.
+          {/* Ayrshare Configuration Check */}
+          {!ayrshareConfigured && (
+            <Card>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <Text weight="medium" color="red">Ayrshare Not Configured</Text>
+                </div>
+                <Text size="2" className="mt-1 text-red-600">
+                  Please set your NEXT_PUBLIC_AYRSHARE_API_KEY environment variable.
                 </Text>
-              </Card>
-            ) : (
-              <Flex direction="column" gap="2">
-                {accounts.map((account) => (
-                  <Card key={account.id}>
-                    <Flex justify="between" align="center">
-                      <Flex align="center" gap="2">
+              </div>
+            </Card>
+          )}
+
+          {/* Create Profile Button */}
+          {!accounts.length && (
+            <Button 
+              onClick={handleCreateAccountGroup}
+              disabled={!groupName.trim() || !ayrshareConfigured || isCreatingProfile}
+              className="w-full"
+            >
+              {isCreatingProfile ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Profile...
+                </>
+              ) : (
+                <>
+                  <Users className="w-4 h-4 mr-2" />
+                  Create Account Group
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Account Linking */}
+          {accounts.length > 0 && (
+            <Card>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <Text weight="medium">Social Media Accounts</Text>
+                  <Text size="2" color="gray">
+                    {linkedAccountsCount} of {accounts.length} linked
+                  </Text>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {accounts.map((account) => (
+                    <div key={account.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="relative">
                         <Image
-                          src={platformIcons[account.platform]}
+                          src={platformIcons[account.platform as keyof typeof platformIcons] || "/sprout.svg"}
                           alt={account.platform}
                           width={20}
                           height={20}
                         />
-                        <Box>
-                          <Text size="2" weight="medium">
-                            {account.name}
-                          </Text>
-                          <Text size="1" color="gray">
-                            {account.platform}
-                          </Text>
-                        </Box>
-                      </Flex>
-                      <Button
-                        variant="ghost"
-                        size="1"
-                        color="red"
-                        onClick={() => handleRemoveAccount(account.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </Flex>
-                  </Card>
-                ))}
-              </Flex>
-            )}
-          </Box>
+                        {account.isLinked && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Text size="2" weight="medium" className="truncate">
+                          {platformLabels[account.platform as keyof typeof platformLabels]}
+                        </Text>
+                        <Text size="1" color={account.isLinked ? "green" : "gray"}>
+                          {account.isLinked ? "Linked" : "Not linked"}
+                        </Text>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-          {/* Add Account Form */}
-          {showAddAccount && (
-            <Card>
-              <Heading size="3" mb="3">Add New Account</Heading>
-              <Flex direction="column" gap="3">
-                <Box>
-                  <Text size="2" weight="medium" as="label">
-                    Platform
-                  </Text>
-                  <Select.Root
-                    value={newAccount.platform}
-                    onValueChange={(value) =>
-                      setNewAccount({ ...newAccount, platform: value as typeof PlatformNames[number] })
-                    }
-                  >
-                    <Select.Trigger />
-                    <Select.Content>
-                      {PlatformNames.map((platform) => (
-                        <Select.Item key={platform} value={platform}>
-                          <Flex align="center" gap="2">
-                            <Image
-                              src={platformIcons[platform]}
-                              alt={platform}
-                              width={16}
-                              height={16}
-                            />
-                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                          </Flex>
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
-                </Box>
-
-                <Box>
-                  <Text size="2" weight="medium" as="label">
-                    Account Name
-                  </Text>
-                  <TextField.Root
-                    value={newAccount.name}
-                    onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
-                    placeholder="Enter account name or handle"
-                    mt="1"
-                  />
-                </Box>
-
-                <Box>
-                  <Text size="2" weight="medium" as="label">
-                    Profile URL
-                  </Text>
-                  <TextField.Root
-                    value={newAccount.apiUrl}
-                    onChange={(e) => setNewAccount({ ...newAccount, apiUrl: e.target.value })}
-                    placeholder="https://instagram.com/yourhandle"
-                    mt="1"
-                  />
-                </Box>
-
-                <Flex gap="2" justify="end">
-                  <Button
-                    variant="soft"
-                    onClick={() => setShowAddAccount(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddAccount}>
-                    Add Account
-                  </Button>
-                </Flex>
-              </Flex>
+                <Button 
+                  onClick={handleLinkAccounts}
+                  variant="soft"
+                  className="w-full"
+                  disabled={!accounts[0]?.profileKey}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Link Social Media Accounts
+                </Button>
+              </div>
             </Card>
           )}
-        </Flex>
 
-        <Flex gap="3" mt="6" justify="end">
-          <Dialog.Close>
-            <Button variant="soft" onClick={handleCancel}>
-              Cancel
-            </Button>
-          </Dialog.Close>
-          <Button
+          {/* Status Messages */}
+          {linkingStatus && (
+            <Card>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <Text size="2" color="blue">{linkingStatus}</Text>
+              </div>
+            </Card>
+          )}
+
+          {error && (
+            <Card>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <Text size="2" color="red">{error}</Text>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Dialog Actions */}
+        <div className="flex justify-end gap-2 mt-6">
+          <Button variant="soft" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button 
             onClick={handleSaveGroup}
-            disabled={!groupName || accounts.length === 0}
+            disabled={!canSave}
           >
             <Save className="w-4 h-4 mr-2" />
-            Create Group
+            Save Account Group
           </Button>
-        </Flex>
+        </div>
       </Dialog.Content>
     </Dialog.Root>
   );

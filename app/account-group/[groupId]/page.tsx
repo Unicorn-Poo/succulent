@@ -78,7 +78,16 @@ export default function AccountGroupPage() {
 			<div className="bg-gray-50 rounded-lg p-4 mb-6">
 				<div className="flex items-center justify-between mb-3">
 					<h3 className="font-medium">Connected Accounts</h3>
-					<span className="text-xs text-gray-500">{Object.keys(accountGroup.accounts).length} accounts</span>
+					<div className="flex items-center gap-3">
+						<span className="text-xs text-gray-500">
+							{Object.values(accountGroup.accounts).filter(acc => acc.isLinked).length} linked of {Object.keys(accountGroup.accounts).length} total
+						</span>
+						{Object.values(accountGroup.accounts).some(acc => acc.profileKey) && (
+							<span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+								Ayrshare Profile
+							</span>
+						)}
+					</div>
 				</div>
 				<div className="flex flex-wrap gap-2">
 					{Object.entries(accountGroup.accounts).map(([key, account]) => {
@@ -86,7 +95,7 @@ export default function AccountGroupPage() {
 						const platformLabel = platformLabels[account.platform as keyof typeof platformLabels] || account.platform;
 						
 						return (
-							<div key={account.id} className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+							<div key={account.id} className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors group">
 								<div className="relative">
 									<Image
 										src={platformIcon}
@@ -95,9 +104,36 @@ export default function AccountGroupPage() {
 										height={16}
 										className="rounded"
 									/>
-									<div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-white"></div>
+									<div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+										account.isLinked 
+											? 'bg-green-500' 
+											: account.status === 'error' 
+											? 'bg-red-500' 
+											: 'bg-gray-400'
+									}`}></div>
 								</div>
-								<span className="text-sm font-medium truncate max-w-[120px]">{account.name}</span>
+								<div className="flex flex-col">
+									<span className="text-sm font-medium truncate max-w-[120px]">{account.name}</span>
+									<span className={`text-xs ${
+										account.isLinked 
+											? 'text-green-600' 
+											: account.status === 'error' 
+											? 'text-red-600' 
+											: 'text-gray-500'
+									}`}>
+										{account.isLinked 
+											? 'Linked' 
+											: account.status === 'error' 
+											? 'Error' 
+											: 'Not linked'
+										}
+									</span>
+								</div>
+								{account.status === 'error' && account.lastError && (
+									<div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded px-2 py-1 mt-8 ml-4 whitespace-nowrap">
+										{account.lastError}
+									</div>
+								)}
 							</div>
 						);
 					})}
@@ -106,6 +142,22 @@ export default function AccountGroupPage() {
 				{Object.keys(accountGroup.accounts).length === 0 && (
 					<div className="text-center py-6 text-gray-500">
 						<p className="text-sm">No accounts connected yet</p>
+					</div>
+				)}
+
+				{/* Add re-link accounts button if any accounts are not linked */}
+				{Object.values(accountGroup.accounts).some(acc => !acc.isLinked && acc.profileKey) && (
+					<div className="mt-3 pt-3 border-t border-gray-200">
+						<button 
+							onClick={() => {
+								// This would open the account linking flow
+								// For now, just show a message
+								alert('Account re-linking functionality would be implemented here');
+							}}
+							className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+						>
+							Re-link social accounts
+						</button>
 					</div>
 				)}
 			</div>
