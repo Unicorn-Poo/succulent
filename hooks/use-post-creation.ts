@@ -68,7 +68,24 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	const handleToggleReplyMode = useCallback(() => {
-		setSeriesType(prev => prev === 'reply' ? null : 'reply');
+		setSeriesType(prev => {
+			const newSeriesType = prev === 'reply' ? null : 'reply';
+			
+			if (newSeriesType === 'reply') {
+				// Entering reply mode - clear content and reset state
+				setContextText("");
+				setReplyUrl("");
+				setIsQuoteTweet(false);
+				setFetchReplyError(null);
+			} else {
+				// Exiting reply mode - clear reply-related state
+				setReplyUrl("");
+				setIsQuoteTweet(false);
+				setFetchReplyError(null);
+			}
+			
+			return newSeriesType;
+		});
 	}, []);
 
 	const isExplicitThread = useMemo(() => {
@@ -230,16 +247,17 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		}
 	}, [replyUrl, isValidReplyUrl, seriesType, activeTab, currentPost.variants, detectedPlatform]);
 
-	useEffect(() => {
-		if (detectedPlatform && seriesType === 'reply') {
-			const accountKey = Object.keys(accountGroup.accounts).find(
-				key => accountGroup.accounts[key].platform === detectedPlatform
-			);
-			if (accountKey) {
-				setActiveTab(accountKey);
-			}
-		}
-	}, [detectedPlatform, seriesType, accountGroup.accounts]);
+	// Removed automatic tab switching when platform is detected for replies
+	// useEffect(() => {
+	// 	if (detectedPlatform && seriesType === 'reply') {
+	// 		const accountKey = Object.keys(accountGroup.accounts).find(
+	// 			key => accountGroup.accounts[key].platform === detectedPlatform
+	// 		);
+	// 		if (accountKey) {
+	// 			setActiveTab(accountKey);
+	// 		}
+	// 	}
+	// }, [detectedPlatform, seriesType, accountGroup.accounts]);
 
 	const handleSaveContent = useCallback(async () => {
 		if (!contextText) return;

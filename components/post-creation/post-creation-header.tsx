@@ -12,7 +12,7 @@ interface PostCreationHeaderProps {
     setIsEditingTitle: (isEditing: boolean) => void;
     handleTitleSave: () => void;
     selectedPlatforms: string[];
-    accountGroup: PostFullyLoaded['accountGroup'];
+    accountGroup?: PostFullyLoaded['accountGroup'];
     seriesType: "reply" | null;
     detectedPlatform: string | null;
     activeTab: string;
@@ -81,8 +81,7 @@ export const PostCreationHeader = ({
                     const displayName = platform === "base"
                         ? "Base"
                         : account?.name || platform;
-                    const isReplyAndNotBase = seriesType === 'reply' && platform !== 'base';
-                    const isDisabled = seriesType === 'reply' && platform !== 'base' && detectedPlatform !== account?.platform;
+                    const isDisabled = seriesType === 'reply' && platform !== 'base' && detectedPlatform && detectedPlatform !== account?.platform;
 
                     return (
                         <TooltipProvider key={platform}>
