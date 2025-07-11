@@ -5,9 +5,9 @@ import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Plus, ArrowLeft, Calendar, Globe, Users, BarChart3, Heart, MessageCircle, Share, Clock, Edit3, Grid, List } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import CalendarView from "../../../components/calendar-view";
-import PlatformProfileView from "../../../components/platform-profile-view";
-import { accountGroup1 } from "../../page"; // Import the demo data
+import CalendarView from "@/components/organisms/calendar-view";
+import PlatformProfileView from "@/components/organisms/platform-profile-view";
+import { accountGroup1 } from "@/app/page"; // Import the demo data
 
 type ViewMode = 'overview' | 'calendar' | 'platform-profile';
 

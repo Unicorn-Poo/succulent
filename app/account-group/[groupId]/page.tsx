@@ -1,21 +1,20 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { accountGroups } from "../../page";
+import { accountGroups } from "@/app/page";
 import Image from "next/image";
 import Link from "next/link";
 import { Button, Dialog, TextField, TextArea, Card } from "@radix-ui/themes";
 import { Plus, Edit3, Home, Trash2, Users, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Navigation from "../../../components/navigation";
-import { platformIcons, platformLabels } from "../../../utils/postConstants";
+import { platformIcons, platformLabels } from "@/utils/postConstants";
 import { useAccount } from "jazz-react";
-import { Post, AccountGroup } from "../../schema";
-import { MyAppAccount } from "../../schema";
-import AyrshareAccountLinking from "../../../components/ayrshare-account-linking";
-import { PlatformAccount } from "../../schema";
-import { PostVariant, MediaItem, ReplyTo } from "../../schema";
+import { Post, AccountGroup } from "@/app/schema";
+import { MyAppAccount } from "@/app/schema";
+import AyrshareAccountLinking from "@/components/organisms/ayrshare-account-linking";
+import { PlatformAccount } from "@/app/schema";
+import { PostVariant, MediaItem, ReplyTo } from "@/app/schema";
 import { co, z } from "jazz-tools";
 
 export default function AccountGroupPage() {

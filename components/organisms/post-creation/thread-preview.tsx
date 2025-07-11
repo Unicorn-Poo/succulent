@@ -1,6 +1,6 @@
 import { Card, Text, Badge } from "@radix-ui/themes";
 import { ListOrdered } from "lucide-react";
-import { ThreadPost } from "../../utils/threadUtils";
+import { ThreadPost } from "@/utils/threadUtils";
 
 interface ThreadPreviewProps {
     isThread: boolean;

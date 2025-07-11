@@ -5,9 +5,10 @@ import {
 	AlertCircle,
 	Check,
 } from "lucide-react";
-import { PostFullyLoaded, MediaItem } from "../app/schema";
+import { PostFullyLoaded } from "@/app/schema";
+import type { MediaItem } from "@/types";
 import { PreviewModal } from "./preview-modal";
-import { usePostCreation } from "../hooks/use-post-creation";
+import { usePostCreation } from "@/hooks/use-post-creation";
 import { PostCreationHeader } from "./post-creation/post-creation-header";
 import { PostActions } from "./post-creation/post-actions";
 import { ReplyPanel } from "./post-creation/reply-panel";
@@ -21,12 +22,7 @@ interface PostCreationProps {
 	accountGroup: {
 		id: string;
 		name: string;
-		accounts: Record<string, {
-			id: string;
-			platform: string;
-			name: string;
-			apiUrl: string;
-		}>;
+		accounts: Record<string, any>;
 	};
 }
 
@@ -201,7 +197,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				selectedPlatforms={selectedPlatforms}
 				accountGroup={accountGroup}
 				activeTab={activeTab}
-				media={currentPost.variants[activeTab]?.media?.filter(Boolean) as MediaItem[] || []}
+				media={currentPost.variants[activeTab]?.media?.filter(Boolean) as any[] || []}
 				isReply={seriesType === "reply"}
 				isQuote={isQuoteTweet}
 				replyTo={currentPost.variants[activeTab]?.replyTo}

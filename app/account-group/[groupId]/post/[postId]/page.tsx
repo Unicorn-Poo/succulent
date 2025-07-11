@@ -1,12 +1,12 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
-import { accountGroups } from "../../../../page";
-import PostCreationComponent from "../../../../../components/post-creation";
-import { PostFullyLoaded } from "../../../../schema";
+import { accountGroups } from "@/app/page";
+import PostCreationComponent from "@/components/organisms/post-creation";
+import { PostFullyLoaded } from "@/app/schema";
 import { Button } from "@radix-ui/themes";
 import { Home, Users } from "lucide-react";
 import { useAccount } from "jazz-react";
-import { MyAppAccount } from "../../../../schema";
+import { MyAppAccount } from "@/app/schema";
 
 export default function PostPage() {
   const params = useParams();

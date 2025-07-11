@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Dialog, Button, Tabs, Box, Text, Badge, Card } from "@radix-ui/themes";
 import { X, ChevronLeft, ChevronRight, Grid, Smartphone, Monitor } from "lucide-react";
 import { PlatformPreview } from "./platform-previews";
-import { ThreadPost } from "../utils/threadUtils";
-import { MediaItem } from "../app/schema";
-import { platformLabels } from "../utils/postConstants";
+import { ThreadPost } from "@/utils/threadUtils";
+import { MediaItem } from "@/app/schema";
+import { platformLabels } from "@/utils/postConstants";
 import Image from "next/image";
 
 interface PreviewModalProps {

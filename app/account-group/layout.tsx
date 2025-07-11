@@ -1,6 +1,6 @@
 "use client";
 
-import Navigation from "../../components/navigation";
+import { Navigation } from "@/components/molecules/navigation";
 
 export default function AccountGroupLayout({
   children,

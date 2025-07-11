@@ -1,20 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Card, Dialog, TextField, Select, Text, Heading, Flex, Box } from "@radix-ui/themes";
-import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2, Globe, Trash2 } from "lucide-react";
-import { Input } from "./input";
-import { PlatformNames, PlatformAccount, AccountGroup, AccountGroupType } from "../app/schema";
-import Image from "next/image";
+import { useState, useEffect, useMemo } from "react";
+import { Button, Dialog, TextField, Select, Card, Text, Badge } from "@radix-ui/themes";
+import { Plus, X, Trash2, Check, AlertCircle, ExternalLink, Users, Loader2, Globe, Save } from "lucide-react";
+import { platformIcons, platformLabels } from "@/utils/postConstants";
+import { Input } from "@/components/atoms";
+import { PlatformAccount, AccountGroup, PlatformNames } from "@/app/schema";
 import { co } from "jazz-tools";
 import { 
-  // Business Plan functions (commented out)
-  // createAyrshareProfile, generateLinkingJWT, getConnectedAccounts, 
-  validateAyrshareConfig, 
-  isBusinessPlanMode,
-  createFreeAccountGroup,
-  getFreeConnectedAccounts
-} from "../utils/ayrshareIntegration";
+	validateAyrshareConfig, 
+	isBusinessPlanMode,
+	createFreeAccountGroup,
+	getFreeConnectedAccounts
+} from "@/utils/ayrshareIntegration";
 
 interface PlatformAccountData {
   platform: typeof PlatformNames[number];
@@ -40,22 +38,6 @@ interface AccountGroupCreationProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const platformIcons = {
-  x: "/icons8-twitter.svg",
-  instagram: "/icons8-instagram.svg",
-  youtube: "/icons8-youtube-logo.svg",
-  facebook: "/icons8-facebook.svg",
-  linkedin: "/icons8-linkedin.svg",
-};
-
-const platformLabels = {
-  x: "X (Twitter)",
-  instagram: "Instagram", 
-  youtube: "YouTube",
-  facebook: "Facebook",
-  linkedin: "LinkedIn",
-};
 
 const availablePlatforms = Object.keys(platformLabels) as (keyof typeof platformLabels)[];
 

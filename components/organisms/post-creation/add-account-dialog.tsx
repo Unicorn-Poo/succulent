@@ -1,6 +1,6 @@
 import { Dialog, Button } from "@radix-ui/themes";
 import Image from "next/image";
-import { platformIcons } from "../../utils/postConstants";
+import { platformIcons } from "@/utils/postConstants";
 
 interface AddAccountDialogProps {
     open: boolean;

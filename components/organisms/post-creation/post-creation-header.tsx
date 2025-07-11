@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { Button, TextField, Badge } from "@radix-ui/themes";
 import { Edit3, Check, X, Plus } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip";
-import { platformIcons } from "../../utils/postConstants";
-import { PostFullyLoaded } from "../../app/schema";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms";
+import { platformIcons } from "@/utils/postConstants";
+import { PostFullyLoaded } from "@/app/schema";
 
 interface PostCreationHeaderProps {
     title: string;

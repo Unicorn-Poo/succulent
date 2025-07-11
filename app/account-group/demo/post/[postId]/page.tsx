@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { accountGroup1 } from "../../../../page";
-import PostCreationComponent from "../../../../../components/post-creation";
+import { accountGroup1 } from "@/app/page";
+import PostCreationComponent from "@/components/organisms/post-creation";
 
 export default function DemoPostPage() {
   const params = useParams();

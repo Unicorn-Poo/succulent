@@ -3,10 +3,10 @@
 import { Card, Avatar, Text, Badge, Button, Box } from "@radix-ui/themes";
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { ThreadPost } from "../utils/threadUtils";
-import { MediaItem } from "../app/schema";
+import { ThreadPost } from "@/utils/threadUtils";
+import { MediaItem } from "@/app/schema";
 import { useState } from "react";
-import { ReplyPreview } from "./reply-preview";
+import { ReplyPreview } from "@/components/molecules";
 
 interface AccountInfo {
 	id: string;

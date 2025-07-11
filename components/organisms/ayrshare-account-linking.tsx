@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Card, Text } from "@radix-ui/themes";
 import { ExternalLink, RefreshCw, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { getFreeConnectedAccounts } from "../utils/ayrshareIntegration";
+import { getFreeConnectedAccounts } from "@/utils/ayrshareIntegration";
 
 interface Account {
   id?: string;
