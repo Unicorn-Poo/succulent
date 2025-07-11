@@ -78,7 +78,47 @@ export const accountGroup1: LegacyAccountGroup = {
       url: "https://youtube.com/@sammiischannel",
     },
   },
-  posts: []
+  posts: [
+    {
+      id: "demo-post-1",
+      title: "Welcome to Succulent! 🌱",
+      content: "Excited to launch our new social media management platform! Create, schedule, and manage all your content from one place. #SocialMediaMarketing #Succulent",
+      platforms: ["instagram", "x"],
+      status: "published",
+      publishedAt: "2024-01-15T10:30:00Z",
+      engagement: {
+        likes: 142,
+        comments: 23,
+        shares: 8
+      }
+    },
+    {
+      id: "demo-post-2", 
+      title: "Tips for Better Social Media Content",
+      content: "💡 Pro tip: Consistency is key! Post regularly and engage with your audience. Quality content builds lasting relationships. What's your favorite content creation tip?",
+      platforms: ["instagram", "x", "youtube"],
+      status: "published", 
+      publishedAt: "2024-01-12T14:15:00Z",
+      engagement: {
+        likes: 89,
+        comments: 15,
+        shares: 12
+      }
+    },
+    {
+      id: "demo-post-3",
+      title: "Behind the Scenes",
+      content: "Working late into the night building something amazing! The Succulent team is passionate about helping creators and businesses thrive online. 🚀",
+      platforms: ["instagram"],
+      status: "scheduled",
+      scheduledFor: "2024-01-20T09:00:00Z",
+      engagement: {
+        likes: 0,
+        comments: 0,
+        shares: 0
+      }
+    }
+  ]
 };
 
 export const accountGroups: Record<string, LegacyAccountGroup> = {
@@ -168,8 +208,8 @@ export default function HomePage() {
   }, [currentAccount, currentAccount?.root?.accountGroups]); // Add dependency on account groups
 
   const handleCreatePost = async () => {
-    // For now, just navigate to the demo account group
-    router.push(`/account-group/1`);
+    // Navigate to the demo account group page
+    router.push(`/account-group/demo`);
   };
 
   const handleSaveAccountGroup = async (groupData: {
@@ -303,11 +343,11 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Legacy Account Groups */}
           {Object.entries(accountGroups).map(([id, group]) => (
-            <Link key={id} href={`/account-group/${id}`}>
+            <Link key={id} href={`/account-group/demo`}>
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-lg">{group.name}</h3>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Demo Account Group"></div>
                 </div>
                 
                 <div className="space-y-2">
@@ -316,6 +356,9 @@ export default function HomePage() {
                   </p>
                   <p className="text-sm text-gray-600">
                     {group.posts.length} posts created
+                  </p>
+                  <p className="text-xs text-green-600">
+                    🎭 Demo account group
                   </p>
                 </div>
 
