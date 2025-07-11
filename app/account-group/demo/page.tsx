@@ -5,7 +5,6 @@ import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Plus, ArrowLeft, Calendar, Globe, Users, BarChart3, Heart, MessageCircle, Share, Clock, Edit3, Grid, List } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Navigation from "../../../components/navigation";
 import CalendarView from "../../../components/calendar-view";
 import PlatformProfileView from "../../../components/platform-profile-view";
 import { accountGroup1 } from "../../page"; // Import the demo data
@@ -90,22 +89,17 @@ export default function DemoAccountGroupPage() {
   // Platform Profile View
   if (viewMode === 'platform-profile' && selectedAccount) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <PlatformProfileView
-          account={selectedAccount}
-          posts={accountGroup.posts}
-          onBack={handleBackToOverview}
-          accountGroupId="demo"
-        />
-      </div>
+      <PlatformProfileView
+        account={selectedAccount}
+        posts={accountGroup.posts}
+        onBack={handleBackToOverview}
+        accountGroupId="demo"
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
+    <>
       <div className="max-w-6xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -387,6 +381,6 @@ export default function DemoAccountGroupPage() {
           </div>
         </Dialog.Content>
       </Dialog.Root>
-    </div>
+    </>
   );
-} 
+}

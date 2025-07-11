@@ -2,19 +2,65 @@
 import { useParams, useRouter } from "next/navigation"; 
 import { accountGroups } from "../../../../page";
 import PostCreationComponent from "../../../../../components/post-creation";
-import Navigation from "../../../../../components/navigation";
 import { PostFullyLoaded } from "../../../../schema";
 import { Button } from "@radix-ui/themes";
 import { Home, Users } from "lucide-react";
+import { useAccount } from "jazz-react";
+import { MyAppAccount } from "../../../../schema";
 
 export default function PostPage() {
   const params = useParams();
   const router = useRouter();
   
-  const accountGroup = accountGroups.find((group) => group.id === params.groupId);
-  const post = accountGroup?.posts.find((post) => post.variants.base.id === params.postId);
+  // Get Jazz account to access collaborative account groups
+  const { me } = useAccount(MyAppAccount, {
+    resolve: {
+      root: {
+        accountGroups: { $each: {
+          accounts: { $each: true },
+          posts: { $each: {
+            variants: { $each: {
+              text: true,
+              media: { $each: true },
+              replyTo: true
+            }}
+          }}
+        }}
+      }
+    }
+  });
   
-  if (!accountGroup) {
+  // Try to find the account group in legacy groups first, then in Jazz groups
+  const legacyAccountGroup = Object.values(accountGroups).find(
+    (group) => group.id === params.groupId
+  );
+  
+  const jazzAccountGroup = me?.root?.accountGroups?.find(
+    (group: any) => group.id === params.groupId
+  );
+  
+  // Use whichever one we found
+  const accountGroup = legacyAccountGroup || jazzAccountGroup;
+  
+  // Helper function to get posts array from either format
+  const getPostsArray = () => {
+    if (legacyAccountGroup) {
+      return legacyAccountGroup.posts || [];
+    } else if (jazzAccountGroup) {
+      return jazzAccountGroup.posts || [];
+    }
+    return [];
+  };
+  
+  // Find the specific post
+  const posts = getPostsArray();
+  const post = posts.find((post: any) => {
+    // Handle different post ID formats
+    const postId = post.id || post.variants?.base?.id || post.variants?.base?.postId;
+    return postId === params.postId;
+  });
+  
+  if (!accountGroup?.id) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
@@ -34,7 +80,14 @@ export default function PostPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Post Not Found</h2>
-          <p className="text-gray-600 mb-4">The post you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">
+            The post you're looking for doesn't exist in {accountGroup.name}.
+          </p>
+          <div className="mb-4">
+            <p className="text-sm text-gray-500">
+              {jazzAccountGroup ? "📍 Jazz Collaborative Group" : "📍 Demo Account Group"}
+            </p>
+          </div>
           <Button onClick={() => router.push(`/account-group/${params.groupId}`)}>
             <Users className="w-4 h-4 mr-2" />
             Back to Account Group
@@ -46,11 +99,9 @@ export default function PostPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
-      <Navigation />
-      
       <PostCreationComponent 
         post={post as unknown as PostFullyLoaded} 
-        accountGroup={accountGroup}
+        accountGroup={accountGroup as any}
       />
     </div>
   );

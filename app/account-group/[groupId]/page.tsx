@@ -15,6 +15,8 @@ import { Post, AccountGroup } from "../../schema";
 import { MyAppAccount } from "../../schema";
 import AyrshareAccountLinking from "../../../components/ayrshare-account-linking";
 import { PlatformAccount } from "../../schema";
+import { PostVariant, MediaItem, ReplyTo } from "../../schema";
+import { co, z } from "jazz-tools";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -36,7 +38,13 @@ export default function AccountGroupPage() {
 			root: {
 				accountGroups: { $each: {
 					accounts: { $each: true },
-					posts: { $each: true }
+					posts: { $each: {
+						variants: { $each: {
+							text: true,
+							media: { $each: true },
+							replyTo: true
+						}}
+					}}
 				}}
 			}
 		}
@@ -56,36 +64,70 @@ export default function AccountGroupPage() {
 
 	if (!accountGroup?.id) {
 		return (
-			<div className="min-h-screen bg-gray-50">
-				<Navigation />
-				<div className="flex flex-col items-center justify-center py-12">
-					<div className="text-center">
-						<h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
-						<p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
-						<Button onClick={() => router.push("/")}>
-							<Home className="w-4 h-4 mr-2" />
-							Back to Home
-						</Button>
-					</div>
+			<div className="flex flex-col items-center justify-center py-12">
+				<div className="text-center">
+					<h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
+					<p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
+					<Button onClick={() => router.push("/")}>
+						<Home className="w-4 h-4 mr-2" />
+						Back to Home
+					</Button>
 				</div>
 			</div>
 		);
 	}
 
 	const handleCreatePost = () => {
-		if (newPostTitle.trim()) {
-			// Create a new post ID
+		if (!newPostTitle.trim()) return;
+
+		if (jazzAccountGroup) {
+			// Create a proper Jazz Post for collaborative account groups
+			console.log('🎵 Creating Jazz Post for collaborative account group');
+			
+			// Create the collaborative objects with the correct syntax
+			const titleText = co.plainText().create(newPostTitle, { owner: jazzAccountGroup._owner });
+			const baseText = co.plainText().create(newPostText || "", { owner: jazzAccountGroup._owner });
+			const mediaList = co.list(MediaItem).create([], { owner: jazzAccountGroup._owner });
+			const replyToObj = ReplyTo.create({}, { owner: jazzAccountGroup._owner });
+			
+			// Create the base post variant
+			const baseVariant = PostVariant.create({
+				text: baseText,
+				postDate: new Date(),
+				media: mediaList,
+				replyTo: replyToObj,
+				edited: false,
+				lastModified: undefined,
+			}, { owner: jazzAccountGroup._owner });
+
+			// Create the variants record
+			const variantsRecord = co.record(z.string(), PostVariant).create({
+				base: baseVariant
+			}, { owner: jazzAccountGroup._owner });
+
+			// Create the post
+			const newPost = Post.create({
+				title: titleText,
+				variants: variantsRecord,
+			}, { owner: jazzAccountGroup._owner });
+
+			// Add the post to the account group
+			jazzAccountGroup.posts.push(newPost);
+			
+			console.log('✅ Jazz Post created with ID:', newPost.id);
+			
+			// Navigate to the newly created post
+			router.push(`/account-group/${accountGroup.id}/post/${newPost.id}`);
+		} else {
+			// For legacy account groups, use the old approach
 			const newPostId = Date.now().toString();
-			
-			// For now, just navigate to post creation
-			// In a full implementation, we'd handle Jazz vs legacy differently
 			router.push(`/account-group/${accountGroup.id}/post/${newPostId}?title=${encodeURIComponent(newPostTitle)}&content=${encodeURIComponent(newPostText)}`);
-			
-			// Reset form
-			setNewPostTitle("");
-			setNewPostText("");
-			setShowCreateDialog(false);
 		}
+		
+		// Reset form
+		setNewPostTitle("");
+		setNewPostText("");
+		setShowCreateDialog(false);
 	};
 
 	// Helper function to get accounts array from either format
@@ -201,31 +243,28 @@ export default function AccountGroupPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<Navigation />
-			
-			<div className="w-full max-w-4xl mx-auto p-6">
-				{/* Account Group Header */}
-				<div className="flex items-center justify-between mb-6">
-					<div>
-						<h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-							{accountGroup.name}
-							{jazzAccountGroup && (
-								<div className="w-3 h-3 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
-							)}
-							{legacyAccountGroup && (
-								<div className="w-3 h-3 bg-green-500 rounded-full" title="Demo Account Group"></div>
-							)}
-						</h1>
-						<p className="text-gray-600">
-							{jazzAccountGroup ? "Collaborative account group" : "Demo account group"}
-						</p>
-					</div>
-					<Button onClick={() => setShowCreateDialog(true)}>
-						<Plus className="w-4 h-4 mr-2" />
-						Create Post
-					</Button>
+		<div className="w-full max-w-4xl mx-auto p-6">
+			{/* Account Group Header */}
+			<div className="flex items-center justify-between mb-6">
+				<div>
+					<h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+						{accountGroup.name}
+						{jazzAccountGroup && (
+							<div className="w-3 h-3 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
+						)}
+						{legacyAccountGroup && (
+							<div className="w-3 h-3 bg-green-500 rounded-full" title="Demo Account Group"></div>
+						)}
+					</h1>
+					<p className="text-gray-600">
+						{jazzAccountGroup ? "Collaborative account group" : "Demo account group"}
+					</p>
 				</div>
+				<Button onClick={() => setShowCreateDialog(true)}>
+					<Plus className="w-4 h-4 mr-2" />
+					Create Post
+				</Button>
+			</div>
 
 				{/* Ayrshare Account Linking */}
 				{accounts.length > 0 && (
@@ -426,8 +465,26 @@ export default function AccountGroupPage() {
 						<div className="space-y-4">
 							{posts.map((post: any, index: number) => {
 								const postId = post.id || post.variants?.base?.id || index;
-								const postTitle = post.title || "Untitled Post";
-								const postContent = post.content || post.variants?.base?.text || "";
+								
+								// Handle collaborative vs legacy text access
+								let postTitle = "Untitled Post";
+								let postContent = "";
+								
+								if (post.title) {
+									// For Jazz posts, title is a collaborative object
+									postTitle = typeof post.title === 'string' ? post.title : post.title.toString();
+								}
+								
+								if (post.content) {
+									// Legacy posts might have direct content
+									postContent = post.content;
+								} else if (post.variants?.base?.text) {
+									// For Jazz posts, text is a collaborative object
+									postContent = typeof post.variants.base.text === 'string' 
+										? post.variants.base.text 
+										: post.variants.base.text.toString();
+								}
+								
 								const postDate = post.createdAt || post.variants?.base?.postDate || new Date();
 								
 								return (
@@ -502,6 +559,5 @@ export default function AccountGroupPage() {
 					</Dialog.Content>
 				</Dialog.Root>
 			</div>
-		</div>
 	);
 }
