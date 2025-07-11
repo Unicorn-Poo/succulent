@@ -17,6 +17,7 @@ import {
 	PostData,
 	fetchPostContent
 } from "../utils/apiHandlers";
+import { isBusinessPlanMode } from "../utils/ayrshareIntegration";
 
 type SeriesType = "reply" | "multi";
 
@@ -29,7 +30,15 @@ interface PostCreationProps {
 			id: string;
 			platform: string;
 			name: string;
-			apiUrl: string;
+			profileKey?: string;
+			isLinked?: boolean;
+			status?: "pending" | "linked" | "error" | "expired";
+			// Legacy fields for backward compatibility
+			apiUrl?: string;
+			avatar?: string;
+			username?: string;
+			displayName?: string;
+			url?: string;
 		}>;
 	};
 }
@@ -304,7 +313,43 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("Post content cannot be empty");
 			}
 
-			// Get profile key from the first account (assuming all accounts in a group share the same profile)
+			// =============================================================================
+			// 🆓 FREE ACCOUNT MODE (ACTIVE FOR DEVELOPMENT)
+			// =============================================================================
+			if (!isBusinessPlanMode()) {
+				// Free account mode - no profile keys needed
+				const mediaUrls = currentPost.variants[activeTab]?.media?.map(item => 
+					item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
+				).filter(Boolean) as string[] || [];
+
+				const basePostData: PostData = {
+					post: postText,
+					platforms,
+					mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
+				};
+
+				let results;
+
+				if (seriesType === "reply" && replyUrl) {
+					results = await handleReplyPost(basePostData, replyUrl);
+				} else if (seriesType === "multi" && contextText.trim()) {
+					const threadPosts = generateThreadPreview(contextText);
+					results = await handleMultiPosts(basePostData, threadPosts);
+				} else {
+					results = await handleStandardPost(basePostData);
+				}
+
+				setSuccess("Post published successfully!");
+				// setResults(results); // This state is not defined in the original file
+				return;
+			}
+
+			// =============================================================================
+			// 🚀 BUSINESS PLAN MODE (COMMENTED OUT FOR DEVELOPMENT)
+			// =============================================================================
+			/*
+			// Business Plan mode - requires profile keys
 			const firstAccount = Object.values(accountGroup.accounts)[0];
 			const profileKey = firstAccount?.profileKey;
 
@@ -312,104 +357,47 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("No Ayrshare profile found. Please create and link your accounts first.");
 			}
 
-			const mediaUrls = currentPost.variants[activeTab]?.media?.map(m => 
-				m?.type === "image" ? m?.image?.toString() : m?.video?.toString()
-			)?.filter((url): url is string => Boolean(url)) || [];
+			const mediaUrls = currentPost.variants[activeTab]?.media?.map(item => 
+				item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
+			).filter(Boolean) as string[] || [];
 
-			if (seriesType === "reply" && replyUrl && isValidReplyUrl) {
-				const replyData = {
-					post: postText,
-					platforms,
-					profileKey,
-					...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
-				};
-				await handleReplyPost(replyData, replyUrl);
+			const basePostData: PostData = {
+				post: postText,
+				platforms,
+				profileKey,
+				mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+				scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
+			};
+
+			let results;
+
+			if (seriesType === "reply" && replyUrl) {
+				results = await handleReplyPost(basePostData, replyUrl);
+			} else if (seriesType === "multi" && contextText.trim()) {
+				const threadPosts = generateThreadPreview(contextText);
+				results = await handleMultiPosts(basePostData, threadPosts);
 			} else {
-				// Convert platform keys to actual platform names for posting
-				const platformNames = platforms.map(platformKey => {
-					const account = accountGroup.accounts[platformKey];
-					return account?.platform || platformKey;
-				});
-
-				const twitterPlatforms = platformNames.filter(p => p === 'x' || p === 'twitter');
-				const otherPlatforms = platformNames.filter(p => p !== 'x' && p !== 'twitter');
-				const content = contextText ?? currentPost.variants[activeTab]?.text?.toString() ?? "";
-
-				if (twitterPlatforms.length > 0) {
-					const isTwitterThread = (manualThreadMode && content.includes('\n\n')) || content.length > PLATFORM_CHARACTER_LIMITS.x;
-					const twitterPostData: PostData = {
-						post: content,
-						platforms: twitterPlatforms,
-						profileKey,
-						...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }),
-						...(isTwitterThread && {
-							twitterOptions: {
-								thread: true,
-								threadNumber: true,
-								mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
-							}
-						}),
-						...(!isTwitterThread && mediaUrls.length > 0 && { mediaUrls }),
-					};
-					await handleStandardPost(twitterPostData);
-				}
-
-				if (otherPlatforms.length > 0) {
-					const threadedPlatforms: string[] = [];
-					const standardPlatforms: string[] = [];
-
-					otherPlatforms.forEach(platform => {
-						const limit = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
-						
-						if ((manualThreadMode && content.includes('\n\n')) || content.length > limit) {
-							threadedPlatforms.push(platform);
-						} else {
-							standardPlatforms.push(platform);
-						}
-					});
-
-					if (standardPlatforms.length > 0) {
-						await handleStandardPost({ 
-							post: content, 
-							platforms: standardPlatforms, 
-							profileKey,
-							mediaUrls, 
-							...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) 
-						});
-					}
-			
-					if (threadedPlatforms.length > 0) {
-						const threads = generateThreadPreview(content, 'default');
-						await handleMultiPosts({ 
-							post: content, 
-							platforms: threadedPlatforms, 
-							profileKey,
-							mediaUrls, 
-							...(scheduledDate && { scheduleDate: scheduledDate.toISOString() }) 
-						}, threads);
-					}
-				}
+				results = await handleStandardPost(basePostData);
 			}
 
 			setSuccess("Post published successfully!");
-			
+			setResults(results);
+			*/
+
 		} catch (error) {
-			console.error('Error publishing post:', error);
-			setErrors([handleApiError(error)]);
+			const errorMessage = handleApiError(error);
+			setErrors([errorMessage]);
+			console.error("Failed to publish post:", error);
 		} finally {
 			setIsScheduling(false);
 		}
 	}, [
-		selectedPlatforms, 
-		currentPost.variants, 
-		activeTab, 
-		scheduledDate, 
-		seriesType, 
-		replyUrl, 
-		isValidReplyUrl, 
-		postingInterval,
-		isThread,
-		manualThreadMode,
+		selectedPlatforms,
+		currentPost,
+		activeTab,
+		scheduledDate,
+		seriesType,
+		replyUrl,
 		contextText,
 		accountGroup.accounts
 	]);

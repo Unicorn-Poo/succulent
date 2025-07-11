@@ -1,6 +1,11 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 
-/**
+// =============================================================================
+// 🚀 BUSINESS PLAN FEATURES (COMMENTED OUT FOR FREE ACCOUNT DEVELOPMENT)
+// =============================================================================
+// Uncomment this section when upgrading to Business Plan
+
+/*
  * Interface for Ayrshare User Profile creation
  */
 export interface CreateProfileData {
@@ -8,7 +13,7 @@ export interface CreateProfileData {
   // Add any other profile metadata you want to track
 }
 
-/**
+/*
  * Interface for Ayrshare User Profile response
  */
 export interface AyrshareProfile {
@@ -17,7 +22,7 @@ export interface AyrshareProfile {
   status: string;
 }
 
-/**
+/*
  * Interface for JWT generation
  */
 export interface GenerateJWTData {
@@ -27,7 +32,7 @@ export interface GenerateJWTData {
   logout?: boolean;
 }
 
-/**
+/*
  * Interface for JWT response
  */
 export interface JWTResponse {
@@ -36,7 +41,7 @@ export interface JWTResponse {
   profileKey: string;
 }
 
-/**
+/*
  * Creates a new Ayrshare User Profile
  * @param profileData - Data for the new profile
  * @returns Profile information including Profile Key
@@ -60,7 +65,7 @@ export const createAyrshareProfile = async (profileData: CreateProfileData = {})
   return result;
 };
 
-/**
+/*
  * Generates a JWT token for social account linking
  * @param jwtData - JWT generation parameters
  * @returns JWT token and linking URL
@@ -84,7 +89,7 @@ export const generateLinkingJWT = async (jwtData: GenerateJWTData): Promise<JWTR
   return result;
 };
 
-/**
+/*
  * Gets the connected social accounts for a profile
  * @param profileKey - Ayrshare Profile Key
  * @returns Connected social accounts information
@@ -108,7 +113,7 @@ export const getConnectedAccounts = async (profileKey: string) => {
   return result;
 };
 
-/**
+/*
  * Deletes an Ayrshare User Profile
  * @param profileKey - Profile Key to delete
  * @returns Deletion result
@@ -131,6 +136,47 @@ export const deleteAyrshareProfile = async (profileKey: string) => {
 
   return result;
 };
+
+// =============================================================================
+// 🆓 FREE ACCOUNT MODE (ACTIVE FOR DEVELOPMENT)
+// =============================================================================
+
+/**
+ * Free account mode - simplified account creation
+ */
+export const createFreeAccountGroup = async (groupName: string) => {
+  // For free accounts, we just return a mock structure
+  return {
+    groupName,
+    message: "Account group created! Link your social accounts in the Ayrshare dashboard.",
+    dashboardUrl: "https://app.ayrshare.com/dashboard"
+  };
+};
+
+/**
+ * Gets connected accounts for free account (no profile key needed)
+ */
+export const getFreeConnectedAccounts = async () => {
+  const response = await fetch(`${AYRSHARE_API_URL}/user`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+    }
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get connected accounts');
+  }
+
+  return result;
+};
+
+// =============================================================================
+// 🔧 SHARED UTILITIES
+// =============================================================================
 
 /**
  * Maps Ayrshare platform names to our internal platform names
@@ -180,4 +226,19 @@ export const handleAyrshareError = (error: any): string => {
     return error.message;
   }
   return 'An unknown error occurred with Ayrshare integration';
-}; 
+};
+
+// =============================================================================
+// 🎛️ MODE CONFIGURATION
+// =============================================================================
+
+/**
+ * Set to true when you upgrade to Business Plan
+ * Set to false for free account development
+ */
+export const USE_BUSINESS_PLAN = false;
+
+/**
+ * Helper to determine which workflow to use
+ */
+export const isBusinessPlanMode = () => USE_BUSINESS_PLAN; 

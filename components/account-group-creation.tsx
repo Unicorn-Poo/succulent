@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { Button, Card, Dialog, TextField, Select, Text, Heading, Flex, Box } from "@radix-ui/themes";
-import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, X, Save, Users, ExternalLink, Check, AlertCircle, Loader2, Globe } from "lucide-react";
 import { Input } from "./input";
 import { PlatformNames } from "../app/schema";
 import Image from "next/image";
-import { createAyrshareProfile, generateLinkingJWT, getConnectedAccounts, validateAyrshareConfig } from "../utils/ayrshareIntegration";
+import { 
+  // Business Plan functions (commented out)
+  // createAyrshareProfile, generateLinkingJWT, getConnectedAccounts, 
+  validateAyrshareConfig, 
+  isBusinessPlanMode,
+  createFreeAccountGroup,
+  getFreeConnectedAccounts
+} from "../utils/ayrshareIntegration";
 
 interface PlatformAccount {
   id: string;
@@ -48,7 +55,92 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
   const [error, setError] = useState<string>("");
 
   const ayrshareConfigured = validateAyrshareConfig();
+  const businessPlanMode = isBusinessPlanMode();
 
+  // =============================================================================
+  // 🆓 FREE ACCOUNT MODE (ACTIVE)
+  // =============================================================================
+  
+  const handleCreateFreeAccountGroup = async () => {
+    if (!groupName.trim()) {
+      setError("Please enter a group name");
+      return;
+    }
+
+    if (!ayrshareConfigured) {
+      setError("Ayrshare API is not configured. Please check your environment variables.");
+      return;
+    }
+
+    setIsCreatingProfile(true);
+    setError("");
+    setLinkingStatus("Creating account group...");
+
+    try {
+      const result = await createFreeAccountGroup(groupName);
+      
+      setLinkingStatus(result.message);
+
+      // Create simple account entries (no profile keys for free accounts)
+      const enabledPlatforms: typeof PlatformNames[number][] = ["instagram", "facebook", "x", "linkedin", "youtube"];
+      const newAccounts: PlatformAccount[] = enabledPlatforms.map(platform => ({
+        id: `${platform}-${Date.now()}`,
+        platform,
+        name: `${groupName} ${platformLabels[platform]}`,
+        isLinked: false, // Will be set to true when user manually links
+        status: "pending" as const,
+      }));
+
+      setAccounts(newAccounts);
+
+    } catch (error) {
+      console.error('Error creating account group:', error);
+      setError(`Failed to create account group: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingProfile(false);
+    }
+  };
+
+  const handleOpenDashboard = () => {
+    window.open("https://app.ayrshare.com/dashboard", '_blank');
+    setLinkingStatus("Link your accounts in the Ayrshare dashboard, then refresh to check status.");
+  };
+
+  const handleCheckAccountStatus = async () => {
+    setLinkingStatus("Checking linked accounts...");
+    
+    try {
+      const connectedAccounts = await getFreeConnectedAccounts();
+      
+      if (connectedAccounts.user?.socialMediaAccounts) {
+        const linkedPlatforms = Object.keys(connectedAccounts.user.socialMediaAccounts);
+        
+        // Update account statuses based on what's linked
+        const updatedAccounts = accounts.map(account => {
+          const isLinked = linkedPlatforms.includes(account.platform === 'x' ? 'twitter' : account.platform);
+          return {
+            ...account,
+            isLinked,
+            status: isLinked ? "linked" as const : "pending" as const,
+          };
+        });
+        
+        setAccounts(updatedAccounts);
+        setLinkingStatus(`${linkedPlatforms.length} account(s) detected as linked!`);
+      } else {
+        setLinkingStatus("No linked accounts found. Please link accounts in the dashboard first.");
+      }
+    } catch (error) {
+      console.error('Error checking accounts:', error);
+      setError('Failed to check account status. Please try again.');
+      setLinkingStatus("");
+    }
+  };
+
+  // =============================================================================
+  // 🚀 BUSINESS PLAN MODE (DISABLED FOR DEVELOPMENT)
+  // =============================================================================
+  /*
   const handleCreateAccountGroup = async () => {
     if (!groupName.trim()) {
       setError("Please enter a group name");
@@ -168,6 +260,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       setLinkingStatus("");
     }
   };
+  */
 
   const handleSaveGroup = () => {
     if (groupName && accounts.length > 0) {
@@ -200,10 +293,28 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
       <Dialog.Content style={{ maxWidth: 600 }}>
         <Dialog.Title>Create Account Group</Dialog.Title>
         <Dialog.Description>
-          Create a new account group and link social media accounts via Ayrshare
+          {businessPlanMode 
+            ? "Create a new account group and link social media accounts via Ayrshare"
+            : "Create a new account group (Free Account Mode)"
+          }
         </Dialog.Description>
 
         <div className="space-y-6 mt-6">
+          {/* Development Mode Notice */}
+          {!businessPlanMode && (
+            <Card>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500" />
+                  <Text weight="medium" color="blue">Development Mode (Free Account)</Text>
+                </div>
+                <Text size="2" className="text-blue-700">
+                  Using simplified workflow. Link accounts manually in Ayrshare dashboard.
+                </Text>
+              </div>
+            </Card>
+          )}
+
           {/* Group Name */}
           <div>
             <label className="block text-sm font-medium mb-2">Group Name</label>
@@ -233,14 +344,14 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
           {/* Create Profile Button */}
           {!accounts.length && (
             <Button 
-              onClick={handleCreateAccountGroup}
+              onClick={handleCreateFreeAccountGroup}
               disabled={!groupName.trim() || !ayrshareConfigured || isCreatingProfile}
               className="w-full"
             >
               {isCreatingProfile ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating Profile...
+                  Creating Group...
                 </>
               ) : (
                 <>
@@ -251,7 +362,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             </Button>
           )}
 
-          {/* Account Linking */}
+          {/* Account Management (Free Mode) */}
           {accounts.length > 0 && (
             <Card>
               <div className="p-4">
@@ -288,15 +399,25 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                   ))}
                 </div>
 
-                <Button 
-                  onClick={handleLinkAccounts}
-                  variant="soft"
-                  className="w-full"
-                  disabled={!accounts[0]?.profileKey}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Link Social Media Accounts
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleOpenDashboard}
+                    variant="soft"
+                    className="w-full"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Open Ayrshare Dashboard to Link Accounts
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleCheckAccountStatus}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Check Account Status
+                  </Button>
+                </div>
               </div>
             </Card>
           )}

@@ -1,7 +1,7 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 import { extractTweetId, detectPlatformFromUrl, extractPostIdFromUrl } from './postValidation';
 import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
-import { INTERNAL_TO_AYRSHARE_PLATFORM } from './ayrshareIntegration';
+import { INTERNAL_TO_AYRSHARE_PLATFORM, isBusinessPlanMode } from './ayrshareIntegration';
 
 /**
  * Interface for post data sent to Ayrshare API
@@ -9,7 +9,7 @@ import { INTERNAL_TO_AYRSHARE_PLATFORM } from './ayrshareIntegration';
 export interface PostData {
 	post: string;
 	platforms: string[];
-	profileKey?: string; // Added profile key for multi-user support
+	profileKey?: string; // Only used in Business Plan mode
 	mediaUrls?: string[];
 	scheduleDate?: string;
 	twitterOptions?: {
@@ -44,8 +44,8 @@ export const handleStandardPost = async (postData: PostData) => {
 		'Authorization': `Bearer ${AYRSHARE_API_KEY}`
 	};
 
-	// Add Profile-Key header if provided (for multi-user support)
-	if (postData.profileKey) {
+	// Only add Profile-Key header in Business Plan mode
+	if (isBusinessPlanMode() && postData.profileKey) {
 		headers['Profile-Key'] = postData.profileKey;
 	}
 
@@ -54,7 +54,9 @@ export const handleStandardPost = async (postData: PostData) => {
 		headers,
 		body: JSON.stringify({
 			...postData,
-			platforms: mappedPlatforms
+			platforms: mappedPlatforms,
+			// Remove profileKey from the body as it's only used in headers
+			profileKey: undefined
 		})
 	});
 
@@ -205,8 +207,8 @@ export const handleCommentPost = async (
 		'Authorization': `Bearer ${AYRSHARE_API_KEY}`
 	};
 
-	// Add Profile-Key header if provided
-	if (postData.profileKey) {
+	// Only add Profile-Key header in Business Plan mode
+	if (isBusinessPlanMode() && postData.profileKey) {
 		headers['Profile-Key'] = postData.profileKey;
 	}
 
@@ -216,7 +218,8 @@ export const handleCommentPost = async (
 		body: JSON.stringify({
 			...postData,
 			id: originalPostId,
-			platforms: [platform] // Ensure we only target one platform per comment
+			platforms: [platform], // Ensure we only target one platform per comment
+			profileKey: undefined // Remove from body
 		})
 	});
 
