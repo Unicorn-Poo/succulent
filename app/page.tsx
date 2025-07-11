@@ -358,44 +358,46 @@ export default function HomePage() {
 
           {/* Jazz Account Groups - Persistent Display */}
           {me?.root?.accountGroups?.map((group: any, index: number) => (
-            <div key={group.id || `jazz-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg">{group.name}</h3>
-                <div className="w-2 h-2 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  {group.accounts?.length || 0} accounts connected
-                </p>
-                <p className="text-sm text-gray-600">
-                  {group.posts?.length || 0} posts created
-                </p>
-                <p className="text-xs text-blue-600">
-                  ✨ Collaborative account group
-                </p>
-              </div>
+            <Link key={group.id || `jazz-${index}`} href={`/account-group/${group.id}`}>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-lg">{group.name}</h3>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    {group.accounts?.length || 0} accounts connected
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {group.posts?.length || 0} posts created
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    ✨ Collaborative account group
+                  </p>
+                </div>
 
-              <div className="flex -space-x-2 mt-4">
-                {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
-                  <div 
-                    key={account?.id || accountIndex}
-                    className="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center"
-                  >
-                    <span className="text-xs font-medium text-blue-700">
-                      {account?.platform?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                ))}
-                {(group.accounts?.length || 0) > 3 && (
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center">
-                    <span className="text-xs font-medium text-blue-700">
-                      +{(group.accounts?.length || 0) - 3}
-                    </span>
-                  </div>
-                )}
+                <div className="flex -space-x-2 mt-4">
+                  {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
+                    <div 
+                      key={account?.id || accountIndex}
+                      className="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center"
+                    >
+                      <span className="text-xs font-medium text-blue-700">
+                        {account?.platform?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
+                  {(group.accounts?.length || 0) > 3 && (
+                    <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center">
+                      <span className="text-xs font-medium text-blue-700">
+                        +{(group.accounts?.length || 0) - 3}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
 
           {/* Create New Card */}

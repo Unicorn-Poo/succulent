@@ -96,6 +96,7 @@ export default function DemoAccountGroupPage() {
           account={selectedAccount}
           posts={accountGroup.posts}
           onBack={handleBackToOverview}
+          accountGroupId="demo"
         />
       </div>
     );

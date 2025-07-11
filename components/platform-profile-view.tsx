@@ -34,11 +34,12 @@ interface PlatformProfileViewProps {
   account: Account;
   posts: Post[];
   onBack: () => void;
+  accountGroupId?: string;
 }
 
 type ViewModeType = 'feed' | 'grid' | 'timeline';
 
-export default function PlatformProfileView({ account, posts, onBack }: PlatformProfileViewProps) {
+export default function PlatformProfileView({ account, posts, onBack, accountGroupId }: PlatformProfileViewProps) {
   const [viewMode, setViewMode] = useState<ViewModeType>('feed');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'scheduled' | 'draft'>('all');
   
@@ -171,7 +172,7 @@ export default function PlatformProfileView({ account, posts, onBack }: Platform
         </div>
 
         {/* Timeline View Component */}
-        <PlatformTimelineView account={account} posts={platformPosts} />
+        <PlatformTimelineView account={account} posts={platformPosts} accountGroupId={accountGroupId} />
 
         {/* Demo Notice */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">

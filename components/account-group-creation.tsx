@@ -144,9 +144,22 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
     try {
       const connectedAccounts = await getFreeConnectedAccounts();
       
-      if (connectedAccounts.user?.socialMediaAccounts) {
-        const linkedPlatforms = Object.keys(connectedAccounts.user.socialMediaAccounts);
-        
+      // Fix: Handle activeSocialAccounts as either array or object
+      let linkedPlatforms: string[] = [];
+      
+      if (connectedAccounts.activeSocialAccounts) {
+        if (Array.isArray(connectedAccounts.activeSocialAccounts)) {
+          // It's an array of platform names like ["instagram", "twitter"]
+          linkedPlatforms = connectedAccounts.activeSocialAccounts;
+          console.log('📱 Linked platforms from Ayrshare (array):', linkedPlatforms);
+        } else if (typeof connectedAccounts.activeSocialAccounts === 'object') {
+          // It's an object with platform keys like {instagram: {...}, twitter: {...}}
+          linkedPlatforms = Object.keys(connectedAccounts.activeSocialAccounts);
+          console.log('📱 Linked platforms from Ayrshare (object keys):', linkedPlatforms);
+        }
+      }
+      
+      if (linkedPlatforms.length > 0) {
         // Update account statuses based on what's linked
         const updatedAccounts = accounts.map(account => {
           const platformKey = account.platform === 'x' ? 'twitter' : account.platform;

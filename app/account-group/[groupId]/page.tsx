@@ -4,12 +4,17 @@ import { useParams } from "next/navigation";
 import { accountGroups } from "../../page";
 import Image from "next/image";
 import Link from "next/link";
-import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
-import { Plus, Edit3, Home } from "lucide-react";
+import { Button, Dialog, TextField, TextArea, Card } from "@radix-ui/themes";
+import { Plus, Edit3, Home, Trash2, Users, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Navigation from "../../../components/navigation";
 import { platformIcons, platformLabels } from "../../../utils/postConstants";
+import { useAccount } from "jazz-react";
+import { Post, AccountGroup } from "../../schema";
+import { MyAppAccount } from "../../schema";
+import AyrshareAccountLinking from "../../../components/ayrshare-account-linking";
+import { PlatformAccount } from "../../schema";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -17,21 +22,51 @@ export default function AccountGroupPage() {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [newPostTitle, setNewPostTitle] = useState("");
 	const [newPostText, setNewPostText] = useState("");
+	const [localAccounts, setLocalAccounts] = useState<any[]>([]);
 	
-	const accountGroup = accountGroups.find(
+	// Account management state - moved to top to fix hooks order
+	const [showAddAccountForm, setShowAddAccountForm] = useState(false);
+	const [newAccountName, setNewAccountName] = useState("");
+	const [newAccountPlatform, setNewAccountPlatform] = useState<"instagram" | "facebook" | "x" | "linkedin" | "youtube">("instagram");
+	const [isRemovalMode, setIsRemovalMode] = useState(false);
+	
+	// Get Jazz account to access collaborative account groups
+	const { me } = useAccount(MyAppAccount, {
+		resolve: {
+			root: {
+				accountGroups: { $each: {
+					accounts: { $each: true },
+					posts: { $each: true }
+				}}
+			}
+		}
+	});
+	
+	// Try to find the account group in legacy groups first, then in Jazz groups
+	const legacyAccountGroup = Object.values(accountGroups).find(
 		(group) => group.id === params.groupId
 	);
+	
+	const jazzAccountGroup = me?.root?.accountGroups?.find(
+		(group: any) => group.id === params.groupId
+	);
+	
+	// Use whichever one we found
+	const accountGroup = legacyAccountGroup || jazzAccountGroup;
 
 	if (!accountGroup?.id) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12">
-				<div className="text-center">
-					<h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
-					<p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
-					<Button onClick={() => router.push("/")}>
-						<Home className="w-4 h-4 mr-2" />
-						Back to Home
-					</Button>
+			<div className="min-h-screen bg-gray-50">
+				<Navigation />
+				<div className="flex flex-col items-center justify-center py-12">
+					<div className="text-center">
+						<h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
+						<p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
+						<Button onClick={() => router.push("/")}>
+							<Home className="w-4 h-4 mr-2" />
+							Back to Home
+						</Button>
+					</div>
 				</div>
 			</div>
 		);
@@ -42,24 +77,9 @@ export default function AccountGroupPage() {
 			// Create a new post ID
 			const newPostId = Date.now().toString();
 			
-			// Create the new post object
-			const newPost = {
-				title: newPostTitle,
-				variants: {
-					base: {
-						id: newPostId,
-						text: newPostText,
-						postDate: new Date(),
-						edited: false,
-					},
-				},
-			};
-			
-			// Add the post to the account group (in a real app, this would be saved to backend)
-			accountGroup.posts.push(newPost);
-			
-			// Navigate to the new post
-			router.push(`/account-group/${accountGroup.id}/post/${newPostId}`);
+			// For now, just navigate to post creation
+			// In a full implementation, we'd handle Jazz vs legacy differently
+			router.push(`/account-group/${accountGroup.id}/post/${newPostId}?title=${encodeURIComponent(newPostTitle)}&content=${encodeURIComponent(newPostText)}`);
 			
 			// Reset form
 			setNewPostTitle("");
@@ -68,196 +88,420 @@ export default function AccountGroupPage() {
 		}
 	};
 
-	return (
-		<div className="w-full max-w-4xl mx-auto p-6">
-			<Navigation 
-				title={accountGroup.name}
-			/>
+	// Helper function to get accounts array from either format
+	const getAccountsArray = () => {
+		if (legacyAccountGroup) {
+			return Object.values(legacyAccountGroup.accounts);
+		} else if (jazzAccountGroup) {
+			return jazzAccountGroup.accounts || [];
+		}
+		return [];
+	};
 
-			{/* Account Group Info */}
-			<div className="bg-gray-50 rounded-lg p-4 mb-6">
-				<div className="flex items-center justify-between mb-3">
-					<h3 className="font-medium">Connected Accounts</h3>
-					<div className="flex items-center gap-3">
-						<span className="text-xs text-gray-500">
-							{Object.values(accountGroup.accounts).filter(acc => acc.isLinked).length} linked of {Object.keys(accountGroup.accounts).length} total
-						</span>
-						{Object.values(accountGroup.accounts).some(acc => acc.profileKey) && (
-							<span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-								Ayrshare Profile
-							</span>
-						)}
-					</div>
-				</div>
-				<div className="flex flex-wrap gap-2">
-					{Object.entries(accountGroup.accounts).map(([key, account]) => {
-						const platformIcon = platformIcons[account.platform as keyof typeof platformIcons] || platformIcons.base;
-						const platformLabel = platformLabels[account.platform as keyof typeof platformLabels] || account.platform;
-						
-						return (
-							<div key={account.id} className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors group">
-								<div className="relative">
-									<Image
-										src={platformIcon}
-										alt={platformLabel}
-										width={16}
-										height={16}
-										className="rounded"
-									/>
-									<div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
-										account.isLinked 
-											? 'bg-green-500' 
-											: account.status === 'error' 
-											? 'bg-red-500' 
-											: 'bg-gray-400'
-									}`}></div>
-								</div>
-								<div className="flex flex-col">
-									<span className="text-sm font-medium truncate max-w-[120px]">{account.name}</span>
-									<span className={`text-xs ${
-										account.isLinked 
-											? 'text-green-600' 
-											: account.status === 'error' 
-											? 'text-red-600' 
-											: 'text-gray-500'
-									}`}>
-										{account.isLinked 
-											? 'Linked' 
-											: account.status === 'error' 
-											? 'Error' 
-											: 'Not linked'
-										}
-									</span>
-								</div>
-								{account.status === 'error' && account.lastError && (
-									<div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded px-2 py-1 mt-8 ml-4 whitespace-nowrap">
-										{account.lastError}
-									</div>
-								)}
-							</div>
-						);
-					})}
-				</div>
+	// Helper function to get posts array from either format
+	const getPostsArray = () => {
+		if (legacyAccountGroup) {
+			return legacyAccountGroup.posts || [];
+		} else if (jazzAccountGroup) {
+			return jazzAccountGroup.posts || [];
+		}
+		return [];
+	};
+
+	// Handle account updates from the Ayrshare linking component
+	const handleAccountsUpdated = (updatedAccounts: any[]) => {
+		if (jazzAccountGroup) {
+			// For Jazz account groups, update the collaborative accounts
+			// Instead of clearing everything, update existing accounts individually
+			updatedAccounts.forEach(updatedAccount => {
+				const existingAccount = jazzAccountGroup.accounts.find((a: any) => 
+					a.platform === updatedAccount.platform && a.name === updatedAccount.name
+				);
 				
-				{Object.keys(accountGroup.accounts).length === 0 && (
-					<div className="text-center py-6 text-gray-500">
-						<p className="text-sm">No accounts connected yet</p>
-					</div>
-				)}
+				if (existingAccount) {
+					// Update existing account properties
+					existingAccount.isLinked = updatedAccount.isLinked;
+					existingAccount.status = updatedAccount.status;
+					if (updatedAccount.lastError) {
+						existingAccount.lastError = updatedAccount.lastError;
+					}
+					if (updatedAccount.isLinked) {
+						existingAccount.linkedAt = new Date();
+					}
+				} else {
+					// Add new account if it doesn't exist
+					console.log('Adding new account to Jazz account group:', updatedAccount);
+					const platformAccount = PlatformAccount.create({
+						name: updatedAccount.name,
+						platform: updatedAccount.platform,
+						apiUrl: undefined,
+						profileKey: updatedAccount.profileKey,
+						isLinked: updatedAccount.isLinked,
+						linkedAt: updatedAccount.isLinked ? new Date() : undefined,
+						avatar: undefined,
+						username: undefined,
+						displayName: undefined,
+						url: undefined,
+						status: updatedAccount.status,
+						lastError: updatedAccount.lastError,
+					}, { owner: jazzAccountGroup._owner });
+					
+					jazzAccountGroup.accounts.push(platformAccount);
+				}
+			});
+		} else {
+			// For legacy account groups, use local state
+			setLocalAccounts(updatedAccounts);
+		}
+	};
 
-				{/* Add re-link accounts button if any accounts are not linked */}
-				{Object.values(accountGroup.accounts).some(acc => !acc.isLinked && acc.profileKey) && (
-					<div className="mt-3 pt-3 border-t border-gray-200">
-						<button 
-							onClick={() => {
-								// This would open the account linking flow
-								// For now, just show a message
-								alert('Account re-linking functionality would be implemented here');
-							}}
-							className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-						>
-							Re-link social accounts
-						</button>
-					</div>
-				)}
-			</div>
+	// Use local state for account updates or fall back to original accounts
+	const accounts = localAccounts.length > 0 ? localAccounts : getAccountsArray();
+	const posts = getPostsArray();
 
-			{/* Posts */}
-			<div className="mb-4">
-				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-semibold">Posts ({accountGroup.posts.length})</h2>
+	const handleAddAccount = () => {
+		if (!newAccountName.trim() || !jazzAccountGroup) {
+			return;
+		}
+
+		const platformAccount = PlatformAccount.create({
+			name: newAccountName.trim(),
+			platform: newAccountPlatform,
+			apiUrl: undefined,
+			profileKey: undefined,
+			isLinked: false,
+			linkedAt: undefined,
+			avatar: undefined,
+			username: undefined,
+			displayName: undefined,
+			url: undefined,
+			status: "pending",
+			lastError: undefined,
+		}, { owner: jazzAccountGroup._owner });
+
+		jazzAccountGroup.accounts.push(platformAccount);
+		
+		// Reset form and close
+		setNewAccountName("");
+		setNewAccountPlatform("instagram");
+		setShowAddAccountForm(false);
+	};
+
+	const handleRemoveAccount = (accountToRemove: any) => {
+		if (!jazzAccountGroup) return;
+		
+		const index = jazzAccountGroup.accounts.findIndex((account: any) => 
+			account.id === accountToRemove.id
+		);
+		if (index !== -1) {
+			jazzAccountGroup.accounts.splice(index, 1);
+			// Turn off removal mode after removing an account
+			setIsRemovalMode(false);
+		}
+	};
+
+	return (
+		<div className="min-h-screen bg-gray-50">
+			<Navigation />
+			
+			<div className="w-full max-w-4xl mx-auto p-6">
+				{/* Account Group Header */}
+				<div className="flex items-center justify-between mb-6">
+					<div>
+						<h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+							{accountGroup.name}
+							{jazzAccountGroup && (
+								<div className="w-3 h-3 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
+							)}
+							{legacyAccountGroup && (
+								<div className="w-3 h-3 bg-green-500 rounded-full" title="Demo Account Group"></div>
+							)}
+						</h1>
+						<p className="text-gray-600">
+							{jazzAccountGroup ? "Collaborative account group" : "Demo account group"}
+						</p>
+					</div>
 					<Button onClick={() => setShowCreateDialog(true)}>
 						<Plus className="w-4 h-4 mr-2" />
-						Create New Post
+						Create Post
 					</Button>
 				</div>
-				
-				{accountGroup.posts.length === 0 ? (
-					<div className="text-center py-12 bg-gray-50 rounded-lg">
-						<div className="text-gray-500 mb-4">
-							<p className="text-lg mb-2">No posts yet</p>
-							<p className="text-sm">Create your first post to get started!</p>
-						</div>
-						<Button onClick={() => setShowCreateDialog(true)}>
-							<Plus className="w-4 h-4 mr-2" />
-							Create First Post
-						</Button>
-					</div>
-				) : (
-					<div className="space-y-2">
-						{accountGroup.posts.map((post) => (
-							<Link
-								href={`/account-group/${accountGroup.id}/post/${post.variants.base.id}`}
-								className="flex gap-4 border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-								key={post.variants.base.id}
-							>
-								<div className="flex-1">
-									<h3 className="font-semibold mb-1">{post.title}</h3>
-									<p className="text-gray-600 line-clamp-2">{post.variants.base.text}</p>
-									<div className="text-xs text-gray-500 mt-2">
-										{new Date(post.variants.base.postDate).toLocaleDateString()}
-									</div>
-								</div>
-								{post.variants.base.media && post.variants.base.media[0] && (
-									<div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-										<Image
-											src={post.variants.base.media[0].image}
-											alt="Post media"
-											width={80}
-											height={80}
-											className="w-full h-full object-cover"
-										/>
-									</div>
-								)}
-							</Link>
-						))}
+
+				{/* Ayrshare Account Linking */}
+				{accounts.length > 0 && (
+					<div className="mb-6">
+						<h3 className="text-lg font-semibold mb-4">Account Linking Status</h3>
+						<AyrshareAccountLinking 
+							accounts={accounts}
+							onAccountsUpdated={handleAccountsUpdated}
+							isJazzAccountGroup={!!jazzAccountGroup}
+						/>
 					</div>
 				)}
-			</div>
 
-			{/* Create New Post Dialog */}
-			<Dialog.Root open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-				<Dialog.Content style={{ maxWidth: 500 }}>
-					<Dialog.Title>Create New Post</Dialog.Title>
-					<Dialog.Description>
-						Create a new post for {accountGroup.name}
-					</Dialog.Description>
+				{/* Account Group Info */}
+				<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+					<div className="flex items-center justify-between mb-4">
+						<h3 className="text-lg font-semibold">Connected Accounts</h3>
+						<div className="flex items-center gap-3">
+							<span className="text-sm text-gray-500">
+								{accounts.filter((acc: any) => acc.isLinked).length} linked of {accounts.length} total
+							</span>
+							<div className="flex items-center gap-1">
+								<Button
+									size="1"
+									variant="ghost"
+									onClick={() => setShowAddAccountForm(!showAddAccountForm)}
+									title="Add Account"
+								>
+									<Plus className="w-4 h-4" />
+								</Button>
+								<Button
+									size="1"
+									variant="ghost"
+									onClick={() => {
+										setIsRemovalMode(!isRemovalMode);
+										if (!isRemovalMode) setShowAddAccountForm(false);
+									}}
+									title="Manage Accounts"
+									color={isRemovalMode ? "red" : "gray"}
+								>
+									<Settings className="w-4 h-4" />
+								</Button>
+							</div>
+						</div>
+					</div>
+
+					{/* Add Account Form */}
+					{showAddAccountForm && (
+						<Card className="mb-4">
+							<div className="p-4 bg-gray-50">
+								<h4 className="font-medium mb-3">Add New Account</h4>
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+									<div>
+										<label className="block text-sm font-medium mb-1">Platform</label>
+										<select 
+											value={newAccountPlatform}
+											onChange={(e) => setNewAccountPlatform(e.target.value as any)}
+											className="w-full px-3 py-2 border border-gray-200 rounded-md"
+										>
+											<option value="instagram">Instagram</option>
+											<option value="x">X (Twitter)</option>
+											<option value="youtube">YouTube</option>
+											<option value="facebook">Facebook</option>
+											<option value="linkedin">LinkedIn</option>
+										</select>
+									</div>
+									<div>
+										<label className="block text-sm font-medium mb-1">Account Name</label>
+										<input
+											type="text"
+											value={newAccountName}
+											onChange={(e) => setNewAccountName(e.target.value)}
+											placeholder="@username or display name"
+											className="w-full px-3 py-2 border border-gray-200 rounded-md"
+										/>
+									</div>
+									<div className="flex items-end gap-2">
+										<Button 
+											size="2"
+											onClick={handleAddAccount}
+											disabled={!newAccountName.trim()}
+										>
+											Add
+										</Button>
+										<Button 
+											size="2"
+											variant="soft"
+											onClick={() => {
+												setShowAddAccountForm(false);
+												setNewAccountName("");
+												setNewAccountPlatform("instagram");
+											}}
+										>
+											Cancel
+										</Button>
+									</div>
+								</div>
+							</div>
+						</Card>
+					)}
+
+					{/* Removal Mode Notice */}
+					{isRemovalMode && (
+						<div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+							<p className="text-red-800 text-sm font-medium">
+								Removal Mode: Click the trash icon to remove accounts
+							</p>
+						</div>
+					)}
 					
-					<div className="space-y-4 mt-4">
-						<div>
-							<label className="block text-sm font-medium mb-1">Post Title</label>
-							<TextField.Root
-								value={newPostTitle}
-								onChange={(e) => setNewPostTitle(e.target.value)}
-								placeholder="Enter a title for your post..."
-							/>
+					{accounts.length > 0 ? (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							{accounts.map((account: any, index: number) => {
+								const platformIcon = platformIcons[account.platform as keyof typeof platformIcons] || platformIcons.base;
+								const platformLabel = platformLabels[account.platform as keyof typeof platformLabels] || account.platform;
+								
+								return (
+									<div key={account.id || index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+										<div className="relative">
+											<Image
+												src={platformIcon}
+												alt={platformLabel}
+												width={20}
+												height={20}
+												className="rounded"
+											/>
+											<div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+												account.isLinked 
+													? 'bg-green-500' 
+													: account.status === 'error' 
+													? 'bg-red-500' 
+													: 'bg-gray-400'
+											}`}></div>
+										</div>
+										<div className="flex-1">
+											<p className="font-medium text-gray-900">{account.name}</p>
+											<p className={`text-sm ${
+												account.isLinked 
+													? 'text-green-600' 
+													: account.status === 'error' 
+													? 'text-red-600' 
+													: 'text-gray-500'
+											}`}>
+												{account.isLinked 
+													? 'Connected' 
+													: account.status === 'error' 
+													? 'Error' 
+													: 'Pending'
+												}
+											</p>
+										</div>
+										{isRemovalMode && (
+											<Button
+												size="1"
+												variant="ghost"
+												color="red"
+												onClick={() => handleRemoveAccount(account)}
+												title="Remove Account"
+											>
+												<Trash2 className="w-4 h-4" />
+											</Button>
+										)}
+									</div>
+								);
+							})}
 						</div>
-						
-						<div>
-							<label className="block text-sm font-medium mb-1">Initial Content (optional)</label>
-							<TextArea
-								value={newPostText}
-								onChange={(e) => setNewPostText(e.target.value)}
-								placeholder="Start writing your post..."
-								rows={4}
-							/>
+					) : (
+						<div className="text-center py-8 text-gray-500">
+							<Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+							<p className="text-sm">No accounts connected yet</p>
+							<p className="text-xs mt-1">Click the + icon to add your first account</p>
 						</div>
-					</div>
+					)}
+				</div>
 
-					<div className="flex justify-end gap-2 mt-6">
-						<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
-							Cancel
-						</Button>
-						<Button 
-							onClick={handleCreatePost}
-							disabled={!newPostTitle.trim()}
-						>
-							<Edit3 className="w-4 h-4 mr-2" />
-							Create Post
+				{/* Posts */}
+				<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+					<div className="flex justify-between items-center mb-6">
+						<h2 className="text-xl font-semibold">Posts ({posts.length})</h2>
+						<Button variant="outline" onClick={() => setShowCreateDialog(true)}>
+							<Plus className="w-4 h-4 mr-2" />
+							New Post
 						</Button>
 					</div>
-				</Dialog.Content>
-			</Dialog.Root>
+					
+					{posts.length === 0 ? (
+						<div className="text-center py-12">
+							<div className="text-gray-500 mb-4">
+								<p className="text-lg mb-2">No posts yet</p>
+								<p className="text-sm">Create your first post to get started!</p>
+							</div>
+							<Button onClick={() => setShowCreateDialog(true)}>
+								<Plus className="w-4 h-4 mr-2" />
+								Create First Post
+							</Button>
+						</div>
+					) : (
+						<div className="space-y-4">
+							{posts.map((post: any, index: number) => {
+								const postId = post.id || post.variants?.base?.id || index;
+								const postTitle = post.title || "Untitled Post";
+								const postContent = post.content || post.variants?.base?.text || "";
+								const postDate = post.createdAt || post.variants?.base?.postDate || new Date();
+								
+								return (
+									<Link
+										key={postId}
+										href={`/account-group/${accountGroup.id}/post/${postId}`}
+										className="flex gap-4 border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+									>
+										<div className="flex-1">
+											<h3 className="font-semibold mb-1">{postTitle}</h3>
+											<p className="text-gray-600 line-clamp-2">{postContent}</p>
+											<div className="text-xs text-gray-500 mt-2">
+												{new Date(postDate).toLocaleDateString()}
+											</div>
+										</div>
+									</Link>
+								);
+							})}
+						</div>
+					)}
+				</div>
+
+				{/* Create New Post Dialog */}
+				<Dialog.Root open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+					<Dialog.Content style={{ maxWidth: 500 }}>
+						<Dialog.Title>Create New Post</Dialog.Title>
+						<Dialog.Description>
+							Create a new post for {accountGroup.name}
+						</Dialog.Description>
+						
+						<div className="space-y-4 mt-4">
+							<div>
+								<label className="block text-sm font-medium mb-1">Post Title</label>
+								<TextField.Root
+									value={newPostTitle}
+									onChange={(e) => setNewPostTitle(e.target.value)}
+									placeholder="Enter a title for your post..."
+								/>
+							</div>
+							
+							<div>
+								<label className="block text-sm font-medium mb-1">Initial Content (optional)</label>
+								<TextArea
+									value={newPostText}
+									onChange={(e) => setNewPostText(e.target.value)}
+									placeholder="Start writing your post..."
+									rows={4}
+								/>
+							</div>
+							
+							{jazzAccountGroup && (
+								<div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+									<p className="text-blue-800 text-sm">
+										<strong>Collaborative:</strong> This post will be saved to your Jazz collaborative workspace.
+									</p>
+								</div>
+							)}
+						</div>
+
+						<div className="flex justify-end gap-2 mt-6">
+							<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
+								Cancel
+							</Button>
+							<Button 
+								onClick={handleCreatePost}
+								disabled={!newPostTitle.trim()}
+							>
+								<Edit3 className="w-4 h-4 mr-2" />
+								Create Post
+							</Button>
+						</div>
+					</Dialog.Content>
+				</Dialog.Root>
+			</div>
 		</div>
 	);
 }
