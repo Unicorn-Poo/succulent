@@ -9,6 +9,7 @@ import { Plus, Edit3, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Navigation from "../../../components/navigation";
+import { platformIcons, platformLabels } from "../../../utils/postConstants";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -75,15 +76,38 @@ export default function AccountGroupPage() {
 
 			{/* Account Group Info */}
 			<div className="bg-gray-50 rounded-lg p-4 mb-6">
-				<h3 className="font-semibold mb-2">Connected Accounts</h3>
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-					{Object.entries(accountGroup.accounts).map(([key, account]) => (
-						<div key={account.id} className="flex items-center gap-2 p-2 bg-white rounded border">
-							<div className="w-2 h-2 bg-green-500 rounded-full"></div>
-							<span className="text-sm">{account.name}</span>
-						</div>
-					))}
+				<div className="flex items-center justify-between mb-3">
+					<h3 className="font-medium">Connected Accounts</h3>
+					<span className="text-xs text-gray-500">{Object.keys(accountGroup.accounts).length} accounts</span>
 				</div>
+				<div className="flex flex-wrap gap-2">
+					{Object.entries(accountGroup.accounts).map(([key, account]) => {
+						const platformIcon = platformIcons[account.platform as keyof typeof platformIcons] || platformIcons.base;
+						const platformLabel = platformLabels[account.platform as keyof typeof platformLabels] || account.platform;
+						
+						return (
+							<div key={account.id} className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+								<div className="relative">
+									<Image
+										src={platformIcon}
+										alt={platformLabel}
+										width={16}
+										height={16}
+										className="rounded"
+									/>
+									<div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-white"></div>
+								</div>
+								<span className="text-sm font-medium truncate max-w-[120px]">{account.name}</span>
+							</div>
+						);
+					})}
+				</div>
+				
+				{Object.keys(accountGroup.accounts).length === 0 && (
+					<div className="text-center py-6 text-gray-500">
+						<p className="text-sm">No accounts connected yet</p>
+					</div>
+				)}
 			</div>
 
 			{/* Posts */}
