@@ -5,6 +5,7 @@ import {
 	AlertCircle,
 	Check,
 	Package,
+	Loader2,
 } from "lucide-react";
 import { PostFullyLoaded } from "@/app/schema";
 import { PreviewModal } from "./preview-modal";
@@ -16,48 +17,339 @@ import { PostContent } from "./post-creation/post-content";
 import { ThreadPreview } from "./post-creation/thread-preview";
 import { AddAccountDialog } from "./post-creation/add-account-dialog";
 import { SettingsDialog } from "./post-creation/settings-dialog";
-import { GelatoButton, TemplateSelector } from "succulent-gelato";
-import type { SucculentPost, TemplateMapping } from "succulent-gelato";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface PostCreationProps {
 	post: PostFullyLoaded;
 	accountGroup: any; // Account group with Gelato credentials
 }
 
+// Simple inline Gelato button to avoid React hook conflicts
+const GelatoButton = ({ 
+	disabled, 
+	onClick, 
+	children, 
+	className 
+}: { 
+	disabled: boolean; 
+	onClick: () => void; 
+	children: React.ReactNode; 
+	className: string 
+}) => {
+	const [loading, setLoading] = useState(false);
+
+	const handleClick = async () => {
+		setLoading(true);
+		try {
+			await onClick();
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<button
+			onClick={handleClick}
+			disabled={disabled || loading}
+			className={className}
+		>
+			{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+			{children}
+		</button>
+	);
+};
+
+// Simple template selector
+const TemplateSelector = ({ 
+	templates, 
+	selectedTemplate, 
+	onSelect, 
+	className,
+	loading,
+	error,
+	onRetry
+}: { 
+	templates: any[]; 
+	selectedTemplate: any; 
+	onSelect: (template: any) => void; 
+	className: string;
+	loading?: boolean;
+	error?: string | null;
+	onRetry?: () => void;
+}) => {
+	if (loading) {
+		return (
+			<div className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg ${className}`}>
+				<Loader2 className="w-4 h-4 animate-spin" />
+				<Text size="2" color="gray">Loading templates from your Gelato store...</Text>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className={`p-3 bg-red-50 border border-red-200 rounded-lg ${className}`}>
+				<Text size="2" color="red">{error}</Text>
+				{onRetry && (
+					<button
+						onClick={onRetry}
+						className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+					>
+						Try Again
+					</button>
+				)}
+			</div>
+		);
+	}
+
+	if (templates.length === 0) {
+		return (
+			<div className={`p-3 bg-yellow-50 border border-yellow-200 rounded-lg ${className}`}>
+				<Text size="2" color="orange">No templates found in your Gelato store</Text>
+			</div>
+		);
+	}
+
+	const formatTemplateTitle = (template: any) => {
+		// Extract meaningful name from displayName or name
+		let primaryName = template.displayName || template.name || `Template ${template.id}`;
+		
+		// Transform common patterns to more user-friendly names
+		primaryName = primaryName
+			.replace(/^.*([Xx]-scape|[Xx]scape).*print.*$/i, 'X-Scape Print')
+			.replace(/^.*canvas.*$/i, 'Canvas')
+			.replace(/^.*poster.*$/i, 'Poster')
+			.replace(/^.*t-shirt.*$/i, 'T-Shirt')
+			.replace(/^.*tshirt.*$/i, 'T-Shirt')
+			.replace(/^.*hoodie.*$/i, 'Hoodie')
+			.replace(/^.*mug.*$/i, 'Mug')
+			.replace(/^.*tote.*bag.*$/i, 'Tote Bag')
+			.replace(/^.*phone.*case.*$/i, 'Phone Case');
+			
+		// Add size and material details if available
+		const details = [];
+		if (template.details?.size) {
+			details.push(template.details.size);
+		}
+		if (template.details?.material) {
+			details.push(template.details.material);
+		}
+		if (template.details?.color) {
+			details.push(template.details.color);
+		}
+		if (template.details?.orientation) {
+			details.push(template.details.orientation);
+		}
+		
+		// Capitalize product type for better readability
+		const productType = template.productType ? 
+			template.productType.charAt(0).toUpperCase() + template.productType.slice(1) : 
+			null;
+			
+		// Format: "Primary Name (Size, Material) - Product Type" or variations
+		let formattedTitle = primaryName;
+		
+		if (details.length > 0) {
+			formattedTitle += ` (${details.join(', ')})`;
+		}
+		
+		if (productType && !primaryName.toLowerCase().includes(productType.toLowerCase())) {
+			formattedTitle += ` - ${productType}`;
+		}
+		
+		return formattedTitle;
+	};
+
+	return (
+		<select
+			value={selectedTemplate?.id || ''}
+			onChange={(e) => {
+				const template = templates.find((t: any) => t.id === e.target.value);
+				if (template) onSelect(template);
+			}}
+			className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${className}`}
+		>
+			<option value="">Select a template...</option>
+			{templates.map((template: any) => (
+				<option key={template.id} value={template.id}>
+					{formatTemplateTitle(template)}
+				</option>
+			))}
+		</select>
+	);
+};
+
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
 	// Get account group's secure Gelato credentials
 	const accountGroupGelatoCredentials = accountGroup?.gelatoCredentials;
 	const isGelatoConfigured = accountGroupGelatoCredentials?.isConfigured || false;
 	
-	const gelatoConfig = {
-		gelato: {
-			apiKey: accountGroupGelatoCredentials?.apiKey || '',
-			storeId: accountGroupGelatoCredentials?.storeId || '',
-		},
-		templates: accountGroupGelatoCredentials?.customTemplates || [
-			{
-				id: '0a2c9a58-d1d4-4a79-b9b2-8726663a50df',
-				name: 'Custom T-Shirt',
-				description: 'High-quality custom t-shirt from social media post',
-				productType: 'apparel',
-				isDefault: true,
-			},
-			{
-				id: 'poster-template-id',
-				name: 'Art Poster',
-				description: 'Beautiful poster from social media post',
-				productType: 'poster',
-			},
-		] as TemplateMapping[],
-	};
-
 	// Gelato state
-	const [selectedTemplate, setSelectedTemplate] = useState<TemplateMapping | null>(
-		gelatoConfig.templates.find((t: TemplateMapping) => t.isDefault) || gelatoConfig.templates[0] || null
-	);
+	const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
 	const [gelatoProducts, setGelatoProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 	const [showGelatoSection, setShowGelatoSection] = useState(false);
+	
+	// Get templates directly from Jazz collaborative data structure
+	const gelatoTemplates = useMemo(() => {
+		console.log('Post-creation: Processing templates...');
+		console.log('Post-creation: accountGroupGelatoCredentials?.templates:', accountGroupGelatoCredentials?.templates);
+		
+		if (!accountGroupGelatoCredentials?.templates) {
+			console.log('Post-creation: No templates found');
+			return [];
+		}
+		
+		const filteredTemplates = accountGroupGelatoCredentials.templates
+			.filter((template: any) => {
+				// Check for both new and potentially old template structures
+				const hasId = template && (template.gelatoTemplateId || template.name);
+				console.log('Post-creation: Template filter check:', { 
+					template, 
+					hasId,
+					gelatoTemplateId: template?.gelatoTemplateId,
+					name: template?.name 
+				});
+				return hasId;
+			});
+			
+		console.log('Post-creation: Filtered templates:', filteredTemplates);
+		
+		const mappedTemplates = filteredTemplates.map((template: any, index: number) => {
+			// Use gelatoTemplateId if available, otherwise create a fallback ID
+			const templateId = template.gelatoTemplateId || `template-${index}-${template.name?.replace(/[^a-zA-Z0-9]/g, '-')}`;
+			
+			const mapped = {
+				id: templateId, // Use gelatoTemplateId or fallback
+				name: template.name,
+				displayName: template.displayName || template.name,
+				productType: template.productType,
+				description: template.description,
+				details: template.details,
+				fetchedAt: template.fetchedAt,
+				isActive: template.isActive,
+			};
+			console.log('Post-creation: Mapped template:', mapped);
+			return mapped;
+		});
+		
+		console.log('Post-creation: Final mapped templates:', mappedTemplates);
+		return mappedTemplates;
+	}, [accountGroupGelatoCredentials?.templates]);
+	
+	const templateError = gelatoTemplates.length === 0 && isGelatoConfigured ? 
+		'No templates imported yet. Use the Settings tab to import templates by ID.' : null;
+
+	// Set first template as default when templates are available
+	useEffect(() => {
+		if (gelatoTemplates.length > 0 && !selectedTemplate) {
+			setSelectedTemplate(gelatoTemplates[0]);
+		}
+	}, [gelatoTemplates, selectedTemplate]);
+
+	// Upload images to Gelato and return their URLs
+	const uploadImagesToGelato = async (media: any[]): Promise<string[]> => {
+		const imageUrls: string[] = [];
+		
+		for (const mediaItem of media) {
+			if (mediaItem?.type === 'image' && mediaItem.image) {
+				try {
+					// Get blob from Jazz FileStream
+					let blob = null;
+					
+					if (typeof mediaItem.image.getBlob === 'function') {
+						blob = await mediaItem.image.getBlob();
+					} else if (typeof mediaItem.image.toBlob === 'function') {
+						blob = await mediaItem.image.toBlob();
+					}
+					
+					if (blob) {
+						// Upload to Gelato
+						const formData = new FormData();
+						formData.append('file', blob, 'image.jpg');
+						formData.append('apiKey', accountGroupGelatoCredentials?.apiKey || '');
+						
+						const response = await fetch('/api/upload-to-gelato', {
+							method: 'POST',
+							body: formData,
+						});
+						
+						if (response.ok) {
+							const result = await response.json();
+							if (result.success && result.url) {
+								imageUrls.push(result.url);
+							}
+						} else {
+							console.error('Failed to upload image to Gelato');
+						}
+					}
+				} catch (error) {
+					console.error('Error uploading image to Gelato:', error);
+				}
+			}
+		}
+		
+		return imageUrls;
+	};
+
+	// Create real Gelato product
+	const createRealGelatoProduct = async () => {
+		if (!isGelatoConfigured || !selectedTemplate || !accountGroupGelatoCredentials) {
+			handleGelatoError('Missing Gelato configuration or template selection');
+			return;
+		}
+
+		try {
+			// Upload images to Gelato and get their URLs
+			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
+			const imageUrls = await uploadImagesToGelato(mediaArray);
+
+			if (imageUrls.length === 0) {
+				handleGelatoError('No images found in this post to create a product');
+				return;
+			}
+
+			const productData = {
+				title: title || 'Succulent Social Media Product',
+				description: `Custom ${selectedTemplate.displayName || selectedTemplate.name || 'product'} created from social media post: "${title || 'Untitled Post'}"`,
+				currency: 'USD',
+			};
+
+			const response = await fetch('/api/create-gelato-product', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					apiKey: accountGroupGelatoCredentials.apiKey,
+					storeId: accountGroupGelatoCredentials.storeId,
+					templateId: selectedTemplate.id,
+					productData: productData,
+					imageUrls: imageUrls,
+				}),
+			});
+
+			if (response.ok) {
+				const result = await response.json();
+				if (result.success) {
+					handleGelatoProductCreated({
+						productId: result.productId,
+						product: result.product,
+						template: selectedTemplate,
+						sourcePost: {
+							title: title || 'Untitled Post',
+							variant: activeTab
+						}
+					});
+				} else {
+					handleGelatoError(result.error || 'Failed to create product');
+				}
+			} else {
+				const errorData = await response.json();
+				handleGelatoError(errorData.error || 'Failed to create product');
+			}
+		} catch (error) {
+			console.error('Error creating Gelato product:', error);
+			handleGelatoError(error instanceof Error ? error.message : 'Unknown error occurred');
+		}
+	};
 
 	const {
 		activeTab, setActiveTab,
@@ -119,7 +411,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	};
 
 	// Convert post to SucculentPost format for Gelato
-	const convertToSucculentPost = (): SucculentPost => {
+	const convertToSucculentPost = (): any => { // Changed to any to avoid SucculentPost type conflict
 		const variants: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
 		
 		Object.keys(currentPost.variants).forEach(platformName => {
@@ -284,12 +576,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										<Text size="2" weight="medium" className="block mb-2">
 											Choose Product Template:
 										</Text>
-										<TemplateSelector
-											templates={gelatoConfig.templates}
-											selectedTemplate={selectedTemplate}
-											onSelect={setSelectedTemplate}
-											className="w-full"
-										/>
+																			<TemplateSelector
+										templates={gelatoTemplates}
+										selectedTemplate={selectedTemplate}
+										onSelect={setSelectedTemplate}
+										className="w-full"
+										error={templateError}
+									/>
 									</div>
 
 									{/* Platform Variant Selection */}
@@ -304,16 +597,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 									{/* Create Product Button */}
 									<GelatoButton
-										config={gelatoConfig}
-										post={convertToSucculentPost()}
-										variant={activeTab}
-										template={selectedTemplate || undefined}
 										disabled={!selectedTemplate || !hasImages}
-										onProductCreated={handleGelatoProductCreated}
-										onError={handleGelatoError}
-										className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+										onClick={createRealGelatoProduct}
+										className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 									>
-										Create {selectedTemplate?.name || 'Product'}
+										<Package className="w-4 h-4" />
+										Create {selectedTemplate?.displayName || selectedTemplate?.name || 'Product'}
 									</GelatoButton>
 
 									{/* Created Products List */}
@@ -340,7 +629,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 							{/* Demo/Test Button when not configured */}
 							{!isGelatoConfigured && hasImages && (
-								<button
+								<GelatoButton
+									disabled={false}
 									onClick={() => {
 										console.log('Demo: Would create Gelato product with:', {
 											post: convertToSucculentPost(),
@@ -349,10 +639,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										});
 										handleGelatoError('Please add your Gelato API credentials to create real products');
 									}}
-									className="w-full bg-gray-400 text-white py-3 px-4 rounded-lg font-medium"
+									className="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-medium"
 								>
 									Demo Mode - Add API Key to Create Real Products
-								</button>
+								</GelatoButton>
 							)}
 						</div>
 					)}
