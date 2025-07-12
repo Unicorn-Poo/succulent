@@ -80,6 +80,26 @@ export type PostFullyLoaded = co.loaded<typeof Post, {
 }>;
 
 // =============================================================================
+// 🏪 GELATO INTEGRATION SCHEMA (ENCRYPTED)
+// =============================================================================
+
+export const GelatoCredentials = co.map({
+	apiKey: z.string(),
+	storeId: z.string(),
+	isConfigured: z.boolean(),
+	connectedAt: z.optional(z.date()),
+	storeName: z.optional(z.string()),
+	// Template configurations for this account group's store
+	customTemplates: z.optional(z.array(z.object({
+		id: z.string(),
+		name: z.string(),
+		description: z.string(),
+		productType: z.string(),
+		isDefault: z.optional(z.boolean()),
+	}))),
+});
+
+// =============================================================================
 // 🏢 ACCOUNT GROUP SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
@@ -101,12 +121,35 @@ export const AccountGroup = co.map({
 	// Ayrshare Integration (Business Plan)
 	ayrshareProfileKey: z.optional(z.string()),
 	ayrshareProfileTitle: z.optional(z.string()),
+	
+	// Gelato Integration (per account group)
+	gelatoCredentials: z.optional(GelatoCredentials),
+	
+	// Account Group Settings
+	settings: z.optional(z.object({
+		autoCreateProducts: z.optional(z.boolean()),
+		defaultProductType: z.optional(z.string()),
+		notifyOnProductCreation: z.optional(z.boolean()),
+	})),
 });
 
 export type AccountGroupType = co.loaded<typeof AccountGroup, {
 	accounts: { $each: true },
-	posts: { $each: true }
+	posts: { $each: true },
+	gelatoCredentials: true
 }>;
+
+export const UserProfile = co.map({
+	name: z.string(),
+	// User-level preferences (not related to specific account groups)
+	preferences: z.optional(z.object({
+		theme: z.optional(z.enum(["light", "dark", "system"])),
+		notificationPreferences: z.optional(z.object({
+			email: z.optional(z.boolean()),
+			push: z.optional(z.boolean()),
+		})),
+	})),
+});
 
 // =============================================================================
 // 📂 ROOT ACCOUNT STRUCTURE
@@ -119,13 +162,14 @@ export const AccountRoot = co.map({
 export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 	accountGroups: { $each: { 
 		accounts: { $each: true },
-		posts: { $each: true }
+		posts: { $each: true },
+		gelatoCredentials: true
 	}}
 }>;
 
 export const MyAppAccount = co.account({
 	root: AccountRoot,
-	profile: co.map({ name: z.string() }),
+	profile: UserProfile,
 }).withMigration(account => {
   if (account.root === undefined) {
     account.root = AccountRoot.create({
@@ -138,7 +182,8 @@ export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
 	root: {
 		accountGroups: { $each: {
 			accounts: { $each: true },
-			posts: { $each: true }
+			posts: { $each: true },
+			gelatoCredentials: true
 		}}
 	}
 }>;

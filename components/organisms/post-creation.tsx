@@ -22,30 +22,29 @@ import { useState } from "react";
 
 interface PostCreationProps {
 	post: PostFullyLoaded;
-	accountGroup: {
-		id: string;
-		name: string;
-		accounts: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-	};
+	accountGroup: any; // Account group with Gelato credentials
 }
 
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
-	// Gelato configuration - TODO: move to env variables and config file
+	// Get account group's secure Gelato credentials
+	const accountGroupGelatoCredentials = accountGroup?.gelatoCredentials;
+	const isGelatoConfigured = accountGroupGelatoCredentials?.isConfigured || false;
+	
 	const gelatoConfig = {
 		gelato: {
-			apiKey: process.env.NEXT_PUBLIC_GELATO_API_KEY || '',
-			storeId: process.env.NEXT_PUBLIC_GELATO_STORE_ID || '',
+			apiKey: accountGroupGelatoCredentials?.apiKey || '',
+			storeId: accountGroupGelatoCredentials?.storeId || '',
 		},
-		templates: [
+		templates: accountGroupGelatoCredentials?.customTemplates || [
 			{
-				id: '0a2c9a58-d1d4-4a79-b9b2-8726663a50df', // TODO: Replace with your actual template ID
+				id: '0a2c9a58-d1d4-4a79-b9b2-8726663a50df',
 				name: 'Custom T-Shirt',
 				description: 'High-quality custom t-shirt from social media post',
 				productType: 'apparel',
 				isDefault: true,
 			},
 			{
-				id: 'poster-template-id', // TODO: Replace with actual template ID
+				id: 'poster-template-id',
 				name: 'Art Poster',
 				description: 'Beautiful poster from social media post',
 				productType: 'poster',
@@ -55,7 +54,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Gelato state
 	const [selectedTemplate, setSelectedTemplate] = useState<TemplateMapping | null>(
-		gelatoConfig.templates.find(t => t.isDefault) || gelatoConfig.templates[0] || null
+		gelatoConfig.templates.find((t: TemplateMapping) => t.isDefault) || gelatoConfig.templates[0] || null
 	);
 	const [gelatoProducts, setGelatoProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 	const [showGelatoSection, setShowGelatoSection] = useState(false);
@@ -239,22 +238,34 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 					{showGelatoSection && (
 						<div className="space-y-4">
-							{/* Setup Instructions when API key is missing */}
-							{!gelatoConfig.gelato.apiKey && (
+							{/* Setup Instructions when credentials are missing */}
+							{!isGelatoConfigured && (
 								<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
 									<Text size="2" weight="medium" className="block mb-2 text-blue-800">
-										🔧 Setup Required
+										🔧 Gelato Store Setup Required
 									</Text>
 									<Text size="2" className="block mb-3 text-blue-700">
-										To create Gelato products, add your API credentials to the .env file:
+										Connect your Gelato store to create print-on-demand products from your posts.
 									</Text>
-									<div className="bg-white p-3 rounded border font-mono text-sm">
-										<div>NEXT_PUBLIC_GELATO_API_KEY=your-api-key</div>
-										<div>NEXT_PUBLIC_GELATO_STORE_ID=your-store-id</div>
+									<div className="space-y-2">
+										<Text size="2" className="block text-blue-700">
+											<strong>Step 1:</strong> Get your API credentials from{' '}
+											<a href="https://gelato.com/developers" target="_blank" className="underline">
+												gelato.com/developers
+											</a>
+										</Text>
+										<Text size="2" className="block text-blue-700">
+											<strong>Step 2:</strong> Go to the "Settings" tab in this account group
+										</Text>
+										<Text size="2" className="block text-blue-700">
+											<strong>Step 3:</strong> Enter your credentials and test the connection
+										</Text>
 									</div>
-									<Text size="1" className="block mt-2 text-blue-600">
-										Get your credentials from: <a href="https://gelato.com/developers" target="_blank" className="underline">gelato.com/developers</a>
-									</Text>
+									<div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+										<Text size="1" className="text-green-700">
+											🔐 <strong>Security:</strong> Your credentials are encrypted and stored securely in your profile
+										</Text>
+									</div>
 								</div>
 							)}
 
@@ -266,7 +277,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</div>
 							)}
 
-							{hasImages && gelatoConfig.gelato.apiKey && (
+							{hasImages && isGelatoConfigured && (
 								<>
 									{/* Template Selection */}
 									<div>
@@ -327,8 +338,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</>
 							)}
 
-							{/* Demo/Test Button when no API key */}
-							{!gelatoConfig.gelato.apiKey && hasImages && (
+							{/* Demo/Test Button when not configured */}
+							{!isGelatoConfigured && hasImages && (
 								<button
 									onClick={() => {
 										console.log('Demo: Would create Gelato product with:', {

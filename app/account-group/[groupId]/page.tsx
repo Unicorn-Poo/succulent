@@ -2,7 +2,7 @@
 import { useParams, useRouter } from "next/navigation"; 
 import { useState } from "react";
 import { Button, Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
-import { Plus, Users, BarChart3, Settings, MessageCircle } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { PostFullyLoaded } from "@/app/schema";
@@ -11,6 +11,7 @@ import { useAccount } from "jazz-react";
 import { MyAppAccount } from "@/app/schema";
 import AccountAnalyticsOverview from "@/components/organisms/account-analytics-overview";
 import AccountGroupTools from "@/components/organisms/account-group-tools";
+import { GelatoSettings } from "@/components/gelato-settings";
 import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
 
@@ -209,6 +210,10 @@ export default function AccountGroupPage() {
 							<Users className="w-4 h-4 mr-2" />
 							Accounts
 						</Tabs.Trigger>
+						<Tabs.Trigger value="settings">
+							<Cog className="w-4 h-4 mr-2" />
+							Settings
+						</Tabs.Trigger>
 					</Tabs.List>
 
 					{/* Posts Tab */}
@@ -333,6 +338,31 @@ export default function AccountGroupPage() {
 											</div>
 										</div>
 									))}
+								</div>
+							)}
+						</div>
+					</Tabs.Content>
+
+					{/* Settings Tab */}
+					<Tabs.Content value="settings" className="mt-6">
+						<div className="space-y-6">
+							<div className="flex items-center gap-3 mb-6">
+								<Cog className="w-5 h-5 text-gray-600" />
+								<Text size="5" weight="bold">Account Group Settings</Text>
+							</div>
+
+							{/* Gelato Integration */}
+							{jazzAccountGroup && (
+								<GelatoSettings accountGroup={jazzAccountGroup as any} />
+							)}
+
+							{/* Future settings can be added here */}
+							{!jazzAccountGroup && (
+								<div className="text-center py-12">
+									<Text size="4" weight="medium" className="mb-2 block">Settings Not Available</Text>
+									<Text size="2" color="gray" className="mb-6 block">
+										Settings are only available for collaborative account groups created with Jazz.
+									</Text>
 								</div>
 							)}
 						</div>
