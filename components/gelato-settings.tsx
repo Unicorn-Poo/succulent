@@ -42,6 +42,10 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 	);
 	const [isFetchingChannels, setIsFetchingChannels] = useState(false);
 	const [isUpdatingChannels, setIsUpdatingChannels] = useState(false);
+	
+	// Template tag editing state
+	const [editingTags, setEditingTags] = useState<{[key: string]: boolean}>({});
+	const [tempTags, setTempTags] = useState<{[key: string]: string}>({});
 
 	// Update publishingChannels when accountGroup changes (for real-time sync)
 	React.useEffect(() => {
@@ -90,6 +94,44 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			accountGroup.gelatoCredentials.templates.splice(index, 1);
 			setForceRefresh(prev => prev + 1);
 		}
+	};
+
+	// Template tag editing functions
+	const handleEditTags = (templateId: string, currentTags: string[]) => {
+		setEditingTags(prev => ({ ...prev, [templateId]: true }));
+		setTempTags(prev => ({ ...prev, [templateId]: currentTags.join(', ') }));
+	};
+
+	const handleSaveTags = (templateId: string) => {
+		if (!accountGroup.gelatoCredentials?.templates) return;
+		
+		const template = accountGroup.gelatoCredentials.templates.find(t => t.gelatoTemplateId === templateId);
+		if (!template) return;
+		
+		const newTags = tempTags[templateId]?.split(',').map(tag => tag.trim()).filter(Boolean) || [];
+		
+		// Update template tags
+		template.tags = newTags;
+		
+		// Update Shopify data tags if they exist
+		if (template.shopifyData) {
+			template.shopifyData.tags = [
+				...newTags,
+				'Print on Demand',
+				'Custom',
+				template.productType || 'Product'
+			].filter(Boolean);
+		}
+		
+		// Clear editing state
+		setEditingTags(prev => ({ ...prev, [templateId]: false }));
+		setTempTags(prev => ({ ...prev, [templateId]: '' }));
+		setForceRefresh(prev => prev + 1);
+	};
+
+	const handleCancelEditTags = (templateId: string) => {
+		setEditingTags(prev => ({ ...prev, [templateId]: false }));
+		setTempTags(prev => ({ ...prev, [templateId]: '' }));
 	};
 
 	// Shopify integration functions
@@ -744,41 +786,113 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 									{accountGroup.gelatoCredentials?.templates?.map((template, index) => {
 										if (!template) return null;
 										
+										const templateId = template.gelatoTemplateId || index.toString();
+										const isEditingThisTemplate = editingTags[templateId];
+										const currentTags = template.tags || [];
+										
 										return (
-											<div key={template.gelatoTemplateId || index} className="flex items-center justify-between p-3 bg-white border rounded-lg">
-												<div className="flex-1 min-w-0">
-													<Text size="2" weight="medium" className="block truncate">
-														{template.name || template.displayName || 'Unnamed Template'}
-													</Text>
-													<Text size="1" color="gray" className="block truncate">
-														{template.productType || 'Unknown Type'} • 
-														{template.fetchedAt ? ` Imported ${template.fetchedAt.toLocaleDateString()}` : ' Recently imported'}
-													</Text>
-													{template.description && (
-														<Text size="1" color="gray" className="block truncate mt-1">
-															{template.description.replace(/<[^>]*>/g, '').substring(0, 100)}...
+											<div key={templateId} className="p-3 bg-white border rounded-lg">
+												<div className="flex items-center justify-between">
+													<div className="flex-1 min-w-0">
+														<Text size="2" weight="medium" className="block truncate">
+															{template.name || template.displayName || 'Unnamed Template'}
 														</Text>
-													)}
+														<Text size="1" color="gray" className="block truncate">
+															{template.productType || 'Unknown Type'} • 
+															{template.fetchedAt ? ` Imported ${template.fetchedAt.toLocaleDateString()}` : ' Recently imported'}
+														</Text>
+														{template.description && (
+															<Text size="1" color="gray" className="block truncate mt-1">
+																{template.description.replace(/<[^>]*>/g, '').substring(0, 100)}...
+															</Text>
+														)}
+													</div>
+													<div className="flex items-center gap-2 ml-4">
+														<Badge 
+															color={template.isActive ? 'green' : 'gray'} 
+															variant="soft"
+															size="1"
+														>
+															{template.isActive ? 'Active' : 'Inactive'}
+														</Badge>
+														<Text size="1" color="gray">
+															ID: {template.gelatoTemplateId?.substring(0, 8) || 'N/A'}...
+														</Text>
+														<Button
+															variant="ghost"
+															color="red"
+															size="1"
+															onClick={() => handleRemoveTemplate(template)}
+														>
+															<Trash2 className="w-3 h-3" />
+														</Button>
+													</div>
 												</div>
-												<div className="flex items-center gap-2 ml-4">
-													<Badge 
-														color={template.isActive ? 'green' : 'gray'} 
-														variant="soft"
-														size="1"
-													>
-														{template.isActive ? 'Active' : 'Inactive'}
-													</Badge>
-													<Text size="1" color="gray">
-														ID: {template.gelatoTemplateId?.substring(0, 8) || 'N/A'}...
-													</Text>
-													<Button
-														variant="ghost"
-														color="red"
-														size="1"
-														onClick={() => handleRemoveTemplate(template)}
-													>
-														<Trash2 className="w-3 h-3" />
-													</Button>
+												
+												{/* Tags Section */}
+												<div className="mt-3 pt-3 border-t border-gray-100">
+													<div className="flex items-center justify-between mb-2">
+														<Text size="1" weight="medium" color="gray">
+															🏷️ Product Tags
+														</Text>
+														{!isEditingThisTemplate && (
+															<Button
+																variant="ghost"
+																size="1"
+																onClick={() => handleEditTags(templateId, currentTags)}
+															>
+																<Settings className="w-3 h-3 mr-1" />
+																Edit
+															</Button>
+														)}
+													</div>
+													
+													{isEditingThisTemplate ? (
+														<div className="space-y-2">
+															<input
+																value={tempTags[templateId] || ''}
+																onChange={(e) => setTempTags(prev => ({ ...prev, [templateId]: e.target.value }))}
+																placeholder="Enter tags separated by commas"
+																className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+															/>
+															<div className="flex gap-2">
+																<Button
+																	size="1"
+																	variant="soft"
+																	color="green"
+																	onClick={() => handleSaveTags(templateId)}
+																>
+																	Save
+																</Button>
+																<Button
+																	size="1"
+																	variant="ghost"
+																	onClick={() => handleCancelEditTags(templateId)}
+																>
+																	Cancel
+																</Button>
+															</div>
+														</div>
+													) : (
+														<div className="flex flex-wrap gap-1">
+															{currentTags.length > 0 ? (
+																currentTags.map((tag, tagIndex) => (
+																	<Badge 
+																		key={tagIndex} 
+																		variant="soft" 
+																		size="1"
+																		color="blue"
+																	>
+																		{tag}
+																	</Badge>
+																))
+															) : (
+																<Text size="1" color="gray">
+																	No tags set - click Edit to add tags
+																</Text>
+															)}
+														</div>
+													)}
 												</div>
 											</div>
 										);

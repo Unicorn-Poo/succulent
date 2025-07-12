@@ -214,6 +214,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				details: template.details,
 				fetchedAt: template.fetchedAt,
 				isActive: template.isActive,
+				tags: template.tags || [],
+				availableSizes: template.availableSizes || [],
+				availableColors: template.availableColors || [],
+				shopifyData: template.shopifyData || {},
 			};
 		});
 		
@@ -228,7 +232,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		if (gelatoTemplates.length > 0 && !selectedTemplate) {
 			setSelectedTemplate(gelatoTemplates[0]);
 		}
-	}, [gelatoTemplates, selectedTemplate]);
+	}, [gelatoTemplates.length, selectedTemplate?.id]);
 
 	// Convert Jazz images to data URLs for direct use in Gelato API
 	const convertImagesToDataUrls = async (media: any[]): Promise<string[]> => {
@@ -286,6 +290,16 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				title: title || 'Succulent Social Media Product',
 				description: `Custom ${selectedTemplate.displayName || selectedTemplate.name || 'product'} created from social media post: "${title || 'Untitled Post'}"`,
 				currency: 'USD',
+				tags: productTags,
+				productType: customProductType || selectedTemplate.productType || 'Custom Product',
+				shopifyData: isShopifyConfigured ? {
+					publishingChannels: selectedPublishingChannels,
+					productType: customProductType || selectedTemplate.productType || 'Custom Product',
+					tags: productTags,
+					vendor: 'Gelato',
+					status: 'draft',
+					publishedScope: 'web',
+				} : undefined,
 			};
 
 
@@ -415,14 +429,37 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Enhanced Gelato product creation with Shopify integration
 	const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(['online-store']);
-	const [productTags, setProductTags] = useState<string[]>([]);
-	const [customProductType, setCustomProductType] = useState('');
-
+	
 	// Get Shopify configuration
 	const shopifyConfig = accountGroupGelatoCredentials?.shopifyCredentials;
 	const isShopifyConfigured = shopifyConfig?.isConfigured || false;
-	const availableChannels = shopifyConfig?.availableChannels || [];
+	const availableChannels = useMemo(() => 
+		shopifyConfig?.availableChannels || [], 
+		[shopifyConfig?.availableChannels]
+	);
+	const defaultChannels = useMemo(() => 
+		shopifyConfig?.defaultPublishingChannels || ['online-store'], 
+		[shopifyConfig?.defaultPublishingChannels]
+	);
+	
+	// Initialize with saved default channels from Jazz object
+	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(defaultChannels);
+	const [productTags, setProductTags] = useState<string[]>([]);
+	const [customProductType, setCustomProductType] = useState('');
+
+	// Update product tags when template changes
+	useEffect(() => {
+		if (selectedTemplate?.tags) {
+			setProductTags(selectedTemplate.tags);
+		} else {
+			setProductTags([]); // Clear tags if template has no tags
+		}
+	}, [selectedTemplate?.id, selectedTemplate?.tags]);
+
+	// Update selected channels when default channels change
+	useEffect(() => {
+		setSelectedPublishingChannels(defaultChannels);
+	}, [defaultChannels]);
 
 	return (
 		<div className="space-y-6">
