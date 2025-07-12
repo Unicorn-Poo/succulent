@@ -1,6 +1,5 @@
 import { Card, Button, Badge, Text, TextArea } from "@radix-ui/themes";
 import { Plus, Upload, Edit3, Save, Loader2, ListTree } from "lucide-react";
-import { MediaCarousel } from "./media-carousel";
 import { UploadedMediaPreview } from "./uploaded-media-preview";
 import { PostFullyLoaded, MediaItem } from "../../../app/schema";
 
@@ -39,35 +38,32 @@ export const PostContent = ({
                 {/* Media Display */}
                 {seriesType !== 'reply' ? (
                     <div className="space-y-2">
-                                        {(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
-                    <div className="relative group">
-                        <MediaCarousel media={post.variants[activeTab]!.media!.filter(Boolean) as any[]} />
-                        <Button
-                            variant="soft"
-                            size="1"
-                            onClick={handleImageUpload}
-                            className="absolute top-2 right-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                        >
-                            <Plus className="w-4 h-4" />
-                        </Button>
-                    </div>
-                ) : (
-                    <>
-                        <UploadedMediaPreview 
-                            post={post}
-                            activeTab={activeTab}
-                        />
-                        <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
-                            <Button
-                                variant="soft"
-                                onClick={handleImageUpload}
-                            >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Add Media
-                            </Button>
-                        </div>
-                    </>
-                )}
+                        {(post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ? (
+                            <div className="relative group">
+                                <UploadedMediaPreview 
+                                    post={post}
+                                    activeTab={activeTab}
+                                />
+                                <Button
+                                    variant="soft"
+                                    size="1"
+                                    onClick={handleImageUpload}
+                                    className="absolute top-2 left-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-blue-500 hover:bg-blue-600 text-white"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
+                                <Button
+                                    variant="soft"
+                                    onClick={handleImageUpload}
+                                >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Add Media
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 ) : null}
 

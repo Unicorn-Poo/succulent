@@ -445,7 +445,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const handleTitleSave = useCallback(() => {
 		setIsEditingTitle(false);
 		setPost(prevPost => ({...prevPost, title: title }));
-		console.log('Title updated:', title);
 	}, [title]);
 
 	const handleClearSchedule = useCallback(() => {
@@ -492,8 +491,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, []);
 
 	const handleImageUpload = useCallback(async () => {
-		console.log('🚀 handleImageUpload called - starting upload process');
-		
 		// Create a file input element
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
@@ -504,54 +501,34 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			const files = (event.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
 			
-			setSuccess('Processing image...');
+			setSuccess('Processing files...');
 			setErrors([]);
 			
 			try {
 				// Process each selected file
 				for (const file of Array.from(files)) {
-					console.log(`📁 Starting to process file: ${file.name}`);
-					
 					// Check if it's an image or video
 					const isImage = file.type.startsWith('image/');
 					const isVideo = file.type.startsWith('video/');
 					
 					if (!isImage && !isVideo) {
-						console.warn(`Unsupported file type: ${file.type}`);
 						setErrors(prev => [...prev, `Unsupported file type: ${file.type}`]);
 						continue;
 					}
 					
-					console.log(`📁 Processing ${isImage ? 'image' : 'video'}:`, {
-						name: file.name,
-						type: file.type,
-						size: file.size
-					});
-					
 					// Get the current post's owner for creating new objects
 					const variant = currentPost.variants[activeTab];
 					if (!variant || !variant.media) {
-						console.error('No media list found for variant');
 						setErrors(prev => [...prev, 'No media list found for current post variant']);
 						continue;
 					}
 					
 					const owner = variant.media._owner;
-					console.log('📄 Using owner for Jazz objects:', owner);
 					
 					let mediaItem;
 					if (isImage) {
-						console.log('🖼️ Creating FileStream for image with createFromBlob...');
-						console.log('📄 File details:', {
-							name: file.name,
-							size: file.size,
-							type: file.type,
-							lastModified: file.lastModified
-						});
-						
 						// Use the proper async FileStream creation method
 						const fileStream = await FileStream.createFromBlob(file, { owner });
-						console.log('📁 Created FileStream for image:', fileStream);
 						
 						// Create ImageMedia with the FileStream
 						mediaItem = ImageMedia.create({
@@ -559,42 +536,32 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 							image: fileStream,
 							alt: undefined,
 						}, { owner });
-						console.log('✅ Created ImageMedia with FileStream:', mediaItem);
 					} else {
-						console.log('🎬 Creating VideoMedia with FileStream...');
-						
 						// Use the proper async FileStream creation method for video
 						const fileStream = await FileStream.createFromBlob(file, { owner });
-						console.log('📁 Created FileStream for video:', fileStream);
 						
 						mediaItem = VideoMedia.create({
 							type: 'video' as const,
 							video: fileStream,
 							alt: undefined,
 						}, { owner });
-						console.log('✅ Created VideoMedia:', mediaItem);
 					}
 					
 					// Add to the current post variant's media array directly
 					if (variant.media) {
-						console.log('📝 Step 5: Adding media item to post...');
 						// Add the new media item to the collaborative list
 						variant.media.push(mediaItem);
-						console.log(`✅ Step 6: Added ${isImage ? 'image' : 'video'} to post media:`, mediaItem);
 					}
 					
-					setSuccess(`Successfully uploaded ${file.name}! Image saved to post.`);
-					console.log(`🎉 Successfully completed upload of ${file.name}`);
+					setSuccess(`Successfully uploaded ${file.name}!`);
 				}
 			} catch (error) {
-				console.error('🚨 Error during file upload:', error);
 				setErrors(prev => [...prev, `Failed to upload files: ${error instanceof Error ? error.message : 'Unknown error'}`]);
 				setSuccess('');
 			}
 		};
 		
 		// Trigger the file dialog
-		console.log('📁 Triggering file dialog...');
 		fileInput.click();
 	}, [activeTab, currentPost]);
 
