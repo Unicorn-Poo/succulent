@@ -192,60 +192,21 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	
 	// Get templates directly from Jazz collaborative data structure
 	const gelatoTemplates = useMemo(() => {
-		console.log('Post-creation: Processing templates...');
-		console.log('Post-creation: accountGroupGelatoCredentials?.templates:', accountGroupGelatoCredentials?.templates);
-		
 		if (!accountGroupGelatoCredentials?.templates) {
-			console.log('Post-creation: No templates found');
 			return [];
 		}
 		
-		// DEBUG: Let's see the raw templates from Jazz
-		console.log('Post-creation: Raw templates from Jazz:', accountGroupGelatoCredentials.templates);
-		console.log('Post-creation: Templates count:', accountGroupGelatoCredentials.templates.length);
-		
-		accountGroupGelatoCredentials.templates.forEach((template: any, index: number) => {
-			console.log(`Post-creation: Jazz Template ${index}:`, {
-				fullObject: template,
-				gelatoTemplateId: template.gelatoTemplateId,
-				name: template.name,
-				allKeys: Object.keys(template),
-				hasGelatoTemplateId: !!template.gelatoTemplateId
-			});
-		});
-		
 		const filteredTemplates = accountGroupGelatoCredentials.templates
 			.filter((template: any) => {
-				// Check for both new and potentially old template structures
-				const hasId = template && (template.gelatoTemplateId || template.name);
-				console.log('Post-creation: Template filter check:', { 
-					template, 
-					hasId,
-					gelatoTemplateId: template?.gelatoTemplateId,
-					name: template?.name 
-				});
-				return hasId;
+				return template && (template.gelatoTemplateId || template.name);
 			});
-			
-		console.log('Post-creation: Filtered templates:', filteredTemplates);
 		
 		const mappedTemplates = filteredTemplates.map((template: any, index: number) => {
-			// DEBUG: Show all template properties
-			console.log(`Post-creation: Template ${index} raw data:`, JSON.stringify(template, null, 2));
-			console.log(`Post-creation: Template ${index} gelatoTemplateId:`, template.gelatoTemplateId);
-			console.log(`Post-creation: Template ${index} name:`, template.name);
-			console.log(`Post-creation: Template ${index} all keys:`, Object.keys(template));
-			
-			// For the dropdown, we can use a display-friendly ID, but we need to keep the real gelatoTemplateId
 			const displayId = template.gelatoTemplateId || `template-${index}-${template.name?.replace(/[^a-zA-Z0-9]/g, '-')}`;
 			
-			console.log(`Post-creation: Template ${index} display ID will be:`, displayId);
-			console.log(`Post-creation: Template ${index} gelato template ID:`, template.gelatoTemplateId);
-			console.log(`Post-creation: Template ${index} used fallback?`, !template.gelatoTemplateId);
-			
-			const mapped = {
-				id: displayId, // For dropdown display and selection
-				gelatoTemplateId: template.gelatoTemplateId, // The REAL Gelato template ID for API calls
+			return {
+				id: displayId,
+				gelatoTemplateId: template.gelatoTemplateId,
 				name: template.name,
 				displayName: template.displayName || template.name,
 				productType: template.productType,
@@ -253,19 +214,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				details: template.details,
 				fetchedAt: template.fetchedAt,
 				isActive: template.isActive,
-				// DEBUG: Add raw template data for inspection
-				_debug: {
-					originalTemplate: template,
-					hasGelatoTemplateId: !!template.gelatoTemplateId,
-					gelatoTemplateId: template.gelatoTemplateId,
-					usingFallback: !template.gelatoTemplateId
-				}
 			};
-			console.log('Post-creation: Mapped template:', mapped);
-			return mapped;
 		});
 		
-		console.log('Post-creation: Final mapped templates:', mappedTemplates);
 		return mappedTemplates;
 	}, [accountGroupGelatoCredentials?.templates]);
 	
@@ -304,7 +255,6 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						});
 						
 						imageUrls.push(dataUrl);
-						console.log('Converted Jazz image to data URL');
 					}
 				} catch (error) {
 					console.error('Error converting image:', error);
@@ -338,13 +288,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				currency: 'USD',
 			};
 
-			console.log('Creating product with data:', {
-				apiKey: accountGroupGelatoCredentials.apiKey ? '***' : 'missing',
-				storeId: accountGroupGelatoCredentials.storeId,
-				templateId: selectedTemplate.gelatoTemplateId || selectedTemplate.id,
-				productData: productData,
-				imageUrls: imageUrls?.length || 0,
-			});
+
 
 			const response = await fetch('/api/create-gelato-product', {
 				method: 'POST',
@@ -433,13 +377,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	// Gelato handlers
 	const handleGelatoProductCreated = (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
 		setGelatoProducts(prev => [...prev, result]);
-		console.log('✅ Gelato product created:', result);
 		// You can add a toast notification here if you have a toast system
 	};
 
 	const handleGelatoError = (error: string) => {
-		console.error('❌ Gelato product creation failed:', error);
 		// You can add error handling/toast notification here
+		console.error('Gelato product creation failed:', error);
 	};
 
 	// Convert post to SucculentPost format for Gelato

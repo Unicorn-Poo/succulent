@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, Text, Button, TextField, Badge, Dialog } from "@radix-ui/themes";
-import { Settings, Key, Store, CheckCircle, XCircle, Loader2, ExternalLink, Download, RefreshCw, Plus, Package } from "lucide-react";
+import { Settings, Key, Store, CheckCircle, XCircle, Loader2, ExternalLink, Download, RefreshCw, Plus, Package, Trash2 } from "lucide-react";
 import type { AccountGroupType } from "../app/schema";
 
 interface GelatoSettingsProps {
@@ -47,48 +47,15 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		});
 	});
 	
-	// Fix function for templates that might have old structure
-	const fixExistingTemplates = () => {
+	// Function to remove a template
+	const handleRemoveTemplate = (templateToRemove: any) => {
 		if (!accountGroup.gelatoCredentials?.templates) return;
 		
-		const templatesToRemove: any[] = [];
-		
-		accountGroup.gelatoCredentials.templates.forEach((template) => {
-			if (template && !template.gelatoTemplateId) {
-				console.log('Found template without gelatoTemplateId, attempting to fix...');
-				console.log('Template data:', template);
-				
-				// For the specific "-scape No.X Print" template that was imported
-				// We need to find its original ID from the import process
-				console.log('Template name:', template.name);
-				if (template.name === '-scape No.X Print') {
-					// This template needs to be re-imported with the correct ID
-					console.log('This is the -scape template that needs re-import');
-					// Mark for removal
-					templatesToRemove.push(template);
-				} else {
-					// For other templates, create a temporary ID
-					const fixedId = `fixed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-					try {
-						template.gelatoTemplateId = fixedId;
-						console.log('Fixed template with ID:', fixedId);
-					} catch (error) {
-						console.error('Could not fix template:', error);
-					}
-				}
-			}
-		});
-		
-		// Remove templates that need re-import
-		templatesToRemove.forEach((template) => {
-			const index = accountGroup.gelatoCredentials!.templates.indexOf(template);
-			if (index > -1) {
-				accountGroup.gelatoCredentials!.templates.splice(index, 1);
-				console.log('Removed template - please re-import it');
-			}
-		});
-		
-		setForceRefresh(prev => prev + 1);
+		const index = accountGroup.gelatoCredentials.templates.indexOf(templateToRemove);
+		if (index > -1) {
+			accountGroup.gelatoCredentials.templates.splice(index, 1);
+			setForceRefresh(prev => prev + 1);
+		}
 	};
 
 	const handleTestConnection = async () => {
@@ -254,9 +221,6 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		setImportError("");
 
 		try {
-			// Call our backend API to import the template (avoids CORS issues)
-			console.log(`Importing template with ID: ${templateIdToImport.trim()}`);
-			
 			const response = await fetch('/api/gelato-templates', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -267,94 +231,56 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				}),
 			});
 
-					const data = await response.json();
-		console.log('Backend API Response:', data);
-		console.log('Template data from API:', data.template);
+			const data = await response.json();
 
-		if (data.success && data.template) {
-			// Ensure gelatoCredentials exists
-			if (!accountGroup.gelatoCredentials) {
-				console.error('Gelato credentials not found');
-				setImportResult('error');
-				setImportError('Gelato credentials not configured');
-				return;
-			}
+			if (data.success && data.template) {
+				if (!accountGroup.gelatoCredentials) {
+					setImportResult('error');
+					setImportError('Gelato credentials not configured');
+					return;
+				}
 
-			// Process the template data and save directly to Jazz
-			const { GelatoTemplate } = await import('../app/schema');
-			
-			// DEBUG: Show full template data from API
-			console.log('Full template data from API:', JSON.stringify(data.template, null, 2));
-			
-			// Check what field contains the template ID
-			const templateId = data.template.gelatoTemplateId || data.template.id;
-			console.log('Template ID sources:', {
-				gelatoTemplateId: data.template.gelatoTemplateId,
-				id: data.template.id,
-				selectedId: templateId
-			});
-			
-			const processedTemplate = {
-				gelatoTemplateId: templateId,
-				name: data.template.name || 'Unnamed Template',
-				displayName: data.template.name || 'Untitled',
-				productType: data.template.productType || 'unknown',
-				description: data.template.description || 'No description available',
-				details: {
-					size: data.template.availableSizes?.[0] || 'Unknown',
-					material: 'Unknown',
-					color: 'Unknown',
-					orientation: 'Unknown',
-				},
-				fetchedAt: new Date(),
-				isActive: true,
-			};
-			
-			// DEBUG: Show what we're about to save
-			console.log('Processed template data for Jazz:', JSON.stringify(processedTemplate, null, 2));
-
-				console.log('Creating template with processed data:', processedTemplate);
-				console.log('Account group owner:', accountGroup._owner);
-				console.log('Gelato credentials before template creation:', accountGroup.gelatoCredentials);
+				const { GelatoTemplate } = await import('../app/schema');
 				
+				const templateId = data.template.gelatoTemplateId || data.template.id;
+				
+				const processedTemplate = {
+					gelatoTemplateId: templateId,
+					name: data.template.name || 'Unnamed Template',
+					displayName: data.template.name || 'Untitled',
+					productType: data.template.productType || 'unknown',
+					description: data.template.description || 'No description available',
+					details: {
+						size: data.template.availableSizes?.[0] || 'Unknown',
+						material: 'Unknown',
+						color: 'Unknown',
+						orientation: 'Unknown',
+					},
+					fetchedAt: new Date(),
+					isActive: true,
+				};
+
 				const template = GelatoTemplate.create(processedTemplate, { owner: accountGroup._owner });
 				
-				console.log('Created template:', template);
-				console.log('Templates array before push:', accountGroup.gelatoCredentials.templates);
-				console.log('Templates length before push:', accountGroup.gelatoCredentials.templates?.length);
-				
-				// Ensure templates array is initialized
 				if (!accountGroup.gelatoCredentials.templates) {
-					console.log('Templates array is undefined, initializing...');
 					const { co } = await import('jazz-tools');
 					accountGroup.gelatoCredentials.templates = co.list(GelatoTemplate).create([], { owner: accountGroup._owner });
 				}
 				
-				// Save directly to Jazz collaborative data structure
 				accountGroup.gelatoCredentials.templates.push(template);
-				
-				console.log('Templates after push:', accountGroup.gelatoCredentials.templates?.length);
-				
-				// Update the templates last fetched timestamp
 				accountGroup.gelatoCredentials.templatesLastFetched = new Date();
 				
-				// Force a re-render by updating component state
 				setImportResult('success');
 				setTemplateIdToImport("");
 				setForceRefresh(prev => prev + 1);
 				
-				// Close dialog after a short delay
 				setTimeout(() => setShowImportDialog(false), 2000);
-				
-				console.log('Template import completed successfully');
 			} else {
-				console.error('Backend API error:', data);
 				setImportResult('error');
 				setImportError(data.message || data.error || 'Failed to import template');
 			}
 			
 		} catch (error) {
-			console.error('Error importing template:', error);
 			setImportResult('error');
 			setImportError('Network error occurred while importing template');
 		} finally {
@@ -362,46 +288,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		}
 	};
 
-	// Test function to create a template directly
-	const handleCreateTestTemplate = async () => {
-		try {
-			const { GelatoTemplate } = await import('../app/schema');
-			
-			console.log('Creating test template...');
-			
-			const testTemplate = GelatoTemplate.create({
-				gelatoTemplateId: `test-${Date.now()}`,
-				name: 'Test Template',
-				displayName: 'Test Template',
-				productType: 'test',
-				description: 'This is a test template',
-				details: { 
-					size: '10x10',
-					material: 'Cotton',
-					color: 'White',
-					orientation: 'Portrait'
-				},
-				fetchedAt: new Date(),
-				isActive: true,
-			}, { owner: accountGroup._owner });
-			
-			console.log('Test template created:', testTemplate);
-			
-			if (!accountGroup.gelatoCredentials) {
-				console.log('No gelato credentials found');
-				return;
-			}
-			
-			console.log('Before push - templates length:', accountGroup.gelatoCredentials.templates.length);
-			accountGroup.gelatoCredentials.templates.push(testTemplate);
-			console.log('After push - templates length:', accountGroup.gelatoCredentials.templates.length);
-			
-			setForceRefresh(prev => prev + 1);
-			
-		} catch (error) {
-			console.error('Error creating test template:', error);
-		}
-	};
+
 
 	return (
 		<Card>
@@ -631,30 +518,6 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										</>
 									)}
 								</Button>
-								<Button
-									onClick={() => setForceRefresh(prev => prev + 1)}
-									variant="soft"
-									color="orange"
-									size="2"
-								>
-									Debug Refresh
-								</Button>
-								<Button
-									onClick={handleCreateTestTemplate}
-									variant="soft"
-									color="blue"
-									size="2"
-								>
-									Test Template
-								</Button>
-								<Button
-									onClick={fixExistingTemplates}
-									variant="soft"
-									color="red"
-									size="2"
-								>
-									Fix Templates
-								</Button>
 							</div>
 						</div>
 
@@ -683,17 +546,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						{cachedTemplatesCount > 0 ? (
 							<div className="mb-4">
 								<Text weight="medium" size="2" className="text-purple-800 block mb-3">
-									📄 Your Imported Templates (Debug: {cachedTemplatesCount} templates found)
+									📄 Your Imported Templates ({cachedTemplatesCount} templates)
 								</Text>
 								<div className="space-y-2 max-h-64 overflow-y-auto">
 									{accountGroup.gelatoCredentials?.templates?.map((template, index) => {
-										console.log('Rendering template:', template);
-										
-										// Safety check for null/undefined templates
-										if (!template) {
-											console.warn('Template is null/undefined at index:', index);
-											return null;
-										}
+										if (!template) return null;
 										
 										return (
 											<div key={template.gelatoTemplateId || index} className="flex items-center justify-between p-3 bg-white border rounded-lg">
@@ -722,6 +579,14 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 													<Text size="1" color="gray">
 														ID: {template.gelatoTemplateId?.substring(0, 8) || 'N/A'}...
 													</Text>
+													<Button
+														variant="ghost"
+														color="red"
+														size="1"
+														onClick={() => handleRemoveTemplate(template)}
+													>
+														<Trash2 className="w-3 h-3" />
+													</Button>
 												</div>
 											</div>
 										);
