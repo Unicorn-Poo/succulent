@@ -116,7 +116,6 @@ async function listPublishingChannels(apiKey: string, storeUrl: string, accessTo
 		
 		// Format store URL properly
 		const formattedStoreUrl = formatShopifyStoreUrl(storeUrl);
-		console.log('Formatted store URL:', formattedStoreUrl);
 		
 		// For testing, let's try a simpler endpoint first - shop info
 		const testResponse = await fetch(`${formattedStoreUrl}/admin/api/2023-10/shop.json`, {
@@ -126,11 +125,8 @@ async function listPublishingChannels(apiKey: string, storeUrl: string, accessTo
 			},
 		});
 
-		console.log('Shopify test response status:', testResponse.status);
-
 		if (!testResponse.ok) {
 			const errorText = await testResponse.text();
-			console.log('Shopify API error details:', errorText);
 			
 			// Provide more specific error messages
 			if (testResponse.status === 401) {
@@ -153,46 +149,84 @@ async function listPublishingChannels(apiKey: string, storeUrl: string, accessTo
 		});
 
 		if (!response.ok) {
-			const errorText = await response.text();
-			console.log('Publications API error:', errorText);
-			
 			// If publications fail, return default channels
-			console.log('Publications endpoint failed, returning default channels');
 			return NextResponse.json({
 				success: true,
 				channels: [
 					{ id: 'online-store', name: 'Online Store', enabled: true, supportsTags: true },
 					{ id: 'pos', name: 'Point of Sale', enabled: false, supportsTags: false },
-					{ id: 'facebook', name: 'Facebook', enabled: false, supportsTags: true },
-					{ id: 'google', name: 'Google', enabled: false, supportsTags: true },
 				],
-				totalChannels: 4,
+				totalChannels: 2,
 				note: 'Using default channels - publications endpoint not accessible with current permissions'
 			});
 		}
 
 		const data = await response.json();
 		
-		// Extract and format channel information
-		const channels = data.publications?.map((pub: any) => ({
-			id: pub.id,
-			name: pub.name,
-			enabled: pub.published,
-			supportsTags: pub.supports_future_publishing,
-		})) || [];
+		// Extract and format channel information from Shopify's response
+		const shopifyChannels = data.publications?.map((pub: any) => {
+			// Improved status detection logic
+			// If a publication exists in the API response, it's generally available/active
+			// Special handling for known channel types
+			let isActive = true; // Default to active if it appears in publications
+			
+			// Special cases for channel detection
+			const channelName = pub.name.toLowerCase();
+			if (channelName.includes('draft') || channelName.includes('inactive')) {
+				isActive = false;
+			}
+			
+			// For headless and other channels, if they're in publications, they're active
+			if (channelName.includes('headless') || channelName.includes('api')) {
+				isActive = true;
+			}
+			
 
-		// Add common default channels
-		const defaultChannels = [
-			{ id: 'online-store', name: 'Online Store', enabled: true, supportsTags: true },
-			{ id: 'pos', name: 'Point of Sale', enabled: false, supportsTags: false },
-			{ id: 'facebook', name: 'Facebook', enabled: false, supportsTags: true },
-			{ id: 'google', name: 'Google', enabled: false, supportsTags: true },
-		];
+			
+			return {
+				id: pub.id.toString(),
+				name: pub.name,
+				enabled: isActive,
+				supportsTags: pub.supports_future_publishing || false,
+				// Add raw data for debugging
+				raw: pub
+			};
+		}) || [];
+
+		// Create a Map to handle duplicates properly by ID and name
+		const channelMap = new Map();
+		
+		// Add Shopify channels first
+		shopifyChannels.forEach((channel: any) => {
+			const key = channel.name.toLowerCase().trim();
+			if (!channelMap.has(key)) {
+				channelMap.set(key, channel);
+			}
+		});
+		
+		// Add default Online Store if not already present
+		const onlineStoreKey = 'online store';
+		if (!channelMap.has(onlineStoreKey)) {
+			channelMap.set(onlineStoreKey, {
+				id: 'online-store',
+				name: 'Online Store',
+				enabled: true,
+				supportsTags: true
+			});
+		}
+
+		// Convert map back to array and sort
+		const allChannels = Array.from(channelMap.values()).sort((a, b) => {
+			// Online Store first, then alphabetical
+			if (a.name === 'Online Store') return -1;
+			if (b.name === 'Online Store') return 1;
+			return a.name.localeCompare(b.name);
+		});
 
 		return NextResponse.json({
 			success: true,
-			channels: [...defaultChannels, ...channels],
-			totalChannels: channels.length,
+			channels: allChannels,
+			totalChannels: allChannels.length,
 		});
 
 	} catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, Text, Button, TextField, Badge, Dialog } from "@radix-ui/themes";
 import { Settings, Key, Store, CheckCircle, XCircle, Loader2, ExternalLink, Download, RefreshCw, Plus, Package, Trash2 } from "lucide-react";
 import type { AccountGroupType } from "../app/schema";
@@ -33,11 +33,41 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		storeUrl: accountGroup.gelatoCredentials?.shopifyCredentials?.storeUrl || '',
 		accessToken: accountGroup.gelatoCredentials?.shopifyCredentials?.accessToken || '',
 		storeName: accountGroup.gelatoCredentials?.shopifyCredentials?.storeName || '',
+		defaultChannels: accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels || ['online-store'],
 	});
 	const [shopifyTestResult, setShopifyTestResult] = useState<'success' | 'error' | null>(null);
 	const [isTestingShopify, setIsTestingShopify] = useState(false);
-	const [publishingChannels, setPublishingChannels] = useState<any[]>([]);
+	const [publishingChannels, setPublishingChannels] = useState<any[]>(
+		accountGroup.gelatoCredentials?.shopifyCredentials?.availableChannels || []
+	);
 	const [isFetchingChannels, setIsFetchingChannels] = useState(false);
+	const [isUpdatingChannels, setIsUpdatingChannels] = useState(false);
+
+	// Update publishingChannels when accountGroup changes (for real-time sync)
+	React.useEffect(() => {
+		const savedChannels = accountGroup.gelatoCredentials?.shopifyCredentials?.availableChannels || [];
+		const savedDefaultChannels = accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels || ['online-store'];
+		
+		// Only sync channels from Jazz if we don't already have them loaded
+		// This prevents overwriting freshly fetched channels
+		if (savedChannels.length > 0 && publishingChannels.length === 0 && !isUpdatingChannels) {
+			setPublishingChannels(savedChannels);
+		}
+		
+		// Always sync form data and default channels
+		if (accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured) {
+			setShopifyFormData(prev => ({
+				...prev,
+				storeUrl: accountGroup.gelatoCredentials?.shopifyCredentials?.storeUrl || prev.storeUrl,
+				accessToken: accountGroup.gelatoCredentials?.shopifyCredentials?.accessToken || prev.accessToken,
+				storeName: accountGroup.gelatoCredentials?.shopifyCredentials?.storeName || prev.storeName,
+				defaultChannels: savedDefaultChannels,
+			}));
+		}
+	}, [
+		accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels,
+		accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured
+	]);
 
 	const isConfigured = accountGroup.gelatoCredentials?.isConfigured || false;
 	const connectedAt = accountGroup.gelatoCredentials?.connectedAt;
@@ -47,21 +77,9 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 	// Shopify configuration status
 	const isShopifyConfigured = accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured || false;
 	const shopifyConnectedAt = accountGroup.gelatoCredentials?.shopifyCredentials?.connectedAt;
+	const channelsLastFetched = accountGroup.gelatoCredentials?.shopifyCredentials?.channelsLastFetched;
 	
-	// Debug logging
-	console.log('Template debugging - cachedTemplatesCount:', cachedTemplatesCount);
-	console.log('Template debugging - templates array:', accountGroup.gelatoCredentials?.templates);
-	console.log('Template debugging - isConfigured:', isConfigured);
-	console.log('Template debugging - forceRefresh:', forceRefresh);
-	
-	// Debug each template's fields
-	accountGroup.gelatoCredentials?.templates?.forEach((template, index) => {
-		console.log(`Template ${index}:`, {
-			gelatoTemplateId: template?.gelatoTemplateId,
-			name: template?.name,
-			allFields: template
-		});
-	});
+	// Remove debug logging as requested
 	
 	// Function to remove a template
 	const handleRemoveTemplate = (templateToRemove: any) => {
@@ -82,6 +100,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		}
 
 		setIsTestingShopify(true);
+		setIsUpdatingChannels(true);
 		setShopifyTestResult(null);
 
 		try {
@@ -98,7 +117,15 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			if (response.ok) {
 				const data = await response.json();
 				if (data.success) {
-					setPublishingChannels(data.channels || []);
+					const cleanChannels = data.channels || [];
+					setPublishingChannels(cleanChannels);
+					
+					// Save fetched channels to Jazz object to prevent reverting to old data
+					if (accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured) {
+						accountGroup.gelatoCredentials.shopifyCredentials.availableChannels = cleanChannels;
+						accountGroup.gelatoCredentials.shopifyCredentials.channelsLastFetched = new Date();
+					}
+					
 					setShopifyTestResult('success');
 				} else {
 					setShopifyTestResult('error');
@@ -107,10 +134,10 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				setShopifyTestResult('error');
 			}
 		} catch (error) {
-			console.error('Shopify connection test failed:', error);
 			setShopifyTestResult('error');
 		} finally {
 			setIsTestingShopify(false);
+			setIsUpdatingChannels(false);
 		}
 	};
 
@@ -129,6 +156,8 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			accountGroup.gelatoCredentials.shopifyCredentials.isConfigured = true;
 			accountGroup.gelatoCredentials.shopifyCredentials.connectedAt = new Date();
 			accountGroup.gelatoCredentials.shopifyCredentials.availableChannels = publishingChannels;
+			accountGroup.gelatoCredentials.shopifyCredentials.defaultPublishingChannels = shopifyFormData.defaultChannels;
+			accountGroup.gelatoCredentials.shopifyCredentials.channelsLastFetched = new Date();
 		} else {
 			// Create new Shopify credentials
 			accountGroup.gelatoCredentials.shopifyCredentials = ShopifyCredentials.create({
@@ -138,7 +167,8 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				isConfigured: true,
 				connectedAt: new Date(),
 				availableChannels: publishingChannels,
-				defaultPublishingChannels: ['online-store'],
+				defaultPublishingChannels: shopifyFormData.defaultChannels,
+				channelsLastFetched: new Date(),
 			}, { owner: accountGroup._owner });
 		}
 
@@ -153,11 +183,39 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			accountGroup.gelatoCredentials.shopifyCredentials.accessToken = '';
 			accountGroup.gelatoCredentials.shopifyCredentials.storeName = '';
 		}
-		setShopifyFormData({ storeUrl: '', accessToken: '', storeName: '' });
+		setShopifyFormData({ storeUrl: '', accessToken: '', storeName: '', defaultChannels: ['online-store'] });
 		setShowShopifyConfig(false);
 		setShopifyTestResult(null);
 		setPublishingChannels([]);
 	};
+
+	// Auto-save default channels when they change
+	const handleDefaultChannelsChange = (newChannels: string[]) => {
+		setIsUpdatingChannels(true);
+		
+		// Update form data
+		setShopifyFormData(prev => ({
+			...prev,
+			defaultChannels: newChannels
+		}));
+
+		// Auto-save to Jazz if Shopify is already configured
+		if (accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured) {
+			accountGroup.gelatoCredentials.shopifyCredentials.defaultPublishingChannels = newChannels;
+		}
+		
+		// Clear the updating flag after a short delay
+		setTimeout(() => setIsUpdatingChannels(false), 100);
+	};
+
+	// Helper function for post creation component to access saved data
+	// Usage in post creation:
+	// const getShopifyChannelData = (accountGroup) => ({
+	//   availableChannels: accountGroup.gelatoCredentials?.shopifyCredentials?.availableChannels || [],
+	//   defaultChannels: accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels || ['online-store'],
+	//   isConfigured: accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured || false,
+	//   lastFetched: accountGroup.gelatoCredentials?.shopifyCredentials?.channelsLastFetched
+	// });
 
 	const handleTestConnection = async () => {
 		if (!formData.apiKey) {
@@ -186,7 +244,6 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				setTestResult('error');
 			}
 		} catch (error) {
-			console.error('Connection test failed:', error);
 			setTestResult('error');
 		} finally {
 			setIsTesting(false);
@@ -254,7 +311,6 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 			// If store templates fail, try catalog endpoint
 			if (!response.ok) {
-				console.log('Store templates failed, trying catalog...');
 				response = await fetch('/api/gelato-catalog', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -303,7 +359,6 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				setTemplateFetchResult('error');
 			}
 		} catch (error) {
-			console.error('Error fetching templates:', error);
 			setTemplateFetchResult('error');
 		} finally {
 			setIsFetchingTemplates(false);
@@ -733,15 +788,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						) : (
 							<div className="mb-4 p-4 bg-white border rounded-lg text-center">
 								<Text size="2" color="gray" className="block mb-2">
-									📄 No templates imported yet (Debug: cachedTemplatesCount = {cachedTemplatesCount})
+									📄 No templates imported yet
 								</Text>
 								<Text size="1" color="gray">
 									Use the "Add Template" button above to import your first template by ID
 								</Text>
-								<div className="mt-2 p-2 bg-gray-50 rounded text-xs text-left">
-									<strong>Debug Info:</strong><br/>
-									Templates array: {JSON.stringify(accountGroup.gelatoCredentials?.templates || [], null, 2)}
-								</div>
 							</div>
 						)}
 
@@ -814,6 +865,17 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										</Text>
 										<Text size="2" className="text-green-700 block mt-1">
 											{shopifyConnectedAt && `Connected on ${shopifyConnectedAt.toLocaleDateString()}`}
+										</Text>
+										{shopifyFormData.defaultChannels && shopifyFormData.defaultChannels.length > 0 && (
+											<Text size="1" className="text-green-700 block mt-1">
+												Default channels: {publishingChannels
+													.filter(ch => shopifyFormData.defaultChannels.includes(ch.id))
+													.map(ch => ch.name)
+													.join(', ') || shopifyFormData.defaultChannels.join(', ')}
+											</Text>
+										)}
+										<Text size="1" className="text-green-600 block mt-1">
+											💾 Saved to Jazz: {accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels?.join(', ') || 'None'}
 										</Text>
 									</div>
 									<Button
@@ -925,28 +987,107 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 							</div>
 						)}
 
-						{/* Publishing Channels */}
-						{isShopifyConfigured && publishingChannels.length > 0 && (
-							<div className="mb-4">
-								<Text weight="medium" size="2" className="text-blue-800 block mb-3">
-									📡 Available Publishing Channels ({publishingChannels.length} channels)
-								</Text>
-								<div className="grid grid-cols-2 gap-2">
-									{publishingChannels.map((channel: any) => (
-										<div key={channel.id} className="flex items-center justify-between p-2 bg-white border rounded">
-											<Text size="1">{channel.name}</Text>
-											<Badge 
-												color={channel.enabled ? 'green' : 'gray'} 
-												variant="soft"
-												size="1"
-											>
-												{channel.enabled ? 'Enabled' : 'Available'}
-											</Badge>
-										</div>
-									))}
-								</div>
+								{/* Publishing Channels */}
+		{isShopifyConfigured && publishingChannels.length > 0 && (
+			<div className="mb-4">
+				<div className="flex items-center justify-between mb-3">
+					<div>
+						<Text weight="medium" size="2" className="text-blue-800 block">
+							📡 Publishing Channels ({publishingChannels.length} channels)
+						</Text>
+						<Text size="1" className="text-blue-700 block mt-1">
+							{channelsLastFetched 
+								? `Last updated: ${channelsLastFetched.toLocaleDateString()}`
+								: 'Channels available from your store'
+							}
+						</Text>
+					</div>
+					<Button
+						variant="ghost"
+						size="1"
+						onClick={handleTestShopifyConnection}
+						disabled={isTestingShopify}
+					>
+						<RefreshCw className={`w-3 h-3 ${isTestingShopify ? 'animate-spin' : ''}`} />
+					</Button>
+				</div>
+				<Text size="1" className="text-blue-700 block mb-3">
+					Select which channels should be preselected when creating new products:
+				</Text>
+				<div className="space-y-2">
+					{publishingChannels.map((channel: any) => (
+						<div key={channel.id} className="flex items-center justify-between p-3 bg-white border rounded">
+							<div className="flex items-center gap-3">
+								<input
+									type="checkbox"
+									id={`channel-${channel.id}`}
+									checked={shopifyFormData.defaultChannels?.includes(channel.id) || false}
+									onChange={(e) => {
+										const isChecked = e.target.checked;
+										const currentChannels = shopifyFormData.defaultChannels || [];
+										
+										let newChannels;
+										if (isChecked) {
+											newChannels = [...currentChannels, channel.id];
+										} else {
+											newChannels = currentChannels.filter(id => id !== channel.id);
+										}
+										
+										handleDefaultChannelsChange(newChannels);
+									}}
+									className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+								/>
+								<label htmlFor={`channel-${channel.id}`} className="cursor-pointer">
+									<Text size="2" weight="medium">{channel.name}</Text>
+								</label>
 							</div>
-						)}
+							<div className="flex items-center gap-2">
+								<Badge 
+									color={channel.enabled ? 'green' : 'gray'} 
+									variant="soft"
+									size="1"
+								>
+									{channel.enabled ? 'Available' : 'Inactive'}
+								</Badge>
+								{shopifyFormData.defaultChannels?.includes(channel.id) && (
+									<Badge 
+										color="blue" 
+										variant="soft"
+										size="1"
+									>
+										Default
+									</Badge>
+								)}
+							</div>
+						</div>
+					))}
+				</div>
+				<Text size="1" color="gray" className="block mt-2">
+					💡 Tip: Online Store is typically preselected for most products
+				</Text>
+				{publishingChannels.some(ch => !ch.enabled) && (
+					<div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+						<Text size="1" className="text-yellow-800 block mb-2">
+							<strong>📱 Activate Inactive Channels:</strong>
+						</Text>
+						<Text size="1" className="text-yellow-700 block mb-2">
+							Some channels appear as "Inactive" because they need to be enabled in your Shopify admin:
+						</Text>
+						<div className="space-y-1">
+							<Text size="1" className="text-yellow-700 block">
+								• Go to <strong>Shopify Admin → Sales channels</strong>
+							</Text>
+							<Text size="1" className="text-yellow-700 block">
+								• Find the inactive channel and click <strong>"Connect"</strong> or <strong>"Add channel"</strong>
+							</Text>
+							<Text size="1" className="text-yellow-700 block">
+								• Once connected, refresh channels here to see them as "Available"
+							</Text>
+						</div>
+					</div>
+				)}
+			</div>
+		)}
 
 						{!isShopifyConfigured && !showShopifyConfig && (
 							<div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
