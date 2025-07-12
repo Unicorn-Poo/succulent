@@ -25,9 +25,6 @@ export async function POST(request: NextRequest) {
 		}
 
 		// First, get the template details to understand the structure
-		console.log(`Fetching template from: https://ecommerce.gelatoapis.com/v1/templates/${templateId}`);
-		console.log(`Using API key: ${apiKey ? '***' : 'missing'}`);
-		
 		const templateResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/templates/${templateId}`, {
 			method: 'GET',
 			headers: {
@@ -36,13 +33,8 @@ export async function POST(request: NextRequest) {
 			},
 		});
 
-		console.log(`Template fetch response status: ${templateResponse.status}`);
-
 		if (!templateResponse.ok) {
 			const errorText = await templateResponse.text();
-			console.error('Failed to fetch template:', templateResponse.status, errorText);
-			console.error('Template ID used:', templateId);
-			console.error('Full error response:', errorText);
 			return NextResponse.json(
 				{ error: `Failed to fetch template: ${templateResponse.status} - ${errorText}` },
 				{ status: templateResponse.status }
@@ -50,12 +42,10 @@ export async function POST(request: NextRequest) {
 		}
 
 		const template = await templateResponse.json();
-		console.log('Template structure:', JSON.stringify(template, null, 2));
 
 		// Upload data URLs to Gelato first if provided
 		let uploadedFileUrls: string[] = [];
 		if (imageUrls && imageUrls.length > 0) {
-			console.log('Uploading images to Gelato...');
 			
 			for (const dataUrl of imageUrls) {
 				try {
@@ -78,13 +68,9 @@ export async function POST(request: NextRequest) {
 					if (uploadResponse.ok) {
 						const uploadResult = await uploadResponse.json();
 						uploadedFileUrls.push(uploadResult.url);
-						console.log('Successfully uploaded image to Gelato:', uploadResult.url);
-					} else {
-						const errorText = await uploadResponse.text();
-						console.error('Failed to upload image to Gelato:', uploadResponse.status, errorText);
 					}
 				} catch (uploadError) {
-					console.error('Error uploading image:', uploadError);
+					// Skip failed uploads
 				}
 			}
 		}
@@ -94,16 +80,12 @@ export async function POST(request: NextRequest) {
 			templateId: templateId,
 			title: productData.title || `${template.displayName || template.title || 'Product'} - ${new Date().toLocaleDateString()}`,
 			description: productData.description || `Custom product created from social media post`,
-			// Add enhanced metadata for Shopify
-			tags: [
-				...(template.tags || []),
-				'Print on Demand',
-				'Custom',
-				'Social Media',
-				template.productType || 'Product'
-			].filter(Boolean),
-			vendor: template.vendor || 'Gelato',
-			productType: template.productType || 'Custom Product',
+			// Use only template tags from productData (no default tags)
+			tags: productData.tags && productData.tags.length > 0 ? 
+				productData.tags.filter(Boolean) : 
+				(template.tags || []).filter(Boolean),
+			vendor: productData.vendor || template.vendor || 'Gelato',
+			productType: productData.productType || template.productType || 'Custom Product',
 			// Add variants with image placeholders if images were uploaded
 			...(uploadedFileUrls.length > 0 && template.variants && {
 				variants: template.variants.slice(0, 1).map((variant: any) => ({
@@ -115,8 +97,6 @@ export async function POST(request: NextRequest) {
 				}))
 			})
 		};
-
-		console.log('Creating product from template with payload:', JSON.stringify(productPayload, null, 2));
 
 		// Use the correct "create from template" endpoint
 		const createResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/stores/${storeId}/products:create-from-template`, {
@@ -130,7 +110,6 @@ export async function POST(request: NextRequest) {
 
 		if (!createResponse.ok) {
 			const errorText = await createResponse.text();
-			console.error('Failed to create product:', createResponse.status, errorText);
 			return NextResponse.json(
 				{ error: `Failed to create product: ${createResponse.status} - ${errorText}` },
 				{ status: createResponse.status }
@@ -138,17 +117,23 @@ export async function POST(request: NextRequest) {
 		}
 
 		const createdProduct = await createResponse.json();
-		console.log('Product created successfully:', createdProduct);
 
+		// Return product info including Shopify management data
 		return NextResponse.json({
 			success: true,
 			productId: createdProduct.id,
 			product: createdProduct,
 			templateUsed: template,
+			shopifyData: {
+				// Include original shopify settings for later management
+				publishingChannels: productData.shopifyData?.publishingChannels || [],
+				needsShopifyManagement: !!(productData.shopifyData && productData.shopifyData.publishingChannels?.length > 0),
+				// Estimated time for Shopify publication (typically 1-3 minutes)
+				estimatedPublishTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+			}
 		});
 
 	} catch (error) {
-		console.error('Error creating Gelato product:', error);
 		return NextResponse.json(
 			{ error: `Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}` },
 			{ status: 500 }

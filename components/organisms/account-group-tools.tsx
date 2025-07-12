@@ -11,9 +11,11 @@ import {
   BarChart3,
   ExternalLink,
   Plus,
-  Users
+  Users,
+  Package
 } from "lucide-react";
 import EnhancedReplyHandler from "./enhanced-reply-handler";
+import GelatoProductsOverview from "./gelato-products-overview";
 import {
   getRSSFeeds,
   addRSSFeed,
@@ -35,12 +37,14 @@ interface Account {
 interface AccountGroupToolsProps {
   accounts: Account[];
   accountGroupId: string;
+  accountGroup?: any; // Account group with Gelato credentials
   onToolUsed?: (tool: string, result: any) => void;
 }
 
 export default function AccountGroupTools({ 
   accounts, 
   accountGroupId, 
+  accountGroup,
   onToolUsed 
 }: AccountGroupToolsProps) {
   const [activeTab, setActiveTab] = useState("replies");
@@ -93,6 +97,14 @@ export default function AccountGroupTools({
       description: "Set up intelligent posting schedules",
       available: scheduleAvailable,
       component: <AutoScheduleManager accounts={linkedAccounts} onUpdate={(result) => onToolUsed?.('schedule', result)} />
+    },
+    {
+      id: "gelato",
+      name: "Gelato Products",
+      icon: Package,
+      description: "View and manage your created Gelato products",
+      available: accountGroup?.gelatoCredentials?.isConfigured || false,
+      component: <GelatoProductsOverview accountGroup={accountGroup} />
     }
   ];
 

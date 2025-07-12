@@ -111,7 +111,6 @@ export default function AccountGroupPage() {
 
 		if (jazzAccountGroup) {
 			// Create a proper Jazz Post for collaborative account groups
-			console.log('🎵 Creating Jazz Post for collaborative account group');
 			
 			// Create the collaborative objects with the correct syntax
 			const titleText = co.plainText().create(newPostTitle, { owner: jazzAccountGroup._owner });
@@ -143,8 +142,6 @@ export default function AccountGroupPage() {
 			// Add the post to the account group
 			jazzAccountGroup.posts.push(newPost);
 			
-			console.log('✅ Jazz Post created with ID:', newPost.id);
-			
 			// Navigate to the newly created post
 			router.push(`/account-group/${accountGroup.id}/post/${newPost.id}`);
 		} else {
@@ -160,7 +157,6 @@ export default function AccountGroupPage() {
 	};
 
 	const handleToolUsed = (tool: string, result: any) => {
-		console.log(`Tool "${tool}" used with result:`, result);
 		// You can add specific handling for different tools here
 	};
 
@@ -289,6 +285,7 @@ export default function AccountGroupPage() {
 						<AccountGroupTools 
 							accounts={transformedAccounts}
 							accountGroupId={accountGroup.id}
+							accountGroup={jazzAccountGroup}
 							onToolUsed={handleToolUsed}
 						/>
 					</Tabs.Content>

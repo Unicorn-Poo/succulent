@@ -289,18 +289,15 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		setSuccess("");
 
 		try {
-			setPost(prevPost => {
-				const newPost = { ...prevPost };
-				if (newPost.variants[activeTab]) {
-					newPost.variants[activeTab] = {
-						...newPost.variants[activeTab],
-						text: contextText,
-						edited: true,
-						lastModified: new Date().toISOString(),
-					} as Post['variants'][keyof Post['variants']];
-				}
-				return newPost;
-			});
+			// Update the Jazz CoPlainText using applyDiff (as per Jazz docs)
+			const variant = currentPost.variants[activeTab];
+			if (variant?.text && contextText) {
+				variant.text.applyDiff(contextText);
+				
+				// Update metadata fields directly on the Jazz object
+				variant.edited = true;
+				variant.lastModified = new Date().toISOString();
+			}
 
 			setContextText(null);
 			setSuccess("Content saved successfully!");

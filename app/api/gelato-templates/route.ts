@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Function to import a specific template by ID
 async function importTemplate(apiKey: string, templateId: string, saveToJazzAccount?: boolean, jazzAccountId?: string) {
-	console.log(`Importing template with ID: ${templateId}`);
 	
 	try {
 		// Updated endpoints based on official Gelato API documentation
@@ -19,7 +18,6 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 		let successfulEndpoint = null;
 
 		for (const endpoint of templateEndpoints) {
-			console.log(`Trying template endpoint: ${endpoint}`);
 			
 			try {
 				const response = await fetch(endpoint, {
@@ -30,19 +28,14 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 					},
 				});
 
-				console.log(`${endpoint} -> Status: ${response.status}`);
-
 				if (response.ok) {
 					templateData = await response.json();
 					successfulEndpoint = endpoint;
-					console.log(`✅ Successfully fetched template from: ${endpoint}`);
 					break;
 				} else {
 					const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-					console.log(`${endpoint} -> Error:`, errorData);
 				}
 			} catch (error) {
-				console.log(`${endpoint} -> Network Error:`, error);
 			}
 		}
 
@@ -70,8 +63,6 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 		}
 
 		// Process the template data according to the official API response structure
-		console.log('Processing template data from official API...');
-		console.log('Template data:', JSON.stringify(templateData, null, 2));
 		
 		// Extract template details from the official API response structure
 		const processedTemplate = {
@@ -171,9 +162,6 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 			jazzSaveResult = await saveTemplateToJazzAccount(processedTemplate, jazzAccountId);
 		}
 
-		console.log(`✅ Template import successful: "${processedTemplate.name}"`);
-		console.log(`Template has ${processedTemplate.variantCount} variants and ${processedTemplate.availableSizes.length} different sizes`);
-
 		return NextResponse.json({
 			success: true,
 			message: 'Template imported successfully from Gelato API',
@@ -200,7 +188,6 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 
 // Function to save a processed template to a Jazz account
 async function saveTemplateToJazzAccount(processedTemplate: any, jazzAccountId: string) {
-	console.log(`Saving template "${processedTemplate.name}" to Jazz account with ID: ${jazzAccountId}`);
 	
 	try {
 		// TODO: Implement proper Jazz integration

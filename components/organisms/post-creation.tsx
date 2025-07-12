@@ -7,7 +7,8 @@ import {
 	Package,
 	Loader2,
 } from "lucide-react";
-import { PostFullyLoaded } from "@/app/schema";
+import { PostFullyLoaded, GelatoProduct } from "@/app/schema";
+import { co } from "jazz-tools";
 import { PreviewModal } from "./preview-modal";
 import { usePostCreation } from "@/hooks/use-post-creation";
 import { PostCreationHeader } from "./post-creation/post-creation-header";
@@ -17,7 +18,7 @@ import { PostContent } from "./post-creation/post-content";
 import { ThreadPreview } from "./post-creation/thread-preview";
 import { AddAccountDialog } from "./post-creation/add-account-dialog";
 import { SettingsDialog } from "./post-creation/settings-dialog";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 interface PostCreationProps {
 	post: PostFullyLoaded;
@@ -187,8 +188,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	
 	// Gelato state
 	const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
-	const [gelatoProducts, setGelatoProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 	const [showGelatoSection, setShowGelatoSection] = useState(false);
+	
+	// Get created products from Jazz object instead of local state
+	const createdProducts = accountGroupGelatoCredentials?.createdProducts || [];
 	
 	// Get templates directly from Jazz collaborative data structure
 	const gelatoTemplates = useMemo(() => {
@@ -286,23 +289,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				return;
 			}
 
+			const productTags = [
+				...(selectedTemplate?.tags || []),
+			];
+
 			const productData = {
-				title: title || 'Succulent Social Media Product',
-				description: `Custom ${selectedTemplate.displayName || selectedTemplate.name || 'product'} created from social media post: "${title || 'Untitled Post'}"`,
-				currency: 'USD',
+				title: title || 'Untitled Product',
+				description: `Custom ${selectedTemplate?.productType || 'product'} created from social media post: "${title || 'Untitled'}"`,
 				tags: productTags,
-				productType: customProductType || selectedTemplate.productType || 'Custom Product',
-				shopifyData: isShopifyConfigured ? {
+				vendor: selectedTemplate?.vendor || 'Print Studio',
+				productType: selectedTemplate?.productType || 'Custom',
+				shopifyData: {
 					publishingChannels: selectedPublishingChannels,
-					productType: customProductType || selectedTemplate.productType || 'Custom Product',
-					tags: productTags,
-					vendor: 'Gelato',
-					status: 'draft',
-					publishedScope: 'web',
-				} : undefined,
+				}
 			};
-
-
 
 			const response = await fetch('/api/create-gelato-product', {
 				method: 'POST',
@@ -326,6 +326,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						sourcePost: {
 							title: title || 'Untitled Post',
 							variant: activeTab
+						},
+						shopifyData: {
+							publishingChannels: selectedPublishingChannels,
+							needsShopifyManagement: isShopifyConfigured
 						}
 					});
 				} else {
@@ -388,10 +392,149 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		isImplicitThread
 	} = usePostCreation({ post, accountGroup });
 
+	// Helper function to initialize createdProducts list if it doesn't exist
+	const initializeCreatedProducts = () => {
+		if (!accountGroupGelatoCredentials) return;
+		
+		if (!accountGroupGelatoCredentials.createdProducts) {
+			// Initialize the createdProducts list
+			accountGroupGelatoCredentials.createdProducts = co.list(GelatoProduct).create([], {
+				owner: accountGroupGelatoCredentials._owner
+			});
+		}
+	};
+
+	// Helper function to add a product to Jazz
+	const addProductToJazz = (productData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		if (!accountGroupGelatoCredentials) return;
+		
+		// Initialize createdProducts if it doesn't exist
+		initializeCreatedProducts();
+		
+		const gelatoProduct = GelatoProduct.create({
+			productId: productData.productId,
+			title: productData.sourcePost?.title || 'Untitled Product',
+			description: productData.product?.description,
+			tags: productData.product?.tags || [],
+			productType: productData.product?.productType,
+			vendor: productData.product?.vendor,
+			sourcePost: {
+				title: productData.sourcePost?.title || 'Untitled',
+				variant: productData.sourcePost?.variant,
+				postId: post.id,
+			},
+			templateId: productData.template?.gelatoTemplateId,
+			templateName: productData.template?.name,
+			status: 'created',
+			createdAt: new Date(),
+			lastUpdated: new Date(),
+			shopifyStatus: 'pending',
+			publishingChannels: productData.shopifyData?.publishingChannels || [],
+			retryCount: 0,
+		}, { owner: accountGroupGelatoCredentials.createdProducts._owner });
+		
+		accountGroupGelatoCredentials.createdProducts.push(gelatoProduct);
+		return gelatoProduct;
+	};
+
+	// Helper function to update a product in Jazz
+	const updateProductInJazz = (productId: string, updates: Partial<any>) => {
+		const product = accountGroupGelatoCredentials?.createdProducts?.find((p: any) => p?.productId === productId);
+		if (product) {
+			Object.assign(product, updates);
+		}
+	};
+
 	// Gelato handlers
-	const handleGelatoProductCreated = (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-		setGelatoProducts(prev => [...prev, result]);
-		// You can add a toast notification here if you have a toast system
+	const handleGelatoProductCreated = async (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		// Add product to Jazz object for persistence
+		const createdProduct = addProductToJazz(result);
+		
+		// If Shopify management is needed, trigger it automatically
+		if (result.shopifyData?.needsShopifyManagement && isShopifyConfigured && createdProduct) {
+			handleShopifyManagement(result);
+		}
+	};
+
+	// Handle Shopify management for created products
+			const handleShopifyManagement = async (productResult: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		try {
+			// Update status to syncing
+			updateProductInJazz(productResult.productId, {
+				shopifyStatus: 'syncing',
+				shopifyMessage: 'Syncing to Shopify...',
+				lastUpdated: new Date(), // Use Date object, not ISO string
+			});
+
+			const shopifyCredentials = accountGroupGelatoCredentials?.shopifyCredentials;
+			const publishingChannels = productResult.shopifyData?.publishingChannels || [];
+
+			// Validate channels
+			const validChannels = publishingChannels.filter((channel: string) => 
+				channel && typeof channel === 'string' && channel.trim() !== ''
+			);
+
+			console.log('Publishing channels to send:', validChannels);
+
+			const response = await fetch('/api/manage-gelato-shopify-product', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					productId: productResult.productId,
+					productTitle: productResult.product?.title || productResult.title, // Pass the product title for better matching
+					shopifyCredentials: shopifyCredentials,
+					publishingChannels: validChannels,
+				}),
+			});
+
+			const result = await response.json();
+			
+			if (result.success) {
+				updateProductInJazz(productResult.productId, {
+					shopifyStatus: 'synced',
+					shopifyMessage: 'Successfully synced to Shopify!',
+					shopifyProductId: result.shopifyProductId,
+					shopifyProductUrl: `${shopifyCredentials?.storeUrl}/admin/products/${result.shopifyProductId}`,
+					lastUpdated: new Date(), // Use Date object, not ISO string
+				});
+			} else {
+				// Check if it's a partial success (product found but channels not updated)
+				if (result.shopifyProductId) {
+					updateProductInJazz(productResult.productId, {
+						shopifyStatus: 'partial',
+						shopifyMessage: result.error || 'Product synced but sales channels not updated - try retry in a few minutes',
+						shopifyProductId: result.shopifyProductId,
+						shopifyProductUrl: `${shopifyCredentials?.storeUrl}/admin/products/${result.shopifyProductId}`,
+						lastUpdated: new Date(),
+					});
+				} else {
+					updateProductInJazz(productResult.productId, {
+						shopifyStatus: 'error',
+						shopifyMessage: result.error || 'Failed to sync to Shopify',
+						lastUpdated: new Date(),
+					});
+				}
+			}
+		} catch (error) {
+			// Handle different types of errors
+			let errorMessage = 'Sync failed: ';
+			
+			if (error instanceof TypeError && error.message.includes('fetch')) {
+				errorMessage += 'Network connection failed. Check your internet connection and try again.';
+			} else if (error instanceof Error) {
+				errorMessage += error.message;
+			} else {
+				errorMessage += 'Unknown error occurred';
+			}
+			
+			updateProductInJazz(productResult.productId, {
+				shopifyStatus: 'error',
+				shopifyMessage: errorMessage,
+				lastUpdated: new Date(),
+			});
+		}
 	};
 
 	const handleGelatoError = (error: string) => {
@@ -446,6 +589,22 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(defaultChannels);
 	const [productTags, setProductTags] = useState<string[]>([]);
 	const [customProductType, setCustomProductType] = useState('');
+	
+	// Auto-create product on publish toggle
+	const [autoCreateOnPublish, setAutoCreateOnPublish] = useState(
+		accountGroupGelatoCredentials?.autoCreateOnPublish ?? false
+	);
+
+	// Handle toggle with Jazz update
+	const handleAutoCreateToggle = useCallback(() => {
+		const newValue = !autoCreateOnPublish;
+		setAutoCreateOnPublish(newValue);
+		
+		// Update Jazz object directly when toggling
+		if (accountGroupGelatoCredentials) {
+			accountGroupGelatoCredentials.autoCreateOnPublish = newValue;
+		}
+	}, [autoCreateOnPublish, accountGroupGelatoCredentials]);
 
 	// Update product tags when template changes
 	useEffect(() => {
@@ -460,6 +619,30 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	useEffect(() => {
 		setSelectedPublishingChannels(defaultChannels);
 	}, [defaultChannels]);
+
+	// Custom publish handler that includes auto-creation logic
+	const handlePublishWithAutoCreate = useCallback(async () => {
+		// First, publish the post using the original handler
+		await handlePublishPost();
+		
+		// Then, if auto-create is enabled and conditions are met, create the Gelato product
+		if (autoCreateOnPublish && hasImages && isGelatoConfigured && selectedTemplate) {
+			try {
+				console.log('Auto-creating Gelato product after publish...');
+				await createRealGelatoProduct();
+			} catch (error) {
+				console.error('Auto-creation failed:', error);
+				// Don't fail the entire publish if auto-creation fails
+			}
+		}
+	}, [
+		handlePublishPost,
+		autoCreateOnPublish,
+		hasImages,
+		isGelatoConfigured,
+		selectedTemplate,
+		createRealGelatoProduct
+	]);
 
 	return (
 		<div className="space-y-6">
@@ -494,7 +677,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				scheduledDate={scheduledDate}
 				setShowSettings={setShowSettings}
 				showPublishButton={showPublishButton}
-				handlePublishPost={handlePublishPost}
+				handlePublishPost={handlePublishWithAutoCreate}
 				isScheduling={isScheduling}
 				getReplyDescription={getReplyDescription}
 				isThread={isThread}
@@ -530,25 +713,288 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			<ThreadPreview isThread={isThread} threadPosts={threadPosts} />
 
+			{/* Created Products Management */}
+			{createdProducts.length > 0 && (
+				<Card>
+					<div className="p-4">
+						<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center gap-2">
+								<Package className="w-5 h-5 text-green-600" />
+								<Text weight="medium" size="3">Created Products ({createdProducts.length})</Text>
+							</div>
+						</div>
+						
+						<div className="space-y-3">
+							{createdProducts.filter(Boolean).map((product: any, index: number) => (
+								<div key={product?.productId || index} className="bg-gray-50 p-4 rounded-lg border">
+									<div className="flex items-start justify-between">
+										<div className="flex-1">
+											<div className="font-medium text-gray-900 mb-1">
+												{product?.title || product?.sourcePost?.title || 'Untitled Product'}
+											</div>
+											<div className="text-sm text-gray-600 mb-2">
+												Product ID: {product?.productId || 'Unknown'}
+											</div>
+											<div className="text-sm text-gray-600 mb-2">
+												Created: {product?.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Unknown'} at {product?.createdAt ? new Date(product.createdAt).toLocaleTimeString() : 'Unknown'}
+											</div>
+											
+											{/* Status Display */}
+											<div className="flex items-center gap-2 mb-2">
+												{product?.shopifyStatus === 'pending' && (
+													<span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+														⏳ Gelato Created
+													</span>
+												)}
+												{product?.shopifyStatus === 'syncing' && (
+													<span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+														🔄 Syncing to Shopify...
+													</span>
+												)}
+												{product?.shopifyStatus === 'synced' && (
+													<span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+														✅ Shopify Synced
+													</span>
+												)}
+												{product?.shopifyStatus === 'partial' && (
+													<span className="inline-flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+														⚠️ Partial Sync
+													</span>
+												)}
+												{product?.shopifyStatus === 'error' && (
+													<span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+														❌ Sync Error
+													</span>
+												)}
+											</div>
+											
+											{/* Status Message */}
+											{product?.shopifyMessage && (
+												<div className="text-sm text-gray-600 mb-2">
+													{product.shopifyMessage}
+												</div>
+											)}
+											
+											{/* Shopify Product Link */}
+											{product?.shopifyProductId && shopifyConfig?.storeUrl && (
+												<div className="mb-2">
+													<a 
+														href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-sm text-blue-600 hover:text-blue-800 underline"
+													>
+														View in Shopify Admin →
+													</a>
+												</div>
+											)}
+											
+											{/* Template and Publishing Info */}
+											<div className="text-xs text-gray-500 space-y-1">
+												{product?.templateName && (
+													<div>Template: {product.templateName}</div>
+												)}
+												{product?.publishingChannels?.length > 0 && (
+													<div>Channels: {product.publishingChannels.join(', ')}</div>
+												)}
+												{product?.tags?.length > 0 && (
+													<div>Tags: {product.tags.slice(0, 5).join(', ')}</div>
+												)}
+											</div>
+										</div>
+										
+										{/* Action Buttons */}
+										<div className="flex gap-2">
+											{(product?.shopifyStatus === 'error' || product?.shopifyStatus === 'partial') && isShopifyConfigured && (
+												<button
+													onClick={() => {
+														const productResult = {
+															productId: product?.productId,
+															product: {
+																title: product?.title || 'Untitled Product'
+															},
+															title: product?.title || 'Untitled Product',
+															shopifyData: {
+																publishingChannels: product?.publishingChannels || defaultChannels
+															}
+														};
+														console.log('Retry sync with channels:', product?.publishingChannels);
+														handleShopifyManagement(productResult);
+													}}
+													className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+												>
+													{product?.shopifyStatus === 'partial' ? 'Fix Channels' : 'Retry Sync'}
+												</button>
+											)}
+											{product?.shopifyStatus === 'pending' && isShopifyConfigured && (
+												<button
+													onClick={() => {
+														const productResult = {
+															productId: product?.productId,
+															product: {
+																title: product?.title || 'Untitled Product'
+															},
+															title: product?.title || 'Untitled Product',
+															shopifyData: {
+																publishingChannels: product?.publishingChannels || defaultChannels
+															}
+														};
+														console.log('Sync to Shopify with channels:', product?.publishingChannels);
+														handleShopifyManagement(productResult);
+													}}
+													className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+												>
+													Sync to Shopify
+												</button>
+											)}
+											{product?.shopifyStatus === 'syncing' && (
+												<button
+													onClick={() => {
+														updateProductInJazz(product?.productId, {
+															shopifyStatus: 'error',
+															shopifyMessage: 'Sync cancelled by user - product may take longer to appear in Shopify'
+														});
+													}}
+													className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded"
+												>
+													Cancel Sync
+												</button>
+											)}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</Card>
+			)}
+
 			{/* Gelato Product Creation Section */}
 			<Card>
 				<div className="p-4">
 					<div className="flex items-center justify-between mb-4">
 						<div className="flex items-center gap-2">
 							<Package className="w-5 h-5 text-blue-600" />
-							<Text weight="medium" size="3">Create Gelato Products</Text>
+							<Text weight="medium" size="3">Auto-Create Gelato Product</Text>
 							{hasImages && (
 								<span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
 									Images detected
 								</span>
 							)}
+							{!hasImages && (
+								<span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+									No images
+								</span>
+							)}
 						</div>
-						<button
-							onClick={() => setShowGelatoSection(!showGelatoSection)}
-							className="text-sm text-gray-600 hover:text-gray-800"
-						>
-							{showGelatoSection ? 'Hide' : 'Show'}
-						</button>
+						
+						{/* Auto-Create Toggle Switch */}
+						<div className="flex items-center gap-2">
+							<Text size="1" color="gray">
+								{autoCreateOnPublish ? 'On' : 'Off'}
+							</Text>
+							<button
+								onClick={handleAutoCreateToggle}
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+									autoCreateOnPublish ? 'bg-blue-600' : 'bg-gray-200'
+								}`}
+							>
+								<span
+									className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+										autoCreateOnPublish ? 'translate-x-6' : 'translate-x-1'
+									}`}
+								/>
+							</button>
+						</div>
+					</div>
+					
+					{/* Auto-Create Status */}
+					<div className="space-y-3">
+											<div className="text-sm text-gray-600">
+						{autoCreateOnPublish ? (
+							<div className="flex items-start gap-2">
+								<div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+								<div>
+									<div className="font-medium text-green-700 mb-1">Auto-create enabled</div>
+									<div className="text-xs text-gray-600">
+										Products will be created automatically when you publish this post
+									</div>
+									{hasImages && isGelatoConfigured && selectedTemplate && (
+										<div className="text-xs text-green-600 mt-1">
+											✓ Ready - will auto-create using "{selectedTemplate.name}"
+										</div>
+									)}
+								</div>
+							</div>
+						) : (
+							<div className="flex items-start gap-2">
+								<div className="w-2 h-2 bg-gray-400 rounded-full mt-1.5 flex-shrink-0"></div>
+								<div>
+									<div className="font-medium text-gray-700 mb-1">Auto-create disabled</div>
+									<div className="text-xs text-gray-600">
+										No products will be created automatically
+									</div>
+								</div>
+							</div>
+						)}
+					</div>
+						
+						{/* Configuration Status */}
+						<div className="grid grid-cols-2 gap-4 text-sm">
+							<div className="flex items-center justify-between">
+								<span className="text-gray-600">Gelato:</span>
+								<span className={`font-medium ${
+									isGelatoConfigured ? 'text-green-600' : 'text-orange-600'
+								}`}>
+									{isGelatoConfigured ? 'Connected' : 'Setup Required'}
+								</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-gray-600">Shopify:</span>
+								<span className={`font-medium ${
+									isShopifyConfigured ? 'text-green-600' : 'text-orange-600'
+								}`}>
+									{isShopifyConfigured ? 'Connected' : 'Not Connected'}
+								</span>
+							</div>
+						</div>
+						
+						{selectedTemplate && (
+							<div className="flex items-center justify-between text-sm">
+								<span className="text-gray-600">Template:</span>
+								<span className="font-medium text-gray-900">{selectedTemplate.name}</span>
+							</div>
+						)}
+						
+						{/* Warning/Setup Messages */}
+						{autoCreateOnPublish && !isGelatoConfigured && (
+							<div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+								<div className="text-sm text-orange-800">
+									<strong>Setup Required:</strong> Configure Gelato credentials in Settings to enable auto-creation
+								</div>
+							</div>
+						)}
+						
+						{autoCreateOnPublish && !hasImages && (
+							<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+								<div className="text-sm text-yellow-800">
+									<strong>No Images:</strong> Add images to this post to create products automatically
+								</div>
+							</div>
+						)}
+						
+						{/* Manual Create Button */}
+						<div className="flex items-center justify-between pt-2 border-t border-gray-200">
+							<Text size="1" color="gray">
+								Or create manually:
+							</Text>
+							<button
+								onClick={() => setShowGelatoSection(!showGelatoSection)}
+								className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+							>
+								{showGelatoSection ? 'Hide Options' : 'Show Options'}
+							</button>
+						</div>
 					</div>
 
 					{showGelatoSection && (
@@ -762,25 +1208,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										Create {selectedTemplate?.displayName || selectedTemplate?.name || 'Product'}
 									</GelatoButton>
 
-									{/* Created Products List */}
-									{gelatoProducts.length > 0 && (
-										<div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-											<Text size="2" weight="medium" className="block mb-2">
-												Created Products ({gelatoProducts.length}):
-											</Text>
-											<div className="space-y-2">
-												{gelatoProducts.map((product, index) => (
-													<div key={index} className="text-sm bg-white p-2 rounded border">
-														<div className="font-medium">Product ID: {product.productId}</div>
-														<div className="text-gray-600">
-															{product.sourcePost.title}
-															{product.sourcePost.variant && ` (${product.sourcePost.variant})`}
-														</div>
-													</div>
-												))}
-											</div>
-										</div>
-									)}
+
 								</>
 							)}
 
@@ -789,11 +1217,18 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								<GelatoButton
 									disabled={false}
 									onClick={() => {
-										console.log('Demo: Would create Gelato product with:', {
-											post: convertToSucculentPost(),
-											template: selectedTemplate,
-											variant: activeTab
-										});
+																			const demoProduct = {
+										id: `demo-${Date.now()}`,
+										title: title || 'Demo Product',
+										description: `Demo: Custom ${selectedTemplate?.productType || 'product'} created from social media post`,
+										tags: productTags,
+										vendor: selectedTemplate?.vendor || 'Print Studio',
+										productType: selectedTemplate?.productType || 'Custom',
+										status: 'demo',
+										createdAt: new Date(), // Use Date object, not ISO string
+										shopifyStatus: 'demo',
+										shopifyMessage: 'Demo mode - product not actually created',
+									};
 										handleGelatoError('Please add your Gelato API credentials to create real products');
 									}}
 									className="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-medium"

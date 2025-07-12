@@ -11,29 +11,23 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Note: storeId is not used in Gelato API, but we keep it for form compatibility
-
-		// Debug: Log the API key format (first/last few chars only for security)
-		console.log('API Key format check:', {
-			length: apiKey.length,
-			firstChars: apiKey.substring(0, 8),
-			lastChars: apiKey.substring(apiKey.length - 4),
-			hasQuotes: apiKey.includes('"') || apiKey.includes("'"),
-		});
+		// Validate API key format
+		const hasValidFormat = apiKey.startsWith('gelato_') && apiKey.length >= 50;
+		
+		if (!hasValidFormat) {
+			return NextResponse.json({ 
+				error: 'Invalid API key format. Gelato API keys should start with "gelato_" and be at least 50 characters long.',
+				isConnected: false 
+			}, { status: 400 });
+		}
 
 		// Test the Gelato API connection by making a simple API call
 		// Try the URL that appeared in the redirect logs
-		const testUrl = `https://order.gelatoapis.com/v4/shipment/methods?country=US`;
-		console.log('Testing URL:', testUrl);
-		console.log('Headers being sent:', {
-			'X-API-KEY': `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`,
-			'Content-Type': 'application/json',
-		});
-		
+		const testUrl = 'https://ecommerce.gelatoapis.com/v1/stores';
 		const response = await fetch(testUrl, {
 			method: 'GET',
 			headers: {
-				'X-API-KEY': apiKey.trim(), // Ensure no whitespace
+				'X-API-KEY': apiKey,
 				'Content-Type': 'application/json',
 			},
 		});

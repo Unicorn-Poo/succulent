@@ -165,6 +165,46 @@ export const ShopifyCredentials = co.map({
 	channelsLastFetched: z.optional(z.date()),
 });
 
+// Gelato Product Schema (for tracking created products)
+export const GelatoProduct = co.map({
+	// Gelato product details
+	productId: z.string(),
+	title: z.string(),
+	description: z.optional(z.string()),
+	tags: z.optional(z.array(z.string())),
+	productType: z.optional(z.string()),
+	vendor: z.optional(z.string()),
+	
+	// Source information
+	sourcePost: z.object({
+		title: z.string(),
+		variant: z.optional(z.string()),
+		postId: z.optional(z.string()),
+	}),
+	
+	// Template information
+	templateId: z.optional(z.string()),
+	templateName: z.optional(z.string()),
+	
+	// Status tracking
+	status: z.enum(['created', 'publishing', 'published', 'error']),
+	createdAt: z.date(),
+	lastUpdated: z.date(),
+	
+	// Shopify integration status
+	shopifyStatus: z.optional(z.enum(['pending', 'syncing', 'synced', 'error'])),
+	shopifyProductId: z.optional(z.string()),
+	shopifyProductUrl: z.optional(z.string()),
+	shopifyMessage: z.optional(z.string()),
+	channelsUpdated: z.optional(z.boolean()),
+	publishingChannels: z.optional(z.array(z.string())),
+	
+	// Error tracking
+	errorMessage: z.optional(z.string()),
+	errorDetails: z.optional(z.string()),
+	retryCount: z.optional(z.number()),
+});
+
 // Gelato Integration Schema
 export const GelatoCredentials = co.map({
 	apiKey: z.string(),
@@ -175,8 +215,12 @@ export const GelatoCredentials = co.map({
 	// Template caching
 	templates: co.list(GelatoTemplate),
 	templatesLastFetched: z.optional(z.date()),
+	// Created products tracking
+	createdProducts: co.list(GelatoProduct),
 	// Shopify integration
 	shopifyCredentials: z.optional(ShopifyCredentials),
+	// Auto-creation settings
+	autoCreateOnPublish: z.optional(z.boolean()),
 });
 
 // =============================================================================
@@ -217,7 +261,8 @@ export type AccountGroupType = co.loaded<typeof AccountGroup, {
 	accounts: { $each: true },
 	posts: { $each: true },
 	gelatoCredentials: {
-		templates: { $each: true }
+		templates: { $each: true },
+		createdProducts: { $each: true }
 	}
 }>;
 
@@ -246,7 +291,8 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 		accounts: { $each: true },
 		posts: { $each: true },
 		gelatoCredentials: {
-			templates: { $each: true }
+			templates: { $each: true },
+			createdProducts: { $each: true }
 		}
 	}}
 }>;
@@ -268,7 +314,8 @@ export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
 			accounts: { $each: true },
 			posts: { $each: true },
 			gelatoCredentials: {
-				templates: { $each: true }
+				templates: { $each: true },
+				createdProducts: { $each: true }
 			}
 		}}
 	}
