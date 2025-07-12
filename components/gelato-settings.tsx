@@ -26,11 +26,27 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		storeId: accountGroup.gelatoCredentials?.storeId || '',
 		storeName: accountGroup.gelatoCredentials?.storeName || '',
 	});
+	
+	// Shopify integration state
+	const [showShopifyConfig, setShowShopifyConfig] = useState(false);
+	const [shopifyFormData, setShopifyFormData] = useState({
+		storeUrl: accountGroup.gelatoCredentials?.shopifyCredentials?.storeUrl || '',
+		accessToken: accountGroup.gelatoCredentials?.shopifyCredentials?.accessToken || '',
+		storeName: accountGroup.gelatoCredentials?.shopifyCredentials?.storeName || '',
+	});
+	const [shopifyTestResult, setShopifyTestResult] = useState<'success' | 'error' | null>(null);
+	const [isTestingShopify, setIsTestingShopify] = useState(false);
+	const [publishingChannels, setPublishingChannels] = useState<any[]>([]);
+	const [isFetchingChannels, setIsFetchingChannels] = useState(false);
 
 	const isConfigured = accountGroup.gelatoCredentials?.isConfigured || false;
 	const connectedAt = accountGroup.gelatoCredentials?.connectedAt;
 	const templatesLastFetched = accountGroup.gelatoCredentials?.templatesLastFetched;
 	const cachedTemplatesCount = accountGroup.gelatoCredentials?.templates?.length || 0;
+	
+	// Shopify configuration status
+	const isShopifyConfigured = accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured || false;
+	const shopifyConnectedAt = accountGroup.gelatoCredentials?.shopifyCredentials?.connectedAt;
 	
 	// Debug logging
 	console.log('Template debugging - cachedTemplatesCount:', cachedTemplatesCount);
@@ -56,6 +72,91 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			accountGroup.gelatoCredentials.templates.splice(index, 1);
 			setForceRefresh(prev => prev + 1);
 		}
+	};
+
+	// Shopify integration functions
+	const handleTestShopifyConnection = async () => {
+		if (!shopifyFormData.storeUrl || !shopifyFormData.accessToken) {
+			setShopifyTestResult('error');
+			return;
+		}
+
+		setIsTestingShopify(true);
+		setShopifyTestResult(null);
+
+		try {
+			const response = await fetch('/api/manage-shopify-publishing', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					action: 'list-channels',
+					shopifyStoreUrl: shopifyFormData.storeUrl,
+					shopifyAccessToken: shopifyFormData.accessToken,
+				}),
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				if (data.success) {
+					setPublishingChannels(data.channels || []);
+					setShopifyTestResult('success');
+				} else {
+					setShopifyTestResult('error');
+				}
+			} else {
+				setShopifyTestResult('error');
+			}
+		} catch (error) {
+			console.error('Shopify connection test failed:', error);
+			setShopifyTestResult('error');
+		} finally {
+			setIsTestingShopify(false);
+		}
+	};
+
+	const handleSaveShopify = async () => {
+		if (!accountGroup.gelatoCredentials) {
+			return;
+		}
+
+		const { ShopifyCredentials } = await import('../app/schema');
+
+		if (accountGroup.gelatoCredentials.shopifyCredentials) {
+			// Update existing credentials
+			accountGroup.gelatoCredentials.shopifyCredentials.storeUrl = shopifyFormData.storeUrl;
+			accountGroup.gelatoCredentials.shopifyCredentials.accessToken = shopifyFormData.accessToken;
+			accountGroup.gelatoCredentials.shopifyCredentials.storeName = shopifyFormData.storeName;
+			accountGroup.gelatoCredentials.shopifyCredentials.isConfigured = true;
+			accountGroup.gelatoCredentials.shopifyCredentials.connectedAt = new Date();
+			accountGroup.gelatoCredentials.shopifyCredentials.availableChannels = publishingChannels;
+		} else {
+			// Create new Shopify credentials
+			accountGroup.gelatoCredentials.shopifyCredentials = ShopifyCredentials.create({
+				storeUrl: shopifyFormData.storeUrl,
+				accessToken: shopifyFormData.accessToken,
+				storeName: shopifyFormData.storeName || '',
+				isConfigured: true,
+				connectedAt: new Date(),
+				availableChannels: publishingChannels,
+				defaultPublishingChannels: ['online-store'],
+			}, { owner: accountGroup._owner });
+		}
+
+		setShowShopifyConfig(false);
+		setShopifyTestResult(null);
+	};
+
+	const handleDisconnectShopify = () => {
+		if (accountGroup.gelatoCredentials?.shopifyCredentials) {
+			accountGroup.gelatoCredentials.shopifyCredentials.isConfigured = false;
+			accountGroup.gelatoCredentials.shopifyCredentials.storeUrl = '';
+			accountGroup.gelatoCredentials.shopifyCredentials.accessToken = '';
+			accountGroup.gelatoCredentials.shopifyCredentials.storeName = '';
+		}
+		setShopifyFormData({ storeUrl: '', accessToken: '', storeName: '' });
+		setShowShopifyConfig(false);
+		setShopifyTestResult(null);
+		setPublishingChannels([]);
 	};
 
 	const handleTestConnection = async () => {
@@ -250,11 +351,47 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 					displayName: data.template.name || 'Untitled',
 					productType: data.template.productType || 'unknown',
 					description: data.template.description || 'No description available',
+					
+					// Enhanced metadata from API
+					tags: data.template.tags || [],
+					categories: data.template.categories || [],
+					keywords: data.template.keywords || [],
+					seoTitle: data.template.seoTitle || data.template.name,
+					seoDescription: data.template.seoDescription || data.template.description,
+					
+					// Pricing information
+					pricing: data.template.pricing || {},
+					
+					// Product specifications
+					specifications: data.template.specifications || {},
+					
+					// Variant information
+					availableSizes: data.template.availableSizes || [],
+					availableColors: data.template.availableColors || [],
+					printAreas: data.template.printAreas || [],
+					
+					// Shopify-specific fields
+					shopifyData: data.template.shopifyData || {
+						productType: data.template.productType || 'Custom Product',
+						vendor: data.template.vendor || 'Gelato',
+						tags: [
+							...(data.template.tags || []),
+							'Print on Demand',
+							'Custom',
+							data.template.productType || 'Product'
+						].filter(Boolean),
+						status: 'draft',
+						publishedScope: 'web',
+						publishingChannels: ['online-store'],
+					},
+					
 					details: {
 						size: data.template.availableSizes?.[0] || 'Unknown',
-						material: 'Unknown',
-						color: 'Unknown',
+						material: data.template.specifications?.material || 'Unknown',
+						color: data.template.availableColors?.[0] || 'Unknown',
 						orientation: 'Unknown',
+						endpoint: data.endpoint,
+						apiVersion: data.endpoint?.includes('v1') ? 'v1' : 'legacy',
 					},
 					fetchedAt: new Date(),
 					isActive: true,
@@ -629,6 +766,214 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						<Text size="1" color="gray">
 							💡 <strong>Tip:</strong> Use "Add Template" to import specific templates by ID, or "Refresh Templates" to update your cached templates from your Gelato store.
 						</Text>
+					</div>
+				)}
+
+				{/* Shopify Integration Section */}
+				{isConfigured && !isEditing && (
+					<div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+						<div className="flex items-center justify-between mb-4">
+							<div>
+								<Text weight="medium" size="3" className="text-blue-800 block">
+									🛒 Shopify Integration
+								</Text>
+								<Text size="2" className="text-blue-700 block mt-1">
+									Connect your Shopify store to manage product publishing and sales channels
+								</Text>
+							</div>
+							<div className="flex items-center gap-2">
+								{isShopifyConfigured ? (
+									<Badge color="green" variant="soft">
+										<CheckCircle className="w-3 h-3 mr-1" />
+										Connected
+									</Badge>
+								) : (
+									<Badge color="gray" variant="soft">
+										<XCircle className="w-3 h-3 mr-1" />
+										Not Connected
+									</Badge>
+								)}
+								<Button
+									variant="soft"
+									size="2"
+									onClick={() => setShowShopifyConfig(!showShopifyConfig)}
+								>
+									<Settings className="w-4 h-4 mr-2" />
+									{showShopifyConfig ? 'Cancel' : 'Configure'}
+								</Button>
+							</div>
+						</div>
+
+						{/* Shopify Connection Status */}
+						{isShopifyConfigured && !showShopifyConfig && (
+							<div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
+								<div className="flex items-center justify-between">
+									<div>
+										<Text weight="medium" size="3" className="text-green-800">
+											✅ Connected to {shopifyFormData.storeName || 'Your Shopify Store'}
+										</Text>
+										<Text size="2" className="text-green-700 block mt-1">
+											{shopifyConnectedAt && `Connected on ${shopifyConnectedAt.toLocaleDateString()}`}
+										</Text>
+									</div>
+									<Button
+										variant="soft"
+										color="red"
+										size="1"
+										onClick={handleDisconnectShopify}
+									>
+										Disconnect
+									</Button>
+								</div>
+							</div>
+						)}
+
+						{/* Shopify Configuration Form */}
+						{showShopifyConfig && (
+							<div className="space-y-4 mb-4">
+								<div>
+									<Text size="2" weight="medium" className="block mb-2">
+										🏪 Store URL
+									</Text>
+									<input
+										placeholder="your-store.myshopify.com or https://your-store.myshopify.com"
+										value={shopifyFormData.storeUrl}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+											setShopifyFormData(prev => ({ ...prev, storeUrl: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+									<Text size="1" color="gray" className="block mt-1">
+										Your Shopify store domain (with or without https://)
+									</Text>
+								</div>
+
+								<div>
+									<Text size="2" weight="medium" className="block mb-2">
+										🔑 Admin API Access Token
+									</Text>
+									<input
+										placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+										value={shopifyFormData.accessToken}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+											setShopifyFormData(prev => ({ ...prev, accessToken: e.target.value }))
+										}
+										type="password"
+										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+									<Text size="1" color="gray" className="block mt-1">
+										<strong>NOT</strong> the same as API key! Get this from Apps → Private apps → Admin API access token
+									</Text>
+								</div>
+
+								<div>
+									<Text size="2" weight="medium" className="block mb-2">
+										Store Name (Optional)
+									</Text>
+									<input
+										placeholder="My Shopify Store"
+										value={shopifyFormData.storeName}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+											setShopifyFormData(prev => ({ ...prev, storeName: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
+
+								{/* Shopify Test Result */}
+								{shopifyTestResult && (
+									<div className={`p-3 rounded-lg ${
+										shopifyTestResult === 'success' 
+											? 'bg-green-50 border border-green-200' 
+											: 'bg-red-50 border border-red-200'
+									}`}>
+										<Text size="2" className={
+											shopifyTestResult === 'success' ? 'text-green-700' : 'text-red-700'
+										}>
+											{shopifyTestResult === 'success' 
+												? `✅ Connected successfully! Found ${publishingChannels.length} publishing channels.`
+												: '❌ Connection failed. Please check your credentials.'
+											}
+										</Text>
+									</div>
+								)}
+
+								{/* Action Buttons */}
+								<div className="flex gap-2 pt-2">
+									<Button
+										onClick={handleTestShopifyConnection}
+										disabled={!shopifyFormData.storeUrl || !shopifyFormData.accessToken || isTestingShopify}
+										variant="soft"
+									>
+										{isTestingShopify ? (
+											<>
+												<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+												Testing...
+											</>
+										) : (
+											'Test Connection'
+										)}
+									</Button>
+									<Button
+										onClick={handleSaveShopify}
+										disabled={!shopifyFormData.storeUrl || !shopifyFormData.accessToken || shopifyTestResult !== 'success'}
+										color="green"
+									>
+										Save Credentials
+									</Button>
+								</div>
+							</div>
+						)}
+
+						{/* Publishing Channels */}
+						{isShopifyConfigured && publishingChannels.length > 0 && (
+							<div className="mb-4">
+								<Text weight="medium" size="2" className="text-blue-800 block mb-3">
+									📡 Available Publishing Channels ({publishingChannels.length} channels)
+								</Text>
+								<div className="grid grid-cols-2 gap-2">
+									{publishingChannels.map((channel: any) => (
+										<div key={channel.id} className="flex items-center justify-between p-2 bg-white border rounded">
+											<Text size="1">{channel.name}</Text>
+											<Badge 
+												color={channel.enabled ? 'green' : 'gray'} 
+												variant="soft"
+												size="1"
+											>
+												{channel.enabled ? 'Enabled' : 'Available'}
+											</Badge>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
+						{!isShopifyConfigured && !showShopifyConfig && (
+							<div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+								<Text size="2" className="text-yellow-800 block mb-2">
+									🔗 Connect Shopify for Enhanced Product Management
+								</Text>
+								<Text size="1" className="text-yellow-700 block mb-3">
+									Connect your Shopify store to automatically manage publishing channels, 
+									sync product data, and control where your Gelato products appear.
+								</Text>
+								
+								<div className="space-y-2">
+									<Text size="1" className="text-yellow-700 block">
+										<strong>Step 1:</strong> Go to your Shopify Admin → Apps → "App and sales channel settings"
+									</Text>
+									<Text size="1" className="text-yellow-700 block">
+										<strong>Step 2:</strong> Click "Develop apps" → "Create an app" → "Configure Admin API scopes"
+									</Text>
+									<Text size="1" className="text-yellow-700 block">
+										<strong>Step 3:</strong> Enable: <code>read_products</code>, <code>write_products</code>, <code>read_publications</code>
+									</Text>
+									<Text size="1" className="text-yellow-700 block">
+										<strong>Step 4:</strong> Install app → Copy the <strong>Admin API access token</strong> (starts with shpat_)
+									</Text>
+								</div>
+							</div>
+						)}
 					</div>
 				)}
 

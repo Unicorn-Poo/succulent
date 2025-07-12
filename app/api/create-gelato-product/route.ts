@@ -94,6 +94,16 @@ export async function POST(request: NextRequest) {
 			templateId: templateId,
 			title: productData.title || `${template.displayName || template.title || 'Product'} - ${new Date().toLocaleDateString()}`,
 			description: productData.description || `Custom product created from social media post`,
+			// Add enhanced metadata for Shopify
+			tags: [
+				...(template.tags || []),
+				'Print on Demand',
+				'Custom',
+				'Social Media',
+				template.productType || 'Product'
+			].filter(Boolean),
+			vendor: template.vendor || 'Gelato',
+			productType: template.productType || 'Custom Product',
 			// Add variants with image placeholders if images were uploaded
 			...(uploadedFileUrls.length > 0 && template.variants && {
 				variants: template.variants.slice(0, 1).map((variant: any) => ({

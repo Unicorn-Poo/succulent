@@ -90,16 +90,79 @@ export const GelatoTemplate = co.map({
 	displayName: z.optional(z.string()),
 	productType: z.string(),
 	description: z.optional(z.string()),
+	
+	// Enhanced product metadata for Shopify
+	tags: z.optional(z.array(z.string())),
+	categories: z.optional(z.array(z.string())),
+	keywords: z.optional(z.array(z.string())),
+	seoTitle: z.optional(z.string()),
+	seoDescription: z.optional(z.string()),
+	
+	// Pricing information
+	pricing: z.optional(z.object({
+		currency: z.optional(z.string()),
+		basePrice: z.optional(z.number()),
+		priceRange: z.optional(z.string()),
+		retailPrice: z.optional(z.number()),
+	})),
+	
+	// Product specifications
+	specifications: z.optional(z.object({
+		material: z.optional(z.string()),
+		weight: z.optional(z.string()),
+		dimensions: z.optional(z.string()),
+		features: z.optional(z.array(z.string())),
+		careInstructions: z.optional(z.string()),
+	})),
+	
+	// Variant information
+	availableSizes: z.optional(z.array(z.string())),
+	availableColors: z.optional(z.array(z.string())),
+	printAreas: z.optional(z.array(z.string())),
+	
+	// Shopify-specific fields
+	shopifyData: z.optional(z.object({
+		productType: z.optional(z.string()),
+		vendor: z.optional(z.string()),
+		tags: z.optional(z.array(z.string())),
+		handle: z.optional(z.string()),
+		status: z.optional(z.enum(['draft', 'active', 'archived'])),
+		publishedScope: z.optional(z.string()),
+		publishingChannels: z.optional(z.array(z.string())),
+	})),
+	
 	// Store additional details for better display
 	details: z.optional(z.object({
 		size: z.optional(z.string()),
 		material: z.optional(z.string()),
 		color: z.optional(z.string()),
 		orientation: z.optional(z.string()),
+		endpoint: z.optional(z.string()),
+		apiVersion: z.optional(z.string()),
 	})),
+	
 	// Metadata
 	fetchedAt: z.date(),
 	isActive: z.boolean(),
+});
+
+// Shopify Integration Schema
+export const ShopifyCredentials = co.map({
+	storeUrl: z.string(),
+	accessToken: z.string(),
+	apiKey: z.optional(z.string()),
+	storeName: z.optional(z.string()),
+	isConfigured: z.boolean(),
+	connectedAt: z.optional(z.date()),
+	// Publishing channels
+	availableChannels: z.optional(z.array(z.object({
+		id: z.string(),
+		name: z.string(),
+		enabled: z.boolean(),
+		supportsTags: z.boolean(),
+	}))),
+	defaultPublishingChannels: z.optional(z.array(z.string())),
+	channelsLastFetched: z.optional(z.date()),
 });
 
 // Gelato Integration Schema
@@ -112,6 +175,8 @@ export const GelatoCredentials = co.map({
 	// Template caching
 	templates: co.list(GelatoTemplate),
 	templatesLastFetched: z.optional(z.date()),
+	// Shopify integration
+	shopifyCredentials: z.optional(ShopifyCredentials),
 });
 
 // =============================================================================

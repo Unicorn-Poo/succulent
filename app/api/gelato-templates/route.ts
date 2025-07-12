@@ -84,6 +84,30 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 			productType: templateData.productType || 'Unknown',
 			vendor: templateData.vendor || 'Gelato',
 			
+			// Enhanced product metadata for Shopify
+			tags: templateData.tags || [],
+			categories: templateData.categories || [],
+			keywords: templateData.keywords || [],
+			seoTitle: templateData.seoTitle || templateData.title,
+			seoDescription: templateData.seoDescription || templateData.description,
+			
+			// Pricing information if available
+			pricing: {
+				currency: templateData.currency || 'USD',
+				basePrice: templateData.basePrice || null,
+				priceRange: templateData.priceRange || null,
+				retailPrice: templateData.retailPrice || null,
+			},
+			
+			// Product specifications
+			specifications: {
+				material: templateData.material || null,
+				weight: templateData.weight || null,
+				dimensions: templateData.dimensions || null,
+				features: templateData.features || [],
+				careInstructions: templateData.careInstructions || null,
+			},
+			
 			// Variant information
 			variants: templateData.variants || [],
 			variantCount: templateData.variants?.length || 0,
@@ -92,6 +116,13 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 			availableSizes: templateData.variants 
 				? [...new Set(templateData.variants.flatMap((v: any) => 
 					v.variantOptions?.filter((opt: any) => opt.name === 'Size')?.map((opt: any) => opt.value) || []
+				))]
+				: [],
+			
+			// Extract available colors from variants
+			availableColors: templateData.variants 
+				? [...new Set(templateData.variants.flatMap((v: any) => 
+					v.variantOptions?.filter((opt: any) => opt.name === 'Color')?.map((opt: any) => opt.value) || []
 				))]
 				: [],
 			
@@ -107,6 +138,21 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 				))]
 				: [],
 			
+			// Shopify-specific fields
+			shopifyData: {
+				productType: templateData.productType || 'Custom Product',
+				vendor: templateData.vendor || 'Gelato',
+				tags: [
+					...(templateData.tags || []),
+					'Print on Demand',
+					'Custom',
+					templateData.productType || 'Product'
+				].filter(Boolean),
+				handle: templateData.handle || null,
+				status: 'draft', // Start as draft
+				publishedScope: 'web', // Default publishing scope
+			},
+			
 			// Metadata
 			createdAt: templateData.createdAt,
 			updatedAt: templateData.updatedAt,
@@ -114,7 +160,6 @@ async function importTemplate(apiKey: string, templateId: string, saveToJazzAcco
 			
 			// Jazz-specific fields
 			details: {
-				originalApiResponse: templateData,
 				endpoint: successfulEndpoint,
 				apiVersion: successfulEndpoint?.includes('v1') ? 'v1' : 'legacy'
 			}

@@ -413,6 +413,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		(item: any) => item?.type === 'image' // eslint-disable-line @typescript-eslint/no-explicit-any
 	) || false;
 
+	// Enhanced Gelato product creation with Shopify integration
+	const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(['online-store']);
+	const [productTags, setProductTags] = useState<string[]>([]);
+	const [customProductType, setCustomProductType] = useState('');
+
+	// Get Shopify configuration
+	const shopifyConfig = accountGroupGelatoCredentials?.shopifyCredentials;
+	const isShopifyConfigured = shopifyConfig?.isConfigured || false;
+	const availableChannels = shopifyConfig?.availableChannels || [];
+
 	return (
 		<div className="space-y-6">
 			<PostCreationHeader
@@ -551,13 +562,50 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										<Text size="2" weight="medium" className="block mb-2">
 											Choose Product Template:
 										</Text>
-																			<TemplateSelector
-										templates={gelatoTemplates}
-										selectedTemplate={selectedTemplate}
-										onSelect={setSelectedTemplate}
-										className="w-full"
-										error={templateError}
-									/>
+										<TemplateSelector
+											templates={gelatoTemplates}
+											selectedTemplate={selectedTemplate}
+											onSelect={setSelectedTemplate}
+											className="w-full"
+											error={templateError}
+										/>
+
+										{/* Enhanced Template Information */}
+										{selectedTemplate && (
+											<div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+												<Text size="2" weight="medium" className="block mb-2">
+													Template Details:
+												</Text>
+												<div className="grid grid-cols-2 gap-2 text-sm">
+													<div>
+														<strong>Product Type:</strong> {selectedTemplate.productType}
+													</div>
+													<div>
+														<strong>Template ID:</strong> {selectedTemplate.gelatoTemplateId?.substring(0, 12) || 'N/A'}...
+													</div>
+													{selectedTemplate.availableSizes && selectedTemplate.availableSizes.length > 0 && (
+														<div>
+															<strong>Sizes:</strong> {selectedTemplate.availableSizes.slice(0, 3).join(', ')}{selectedTemplate.availableSizes.length > 3 ? '...' : ''}
+														</div>
+													)}
+													{selectedTemplate.availableColors && selectedTemplate.availableColors.length > 0 && (
+														<div>
+															<strong>Colors:</strong> {selectedTemplate.availableColors.slice(0, 3).join(', ')}{selectedTemplate.availableColors.length > 3 ? '...' : ''}
+														</div>
+													)}
+													{selectedTemplate.tags && selectedTemplate.tags.length > 0 && (
+														<div className="col-span-2">
+															<strong>Tags:</strong> {selectedTemplate.tags.slice(0, 5).join(', ')}{selectedTemplate.tags.length > 5 ? '...' : ''}
+														</div>
+													)}
+													{selectedTemplate.description && (
+														<div className="col-span-2">
+															<strong>Description:</strong> {selectedTemplate.description.substring(0, 100)}...
+														</div>
+													)}
+												</div>
+											</div>
+										)}
 									</div>
 
 									{/* Platform Variant Selection */}
@@ -569,6 +617,103 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											Using: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
 										</Text>
 									</div>
+
+									{/* Shopify Integration Options */}
+									{isShopifyConfigured && selectedTemplate && (
+										<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+											<div className="flex items-center justify-between mb-3">
+												<Text size="2" weight="medium" className="text-blue-800">
+													🛒 Shopify Publishing Options
+												</Text>
+												<button
+													onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+													className="text-xs text-blue-600 hover:text-blue-800"
+												>
+													{showAdvancedOptions ? 'Simple' : 'Advanced'}
+												</button>
+											</div>
+
+											{showAdvancedOptions && (
+												<div className="space-y-3">
+													{/* Publishing Channels */}
+													<div>
+														<Text size="1" weight="medium" className="block mb-2">
+															Publishing Channels:
+														</Text>
+														<div className="grid grid-cols-2 gap-2">
+															{availableChannels.map((channel: any) => (
+																<label key={channel.id} className="flex items-center gap-2 text-xs">
+																	<input
+																		type="checkbox"
+																		checked={selectedPublishingChannels.includes(channel.id)}
+																		onChange={(e) => {
+																			if (e.target.checked) {
+																				setSelectedPublishingChannels(prev => [...prev, channel.id]);
+																			} else {
+																				setSelectedPublishingChannels(prev => prev.filter(id => id !== channel.id));
+																			}
+																		}}
+																		className="w-3 h-3"
+																	/>
+																	{channel.name}
+																</label>
+															))}
+														</div>
+													</div>
+
+													{/* Custom Product Type */}
+													<div>
+														<Text size="1" weight="medium" className="block mb-1">
+															Product Type (Optional):
+														</Text>
+														<input
+															value={customProductType}
+															onChange={(e) => setCustomProductType(e.target.value)}
+															placeholder={selectedTemplate.productType || 'Custom Product'}
+															className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+														/>
+													</div>
+
+													{/* Additional Tags */}
+													<div>
+														<Text size="1" weight="medium" className="block mb-1">
+															Additional Tags (comma-separated):
+														</Text>
+														<input
+															value={productTags.join(', ')}
+															onChange={(e) => setProductTags(e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
+															placeholder="social-media, custom-design"
+															className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+														/>
+													</div>
+												</div>
+											)}
+
+											{!showAdvancedOptions && (
+												<div className="space-y-2">
+													<Text size="1" className="text-blue-700">
+														✅ Publishing to: {selectedPublishingChannels.map(id => 
+															availableChannels.find((c: any) => c.id === id)?.name || id
+														).join(', ') || 'Online Store'}
+													</Text>
+													<Text size="1" className="text-blue-700">
+														🏷️ Using template tags: {selectedTemplate.tags?.slice(0, 3).join(', ') || 'Print on Demand, Custom'}
+													</Text>
+												</div>
+											)}
+										</div>
+									)}
+
+									{!isShopifyConfigured && selectedTemplate && (
+										<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+											<Text size="2" className="text-yellow-800 block mb-2">
+												🔗 Shopify Integration Available
+											</Text>
+											<Text size="1" className="text-yellow-700">
+												Connect your Shopify store in Settings to automatically manage publishing channels and product metadata.
+											</Text>
+										</div>
+									)}
 
 									{/* Create Product Button */}
 									<GelatoButton
