@@ -49,6 +49,16 @@ export const PostCreationHeader = ({
                         <TextField.Root
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleTitleSave();
+                                }
+                                if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    setIsEditingTitle(false);
+                                }
+                            }}
                             placeholder="Enter post title..."
                             className="flex-1"
                         />

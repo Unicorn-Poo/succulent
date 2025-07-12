@@ -444,8 +444,15 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 	const handleTitleSave = useCallback(() => {
 		setIsEditingTitle(false);
-		setPost(prevPost => ({...prevPost, title: title }));
-	}, [title]);
+		// Update the Jazz CoPlainText using applyDiff (as per Jazz docs)
+		try {
+			if (post.title) {
+				post.title.applyDiff(title);
+			}
+		} catch (error) {
+			console.error('Error updating title:', error);
+		}
+	}, [title, post]);
 
 	const handleClearSchedule = useCallback(() => {
 		setScheduledDate(null);
