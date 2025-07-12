@@ -54,8 +54,8 @@ export const PostContent = ({
                 ) : (
                     <>
                         <UploadedMediaPreview 
-                            postId={post.id?.toString() ?? ""}
-                            variant={activeTab}
+                            post={post}
+                            activeTab={activeTab}
                         />
                         <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
                             <Button

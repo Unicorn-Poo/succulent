@@ -3,89 +3,43 @@ import Image from "next/image";
 import { Button } from "@radix-ui/themes";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-// Extend Window interface to include tempUploads
-declare global {
-	interface Window {
-		tempUploads: UploadedFile[];
-	}
-}
-
-interface UploadedFile {
-	type: 'image' | 'video';
-	objectUrl: string;
-	file: File;
-	alt: string;
-	postId: string;
-	variant: string;
-	timestamp: number;
-	fileName: string;
-	fileType: string;
-}
-
 interface UploadedMediaPreviewProps {
-	postId: string;
-	variant: string;
+	post: any; // Using any for now to avoid complex type issues
+	activeTab: string;
 }
 
-export const UploadedMediaPreview = ({ postId, variant }: UploadedMediaPreviewProps) => {
-	const [uploads, setUploads] = useState<UploadedFile[]>([]);
+export const UploadedMediaPreview = ({ post, activeTab }: UploadedMediaPreviewProps) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
+	
+	// Get media from the Jazz post object
+	const media = post.variants[activeTab]?.media || [];
+	const mediaArray = Array.from(media);
 
-	useEffect(() => {
-		const loadUploads = () => {
-			const allUploads = window.tempUploads || [];
-			console.log('📄 All uploads from window.tempUploads:', allUploads);
+	const removeMedia = (index: number) => {
+		const mediaToRemove = mediaArray[index];
+		if (mediaToRemove && media) {
+			// Remove from Jazz collaborative list
+			const mediaIndex = media.findIndex((item: any) => item === mediaToRemove);
+			if (mediaIndex !== -1) {
+				media.splice(mediaIndex, 1);
+			}
 			
-			const filteredUploads = allUploads.filter((upload: UploadedFile) => 
-				upload.postId === postId && upload.variant === variant
-			);
-			console.log('📄 Filtered uploads for this post/variant:', filteredUploads);
-			setUploads(filteredUploads);
-		};
-
-		loadUploads();
-		
-		// Listen for storage changes
-		const handleStorageChange = () => loadUploads();
-		window.addEventListener('storage', handleStorageChange);
-		
-		// Also listen for a custom event we'll dispatch
-		window.addEventListener('temp-uploads-changed', handleStorageChange);
-		
-		return () => {
-			window.removeEventListener('storage', handleStorageChange);
-			window.removeEventListener('temp-uploads-changed', handleStorageChange);
-		};
-	}, [postId, variant]);
-
-	const removeUpload = (index: number) => {
-		const uploadToRemove = uploads[index];
-		
-		// Clean up object URL to prevent memory leaks
-		URL.revokeObjectURL(uploadToRemove.objectUrl);
-		
-		// Remove from window.tempUploads
-		if (window.tempUploads) {
-			window.tempUploads = window.tempUploads.filter(upload => 
-				upload.timestamp !== uploadToRemove.timestamp
-			);
-		}
-		
-		setUploads(uploads.filter((_, i) => i !== index));
-		if (currentIndex >= uploads.length - 1) {
-			setCurrentIndex(Math.max(0, uploads.length - 2));
+			// Adjust current index if needed
+			if (currentIndex >= mediaArray.length - 1) {
+				setCurrentIndex(Math.max(0, mediaArray.length - 2));
+			}
 		}
 	};
 
 	const handlePrev = () => {
-		setCurrentIndex((prevIndex) => (prevIndex === 0 ? uploads.length - 1 : prevIndex - 1));
+		setCurrentIndex((prevIndex) => (prevIndex === 0 ? mediaArray.length - 1 : prevIndex - 1));
 	};
 
 	const handleNext = () => {
-		setCurrentIndex((prevIndex) => (prevIndex === uploads.length - 1 ? 0 : prevIndex + 1));
+		setCurrentIndex((prevIndex) => (prevIndex === mediaArray.length - 1 ? 0 : prevIndex + 1));
 	};
 
-	if (uploads.length === 0) return null;
+	if (mediaArray.length === 0) return null;
 
 	return (
 		<div className="relative max-w-lg mx-auto">
@@ -94,28 +48,165 @@ export const UploadedMediaPreview = ({ postId, variant }: UploadedMediaPreviewPr
 					className="flex transition-transform duration-300 ease-in-out"
 					style={{ transform: `translateX(-${currentIndex * 100}%)` }}
 				>
-					{uploads.map((upload, index) => (
+					{mediaArray.map((mediaItem: any, index) => (
 						<div key={index} className="flex-shrink-0 w-full relative">
-							{upload.type === 'image' && (
-								<Image
-									src={upload.objectUrl}
-									alt={upload.alt ?? "uploaded image"}
-									width={500}
-									height={500}
-									className="rounded-lg shadow-md w-full object-cover"
-								/>
-							)}
-							{upload.type === 'video' && (
-								<video
-									src={upload.objectUrl}
-									controls
-									className="w-full max-w-lg rounded-lg shadow-md"
-								/>
-							)}
+							{(() => {
+								// Debug logging to see what we actually have
+								console.log('MediaItem debug:', {
+									type: mediaItem?.type,
+									hasImage: !!mediaItem?.image,
+									imageKeys: mediaItem?.image ? Object.keys(mediaItem.image) : [],
+									imageProps: mediaItem?.image ? {
+										// FileStream properties
+										id: mediaItem.image.id,
+										mimeType: mediaItem.image.mimeType,
+										totalSize: mediaItem.image.totalSize,
+										// Check all available properties and methods
+										allProps: Object.getOwnPropertyNames(mediaItem.image),
+										allKeys: Object.keys(mediaItem.image),
+										// Check prototype methods
+										prototypeMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(mediaItem.image)),
+										// Try calling potential methods
+										createObjectURL: typeof mediaItem.image.createObjectURL === 'function',
+										getBlob: typeof mediaItem.image.getBlob === 'function',
+										toBlob: typeof mediaItem.image.toBlob === 'function',
+										asBlob: typeof mediaItem.image.asBlob === 'function',
+										getBlobURL: typeof mediaItem.image.getBlobURL === 'function',
+										toString: mediaItem.image.toString ? mediaItem.image.toString() : 'no toString',
+										// Try to access _raw property
+										hasRaw: !!mediaItem.image._raw,
+										rawType: typeof mediaItem.image._raw,
+										rawKeys: mediaItem.image._raw ? Object.keys(mediaItem.image._raw) : [],
+									} : null
+								});
+
+								if (mediaItem?.type === 'image' && mediaItem.image) {
+									// Try different methods to get image URL from FileStream
+									let imageUrl = null;
+									
+									try {
+										// Try various methods that might exist on FileStream
+										if (typeof mediaItem.image.createObjectURL === 'function') {
+											imageUrl = mediaItem.image.createObjectURL();
+										} else if (typeof mediaItem.image.getBlob === 'function') {
+											const blob = mediaItem.image.getBlob();
+											if (blob) imageUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.image.toBlob === 'function') {
+											const blob = mediaItem.image.toBlob();
+											if (blob) imageUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.image.asBlob === 'function') {
+											const blob = mediaItem.image.asBlob();
+											if (blob) imageUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.image.getBlobURL === 'function') {
+											imageUrl = mediaItem.image.getBlobURL();
+										} else if (mediaItem.image.toString && mediaItem.image.toString() !== '[object Object]') {
+											// If toString returns something useful, try using it as URL
+											const stringValue = mediaItem.image.toString();
+											if (stringValue.startsWith('blob:') || stringValue.startsWith('data:') || stringValue.startsWith('http')) {
+												imageUrl = stringValue;
+											}
+										}
+									} catch (error) {
+										console.error('Error getting image URL:', error);
+									}
+									
+									console.log('🖼️ UploadedMediaPreview - Image URL detection result:', {
+										imageUrl,
+										availableMethods: {
+											createObjectURL: typeof mediaItem.image.createObjectURL,
+											getBlob: typeof mediaItem.image.getBlob,
+											toBlob: typeof mediaItem.image.toBlob,
+											asBlob: typeof mediaItem.image.asBlob,
+											getBlobURL: typeof mediaItem.image.getBlobURL,
+										}
+									});
+
+									if (imageUrl) {
+										return (
+											<Image
+												src={imageUrl}
+												alt={mediaItem.alt?.toString() || "uploaded image"}
+												width={500}
+												height={500}
+												className="rounded-lg shadow-md w-full object-cover"
+												onError={(e) => {
+													console.error('Image failed to load:', e);
+													(e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+												}}
+											/>
+										);
+									} else {
+										return (
+											<div className="w-full h-[500px] bg-gray-200 rounded-lg shadow-md flex items-center justify-center">
+												<div className="text-center">
+													<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+													<p className="text-gray-500 text-sm">Processing image...</p>
+													<p className="text-xs text-gray-400 mt-1">Available properties: {Object.keys(mediaItem.image).join(', ')}</p>
+												</div>
+											</div>
+										);
+									}
+								} else if (mediaItem?.type === 'video' && mediaItem.video) {
+									// Try different methods to get video URL from FileStream
+									let videoUrl = null;
+									
+									try {
+										// Try various methods that might exist on FileStream
+										if (typeof mediaItem.video.createObjectURL === 'function') {
+											videoUrl = mediaItem.video.createObjectURL();
+										} else if (typeof mediaItem.video.getBlob === 'function') {
+											const blob = mediaItem.video.getBlob();
+											if (blob) videoUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.video.toBlob === 'function') {
+											const blob = mediaItem.video.toBlob();
+											if (blob) videoUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.video.asBlob === 'function') {
+											const blob = mediaItem.video.asBlob();
+											if (blob) videoUrl = URL.createObjectURL(blob);
+										} else if (typeof mediaItem.video.getBlobURL === 'function') {
+											videoUrl = mediaItem.video.getBlobURL();
+										}
+									} catch (error) {
+										console.error('Error getting video URL:', error);
+									}
+
+									if (videoUrl) {
+										return (
+											<video
+												src={videoUrl}
+												controls
+												className="w-full max-w-lg rounded-lg shadow-md"
+												onError={(e) => console.error('Video failed to load:', e)}
+											/>
+										);
+									} else {
+										return (
+											<div className="w-full h-[300px] bg-gray-200 rounded-lg shadow-md flex items-center justify-center">
+												<div className="text-center">
+													<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+													<p className="text-gray-500 text-sm">Processing video...</p>
+													<p className="text-xs text-gray-400 mt-1">Available properties: {Object.keys(mediaItem.video).join(', ')}</p>
+												</div>
+											</div>
+										);
+									}
+								} else {
+									return (
+										<div className="w-full h-[500px] bg-gray-100 rounded-lg shadow-md flex items-center justify-center">
+											<div className="text-center">
+												<p className="text-gray-400">Media not available</p>
+												<p className="text-xs text-gray-300 mt-1">Type: {mediaItem?.type || 'unknown'}</p>
+												<p className="text-xs text-gray-300">Has image: {!!mediaItem?.image ? 'yes' : 'no'}</p>
+												<p className="text-xs text-gray-300">Has video: {!!mediaItem?.video ? 'yes' : 'no'}</p>
+											</div>
+										</div>
+									);
+								}
+							})()}
 							<Button
 								variant="soft"
 								size="1"
-								onClick={() => removeUpload(index)}
+								onClick={() => removeMedia(index)}
 								className="absolute top-2 right-2 !rounded-full !w-8 !h-8 bg-red-500 hover:bg-red-600 text-white"
 							>
 								<X className="w-4 h-4" />
@@ -125,7 +216,7 @@ export const UploadedMediaPreview = ({ postId, variant }: UploadedMediaPreviewPr
 				</div>
 			</div>
 
-			{uploads.length > 1 && (
+			{mediaArray.length > 1 && (
 				<>
 					<Button
 						variant="soft"
@@ -144,7 +235,7 @@ export const UploadedMediaPreview = ({ postId, variant }: UploadedMediaPreviewPr
 						<ChevronRight className="w-4 h-4" />
 					</Button>
 					<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
-						{uploads.map((_, index) => (
+						{mediaArray.map((_, index) => (
 							<button
 								key={index}
 								onClick={() => setCurrentIndex(index)}

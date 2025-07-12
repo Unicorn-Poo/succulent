@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@radix-ui/themes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { MediaItem } from "../../../app/schema";
-
-export const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
+export const MediaCarousel = ({ media }: { media: any[] }) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [tempUploads, setTempUploads] = useState<any[]>([]);
 
@@ -78,24 +76,209 @@ export const MediaCarousel = ({ media }: { media: MediaItem[] }) => {
 const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	if (!mediaItem) return null;
 
+	// Debug logging for media carousel
+	console.log('MediaCarousel debug:', {
+		type: mediaItem?.type,
+		hasImage: !!mediaItem?.image,
+		imageKeys: mediaItem?.image ? Object.keys(mediaItem.image) : [],
+		imageProps: mediaItem?.image ? {
+			// FileStream properties  
+			id: mediaItem.image.id,
+			mimeType: mediaItem.image.mimeType,
+			totalSize: mediaItem.image.totalSize,
+			// Check all available properties and methods
+			allProps: Object.getOwnPropertyNames(mediaItem.image),
+			allKeys: Object.keys(mediaItem.image),
+			// Check prototype methods
+			prototypeMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(mediaItem.image)),
+			// Try calling potential methods
+			createObjectURL: typeof mediaItem.image.createObjectURL === 'function',
+			getBlob: typeof mediaItem.image.getBlob === 'function',
+			toBlob: typeof mediaItem.image.toBlob === 'function',
+			asBlob: typeof mediaItem.image.asBlob === 'function',
+			getBlobURL: typeof mediaItem.image.getBlobURL === 'function',
+			toString: mediaItem.image.toString ? mediaItem.image.toString() : 'no toString',
+			// Try to access _raw property
+			hasRaw: !!mediaItem.image._raw,
+			rawType: typeof mediaItem.image._raw,
+			rawKeys: mediaItem.image._raw ? Object.keys(mediaItem.image._raw) : [],
+		} : null
+	});
+
 	return (
 		<div className="max-w-lg mx-auto">
-			{mediaItem.type === "image" && (
-				<Image
-					src={mediaItem.image?.toString() ?? ""}
-					alt={mediaItem.alt?.toString() ?? "image"}
-					width={500}
-					height={500}
-					className="rounded-lg shadow-md w-full object-cover"
-				/>
-			)}
-			{mediaItem.type === "video" && (
-				<video
-					src={mediaItem.video?.toString() ?? ""}
-					controls
-					className="w-full max-w-lg rounded-lg shadow-md"
-				/>
-			)}
+			{(() => {
+				if (mediaItem.type === "image" && mediaItem.image) {
+					// Try different methods to get image URL from FileStream
+					let imageUrl = null;
+					
+					try {
+						// Try various methods that might exist on FileStream
+						if (typeof mediaItem.image.createObjectURL === 'function') {
+							imageUrl = mediaItem.image.createObjectURL();
+						} else if (typeof mediaItem.image.getBlob === 'function') {
+							const blob = mediaItem.image.getBlob();
+							if (blob) imageUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.image.toBlob === 'function') {
+							const blob = mediaItem.image.toBlob();
+							if (blob) imageUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.image.asBlob === 'function') {
+							const blob = mediaItem.image.asBlob();
+							if (blob) imageUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.image.getBlobURL === 'function') {
+							imageUrl = mediaItem.image.getBlobURL();
+						} else if (mediaItem.image.toString && mediaItem.image.toString() !== '[object Object]') {
+							// If toString returns something useful, try using it as URL
+							const stringValue = mediaItem.image.toString();
+							if (stringValue.startsWith('blob:') || stringValue.startsWith('data:') || stringValue.startsWith('http')) {
+								imageUrl = stringValue;
+							}
+						}
+						
+						// Try accessing raw data
+						if (!imageUrl && mediaItem.image._raw) {
+							console.log('🔍 Trying to access _raw data:', mediaItem.image._raw);
+							// If _raw contains blob data, try to use it
+							if (mediaItem.image._raw.blob || mediaItem.image._raw.data) {
+								const blob = mediaItem.image._raw.blob || mediaItem.image._raw.data;
+								if (blob instanceof Blob) {
+									imageUrl = URL.createObjectURL(blob);
+									console.log('✅ Created URL from _raw blob:', imageUrl);
+								}
+							}
+						}
+						
+						// Try prototype methods for async data access
+						if (!imageUrl) {
+							const proto = Object.getPrototypeOf(mediaItem.image);
+							console.log('🔍 Prototype methods:', Object.getOwnPropertyNames(proto));
+							
+							// Try common FileStream async methods
+							const asyncMethods = ['getBlob', 'toBlob', 'arrayBuffer', 'stream', 'text'];
+							for (const method of asyncMethods) {
+								if (typeof mediaItem.image[method] === 'function') {
+									console.log(`🔍 Found async method: ${method}, trying to call...`);
+									try {
+										const result = mediaItem.image[method]();
+										if (result && typeof result.then === 'function') {
+											// It's a Promise, handle it
+											result.then((data: any) => {
+												console.log(`✅ Async ${method} result:`, data);
+												if (data instanceof Blob) {
+													const url = URL.createObjectURL(data);
+													console.log(`✅ Created URL from async ${method}:`, url);
+													// Note: This won't update the imageUrl in this render, but will log it
+												}
+											}).catch((err: any) => {
+												console.error(`❌ Error with async ${method}:`, err);
+											});
+										} else {
+											console.log(`📄 Sync ${method} result:`, result);
+										}
+									} catch (err) {
+										console.error(`❌ Error calling ${method}:`, err);
+									}
+									break; // Try only the first available method
+								}
+							}
+						}
+					} catch (error) {
+						console.error('Error getting image URL:', error);
+					}
+					
+					console.log('🖼️ Image URL detection result:', {
+						imageUrl,
+						availableMethods: {
+							createObjectURL: typeof mediaItem.image.createObjectURL,
+							getBlob: typeof mediaItem.image.getBlob,
+							toBlob: typeof mediaItem.image.toBlob,
+							asBlob: typeof mediaItem.image.asBlob,
+							getBlobURL: typeof mediaItem.image.getBlobURL,
+						}
+					});
+
+					if (imageUrl) {
+						return (
+							<Image
+								src={imageUrl}
+								alt={mediaItem.alt?.toString() || "uploaded image"}
+								width={500}
+								height={500}
+								className="rounded-lg shadow-md w-full object-cover"
+								onError={(e) => {
+									console.error('Image failed to load:', e);
+									(e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+								}}
+							/>
+						);
+					} else {
+						return (
+							<div className="w-full h-[500px] bg-gray-200 rounded-lg shadow-md flex items-center justify-center">
+								<div className="text-center">
+									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+									<p className="text-gray-500 text-sm">Processing image...</p>
+									<p className="text-xs text-gray-400 mt-1">Available properties: {Object.keys(mediaItem.image).join(', ')}</p>
+								</div>
+							</div>
+						);
+					}
+				} else if (mediaItem.type === "video" && mediaItem.video) {
+					// Try different methods to get video URL from FileStream
+					let videoUrl = null;
+					
+					try {
+						// Try various methods that might exist on FileStream
+						if (typeof mediaItem.video.createObjectURL === 'function') {
+							videoUrl = mediaItem.video.createObjectURL();
+						} else if (typeof mediaItem.video.getBlob === 'function') {
+							const blob = mediaItem.video.getBlob();
+							if (blob) videoUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.video.toBlob === 'function') {
+							const blob = mediaItem.video.toBlob();
+							if (blob) videoUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.video.asBlob === 'function') {
+							const blob = mediaItem.video.asBlob();
+							if (blob) videoUrl = URL.createObjectURL(blob);
+						} else if (typeof mediaItem.video.getBlobURL === 'function') {
+							videoUrl = mediaItem.video.getBlobURL();
+						}
+					} catch (error) {
+						console.error('Error getting video URL:', error);
+					}
+
+					if (videoUrl) {
+						return (
+							<video
+								src={videoUrl}
+								controls
+								className="w-full max-w-lg rounded-lg shadow-md"
+								onError={(e) => console.error('Video failed to load:', e)}
+							/>
+						);
+					} else {
+						return (
+							<div className="w-full h-[300px] bg-gray-200 rounded-lg shadow-md flex items-center justify-center">
+								<div className="text-center">
+									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+									<p className="text-gray-500 text-sm">Processing video...</p>
+									<p className="text-xs text-gray-400 mt-1">Available properties: {Object.keys(mediaItem.video).join(', ')}</p>
+								</div>
+							</div>
+						);
+					}
+				} else {
+					return (
+						<div className="w-full h-[500px] bg-gray-100 rounded-lg shadow-md flex items-center justify-center">
+							<div className="text-center">
+								<p className="text-gray-400">Media not available</p>
+								<p className="text-xs text-gray-300 mt-1">Type: {mediaItem?.type || 'unknown'}</p>
+								<p className="text-xs text-gray-300">Has image: {!!mediaItem?.image ? 'yes' : 'no'}</p>
+								<p className="text-xs text-gray-300">Has video: {!!mediaItem?.video ? 'yes' : 'no'}</p>
+							</div>
+						</div>
+					);
+				}
+			})()}
 		</div>
 	);
 }; 

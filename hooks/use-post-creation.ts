@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Post, PostFullyLoaded } from "../app/schema";
-import { co } from "jazz-tools";
+import { Post, PostFullyLoaded, ImageMedia, VideoMedia } from "../app/schema";
+import { co, FileStream } from "jazz-tools";
+// Note: createImage might be imported differently in your Jazz version
 import { 
 	platformIcons, 
 	platformLabels, 
@@ -49,6 +50,16 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [seriesType, setSeriesType] = useState<"reply" | null>(null);
 	const [title, setTitle] = useState(post.title?.toString() || "");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+	// Sync title with Jazz post object changes, but only if not currently editing
+	useEffect(() => {
+		if (!isEditingTitle) {
+			const jazzTitle = post.title?.toString() || "";
+			if (jazzTitle !== title) {
+				setTitle(jazzTitle);
+			}
+		}
+	}, [post.title, isEditingTitle, title]);
 	const [replyUrl, setReplyUrl] = useState("");
 	const [postingInterval, setPostingInterval] = useState(5);
 	const [showSettings, setShowSettings] = useState(false);
@@ -70,7 +81,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
 	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 	const [currentPost, setPost] = useState(post);
-	const [uploadTrigger, setUploadTrigger] = useState(0);
+
 
 	const hasMultipleAccounts = useMemo(() => {
 		return selectedPlatforms.filter(p => p !== 'base').length > 1;
@@ -481,6 +492,8 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, []);
 
 	const handleImageUpload = useCallback(async () => {
+		console.log('🚀 handleImageUpload called - starting upload process');
+		
 		// Create a file input element
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
@@ -491,68 +504,99 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			const files = (event.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
 			
-			// Process each selected file
-			for (const file of Array.from(files)) {
-				try {
+			setSuccess('Processing image...');
+			setErrors([]);
+			
+			try {
+				// Process each selected file
+				for (const file of Array.from(files)) {
+					console.log(`📁 Starting to process file: ${file.name}`);
+					
 					// Check if it's an image or video
 					const isImage = file.type.startsWith('image/');
 					const isVideo = file.type.startsWith('video/');
 					
 					if (!isImage && !isVideo) {
 						console.warn(`Unsupported file type: ${file.type}`);
+						setErrors(prev => [...prev, `Unsupported file type: ${file.type}`]);
 						continue;
 					}
 					
-					// Create object URL for immediate preview (much more efficient than base64)
-					const objectUrl = URL.createObjectURL(file);
-					
-					console.log('📁 File selected:', {
+					console.log(`📁 Processing ${isImage ? 'image' : 'video'}:`, {
 						name: file.name,
 						type: file.type,
-						size: file.size,
-						objectUrl
+						size: file.size
 					});
 					
-					// Store file object and metadata directly in memory (not localStorage to avoid quota issues)
-					const uploadData = {
-						type: isImage ? 'image' as const : 'video' as const,
-						objectUrl,
-						file, // Keep original file object
-						alt: `Uploaded ${isImage ? 'image' : 'video'}: ${file.name}`,
-						postId: currentPost.id,
-						variant: activeTab,
-						timestamp: Date.now(),
-						fileName: file.name,
-						fileType: file.type
-					};
-					
-					// Store in a global window object to avoid localStorage quota issues
-					if (!window.tempUploads) {
-						window.tempUploads = [];
+					// Get the current post's owner for creating new objects
+					const variant = currentPost.variants[activeTab];
+					if (!variant || !variant.media) {
+						console.error('No media list found for variant');
+						setErrors(prev => [...prev, 'No media list found for current post variant']);
+						continue;
 					}
-					window.tempUploads.push(uploadData);
 					
-					console.log('📄 Created media item:', uploadData);
+					const owner = variant.media._owner;
+					console.log('📄 Using owner for Jazz objects:', owner);
 					
-					// Trigger a re-render to show the new upload
-					setUploadTrigger(prev => prev + 1);
+					let mediaItem;
+					if (isImage) {
+						console.log('🖼️ Creating FileStream for image with createFromBlob...');
+						console.log('📄 File details:', {
+							name: file.name,
+							size: file.size,
+							type: file.type,
+							lastModified: file.lastModified
+						});
+						
+						// Use the proper async FileStream creation method
+						const fileStream = await FileStream.createFromBlob(file, { owner });
+						console.log('📁 Created FileStream for image:', fileStream);
+						
+						// Create ImageMedia with the FileStream
+						mediaItem = ImageMedia.create({
+							type: 'image' as const,
+							image: fileStream,
+							alt: undefined,
+						}, { owner });
+						console.log('✅ Created ImageMedia with FileStream:', mediaItem);
+					} else {
+						console.log('🎬 Creating VideoMedia with FileStream...');
+						
+						// Use the proper async FileStream creation method for video
+						const fileStream = await FileStream.createFromBlob(file, { owner });
+						console.log('📁 Created FileStream for video:', fileStream);
+						
+						mediaItem = VideoMedia.create({
+							type: 'video' as const,
+							video: fileStream,
+							alt: undefined,
+						}, { owner });
+						console.log('✅ Created VideoMedia:', mediaItem);
+					}
 					
-					// Dispatch custom event to update preview components
-					window.dispatchEvent(new CustomEvent('temp-uploads-changed'));
+					// Add to the current post variant's media array directly
+					if (variant.media) {
+						console.log('📝 Step 5: Adding media item to post...');
+						// Add the new media item to the collaborative list
+						variant.media.push(mediaItem);
+						console.log(`✅ Step 6: Added ${isImage ? 'image' : 'video'} to post media:`, mediaItem);
+					}
 					
-					// Success message
-					setSuccess(`Successfully uploaded ${file.name}! Preview now visible.`);
-					
-				} catch (error) {
-					console.error('Error processing file:', error);
-					setErrors(prev => [...prev, `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+					setSuccess(`Successfully uploaded ${file.name}! Image saved to post.`);
+					console.log(`🎉 Successfully completed upload of ${file.name}`);
 				}
+			} catch (error) {
+				console.error('🚨 Error during file upload:', error);
+				setErrors(prev => [...prev, `Failed to upload files: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+				setSuccess('');
 			}
 		};
 		
 		// Trigger the file dialog
+		console.log('📁 Triggering file dialog...');
 		fileInput.click();
-	}, [activeTab]);
+	}, [activeTab, currentPost]);
 
     return {
         activeTab, setActiveTab,

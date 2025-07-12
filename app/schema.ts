@@ -48,7 +48,7 @@ export const ReplyTo = co.map({
 
 export const ImageMedia = co.map({
 	type: z.literal("image"),
-	image: co.image(),
+	image: co.fileStream(), // Temporarily use fileStream until we fix co.image()
 	alt: z.optional(co.plainText()),
 });
 
@@ -80,26 +80,6 @@ export type PostFullyLoaded = co.loaded<typeof Post, {
 }>;
 
 // =============================================================================
-// 🏪 GELATO INTEGRATION SCHEMA (ENCRYPTED)
-// =============================================================================
-
-export const GelatoCredentials = co.map({
-	apiKey: z.string(),
-	storeId: z.string(),
-	isConfigured: z.boolean(),
-	connectedAt: z.optional(z.date()),
-	storeName: z.optional(z.string()),
-	// Template configurations for this account group's store
-	customTemplates: z.optional(z.array(z.object({
-		id: z.string(),
-		name: z.string(),
-		description: z.string(),
-		productType: z.string(),
-		isDefault: z.optional(z.boolean()),
-	}))),
-});
-
-// =============================================================================
 // 🏢 ACCOUNT GROUP SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
@@ -122,9 +102,6 @@ export const AccountGroup = co.map({
 	ayrshareProfileKey: z.optional(z.string()),
 	ayrshareProfileTitle: z.optional(z.string()),
 	
-	// Gelato Integration (per account group)
-	gelatoCredentials: z.optional(GelatoCredentials),
-	
 	// Account Group Settings
 	settings: z.optional(z.object({
 		autoCreateProducts: z.optional(z.boolean()),
@@ -136,7 +113,7 @@ export const AccountGroup = co.map({
 export type AccountGroupType = co.loaded<typeof AccountGroup, {
 	accounts: { $each: true },
 	posts: { $each: true },
-	gelatoCredentials: true
+	// gelatoCredentials: true
 }>;
 
 export const UserProfile = co.map({
@@ -163,7 +140,7 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 	accountGroups: { $each: { 
 		accounts: { $each: true },
 		posts: { $each: true },
-		gelatoCredentials: true
+		// gelatoCredentials: true
 	}}
 }>;
 
@@ -183,7 +160,7 @@ export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
 		accountGroups: { $each: {
 			accounts: { $each: true },
 			posts: { $each: true },
-			gelatoCredentials: true
+			// gelatoCredentials: true
 		}}
 	}
 }>;
