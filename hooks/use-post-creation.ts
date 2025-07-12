@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Post, PostFullyLoaded } from "../app/schema";
+import { co } from "jazz-tools";
 import { 
 	platformIcons, 
 	platformLabels, 
@@ -69,6 +70,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
 	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 	const [currentPost, setPost] = useState(post);
+	const [uploadTrigger, setUploadTrigger] = useState(0);
 
 	const hasMultipleAccounts = useMemo(() => {
 		return selectedPlatforms.filter(p => p !== 'base').length > 1;
@@ -478,33 +480,78 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		setShowPreviewModal(true);
 	}, []);
 
-	const handleImageUpload = useCallback(() => {
-		const newImage = {
-			type: 'image',
-			image: `https://source.unsplash.com/random/800x600?sig=${Math.random()}`,
-			alt: 'A randomly uploaded image',
-		};
-
-		setPost(prevPost => {
-			const newPost = { ...prevPost };
-			const variant = newPost.variants[activeTab];
-			if (variant) {
-				const currentMedia = (variant.media || []);
-				
-				const updatedPost = {
-					...newPost,
-					variants: {
-						...newPost.variants,
-						[activeTab]: {
-							...variant,
-							media: [...currentMedia, newImage],
-						},
-					},
-				};
-				return updatedPost as PostFullyLoaded;
+	const handleImageUpload = useCallback(async () => {
+		// Create a file input element
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.accept = 'image/*,video/*';
+		fileInput.multiple = true;
+		
+		fileInput.onchange = async (event) => {
+			const files = (event.target as HTMLInputElement).files;
+			if (!files || files.length === 0) return;
+			
+			// Process each selected file
+			for (const file of Array.from(files)) {
+				try {
+					// Check if it's an image or video
+					const isImage = file.type.startsWith('image/');
+					const isVideo = file.type.startsWith('video/');
+					
+					if (!isImage && !isVideo) {
+						console.warn(`Unsupported file type: ${file.type}`);
+						continue;
+					}
+					
+					// Create object URL for immediate preview (much more efficient than base64)
+					const objectUrl = URL.createObjectURL(file);
+					
+					console.log('📁 File selected:', {
+						name: file.name,
+						type: file.type,
+						size: file.size,
+						objectUrl
+					});
+					
+					// Store file object and metadata directly in memory (not localStorage to avoid quota issues)
+					const uploadData = {
+						type: isImage ? 'image' as const : 'video' as const,
+						objectUrl,
+						file, // Keep original file object
+						alt: `Uploaded ${isImage ? 'image' : 'video'}: ${file.name}`,
+						postId: currentPost.id,
+						variant: activeTab,
+						timestamp: Date.now(),
+						fileName: file.name,
+						fileType: file.type
+					};
+					
+					// Store in a global window object to avoid localStorage quota issues
+					if (!window.tempUploads) {
+						window.tempUploads = [];
+					}
+					window.tempUploads.push(uploadData);
+					
+					console.log('📄 Created media item:', uploadData);
+					
+					// Trigger a re-render to show the new upload
+					setUploadTrigger(prev => prev + 1);
+					
+					// Dispatch custom event to update preview components
+					window.dispatchEvent(new CustomEvent('temp-uploads-changed'));
+					
+					// Success message
+					setSuccess(`Successfully uploaded ${file.name}! Preview now visible.`);
+					
+				} catch (error) {
+					console.error('Error processing file:', error);
+					setErrors(prev => [...prev, `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+				}
 			}
-			return newPost;
-		});
+		};
+		
+		// Trigger the file dialog
+		fileInput.click();
 	}, [activeTab]);
 
     return {

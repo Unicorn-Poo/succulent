@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  succulent-gelato: link:../succulent-gelato
+
 importers:
 
   .:
@@ -41,6 +44,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
+      succulent-gelato:
+        specifier: file:../succulent-gelato
+        version: file:../succulent-gelato(react@19.1.0)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2657,6 +2663,11 @@ packages:
         optional: true
       babel-plugin-macros:
         optional: true
+
+  succulent-gelato@file:../succulent-gelato:
+    resolution: {directory: ../succulent-gelato, type: directory}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -5686,6 +5697,10 @@ snapshots:
   styled-jsx@5.1.6(react@19.1.0):
     dependencies:
       client-only: 0.0.1
+      react: 19.1.0
+
+  succulent-gelato@file:../succulent-gelato(react@19.1.0):
+    dependencies:
       react: 19.1.0
 
   supports-color@7.2.0:
