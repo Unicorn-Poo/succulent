@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
 		}
 
 		// First, get the template details to understand the structure
+		console.log(`Fetching template from: https://ecommerce.gelatoapis.com/v1/templates/${templateId}`);
+		console.log(`Using API key: ${apiKey ? '***' : 'missing'}`);
+		
 		const templateResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/templates/${templateId}`, {
 			method: 'GET',
 			headers: {
@@ -33,11 +36,15 @@ export async function POST(request: NextRequest) {
 			},
 		});
 
+		console.log(`Template fetch response status: ${templateResponse.status}`);
+
 		if (!templateResponse.ok) {
 			const errorText = await templateResponse.text();
 			console.error('Failed to fetch template:', templateResponse.status, errorText);
+			console.error('Template ID used:', templateId);
+			console.error('Full error response:', errorText);
 			return NextResponse.json(
-				{ error: `Failed to fetch template: ${templateResponse.status}` },
+				{ error: `Failed to fetch template: ${templateResponse.status} - ${errorText}` },
 				{ status: templateResponse.status }
 			);
 		}
@@ -45,25 +52,64 @@ export async function POST(request: NextRequest) {
 		const template = await templateResponse.json();
 		console.log('Template structure:', JSON.stringify(template, null, 2));
 
-		// Create product from template
+		// Upload data URLs to Gelato first if provided
+		let uploadedFileUrls: string[] = [];
+		if (imageUrls && imageUrls.length > 0) {
+			console.log('Uploading images to Gelato...');
+			
+			for (const dataUrl of imageUrls) {
+				try {
+					// Convert data URL to blob
+					const response = await fetch(dataUrl);
+					const blob = await response.blob();
+					
+					// Upload to Gelato
+					const formData = new FormData();
+					formData.append('file', blob, 'image.jpg');
+					
+					const uploadResponse = await fetch('https://ecommerce.gelatoapis.com/v1/files', {
+						method: 'POST',
+						headers: {
+							'X-API-KEY': apiKey,
+						},
+						body: formData,
+					});
+					
+					if (uploadResponse.ok) {
+						const uploadResult = await uploadResponse.json();
+						uploadedFileUrls.push(uploadResult.url);
+						console.log('Successfully uploaded image to Gelato:', uploadResult.url);
+					} else {
+						const errorText = await uploadResponse.text();
+						console.error('Failed to upload image to Gelato:', uploadResponse.status, errorText);
+					}
+				} catch (uploadError) {
+					console.error('Error uploading image:', uploadError);
+				}
+			}
+		}
+
+		// Create product from template using the correct endpoint
 		const productPayload = {
-			title: productData.title || `${template.displayName || 'Product'} - ${new Date().toLocaleDateString()}`,
-			description: productData.description || `Custom product created from social media post`,
-			currency: productData.currency || 'USD',
 			templateId: templateId,
-			// Add images if provided
-			...(imageUrls && imageUrls.length > 0 && {
-				files: imageUrls.map((url: string, index: number) => ({
-					url: url,
-					layer: `image_${index + 1}` // This will need to match the template's expected layers
+			title: productData.title || `${template.displayName || template.title || 'Product'} - ${new Date().toLocaleDateString()}`,
+			description: productData.description || `Custom product created from social media post`,
+			// Add variants with image placeholders if images were uploaded
+			...(uploadedFileUrls.length > 0 && template.variants && {
+				variants: template.variants.slice(0, 1).map((variant: any) => ({
+					templateVariantId: variant.id,
+					imagePlaceholders: uploadedFileUrls.slice(0, variant.imagePlaceholders?.length || 1).map((url: string, index: number) => ({
+						name: variant.imagePlaceholders?.[index]?.name || 'ImageFront',
+						fileUrl: url
+					}))
 				}))
 			})
 		};
 
-		console.log('Creating product with payload:', JSON.stringify(productPayload, null, 2));
+		console.log('Creating product from template with payload:', JSON.stringify(productPayload, null, 2));
 
-		// Create the product
-		const createResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/stores/${storeId}/products`, {
+		// Use the correct "create from template" endpoint
+		const createResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/stores/${storeId}/products:create-from-template`, {
 			method: 'POST',
 			headers: {
 				'X-API-KEY': apiKey,

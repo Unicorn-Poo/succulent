@@ -126,23 +126,24 @@ const TemplateSelector = ({
 			.replace(/^.*tote.*bag.*$/i, 'Tote Bag')
 			.replace(/^.*phone.*case.*$/i, 'Phone Case');
 			
-		// Add size and material details if available
+		// Add meaningful details if available (skip "Unknown" values)
 		const details = [];
-		if (template.details?.size) {
+		if (template.details?.size && template.details.size !== 'Unknown') {
 			details.push(template.details.size);
 		}
-		if (template.details?.material) {
+		if (template.details?.material && template.details.material !== 'Unknown') {
 			details.push(template.details.material);
 		}
-		if (template.details?.color) {
+		if (template.details?.color && template.details.color !== 'Unknown') {
 			details.push(template.details.color);
 		}
-		if (template.details?.orientation) {
+		if (template.details?.orientation && template.details.orientation !== 'Unknown') {
 			details.push(template.details.orientation);
 		}
 		
-		// Capitalize product type for better readability
-		const productType = template.productType ? 
+		// Capitalize product type for better readability, but skip generic types
+		const productType = template.productType && 
+			!['unknown', 'c-type', 'template'].includes(template.productType.toLowerCase()) ? 
 			template.productType.charAt(0).toUpperCase() + template.productType.slice(1) : 
 			null;
 			
@@ -199,6 +200,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			return [];
 		}
 		
+		// DEBUG: Let's see the raw templates from Jazz
+		console.log('Post-creation: Raw templates from Jazz:', accountGroupGelatoCredentials.templates);
+		console.log('Post-creation: Templates count:', accountGroupGelatoCredentials.templates.length);
+		
+		accountGroupGelatoCredentials.templates.forEach((template: any, index: number) => {
+			console.log(`Post-creation: Jazz Template ${index}:`, {
+				fullObject: template,
+				gelatoTemplateId: template.gelatoTemplateId,
+				name: template.name,
+				allKeys: Object.keys(template),
+				hasGelatoTemplateId: !!template.gelatoTemplateId
+			});
+		});
+		
 		const filteredTemplates = accountGroupGelatoCredentials.templates
 			.filter((template: any) => {
 				// Check for both new and potentially old template structures
@@ -215,11 +230,22 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		console.log('Post-creation: Filtered templates:', filteredTemplates);
 		
 		const mappedTemplates = filteredTemplates.map((template: any, index: number) => {
-			// Use gelatoTemplateId if available, otherwise create a fallback ID
-			const templateId = template.gelatoTemplateId || `template-${index}-${template.name?.replace(/[^a-zA-Z0-9]/g, '-')}`;
+			// DEBUG: Show all template properties
+			console.log(`Post-creation: Template ${index} raw data:`, JSON.stringify(template, null, 2));
+			console.log(`Post-creation: Template ${index} gelatoTemplateId:`, template.gelatoTemplateId);
+			console.log(`Post-creation: Template ${index} name:`, template.name);
+			console.log(`Post-creation: Template ${index} all keys:`, Object.keys(template));
+			
+			// For the dropdown, we can use a display-friendly ID, but we need to keep the real gelatoTemplateId
+			const displayId = template.gelatoTemplateId || `template-${index}-${template.name?.replace(/[^a-zA-Z0-9]/g, '-')}`;
+			
+			console.log(`Post-creation: Template ${index} display ID will be:`, displayId);
+			console.log(`Post-creation: Template ${index} gelato template ID:`, template.gelatoTemplateId);
+			console.log(`Post-creation: Template ${index} used fallback?`, !template.gelatoTemplateId);
 			
 			const mapped = {
-				id: templateId, // Use gelatoTemplateId or fallback
+				id: displayId, // For dropdown display and selection
+				gelatoTemplateId: template.gelatoTemplateId, // The REAL Gelato template ID for API calls
 				name: template.name,
 				displayName: template.displayName || template.name,
 				productType: template.productType,
@@ -227,6 +253,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				details: template.details,
 				fetchedAt: template.fetchedAt,
 				isActive: template.isActive,
+				// DEBUG: Add raw template data for inspection
+				_debug: {
+					originalTemplate: template,
+					hasGelatoTemplateId: !!template.gelatoTemplateId,
+					gelatoTemplateId: template.gelatoTemplateId,
+					usingFallback: !template.gelatoTemplateId
+				}
 			};
 			console.log('Post-creation: Mapped template:', mapped);
 			return mapped;
@@ -246,8 +279,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 	}, [gelatoTemplates, selectedTemplate]);
 
-	// Upload images to Gelato and return their URLs
-	const uploadImagesToGelato = async (media: any[]): Promise<string[]> => {
+	// Convert Jazz images to data URLs for direct use in Gelato API
+	const convertImagesToDataUrls = async (media: any[]): Promise<string[]> => {
 		const imageUrls: string[] = [];
 		
 		for (const mediaItem of media) {
@@ -263,27 +296,18 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					}
 					
 					if (blob) {
-						// Upload to Gelato
-						const formData = new FormData();
-						formData.append('file', blob, 'image.jpg');
-						formData.append('apiKey', accountGroupGelatoCredentials?.apiKey || '');
-						
-						const response = await fetch('/api/upload-to-gelato', {
-							method: 'POST',
-							body: formData,
+						// Convert blob to data URL for direct use
+						const dataUrl = await new Promise<string>((resolve) => {
+							const reader = new FileReader();
+							reader.onload = (e) => resolve(e.target?.result as string);
+							reader.readAsDataURL(blob);
 						});
 						
-						if (response.ok) {
-							const result = await response.json();
-							if (result.success && result.url) {
-								imageUrls.push(result.url);
-							}
-						} else {
-							console.error('Failed to upload image to Gelato');
-						}
+						imageUrls.push(dataUrl);
+						console.log('Converted Jazz image to data URL');
 					}
 				} catch (error) {
-					console.error('Error uploading image to Gelato:', error);
+					console.error('Error converting image:', error);
 				}
 			}
 		}
@@ -299,9 +323,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 
 		try {
-			// Upload images to Gelato and get their URLs
+			// Convert Jazz images to data URLs for Gelato API
 			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
-			const imageUrls = await uploadImagesToGelato(mediaArray);
+			const imageUrls = await convertImagesToDataUrls(mediaArray);
 
 			if (imageUrls.length === 0) {
 				handleGelatoError('No images found in this post to create a product');
@@ -314,13 +338,21 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				currency: 'USD',
 			};
 
+			console.log('Creating product with data:', {
+				apiKey: accountGroupGelatoCredentials.apiKey ? '***' : 'missing',
+				storeId: accountGroupGelatoCredentials.storeId,
+				templateId: selectedTemplate.gelatoTemplateId || selectedTemplate.id,
+				productData: productData,
+				imageUrls: imageUrls?.length || 0,
+			});
+
 			const response = await fetch('/api/create-gelato-product', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					apiKey: accountGroupGelatoCredentials.apiKey,
 					storeId: accountGroupGelatoCredentials.storeId,
-					templateId: selectedTemplate.id,
+					templateId: selectedTemplate.gelatoTemplateId || selectedTemplate.id, // Use the real Gelato template ID
 					productData: productData,
 					imageUrls: imageUrls,
 				}),

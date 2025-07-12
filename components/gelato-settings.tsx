@@ -51,19 +51,44 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 	const fixExistingTemplates = () => {
 		if (!accountGroup.gelatoCredentials?.templates) return;
 		
+		const templatesToRemove: any[] = [];
+		
 		accountGroup.gelatoCredentials.templates.forEach((template) => {
 			if (template && !template.gelatoTemplateId) {
 				console.log('Found template without gelatoTemplateId, attempting to fix...');
-				// If template exists but doesn't have gelatoTemplateId, try to create a new one
-				const fixedId = `fixed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-				try {
-					template.gelatoTemplateId = fixedId;
-					console.log('Fixed template with ID:', fixedId);
-				} catch (error) {
-					console.error('Could not fix template:', error);
+				console.log('Template data:', template);
+				
+				// For the specific "-scape No.X Print" template that was imported
+				// We need to find its original ID from the import process
+				console.log('Template name:', template.name);
+				if (template.name === '-scape No.X Print') {
+					// This template needs to be re-imported with the correct ID
+					console.log('This is the -scape template that needs re-import');
+					// Mark for removal
+					templatesToRemove.push(template);
+				} else {
+					// For other templates, create a temporary ID
+					const fixedId = `fixed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+					try {
+						template.gelatoTemplateId = fixedId;
+						console.log('Fixed template with ID:', fixedId);
+					} catch (error) {
+						console.error('Could not fix template:', error);
+					}
 				}
 			}
 		});
+		
+		// Remove templates that need re-import
+		templatesToRemove.forEach((template) => {
+			const index = accountGroup.gelatoCredentials!.templates.indexOf(template);
+			if (index > -1) {
+				accountGroup.gelatoCredentials!.templates.splice(index, 1);
+				console.log('Removed template - please re-import it');
+			}
+		});
+		
+		setForceRefresh(prev => prev + 1);
 	};
 
 	const handleTestConnection = async () => {
@@ -186,7 +211,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 					// Add new templates
 					for (const templateData of data.templates) {
 						const template = GelatoTemplate.create({
-							id: templateData.id,
+							gelatoTemplateId: templateData.id,
 							name: templateData.name,
 							displayName: templateData.displayName,
 							productType: templateData.productType,
@@ -258,6 +283,9 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			// Process the template data and save directly to Jazz
 			const { GelatoTemplate } = await import('../app/schema');
 			
+			// DEBUG: Show full template data from API
+			console.log('Full template data from API:', JSON.stringify(data.template, null, 2));
+			
 			// Check what field contains the template ID
 			const templateId = data.template.gelatoTemplateId || data.template.id;
 			console.log('Template ID sources:', {
@@ -281,6 +309,9 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				fetchedAt: new Date(),
 				isActive: true,
 			};
+			
+			// DEBUG: Show what we're about to save
+			console.log('Processed template data for Jazz:', JSON.stringify(processedTemplate, null, 2));
 
 				console.log('Creating template with processed data:', processedTemplate);
 				console.log('Account group owner:', accountGroup._owner);
