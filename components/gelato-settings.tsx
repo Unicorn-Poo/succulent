@@ -70,11 +70,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			const { GelatoCredentials } = await import('../app/schema');
 			accountGroup.gelatoCredentials = GelatoCredentials.create({
 				apiKey: formData.apiKey,
-				storeId: formData.storeId,
-				storeName: formData.storeName,
+				storeId: formData.storeId || '',
+				storeName: formData.storeName || '',
 				isConfigured: true,
 				connectedAt: new Date(),
-			});
+			}, { owner: accountGroup._owner });
 		}
 
 		setIsEditing(false);

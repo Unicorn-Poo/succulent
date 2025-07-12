@@ -83,6 +83,15 @@ export type PostFullyLoaded = co.loaded<typeof Post, {
 // 🏢 ACCOUNT GROUP SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
+// Gelato Integration Schema
+export const GelatoCredentials = co.map({
+	apiKey: z.string(),
+	storeId: z.optional(z.string()),
+	storeName: z.optional(z.string()),
+	isConfigured: z.boolean(),
+	connectedAt: z.optional(z.date()),
+});
+
 export const AccountGroup = co.map({
 	name: z.string(),
 	createdAt: z.date(),
@@ -102,6 +111,9 @@ export const AccountGroup = co.map({
 	ayrshareProfileKey: z.optional(z.string()),
 	ayrshareProfileTitle: z.optional(z.string()),
 	
+	// Gelato Integration (per account group)
+	gelatoCredentials: z.optional(GelatoCredentials),
+	
 	// Account Group Settings
 	settings: z.optional(z.object({
 		autoCreateProducts: z.optional(z.boolean()),
@@ -113,7 +125,7 @@ export const AccountGroup = co.map({
 export type AccountGroupType = co.loaded<typeof AccountGroup, {
 	accounts: { $each: true },
 	posts: { $each: true },
-	// gelatoCredentials: true
+	gelatoCredentials: true
 }>;
 
 export const UserProfile = co.map({
@@ -140,7 +152,7 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 	accountGroups: { $each: { 
 		accounts: { $each: true },
 		posts: { $each: true },
-		// gelatoCredentials: true
+		gelatoCredentials: true
 	}}
 }>;
 
@@ -160,7 +172,7 @@ export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
 		accountGroups: { $each: {
 			accounts: { $each: true },
 			posts: { $each: true },
-			// gelatoCredentials: true
+			gelatoCredentials: true
 		}}
 	}
 }>;
