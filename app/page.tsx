@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
-import { Plus, Edit3, Home } from "lucide-react";
+import { Plus, Edit3, Home, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navigation } from "@/components/molecules/navigation";
@@ -284,204 +284,200 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Succulent</h1>
-            <p className="text-gray-600 mt-1">
-              Manage your social media accounts and create engaging content
-            </p>
+      <div className="w-full max-w-4xl mx-auto p-6">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Succulent 🌱</h1>
+              <p className="text-gray-600">Your social media management platform</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/analytics-demo">
+                <Button variant="soft" size="2">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics Demo
+                </Button>
+              </Link>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Account Group
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Button 
-              onClick={handleCreatePost}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Post
-            </Button>
-            <Button 
-              variant="outline"
+
+          {/* Account Groups Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Legacy Account Groups */}
+            {Object.entries(accountGroups).map(([id, group]) => (
+              <Link key={id} href={`/account-group/demo`}>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg">{group.name}</h3>
+                    <div className="w-2 h-2 bg-green-500 rounded-full" title="Demo Account Group"></div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      {Object.keys(group.accounts).length} accounts connected
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {group.posts.length} posts created
+                    </p>
+                    <p className="text-xs text-green-600">
+                      🎭 Demo account group
+                    </p>
+                  </div>
+
+                  <div className="flex -space-x-2 mt-4">
+                    {Object.values(group.accounts).slice(0, 3).map((account, index) => (
+                      <div 
+                        key={index}
+                        className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center"
+                      >
+                        <span className="text-xs font-medium">
+                          {account.platform.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    ))}
+                    {Object.keys(group.accounts).length > 3 && (
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
+                        <span className="text-xs font-medium">
+                          +{Object.keys(group.accounts).length - 3}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            {/* Jazz Account Groups - Persistent Display */}
+            {me?.root?.accountGroups?.map((group: any, index: number) => (
+              <Link key={group.id || `jazz-${index}`} href={`/account-group/${group.id}`}>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg">{group.name}</h3>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      {group.accounts?.length || 0} accounts connected
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {group.posts?.length || 0} posts created
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      ✨ Collaborative account group
+                    </p>
+                  </div>
+
+                  <div className="flex -space-x-2 mt-4">
+                    {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
+                      <div 
+                        key={account?.id || accountIndex}
+                        className="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center"
+                      >
+                        <span className="text-xs font-medium text-blue-700">
+                          {account?.platform?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    ))}
+                    {(group.accounts?.length || 0) > 3 && (
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center">
+                        <span className="text-xs font-medium text-blue-700">
+                          +{(group.accounts?.length || 0) - 3}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            {/* Create New Card */}
+            <button
               onClick={() => setShowCreateAccountGroupDialog(true)}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 border-dashed p-6 hover:shadow-md transition-shadow text-center"
             >
-              <Edit3 className="w-4 h-4 mr-2" />
-              New Account Group
-            </Button>
+              <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <h3 className="font-medium text-gray-900 mb-1">Create Account Group</h3>
+              <p className="text-sm text-gray-500">
+                Connect your social media accounts
+              </p>
+            </button>
           </div>
-        </div>
 
-        {/* Account Groups Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Legacy Account Groups */}
-          {Object.entries(accountGroups).map(([id, group]) => (
-            <Link key={id} href={`/account-group/demo`}>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-lg">{group.name}</h3>
-                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Demo Account Group"></div>
+          {/* Jazz Account Status */}
+          {!me && (
+            <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800">
+                🎵 Connecting to Jazz collaborative system...
+              </p>
+            </div>
+          )}
+
+          {me && (
+            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800">
+                ✅ Jazz Foundation Complete! Account: {me.id}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                🎯 Account system connected | Freeform account creation working | Ayrshare ready
+              </p>
+              <p className="text-xs text-blue-500 mt-1">
+                📋 Ready: Create account groups that persist across sessions! 🚀
+              </p>
+            </div>
+          )}
+
+          {/* Create Post Dialog */}
+          <Dialog.Root open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <Dialog.Content style={{ maxWidth: 450 }}>
+              <Dialog.Title>Create New Post</Dialog.Title>
+              <Dialog.Description>
+                Create a new post for your social media accounts
+              </Dialog.Description>
+
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Post Title</label>
+                  <TextField.Root
+                    value={newPostTitle}
+                    onChange={(e) => setNewPostTitle(e.target.value)}
+                    placeholder="Enter post title..."
+                  />
                 </div>
                 
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    {Object.keys(group.accounts).length} accounts connected
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {group.posts.length} posts created
-                  </p>
-                  <p className="text-xs text-green-600">
-                    🎭 Demo account group
-                  </p>
-                </div>
-
-                <div className="flex -space-x-2 mt-4">
-                  {Object.values(group.accounts).slice(0, 3).map((account, index) => (
-                    <div 
-                      key={index}
-                      className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center"
-                    >
-                      <span className="text-xs font-medium">
-                        {account.platform.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  ))}
-                  {Object.keys(group.accounts).length > 3 && (
-                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
-                      <span className="text-xs font-medium">
-                        +{Object.keys(group.accounts).length - 3}
-                      </span>
-                    </div>
-                  )}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Content</label>
+                  <TextArea
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    placeholder="What's on your mind?"
+                    rows={4}
+                  />
                 </div>
               </div>
-            </Link>
-          ))}
 
-          {/* Jazz Account Groups - Persistent Display */}
-          {me?.root?.accountGroups?.map((group: any, index: number) => (
-            <Link key={group.id || `jazz-${index}`} href={`/account-group/${group.id}`}>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-lg">{group.name}</h3>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    {group.accounts?.length || 0} accounts connected
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {group.posts?.length || 0} posts created
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    ✨ Collaborative account group
-                  </p>
-                </div>
-
-                <div className="flex -space-x-2 mt-4">
-                  {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
-                    <div 
-                      key={account?.id || accountIndex}
-                      className="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center"
-                    >
-                      <span className="text-xs font-medium text-blue-700">
-                        {account?.platform?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  ))}
-                  {(group.accounts?.length || 0) > 3 && (
-                    <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center">
-                      <span className="text-xs font-medium text-blue-700">
-                        +{(group.accounts?.length || 0) - 3}
-                      </span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="soft" onClick={() => setShowCreateDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreatePost}>
+                  Create Post
+                </Button>
               </div>
-            </Link>
-          ))}
+            </Dialog.Content>
+          </Dialog.Root>
 
-          {/* Create New Card */}
-          <button
-            onClick={() => setShowCreateAccountGroupDialog(true)}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 border-dashed p-6 hover:shadow-md transition-shadow text-center"
-          >
-            <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <h3 className="font-medium text-gray-900 mb-1">Create Account Group</h3>
-            <p className="text-sm text-gray-500">
-              Connect your social media accounts
-            </p>
-          </button>
+          {/* Account Group Creation Dialog */}
+          <AccountGroupCreation
+            isOpen={showCreateAccountGroupDialog}
+            onOpenChange={setShowCreateAccountGroupDialog}
+            onSave={handleSaveAccountGroup}
+          />
         </div>
-
-        {/* Jazz Account Status */}
-        {!me && (
-          <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">
-              🎵 Connecting to Jazz collaborative system...
-            </p>
-          </div>
-        )}
-
-        {me && (
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800">
-              ✅ Jazz Foundation Complete! Account: {me.id}
-            </p>
-            <p className="text-xs text-blue-600 mt-1">
-              🎯 Account system connected | Freeform account creation working | Ayrshare ready
-            </p>
-            <p className="text-xs text-blue-500 mt-1">
-              📋 Ready: Create account groups that persist across sessions! 🚀
-            </p>
-          </div>
-        )}
-
-        {/* Create Post Dialog */}
-        <Dialog.Root open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <Dialog.Content style={{ maxWidth: 450 }}>
-            <Dialog.Title>Create New Post</Dialog.Title>
-            <Dialog.Description>
-              Create a new post for your social media accounts
-            </Dialog.Description>
-
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Post Title</label>
-                <TextField.Root
-                  value={newPostTitle}
-                  onChange={(e) => setNewPostTitle(e.target.value)}
-                  placeholder="Enter post title..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Content</label>
-                <TextArea
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  placeholder="What's on your mind?"
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="soft" onClick={() => setShowCreateDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePost}>
-                Create Post
-              </Button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Root>
-
-        {/* Account Group Creation Dialog */}
-        <AccountGroupCreation
-          isOpen={showCreateAccountGroupDialog}
-          onOpenChange={setShowCreateAccountGroupDialog}
-          onSave={handleSaveAccountGroup}
-        />
       </div>
     </div>
   );

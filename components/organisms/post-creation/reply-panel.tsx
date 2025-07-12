@@ -1,8 +1,8 @@
 import { Card, Box, Text } from "@radix-ui/themes";
 import { Link as LinkIcon, Loader2, AlertCircle, Check } from "lucide-react";
-import { Input } from "../input";
-import { ReplyPreview } from "../reply-preview";
-import { PostFullyLoaded } from "../../app/schema";
+import { Input } from "@/components/atoms";
+import { ReplyPreview } from "@/components/molecules/reply-preview";
+import { PostFullyLoaded } from "@/app/schema";
 
 interface ReplyPanelProps {
     replyUrl: string;

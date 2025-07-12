@@ -1,7 +1,7 @@
 import { Button, Card, Switch, Box, Text } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import { MessageSquare, Eye, CalendarDays, Calendar, Loader2, Globe } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms/tooltip";
 
 interface PostActionsProps {
     seriesType: "reply" | null;

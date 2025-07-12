@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button, Dialog, TextField, Select, Card, Text, Badge } from "@radix-ui/themes";
 import { Plus, X, Trash2, Check, AlertCircle, ExternalLink, Users, Loader2, Globe, Save } from "lucide-react";
+import Image from "next/image";
 import { platformIcons, platformLabels } from "@/utils/postConstants";
 import { Input } from "@/components/atoms";
 import { PlatformAccount, AccountGroup, PlatformNames } from "@/app/schema";
@@ -39,7 +40,8 @@ interface AccountGroupCreationProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const availablePlatforms = Object.keys(platformLabels) as (keyof typeof platformLabels)[];
+// Filter out 'base' from available platforms since it's not a valid social platform
+const availablePlatforms = Object.keys(platformLabels).filter(platform => platform !== 'base') as (keyof typeof platformLabels)[];
 
 export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: AccountGroupCreationProps) {
   const [groupName, setGroupName] = useState("");
@@ -51,7 +53,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
   // Form state for adding new accounts
   const [showAddAccountForm, setShowAddAccountForm] = useState(false);
   const [newAccountName, setNewAccountName] = useState("");
-  const [newAccountPlatform, setNewAccountPlatform] = useState<keyof typeof platformLabels>("instagram");
+  const [newAccountPlatform, setNewAccountPlatform] = useState<typeof PlatformNames[number]>("instagram");
 
   const ayrshareConfigured = validateAyrshareConfig();
   const businessPlanMode = isBusinessPlanMode();
@@ -431,7 +433,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                           <label className="block text-xs font-medium mb-1">Platform</label>
                           <Select.Root 
                             value={newAccountPlatform} 
-                            onValueChange={(value) => setNewAccountPlatform(value as keyof typeof platformLabels)}
+                            onValueChange={(value) => setNewAccountPlatform(value as typeof PlatformNames[number])}
                           >
                             <Select.Trigger className="w-full" />
                             <Select.Content>

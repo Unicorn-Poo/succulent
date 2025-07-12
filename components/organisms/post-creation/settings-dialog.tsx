@@ -1,6 +1,6 @@
 import { Dialog, Button } from "@radix-ui/themes";
 import { Label } from "radix-ui";
-import { Input } from "../input";
+import { Input } from "@/components/atoms";
 
 interface SettingsDialogProps {
     open: boolean;
