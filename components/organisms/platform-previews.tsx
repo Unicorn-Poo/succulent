@@ -1,10 +1,9 @@
 "use client";
 
-import { Card, Avatar, Text, Badge, Button, Box } from "@radix-ui/themes";
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { Card, Avatar, Text, Badge, Button } from "@radix-ui/themes";
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { ThreadPost } from "@/utils/threadUtils";
-import { platformLabels } from "@/utils/postConstants";
 import { useState, useEffect } from "react";
 import { ReplyPreview } from "@/components/molecules";
 
@@ -77,7 +76,6 @@ export const TwitterPreview = ({
 							author={replyTo.author}
 							username={replyTo.authorUsername}
 							platform={replyTo.platform}
-							authorAvatar={replyTo.authorAvatar}
 						/>
 					</div>
 				)}
@@ -101,7 +99,7 @@ export const TwitterPreview = ({
 						author={replyTo.author}
 						username={replyTo.authorUsername}
 						platform={replyTo.platform}
-						authorAvatar={replyTo.authorAvatar}
+						// authorAvatar={replyTo.authorAvatar}
 					/>
 					<div className="flex gap-3 mt-4">
 						<Avatar

@@ -13,7 +13,24 @@ interface PostCreationHeaderProps {
     setIsEditingTitle: (isEditing: boolean) => void;
     handleTitleSave: () => void;
     selectedPlatforms: string[];
-    accountGroup?: PostFullyLoaded['accountGroup'];
+    accountGroup?: {
+        id: string;
+        name: string;
+        accounts: Record<string, {
+            id: string;
+            platform: string;
+            name: string;
+            profileKey?: string;
+            isLinked?: boolean;
+            status?: "pending" | "linked" | "error" | "expired";
+            // Legacy fields for backward compatibility
+            apiUrl?: string;
+            avatar?: string;
+            username?: string;
+            displayName?: string;
+            url?: string;
+        }> | any[]; // Allow array for Jazz CoList
+    };
     seriesType: "reply" | null;
     detectedPlatform: string | null;
     activeTab: string;

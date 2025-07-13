@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Edit3, Home, BarChart3 } from "lucide-react";
+import { Plus, Edit3, Home, BarChart3, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Navigation } from "@/components/molecules/navigation";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
 import { AccountGroup, AccountGroupType, PlatformAccount, MyAppAccount, AccountRoot, Post } from "@/app/schema";
 import { useAccount, useAcceptInvite } from "jazz-react";
@@ -261,8 +260,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
       <div className="w-full max-w-4xl mx-auto p-6">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -275,6 +272,12 @@ export default function HomePage() {
                 <Button variant="soft" size="2">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Analytics Demo
+                </Button>
+              </Link>
+              <Link href="/paywall-demo">
+                <Button variant="soft" size="2">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Paywall Demo
                 </Button>
               </Link>
                               <Button 

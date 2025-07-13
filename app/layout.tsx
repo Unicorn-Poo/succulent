@@ -5,6 +5,7 @@ import "./globals.css";
 import { Theme } from "@radix-ui/themes";
 import { JazzProvider } from "jazz-react";
 import { MyAppAccount } from "./schema";
+import { Navigation } from "@/components/molecules/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,22 +24,22 @@ const geistMono = Geist_Mono({
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
-      >
-        <Theme>
-          <JazzProvider
-            sync={{ peer: `wss://cloud.jazz.tools/?key=${process.env.NEXT_PUBLIC_JAZZ_API_KEY}` }}
-            AccountSchema={MyAppAccount}
-          >
-            {children}
-          </JazzProvider>
-        </Theme>
+      <body>
+        <JazzProvider
+          sync={{ peer: "wss://cloud.jazz.tools" }}
+        >
+          <div className="min-h-screen bg-gray-50">
+            <Navigation />
+            <main>
+              {children}
+            </main>
+          </div>
+        </JazzProvider>
       </body>
     </html>
   );

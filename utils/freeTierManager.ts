@@ -179,54 +179,19 @@ export class FreeTierManager {
   static exportUsageData() {
     const usage = this.getUsageStats();
     const strategy = this.getPostingStrategy();
+    const tips = this.getOptimizationTips();
     
     return {
-      currentUsage: usage,
-      strategy: strategy,
-      tips: this.getOptimizationTips(),
-      exportedAt: new Date().toISOString()
+      current: usage,
+      strategy,
+      tips,
+      exportedAt: new Date().toISOString(),
+      suggestions: {
+        urgent: this.suggestPlatforms(['instagram', 'twitter', 'linkedin', 'facebook'], 'urgent'),
+        high: this.suggestPlatforms(['instagram', 'twitter', 'linkedin', 'facebook'], 'high'),
+        medium: this.suggestPlatforms(['instagram', 'twitter', 'linkedin', 'facebook'], 'medium'),
+        low: this.suggestPlatforms(['instagram', 'twitter', 'linkedin', 'facebook'], 'low'),
+      }
     };
   }
-}
-
-/**
- * React hook for free tier management
- */
-export const useFreeTier = () => {
-  const [usage, setUsage] = useState<FreeTierUsage>(() => FreeTierManager.getUsageStats());
-  
-  const refreshUsage = () => {
-    setUsage(FreeTierManager.getUsageStats());
-  };
-  
-  const recordPost = (platformCount: number = 1) => {
-    const newUsage = FreeTierManager.recordPost(platformCount);
-    setUsage(newUsage);
-    return newUsage;
-  };
-  
-  const canSendPost = (platformCount: number = 1) => {
-    return FreeTierManager.canSendPost(platformCount);
-  };
-  
-  const getStrategy = () => {
-    return FreeTierManager.getPostingStrategy();
-  };
-  
-  const suggestPlatforms = (availablePlatforms: string[], priority: 'urgent' | 'high' | 'medium' | 'low') => {
-    return FreeTierManager.suggestPlatforms(availablePlatforms, priority);
-  };
-  
-  return {
-    usage,
-    refreshUsage,
-    recordPost,
-    canSendPost,
-    getStrategy,
-    suggestPlatforms,
-    tips: FreeTierManager.getOptimizationTips()
-  };
-};
-
-// Import useState for the hook
-import { useState } from 'react'; 
+} 
