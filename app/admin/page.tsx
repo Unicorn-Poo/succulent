@@ -96,74 +96,108 @@ export default function AdminDashboard() {
 // =============================================================================
 
 function OverviewTab() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeSubscriptions: 0,
-    monthlyRevenue: 0,
-    churnRate: 0,
-  });
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch stats from your backend
-    // This is mock data - replace with actual API calls
-    setStats({
-      totalUsers: 1250,
-      activeSubscriptions: 320,
-      monthlyRevenue: 15780,
-      churnRate: 5.2,
-    });
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/admin/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
-  const statCards = [
-    { title: 'Total Users', value: stats.totalUsers.toLocaleString(), color: 'blue' },
-    { title: 'Active Subscriptions', value: stats.activeSubscriptions.toLocaleString(), color: 'green' },
-    { title: 'Monthly Revenue', value: `$${stats.monthlyRevenue.toLocaleString()}`, color: 'purple' },
-    { title: 'Churn Rate', value: `${stats.churnRate}%`, color: 'orange' },
-  ];
+  if (loading) {
+    return <div className="p-4">Loading statistics...</div>;
+  }
+
+  if (!stats) {
+    return <div className="p-4">Error loading statistics</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
-          <Card key={index}>
-            <Box p="4">
-              <div className="text-center">
-                <Text size="2" color="gray">{stat.title}</Text>
-                <Text size="6" weight="bold" className="block mt-1">{stat.value}</Text>
-              </div>
-            </Box>
-          </Card>
-        ))}
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
+          <p className="text-2xl font-bold">{stats.overview.totalUsers}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Active Subscriptions</h3>
+          <p className="text-2xl font-bold">{stats.overview.activeSubscriptions}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Monthly Revenue</h3>
+          <p className="text-2xl font-bold">${stats.overview.monthlyRevenue}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Churn Rate</h3>
+          <p className="text-2xl font-bold">{stats.overview.churnRate}%</p>
+        </div>
+      </div>
+
+      {/* Subscription Breakdown */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-medium mb-4">Subscription Breakdown</h3>
+        <div className="space-y-2">
+          {Object.entries(stats.subscriptions).map(([tier, count]) => (
+            <div key={tier} className="flex justify-between">
+              <span className="capitalize">{tier}</span>
+              <span className="font-medium">{count}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Recent Activity */}
-      <Card>
-        <Box p="6">
-          <Heading size="5" className="mb-4">Recent Activity</Heading>
-          <div className="space-y-3">
-            {[
-              { user: 'john@example.com', action: 'Upgraded to Pro', time: '2 minutes ago' },
-              { user: 'sarah@example.com', action: 'Subscription renewed', time: '1 hour ago' },
-              { user: 'mike@example.com', action: 'Account created', time: '3 hours ago' },
-              { user: 'lisa@example.com', action: 'Subscription canceled', time: '5 hours ago' },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Users size={14} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <Text weight="medium">{activity.user}</Text>
-                    <Text size="2" color="gray">{activity.action}</Text>
-                  </div>
-                </div>
-                <Text size="2" color="gray">{activity.time}</Text>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
+        <div className="space-y-2">
+          {stats.recentActivity.map((activity: any, index: number) => (
+            <div key={index} className="flex justify-between items-center">
+              <div>
+                <span className="font-medium">{activity.user}</span>
+                <span className="text-gray-500 ml-2">{activity.action}</span>
               </div>
-            ))}
+              <span className="text-sm text-gray-400">{activity.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* System Stats */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-medium mb-4">System Statistics</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Storage Used</p>
+            <p className="text-lg font-medium">{stats.systemStats.totalStorageUsed} MB</p>
           </div>
-        </Box>
-      </Card>
+          <div>
+            <p className="text-sm text-gray-500">Monthly Posts</p>
+            <p className="text-lg font-medium">{stats.systemStats.monthlyPosts}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">API Calls</p>
+            <p className="text-lg font-medium">{stats.systemStats.apiCalls}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Uptime</p>
+            <p className="text-lg font-medium">{stats.systemStats.uptime}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -173,156 +207,266 @@ function OverviewTab() {
 // =============================================================================
 
 function UsersTab() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
+    tier: 'free',
+    status: 'active',
+    reason: '',
+  });
 
   useEffect(() => {
-    // Fetch users from your backend
-    // This is mock data - replace with actual API calls
-    const mockUsers = [
-      { id: 1, name: 'John Doe', email: 'john@example.com', tier: 'premium', status: 'active', created: '2024-01-15' },
-      { id: 2, name: 'Sarah Smith', email: 'sarah@example.com', tier: 'free', status: 'active', created: '2024-01-20' },
-      { id: 3, name: 'Mike Johnson', email: 'mike@example.com', tier: 'business', status: 'active', created: '2024-01-25' },
-      { id: 4, name: 'Lisa Brown', email: 'lisa@example.com', tier: 'free', status: 'inactive', created: '2024-01-30' },
-    ];
-    setUsers(mockUsers);
-  }, []);
+    fetchUsers();
+  }, [searchTerm]);
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`/api/admin/users?search=${searchTerm}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: any) => {
     setSelectedUser(user);
-    setIsEditDialogOpen(true);
+    setEditFormData({
+      name: user.name || '',
+      email: user.email || '',
+      tier: user.tier || 'free',
+      status: user.status || 'active',
+      reason: '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...editFormData,
+          adminId: 'current-admin-id', // You'd get this from your auth context
+        }),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUsers(users.map(user => 
+          user.id === selectedUser.id ? { ...user, ...updatedUser.user } : user
+        ));
+        setEditDialogOpen(false);
+        setSelectedUser(null);
+      } else {
+        console.error('Failed to update user');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setUsers(users.filter(user => user.id !== userId));
+      } else {
+        console.error('Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Search and Actions */}
-      <Card>
-        <Box p="4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border rounded-md w-64"
-                />
-              </div>
-              <Button variant="outline">
-                <Download size={16} className="mr-2" />
-                Export
-              </Button>
-            </div>
-            <Button>
-              <Plus size={16} className="mr-2" />
-              Add User
-            </Button>
-          </div>
-        </Box>
-      </Card>
+      {/* Search */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md"
+        />
+      </div>
 
       {/* Users Table */}
-      <Card>
-        <Box p="6">
-          <Heading size="5" className="mb-4">Users ({filteredUsers.length})</Heading>
-          
-          <Table.Root>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Plan</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
-              </Table.Row>
-            </Table.Header>
-            
-            <Table.Body>
-              {filteredUsers.map((user) => (
-                <Table.Row key={user.id}>
-                  <Table.Cell>{user.name}</Table.Cell>
-                  <Table.Cell>{user.email}</Table.Cell>
-                  <Table.Cell>
-                    <Badge color={user.tier === 'free' ? 'gray' : 'green'}>
-                      {user.tier}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge color={user.status === 'active' ? 'green' : 'gray'}>
-                      {user.status}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>{user.created}</Table.Cell>
-                  <Table.Cell>
-                    <div className="flex gap-2">
-                      <Button size="1" variant="outline" onClick={() => handleEditUser(user)}>
-                        <Edit size={12} />
-                      </Button>
-                      <Button size="1" variant="outline" color="red">
-                        <Trash2 size={12} />
-                      </Button>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-4 text-center">Loading users...</td>
+              </tr>
+            ) : users.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-4 text-center">No users found</td>
+              </tr>
+            ) : (
+              users.map((user) => (
+                <tr key={user.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="font-medium text-gray-900">{user.name}</div>
+                      <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      </Card>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      user.tier === 'free' ? 'bg-gray-100 text-gray-800' :
+                      user.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+                      user.tier === 'business' ? 'bg-green-100 text-green-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}>
+                      {user.tier}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      user.status === 'active' ? 'bg-green-100 text-green-800' :
+                      user.status === 'canceled' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.created}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEditUser(user)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Edit User Dialog */}
-      <Dialog.Root open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <Dialog.Content style={{ maxWidth: 450 }}>
-          <Dialog.Title>Edit User</Dialog.Title>
-          <Dialog.Description size="2" mb="4">
-            Update user information and subscription details.
-          </Dialog.Description>
-
-          {selectedUser && (
+      {editDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-lg font-medium mb-4">Edit User</h3>
+            
             <div className="space-y-4">
               <div>
-                <Text as="label" size="2" weight="medium">Name</Text>
-                <TextField.Input defaultValue={selectedUser.name} mt="1" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
               </div>
+              
               <div>
-                <Text as="label" size="2" weight="medium">Email</Text>
-                <TextField.Input defaultValue={selectedUser.email} mt="1" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
               </div>
+              
               <div>
-                <Text as="label" size="2" weight="medium">Subscription Tier</Text>
-                <Select.Root defaultValue={selectedUser.tier}>
-                  <Select.Trigger mt="1" />
-                  <Select.Content>
-                    <Select.Item value="free">Free</Select.Item>
-                    <Select.Item value="premium">Premium</Select.Item>
-                    <Select.Item value="business">Business</Select.Item>
-                    <Select.Item value="enterprise">Enterprise</Select.Item>
-                  </Select.Content>
-                </Select.Root>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Tier</label>
+                <select
+                  value={editFormData.tier}
+                  onChange={(e) => setEditFormData({...editFormData, tier: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="free">Free</option>
+                  <option value="premium">Premium</option>
+                  <option value="business">Business</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="active">Active</option>
+                  <option value="canceled">Canceled</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
+                <textarea
+                  value={editFormData.reason}
+                  onChange={(e) => setEditFormData({...editFormData, reason: e.target.value})}
+                  placeholder="Optional reason for this change..."
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  rows={3}
+                />
               </div>
             </div>
-          )}
-
-          <Flex gap="3" mt="4" justify="end">
-            <Dialog.Close>
-              <Button variant="soft" color="gray">Cancel</Button>
-            </Dialog.Close>
-            <Dialog.Close>
-              <Button>Save Changes</Button>
-            </Dialog.Close>
-          </Flex>
-        </Dialog.Content>
-      </Dialog.Root>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setEditDialogOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateUser}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                Update User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -331,88 +475,135 @@ function UsersTab() {
 // 💳 SUBSCRIPTIONS TAB
 // =============================================================================
 
+interface SubscriptionData {
+  id: string;
+  user: string;
+  plan: string;
+  status: string;
+  nextBilling: string | null;
+  revenue: number;
+}
+
 function SubscriptionsTab() {
-  const [subscriptions, setSubscriptions] = useState([]);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch subscriptions from your backend
-    // This is mock data - replace with actual API calls
-    const mockSubscriptions = [
-      { id: 1, user: 'john@example.com', plan: 'Premium', status: 'active', nextBilling: '2024-02-15', revenue: 12 },
-      { id: 2, user: 'mike@example.com', plan: 'Business', status: 'active', nextBilling: '2024-02-20', revenue: 49 },
-      { id: 3, user: 'lisa@example.com', plan: 'Premium', status: 'canceled', nextBilling: null, revenue: 0 },
+    // Mock subscription data for demo
+    const mockSubscriptions: SubscriptionData[] = [
+      { id: '1', user: 'john@example.com', plan: 'Premium', status: 'active', nextBilling: '2024-02-15', revenue: 12 },
+      { id: '2', user: 'mike@example.com', plan: 'Business', status: 'active', nextBilling: '2024-02-20', revenue: 49 },
+      { id: '3', user: 'lisa@example.com', plan: 'Premium', status: 'canceled', nextBilling: null, revenue: 0 },
+      { id: '4', user: 'sarah@example.com', plan: 'Free', status: 'active', nextBilling: null, revenue: 0 },
+      { id: '5', user: 'david@example.com', plan: 'Premium', status: 'past_due', nextBilling: '2024-02-05', revenue: 12 },
     ];
     setSubscriptions(mockSubscriptions);
+    setLoading(false);
   }, []);
+
+  const handleCancelSubscription = async (subscriptionId: string) => {
+    if (!confirm('Are you sure you want to cancel this subscription?')) return;
+
+    // Update the subscription status
+    setSubscriptions(subscriptions.map(sub => 
+      sub.id === subscriptionId ? { ...sub, status: 'canceled', nextBilling: null } : sub
+    ));
+  };
+
+  const handleUpdateSubscription = async (subscriptionId: string, newPlan: string) => {
+    // Update the subscription plan
+    setSubscriptions(subscriptions.map(sub => 
+      sub.id === subscriptionId ? { ...sub, plan: newPlan } : sub
+    ));
+  };
 
   return (
     <div className="space-y-6">
-      {/* Subscription Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {Object.entries(PLAN_DEFINITIONS).map(([tier, plan]) => (
-          <Card key={tier}>
-            <Box p="4">
-              <div className="text-center">
-                <Text size="2" color="gray">{plan.name}</Text>
-                <Text size="6" weight="bold" className="block mt-1">
-                  {subscriptions.filter(s => s.plan.toLowerCase() === tier).length}
-                </Text>
-                <Text size="2" color="gray">subscribers</Text>
-              </div>
-            </Box>
-          </Card>
-        ))}
-      </div>
-
-      {/* Subscriptions Table */}
-      <Card>
-        <Box p="6">
-          <Heading size="5" className="mb-4">Active Subscriptions</Heading>
-          
-          <Table.Root>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>User</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Plan</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Next Billing</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Revenue</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
-              </Table.Row>
-            </Table.Header>
-            
-            <Table.Body>
-              {subscriptions.map((subscription) => (
-                <Table.Row key={subscription.id}>
-                  <Table.Cell>{subscription.user}</Table.Cell>
-                  <Table.Cell>
-                    <Badge color={subscription.plan === 'Premium' ? 'green' : 'purple'}>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium">Subscriptions Management</h3>
+        </div>
+        
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Billing</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center">Loading subscriptions...</td>
+              </tr>
+            ) : subscriptions.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center">No subscriptions found</td>
+              </tr>
+            ) : (
+              subscriptions.map((subscription) => (
+                <tr key={subscription.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-medium text-gray-900">{subscription.user}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      subscription.plan === 'Free' ? 'bg-gray-100 text-gray-800' :
+                      subscription.plan === 'Premium' ? 'bg-blue-100 text-blue-800' :
+                      subscription.plan === 'Business' ? 'bg-green-100 text-green-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}>
                       {subscription.plan}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge color={subscription.status === 'active' ? 'green' : 'gray'}>
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      subscription.status === 'active' ? 'bg-green-100 text-green-800' :
+                      subscription.status === 'canceled' ? 'bg-red-100 text-red-800' :
+                      subscription.status === 'past_due' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
                       {subscription.status}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>{subscription.nextBilling || 'N/A'}</Table.Cell>
-                  <Table.Cell>${subscription.revenue}/month</Table.Cell>
-                  <Table.Cell>
-                    <div className="flex gap-2">
-                      <Button size="1" variant="outline">
-                        <Edit size={12} />
-                      </Button>
-                      <Button size="1" variant="outline" color="red">
-                        Cancel
-                      </Button>
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {subscription.nextBilling || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${subscription.revenue}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <select
+                        value={subscription.plan}
+                        onChange={(e) => handleUpdateSubscription(subscription.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="Free">Free</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Business">Business</option>
+                        <option value="Enterprise">Enterprise</option>
+                      </select>
+                      {subscription.status === 'active' && (
+                        <button
+                          onClick={() => handleCancelSubscription(subscription.id)}
+                          className="text-red-600 hover:text-red-900 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      </Card>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
