@@ -85,7 +85,7 @@ export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
         size={size}
         disabled={disabled || loading}
         className={clsx(
-          'transition-all duration-200',
+          'transition-all duration-200 cursor-pointer',
           'focus:outline-none focus:ring-2 focus:ring-offset-2',
           // Intent-based styling with aggressive overrides
           intentClasses,

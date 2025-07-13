@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Button } from "@radix-ui/themes";
-import { ChevronLeft, ChevronRight, X, Trash2, Plus, Upload, RotateCcw } from "lucide-react";
+// import { Button } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
+import { ChevronLeft, ChevronRight, X, Trash2, Plus, RotateCcw } from "lucide-react";
 
 interface UploadedMediaPreviewProps {
 	post: any; // Using any for now to avoid complex type issues
@@ -14,15 +15,12 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [draggedItem, setDraggedItem] = useState<number | null>(null);
-	const [draggedOver, setDraggedOver] = useState<number | null>(null);
 	const [touchStart, setTouchStart] = useState<number | null>(null);
 	const [touchEnd, setTouchEnd] = useState<number | null>(null);
 	
 	// Get media from the Jazz post object
 	const media = post.variants[activeTab]?.media || [];
 	const mediaArray = Array.from(media);
-	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleDeleteClick = (index: number, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -70,10 +68,6 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 		setCurrentIndex((prevIndex) => (prevIndex === mediaArray.length - 1 ? 0 : prevIndex + 1));
 	};
 
-	const handleGoToSlide = (index: number) => {
-		setCurrentIndex(index);
-	};
-
 	// Touch handlers for mobile swipe
 	const handleTouchStart = (e: React.TouchEvent) => {
 		setTouchEnd(null);
@@ -97,47 +91,13 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 		}
 	};
 
-	// Drag and drop handlers
-	const handleDragStart = (e: React.DragEvent, index: number) => {
-		setDraggedItem(index);
-		e.dataTransfer.effectAllowed = 'move';
-	};
-
-	const handleDragOver = (e: React.DragEvent, index: number) => {
-		e.preventDefault();
-		setDraggedOver(index);
-	};
-
-	const handleDragLeave = () => {
-		setDraggedOver(null);
-	};
-
-	const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-		e.preventDefault();
-		
-		if (draggedItem !== null && draggedItem !== dropIndex) {
-			// Reorder items in the media array
-			const draggedMediaItem = mediaArray[draggedItem];
-			media.splice(draggedItem, 1);
-			media.splice(dropIndex, 0, draggedMediaItem);
-			
-			// Update current index if needed
-			if (currentIndex === draggedItem) {
-				setCurrentIndex(dropIndex);
-			}
-		}
-		
-		setDraggedItem(null);
-		setDraggedOver(null);
-	};
-
 	if (mediaArray.length === 0) return null;
 
 	return (
 		<>
-			<div className="relative group">
-				{/* Main carousel container */}
-				<div className="relative overflow-hidden rounded-xl shadow-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+			<div className="relative group max-w-2xl mx-auto">
+				{/* Simple carousel container with overlay controls */}
+				<div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
 					<div
 						className="flex transition-transform duration-300 ease-out"
 						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -146,151 +106,86 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 						onTouchEnd={handleTouchEnd}
 					>
 						{mediaArray.map((mediaItem: any, index) => (
-							<div 
-								key={index} 
-								className={`flex-shrink-0 w-full relative transition-all duration-200 ${
-									draggedOver === index ? 'scale-95 opacity-80' : ''
-								}`}
-								draggable
-								onDragStart={(e) => handleDragStart(e, index)}
-								onDragOver={(e) => handleDragOver(e, index)}
-								onDragLeave={handleDragLeave}
-								onDrop={(e) => handleDrop(e, index)}
-							>
-								<MediaComponent mediaItem={mediaItem} />
-								
-								{/* Enhanced delete button */}
-								<div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-									<Button
-										variant="soft"
-										size="1"
-										onClick={(e) => handleDeleteClick(index, e)}
-										className="!rounded-full !w-10 !h-10 bg-red-500/90 hover:bg-red-600 text-white shadow-lg backdrop-blur-sm border border-red-400/50 transition-all duration-200 hover:scale-110"
-										aria-label={`Delete media ${index + 1}`}
-									>
-										<Trash2 className="w-4 h-4" />
-									</Button>
-								</div>
+							<div key={index} className="flex-shrink-0 w-full">
+								{/* Create a positioning wrapper that contains both media and controls */}
+								<div className="relative w-full h-[400px]">
+									<MediaComponent mediaItem={mediaItem} />
+									
+									{/* Controls positioned absolutely within this wrapper */}
+									{index === currentIndex && (
+										<>
+											{/* Red danger delete button - top right corner */}
+											<button
+												onClick={(e) => handleDeleteClick(currentIndex, e)}
+												className="absolute top-2 right-2 rounded-full w-8 h-8 bg-red-600 hover:bg-red-700 text-white opacity-100 transition-all duration-200 z-50 flex items-center justify-center"
+												aria-label={`Delete current media`}
+												style={{ zIndex: 1000 }}
+											>
+												<Trash2 className="w-4 h-4" />
+											</button>
 
-								{/* Drag handle indicator */}
-								<div className="absolute top-3 left-3 opacity-0 group-hover:opacity-60 transition-opacity duration-200">
-									<div className="flex flex-col gap-1 p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-										<div className="w-1 h-1 bg-white rounded-full"></div>
-										<div className="w-1 h-1 bg-white rounded-full"></div>
-										<div className="w-1 h-1 bg-white rounded-full"></div>
-									</div>
-								</div>
-
-								{/* Media index indicator */}
-								<div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 text-white text-xs rounded-full backdrop-blur-sm">
-									{index + 1}
+											{/* Simple dots indicator - bottom center */}
+											{mediaArray.length > 1 && (
+												<div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50" style={{ zIndex: 1000 }}>
+													{mediaArray.map((_, dotIndex) => (
+														<button
+															key={dotIndex}
+															onClick={() => setCurrentIndex(dotIndex)}
+															className={`w-3 h-3 rounded-full transition-all duration-200 ${
+																currentIndex === dotIndex 
+																	? 'bg-white shadow-lg scale-110' 
+																	: 'bg-white/60 hover:bg-white/80 hover:scale-105'
+															}`}
+															aria-label={`Go to media ${dotIndex + 1}`}
+														/>
+													))}
+												</div>
+											)}
+										</>
+									)}
 								</div>
 							</div>
 						))}
 					</div>
 
-					{/* Navigation arrows */}
-					{mediaArray.length > 1 && (
-						<>
-							<Button
-								variant="soft"
-								size="1"
-								onClick={handlePrev}
-								className="absolute top-1/2 left-3 transform -translate-y-1/2 !rounded-full !w-12 !h-12 bg-white/20 hover:bg-white/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
-								aria-label="Previous media"
-							>
-								<ChevronLeft className="w-6 h-6" />
-							</Button>
-							<Button
-								variant="soft"
-								size="1"
-								onClick={handleNext}
-								className="absolute top-1/2 right-3 transform -translate-y-1/2 !rounded-full !w-12 !h-12 bg-white/20 hover:bg-white/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
-								aria-label="Next media"
-							>
-								<ChevronRight className="w-6 h-6" />
-							</Button>
-						</>
-					)}
 
-					{/* Progress bar */}
-					{mediaArray.length > 1 && (
-						<div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
-							<div 
-								className="h-full bg-lime-500 transition-all duration-300 ease-out"
-								style={{ width: `${((currentIndex + 1) / mediaArray.length) * 100}%` }}
-							/>
-						</div>
-					)}
 				</div>
 
-				{/* Enhanced thumbnail indicators */}
-				{mediaArray.length > 1 && (
-					<div className="flex justify-center gap-2 mt-4 px-4">
-						{mediaArray.map((mediaItem: any, index) => (
-							<button
-								key={index}
-								onClick={() => handleGoToSlide(index)}
-								className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-									currentIndex === index 
-										? 'border-lime-500 shadow-lg shadow-lime-500/50 scale-110' 
-										: 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
-								}`}
-								aria-label={`Go to media ${index + 1}`}
-							>
-								<MediaThumbnail mediaItem={mediaItem} />
-								{currentIndex === index && (
-									<div className="absolute inset-0 bg-lime-500/20 backdrop-blur-sm" />
-								)}
-							</button>
-						))}
-					</div>
-				)}
-
-				{/* Add more media button */}
+				{/* Simple add more button */}
 				{handleImageUpload && (
-					<div className="mt-4 flex justify-center">
+					<div className="mt-3 flex justify-center">
 						<Button
 							variant="outline"
 							size="2"
 							onClick={handleImageUpload}
-							className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+							className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-lime-600 hover:border-lime-500 transition-colors duration-200"
 						>
-							<Plus className="w-5 h-5" />
-							Add More Media
+							<Plus className="w-4 h-4" />
+							Add More
 						</Button>
 					</div>
 				)}
 			</div>
 
-			{/* Enhanced Delete Confirmation Modal */}
+			{/* Simplified Delete Confirmation Modal */}
 			{showDeleteConfirm && (
-				<div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-					<div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all duration-300 scale-100">
+				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
 						<div className="text-center">
-							<div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-								<Trash2 className="w-8 h-8 text-red-500" />
+							<div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+								<Trash2 className="w-6 h-6 text-red-500" />
 							</div>
-							<h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Media</h3>
+							<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Media</h3>
 							<p className="text-gray-600 dark:text-gray-400 mb-6">
-								Are you sure you want to delete this media? This action cannot be undone.
+								Are you sure you want to delete this media?
 							</p>
-							
-							{/* Preview of item being deleted */}
-							{deleteIndex !== null && mediaArray[deleteIndex] && (
-								<div className="mb-6">
-									<div className="w-24 h-24 mx-auto rounded-lg overflow-hidden border-2 border-red-200 dark:border-red-800">
-										<MediaThumbnail mediaItem={mediaArray[deleteIndex] as any} />
-									</div>
-								</div>
-							)}
 							
 							<div className="flex gap-3 justify-center">
 								<Button
 									variant="outline"
 									onClick={cancelDelete}
 									disabled={isDeleting}
-									className="px-6 py-2 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+									className="px-4 py-2"
 								>
 									Cancel
 								</Button>
@@ -298,7 +193,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 									variant="solid"
 									onClick={confirmDelete}
 									disabled={isDeleting}
-									className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200"
+									className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white"
 								>
 									{isDeleting ? (
 										<>
@@ -306,10 +201,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 											Deleting...
 										</>
 									) : (
-										<>
-											<Trash2 className="w-4 h-4 mr-2" />
-											Delete
-										</>
+										'Delete'
 									)}
 								</Button>
 							</div>
@@ -318,69 +210,6 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 				</div>
 			)}
 		</>
-	);
-};
-
-const MediaThumbnail = ({ mediaItem }: { mediaItem: any }) => {
-	const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-	const [thumbnailLoading, setThumbnailLoading] = useState(true);
-	const [thumbnailError, setThumbnailError] = useState(false);
-
-	useEffect(() => {
-		if (!mediaItem) return;
-
-		const loadMediaUrl = async () => {
-			setThumbnailLoading(true);
-			setThumbnailError(false);
-			
-			try {
-				let url = null;
-				
-				if (mediaItem.type === "image" && mediaItem.image) {
-					url = await extractMediaUrl(mediaItem.image);
-				} else if (mediaItem.type === "video" && mediaItem.video) {
-					url = await extractMediaUrl(mediaItem.video);
-				}
-				
-				if (url) {
-					setThumbnailUrl(url);
-				} else {
-					setThumbnailError(true);
-				}
-			} catch (err) {
-				setThumbnailError(true);
-			} finally {
-				setThumbnailLoading(false);
-			}
-		};
-
-		loadMediaUrl();
-	}, [mediaItem]);
-
-	if (thumbnailLoading) {
-		return (
-			<div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-				<div className="w-4 h-4 border-2 border-lime-500 border-t-transparent rounded-full animate-spin"></div>
-			</div>
-		);
-	}
-
-	if (thumbnailError || !thumbnailUrl) {
-		return (
-			<div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-				<X className="w-4 h-4 text-gray-500" />
-			</div>
-		);
-	}
-
-	return (
-		<Image
-			src={thumbnailUrl}
-			alt="Media thumbnail"
-			fill
-			className="object-cover"
-			sizes="64px"
-		/>
 	);
 };
 
@@ -422,13 +251,10 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (loading) {
 		return (
-			<div className="w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+			<div className="w-full h-[400px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
 				<div className="text-center">
-					<div className="w-16 h-16 border-4 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-					<p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Loading media...</p>
-					<div className="mt-3 w-32 h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
-						<div className="h-full bg-lime-500 rounded-full animate-pulse" style={{ width: '70%' }} />
-					</div>
+					<div className="w-8 h-8 border-2 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+					<p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
 				</div>
 			</div>
 		);
@@ -436,15 +262,10 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (error || !imageUrl) {
 		return (
-			<div className="w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-				<div className="text-center p-8">
-					<div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 mx-auto">
-						<X className="w-10 h-10 text-red-500" />
-					</div>
-					<p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Failed to load media</p>
-					<p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-						{mediaItem?.type === 'image' ? 'Image' : 'Video'} unavailable
-					</p>
+			<div className="w-full h-[400px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+				<div className="text-center">
+					<X className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+					<p className="text-gray-400 text-sm">Failed to load media</p>
 				</div>
 			</div>
 		);
@@ -452,43 +273,36 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (mediaItem?.type === 'image') {
 		return (
-			<div className="relative w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+			<div className="relative w-full h-[400px]">
 				<Image
 					src={imageUrl}
 					alt={mediaItem.alt?.toString() || "uploaded image"}
 					fill
 					sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-					className="object-cover transition-transform duration-300 hover:scale-105"
+					className="object-cover"
 					onError={() => setError(true)}
 					priority
 				/>
-				{/* Subtle overlay gradient */}
-				<div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
 			</div>
 		);
 	} else if (mediaItem?.type === 'video') {
 		return (
-			<div className="relative w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+			<div className="relative w-full h-[400px]">
 				<video
 					src={imageUrl}
 					controls
 					className="w-full h-full object-cover"
 					onError={() => setError(true)}
 				/>
-				{/* Subtle overlay gradient */}
-				<div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-			<div className="text-center p-8">
-				<div className="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 mx-auto">
-					<X className="w-10 h-10 text-gray-500" />
-				</div>
-				<p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Unsupported media type</p>
-				<p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
+		<div className="w-full h-[400px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+			<div className="text-center">
+				<X className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+				<p className="text-gray-400 text-sm">Unsupported media type</p>
 			</div>
 		</div>
 	);
