@@ -34,6 +34,9 @@ export default function AccountGroupPage() {
 	const [previewAccount, setPreviewAccount] = useState<any>(null);
 	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
 	
+	// Posts filter state
+	const [postsFilter, setPostsFilter] = useState<'all' | 'draft' | 'scheduled' | 'published'>('all');
+	
 	// Get account group ID from params
 	const accountGroupId = params.groupId as string;
 	
@@ -245,47 +248,151 @@ export default function AccountGroupPage() {
 								</Button>
 							</div>
 						) : (
-							<div className="space-y-4">
-								{posts.map((post: any, index: number) => {
-									const postId = post.id || post.variants?.base?.id || index;
+							<div className="space-y-6">
+								{/* Posts Header with Filters */}
+								<div className="flex items-center justify-between">
+									<div className="flex items-center gap-4">
+										<h2 className="text-xl font-semibold text-gray-900">Posts</h2>
+										<div className="text-sm text-gray-500">
+											{(() => {
+												const filterCounts = {
+													all: posts.length,
+													draft: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'draft').length,
+													scheduled: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'scheduled').length,
+													published: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'published').length
+												};
+												return `${filterCounts[postsFilter]} ${postsFilter === 'all' ? 'total' : postsFilter} post${filterCounts[postsFilter] !== 1 ? 's' : ''}`;
+											})()}
+										</div>
+									</div>
 									
-									// Handle collaborative vs legacy text access
-									let postTitle = "Untitled Post";
-									let postContent = "";
-									
-									if (post.title) {
-										// For Jazz posts, title is a collaborative object
-										postTitle = typeof post.title === 'string' ? post.title : post.title.toString();
-									}
-									
-									if (post.content) {
-										// Legacy posts might have direct content
-										postContent = post.content;
-									} else if (post.variants?.base?.text) {
-										// For Jazz posts, text is a collaborative object
-										postContent = typeof post.variants.base.text === 'string' 
-											? post.variants.base.text 
-											: post.variants.base.text.toString();
-									}
-									
-									const postDate = post.createdAt || post.variants?.base?.postDate || new Date();
-									
-									return (
-										<Link
-											key={postId}
-											href={`/account-group/${accountGroup.id}/post/${postId}`}
-											className="flex gap-4 border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-										>
-											<div className="flex-1">
-												<h3 className="font-semibold mb-1">{postTitle}</h3>
-												<p className="text-gray-600 line-clamp-2">{postContent}</p>
-												<div className="text-xs text-gray-500 mt-2">
-													{new Date(postDate).toLocaleDateString()}
-												</div>
-											</div>
-										</Link>
-									);
-								})}
+									{/* Filter Controls */}
+									<div className="flex items-center gap-2">
+										{[
+											{ key: 'all', label: 'All', icon: List },
+											{ key: 'draft', label: 'Drafts', icon: MessageCircle },
+											{ key: 'scheduled', label: 'Scheduled', icon: Calendar },
+											{ key: 'published', label: 'Published', icon: Eye }
+										].map(({ key, label, icon: Icon }) => (
+											<Button
+												key={key}
+												variant={postsFilter === key ? 'solid' : 'outline'}
+												size="1"
+												onClick={() => setPostsFilter(key as any)}
+												className={postsFilter === key ? 'bg-lime-600 text-white' : ''}
+											>
+												<Icon className="w-3 h-3 mr-1" />
+												{label}
+											</Button>
+										))}
+									</div>
+								</div>
+
+								{/* Posts Grid */}
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+									{posts
+										.filter(post => {
+											if (postsFilter === 'all') return true;
+											const postStatus = post.variants?.base?.status || post.status || 'draft';
+											return postStatus === postsFilter;
+										})
+										.map((post: any, index: number) => {
+											const postId = post.id || post.variants?.base?.id || index;
+											
+											// Extract post data
+											const postTitle = post.title?.toString() || post.title || "Untitled Post";
+											const postContent = post.variants?.base?.text?.toString() || 
+															  post.variants?.base?.text || 
+															  post.content || 
+															  "";
+											const postStatus = post.variants?.base?.status || post.status || 'draft';
+											const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
+											const hasMedia = post.variants?.base?.media && post.variants.base.media.length > 0;
+											
+											// Status styling
+											const getStatusColor = (status: string) => {
+												switch (status) {
+													case 'published': return 'bg-green-100 text-green-800';
+													case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+													case 'draft': return 'bg-gray-100 text-gray-800';
+													default: return 'bg-gray-100 text-gray-800';
+												}
+											};
+											
+											const getStatusIcon = (status: string) => {
+												switch (status) {
+													case 'published': return '✓';
+													case 'scheduled': return '⏰';
+													case 'draft': return '📝';
+													default: return '📝';
+												}
+											};
+											
+											return (
+												<Link
+													key={postId}
+													href={`/account-group/${accountGroup.id}/post/${postId}`}
+													className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-lime-300 group"
+												>
+													{/* Header with status and date */}
+													<div className="flex items-center justify-between mb-3">
+														<div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(postStatus)}`}>
+															{getStatusIcon(postStatus)} {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+														</div>
+														<div className="text-xs text-gray-500">
+															{new Date(postDate).toLocaleDateString()}
+														</div>
+													</div>
+													
+													{/* Title */}
+													<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-lime-600 transition-colors">
+														{postTitle}
+													</h3>
+													
+													{/* Content Preview */}
+													<p className="text-sm text-gray-600 mb-3 line-clamp-3">
+														{postContent || "No content"}
+													</p>
+													
+													{/* Footer with media indicator and platforms */}
+													<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+														<div className="flex items-center gap-2">
+															{hasMedia && (
+																<div className="flex items-center gap-1 text-xs text-gray-500">
+																	<span>📎</span>
+																	<span>{post.variants.base.media.length} media</span>
+																</div>
+															)}
+														</div>
+														
+														<div className="flex items-center gap-1">
+															<MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
+															<span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
+														</div>
+													</div>
+												</Link>
+											);
+										})}
+								</div>
+								
+								{/* Empty state for filtered results */}
+								{posts.filter(post => {
+									if (postsFilter === 'all') return true;
+									const postStatus = post.variants?.base?.status || post.status || 'draft';
+									return postStatus === postsFilter;
+								}).length === 0 && postsFilter !== 'all' && (
+									<div className="text-center py-8">
+										<div className="text-gray-400 mb-2">
+											<MessageCircle className="w-8 h-8 mx-auto mb-2" />
+										</div>
+										<p className="text-gray-500">No {postsFilter} posts found</p>
+										<p className="text-sm text-gray-400 mt-1">
+											{postsFilter === 'draft' && "Create a new post to get started"}
+											{postsFilter === 'scheduled' && "Schedule some posts for future publishing"}
+											{postsFilter === 'published' && "Publish some posts to see them here"}
+										</p>
+									</div>
+								)}
 							</div>
 						)}
 					</Tabs.Content>
