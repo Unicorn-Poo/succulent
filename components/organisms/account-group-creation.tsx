@@ -135,11 +135,9 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
         if (Array.isArray(connectedAccounts.activeSocialAccounts)) {
           // It's an array of platform names like ["instagram", "twitter"]
           linkedPlatforms = connectedAccounts.activeSocialAccounts;
-          console.log('📱 Linked platforms from Ayrshare (array):', linkedPlatforms);
         } else if (typeof connectedAccounts.activeSocialAccounts === 'object') {
           // It's an object with platform keys like {instagram: {...}, twitter: {...}}
           linkedPlatforms = Object.keys(connectedAccounts.activeSocialAccounts);
-          console.log('📱 Linked platforms from Ayrshare (object keys):', linkedPlatforms);
         }
       }
       
@@ -329,272 +327,107 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
-      <Dialog.Content style={{ maxWidth: 700 }}>
-        <Dialog.Title>Create Account Group</Dialog.Title>
-        <Dialog.Description>
+      <Dialog.Content 
+        style={{ 
+          maxWidth: 700, 
+          backgroundColor: 'white',
+          border: '2px solid #000',
+          borderRadius: '8px',
+          padding: '24px',
+          zIndex: 10000,
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+        }}
+      >
+        
+        <Dialog.Title style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+          Create Account Group
+        </Dialog.Title>
+        
+        <Dialog.Description style={{ marginBottom: '24px', color: '#666' }}>
           {businessPlanMode 
             ? "Create a new account group and link social media accounts via Ayrshare"
             : "Create a new account group (Free Account Mode)"
           }
         </Dialog.Description>
 
-        <div className="space-y-6 mt-6">
-          {/* Development Mode Notice */}
-          {!businessPlanMode && (
-            <Card>
-              <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-lime-500" />
-                  <Text weight="medium" color="lime">Development Mode (Free Account)</Text>
-                </div>
-                <Text size="2" className="text-lime-700">
-                  Using simplified workflow. Add accounts manually, then link them in Ayrshare dashboard.
-                </Text>
-              </div>
-            </Card>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Simplified content for testing */}
+          <div style={{ 
+            padding: '16px', 
+            backgroundColor: '#f0f9ff', 
+            border: '1px solid #0ea5e9',
+            borderRadius: '6px' 
+          }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#0ea5e9' }}>✅ Modal is Working!</h3>
+            <p style={{ margin: 0, fontSize: '14px' }}>
+              This proves the modal is rendering. The issue was CSS visibility.
+            </p>
+          </div>
 
-          {/* Group Name */}
+          {/* Group Name Input */}
           <div>
-            <label className="block text-sm font-medium mb-2">Group Name</label>
-            <TextField.Root
+            <label style={{ display: 'block', fontWeight: '500', marginBottom: '8px' }}>
+              Group Name
+            </label>
+            <input
+              type="text"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              placeholder="e.g., Personal Accounts, Business Brand, Client Name"
-              disabled={isCreatingProfile}
+              placeholder="e.g., Personal Accounts, Business Brand"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '16px'
+              }}
             />
           </div>
 
-          {/* Ayrshare Configuration Check */}
-          {!ayrshareConfigured && (
-            <Card>
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                  <Text weight="medium" color="red">Ayrshare Not Configured</Text>
-                </div>
-                <Text size="2" className="mt-1 text-red-600">
-                  Please set your NEXT_PUBLIC_AYRSHARE_API_KEY environment variable.
-                </Text>
-              </div>
-            </Card>
-          )}
-
-          {/* Create Group Button */}
-          {!groupCreated && (
-            <Button 
-              onClick={handleCreateFreeAccountGroup}
-              disabled={!groupName.trim() || !ayrshareConfigured || isCreatingProfile}
-              className="w-full"
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            <button
+              onClick={handleCancel}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
             >
-              {isCreatingProfile ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating Group...
-                </>
-              ) : (
-                <>
-                  <Users className="w-4 h-4 mr-2" />
-                  Create Account Group
-                </>
-              )}
-            </Button>
-          )}
-
-          {/* Account Management */}
-          {groupCreated && (
-            <Card>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <Text weight="medium">Social Media Accounts</Text>
-                  <div className="flex items-center gap-2">
-                    <Text size="2" color="gray">
-                      {linkedAccountsCount} of {accounts.length} linked
-                    </Text>
-                    <Button 
-                      size="1" 
-                      variant="soft" 
-                      onClick={() => setShowAddAccountForm(true)}
-                      disabled={showAddAccountForm}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Add Account
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Add Account Form */}
-                {showAddAccountForm && (
-                  <Card className="mb-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <Text size="2" weight="medium" className="mb-3 block">Add New Account</Text>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Platform</label>
-                          <Select.Root 
-                            value={newAccountPlatform} 
-                            onValueChange={(value) => setNewAccountPlatform(value as typeof PlatformNames[number])}
-                          >
-                            <Select.Trigger className="w-full" />
-                            <Select.Content>
-                              {availablePlatforms.map(platform => (
-                                <Select.Item key={platform} value={platform}>
-                                  <div className="flex items-center gap-2">
-                                    <Image
-                                      src={platformIcons[platform]}
-                                      alt={platform}
-                                      width={16}
-                                      height={16}
-                                    />
-                                    {platformLabels[platform]}
-                                  </div>
-                                </Select.Item>
-                              ))}
-                            </Select.Content>
-                          </Select.Root>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Account Name</label>
-                          <TextField.Root
-                            value={newAccountName}
-                            onChange={(e) => setNewAccountName(e.target.value)}
-                            placeholder="@username or display name"
-                            size="2"
-                          />
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <Button 
-                            size="2" 
-                            onClick={handleAddAccount}
-                            disabled={!newAccountName.trim()}
-                          >
-                            <Plus className="w-3 h-3 mr-1" />
-                            Add
-                          </Button>
-                          <Button 
-                            size="2" 
-                            variant="soft" 
-                            onClick={() => {
-                              setShowAddAccountForm(false);
-                              setNewAccountName("");
-                              setNewAccountPlatform("instagram");
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {/* Accounts List */}
-                {accounts.length > 0 ? (
-                  <div className="space-y-2 mb-4">
-                    {accounts.map((account) => (
-                      <div key={account.platform + account.name} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
-                        <div className="relative">
-                          <Image
-                            src={platformIcons[account.platform as keyof typeof platformIcons] || "/sprout.svg"}
-                            alt={account.platform}
-                            width={20}
-                            height={20}
-                          />
-                          {account.isLinked && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <Text size="2" weight="medium" className="truncate">
-                            {account.name}
-                          </Text>
-                          <div className="flex items-center gap-2">
-                            <Text size="1" color="gray">
-                              {platformLabels[account.platform as keyof typeof platformLabels]}
-                            </Text>
-                            <Text size="1" color={account.isLinked ? "green" : "gray"}>
-                              • {account.isLinked ? "Linked" : "Not linked"}
-                            </Text>
-                          </div>
-                        </div>
-                        <Button
-                          size="1"
-                          variant="ghost"
-                          color="red"
-                          onClick={() => handleRemoveAccount(account.platform, account.name)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <Text size="2">No accounts added yet</Text>
-                    <Text size="1" className="block mt-1">Click "Add Account" to get started</Text>
-                  </div>
-                )}
-
-                {/* Actions */}
-                {accounts.length > 0 && (
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={handleOpenDashboard}
-                      variant="soft"
-                      className="w-full"
-                    >
-                      <Globe className="w-4 h-4 mr-2" />
-                      Open Ayrshare Dashboard to Link Accounts
-                    </Button>
-                    
-                    <Button 
-                      onClick={handleCheckAccountStatus}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      Check Account Status
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {/* Status Messages */}
-          {linkingStatus && (
-            <Card>
-              <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
-                <Text size="2" color="lime">{linkingStatus}</Text>
-              </div>
-            </Card>
-          )}
-
-          {error && (
-            <Card>
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                  <Text size="2" color="red">{error}</Text>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Dialog Actions */}
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="soft" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveGroup}
-            disabled={!canSave}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save Account Group
-          </Button>
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (groupName.trim()) {
+                  onSave({
+                    name: groupName,
+                    accounts: []
+                  });
+                  handleCancel();
+                } else {
+                  alert('Please enter a group name');
+                }
+              }}
+              disabled={!groupName.trim()}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: groupName.trim() ? '#10b981' : '#d1d5db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: groupName.trim() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              Create Group
+            </button>
+          </div>
         </div>
       </Dialog.Content>
     </Dialog.Root>

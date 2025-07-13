@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
 import { useState } from "react";
-import { Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
+import { Dialog, TextField, TextArea, Text, Tabs, Card } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
 import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { MyAppAccount } from "@/app/schema";
 import AccountAnalyticsOverview from "@/components/organisms/account-analytics-overview";
 import AccountGroupTools from "@/components/organisms/account-group-tools";
 import { GelatoSettings } from "@/components/gelato-settings";
+import { CollaborationSettings } from "@/components/organisms/collaboration-settings";
 import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
@@ -23,6 +24,7 @@ export default function AccountGroupPage() {
 	const params = useParams();
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState("posts");
+	const [showCollaborationSettings, setShowCollaborationSettings] = useState(false);
 	
 	// Create post dialog state
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -197,7 +199,7 @@ export default function AccountGroupPage() {
 								</p>
 							</div>
 						</div>
-						<Button onClick={() => setShowCreateDialog(true)} className="bg-lime-600 hover:bg-lime-700 text-white">
+						<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
 							<Plus className="w-4 h-4 mr-2" />
 							Create Post
 						</Button>
@@ -242,7 +244,7 @@ export default function AccountGroupPage() {
 									<p className="text-lg mb-2">No posts yet</p>
 									<p className="text-sm">Create your first post to get started!</p>
 								</div>
-								<Button onClick={() => setShowCreateDialog(true)} className="bg-lime-600 hover:bg-lime-700 text-white">
+								<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
 									<Plus className="w-4 h-4 mr-2" />
 									Create First Post
 								</Button>
@@ -277,9 +279,9 @@ export default function AccountGroupPage() {
 											<Button
 												key={key}
 												variant={postsFilter === key ? 'solid' : 'outline'}
+												intent={postsFilter === key ? 'primary' : 'secondary'}
 												size="1"
 												onClick={() => setPostsFilter(key as any)}
-												className={postsFilter === key ? 'bg-lime-600 text-white' : ''}
 											>
 												<Icon className="w-3 h-3 mr-1" />
 												{label}
@@ -421,9 +423,10 @@ export default function AccountGroupPage() {
 						<div className="space-y-6">
 							<div className="flex items-center justify-between">
 								<Text size="5" weight="bold">Connected Accounts</Text>
-																<Button
+								<Button
 									onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}
-									className="bg-green-600 hover:bg-green-700 text-white"
+									intent="success"
+									variant="solid"
 								>
 									Link More Accounts
 								</Button>
@@ -436,7 +439,7 @@ export default function AccountGroupPage() {
 									<Text size="2" color="gray" className="mb-6 block">
 										Connect your social media accounts to start posting and managing content.
 									</Text>
-									<Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} className="bg-green-600 hover:bg-green-700 text-white">
+									<Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} intent="success" variant="solid">
 										Connect Accounts
 									</Button>
 								</div>
@@ -511,6 +514,57 @@ export default function AccountGroupPage() {
 								<Text size="5" weight="bold">Account Group Settings</Text>
 							</div>
 
+							{/* Collaboration Settings */}
+							{jazzAccountGroup && (
+								<Card className="p-6">
+									<div className="flex items-center justify-between mb-4">
+										<div>
+											<Text size="4" weight="bold" className="mb-2 block">
+												Team Collaboration
+											</Text>
+											<Text size="2" color="gray">
+												Invite team members to collaborate on this account group
+											</Text>
+										</div>
+										<Button
+											onClick={() => setShowCollaborationSettings(true)}
+											variant="outline"
+											className="flex items-center gap-2"
+										>
+											<Users className="w-4 h-4" />
+											Manage Team
+										</Button>
+									</div>
+									
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+										<div className="bg-gray-50 p-4 rounded-lg">
+											<Text size="2" weight="medium" className="block mb-1">
+												Members
+											</Text>
+											<Text size="1" color="gray">
+												3 collaborators
+											</Text>
+										</div>
+										<div className="bg-gray-50 p-4 rounded-lg">
+											<Text size="2" weight="medium" className="block mb-1">
+												Pending Invites
+											</Text>
+											<Text size="1" color="gray">
+												1 invitation sent
+											</Text>
+										</div>
+										<div className="bg-gray-50 p-4 rounded-lg">
+											<Text size="2" weight="medium" className="block mb-1">
+												Role
+											</Text>
+											<Text size="1" color="gray">
+												Owner
+											</Text>
+										</div>
+									</div>
+								</Card>
+							)}
+
 							{/* Gelato Integration */}
 							{jazzAccountGroup && (
 								<GelatoSettings accountGroup={jazzAccountGroup as any} />
@@ -535,25 +589,25 @@ export default function AccountGroupPage() {
 				<Dialog.Content style={{ maxWidth: 500 }}>
 					<Dialog.Title>Create New Post</Dialog.Title>
 					<Dialog.Description>
-						Create a new post for this account group. You can customize it for different platforms later.
+						Create a new post for your social media accounts
 					</Dialog.Description>
 
-					<div className="space-y-4 mt-6">
+					<div className="space-y-4 mt-4">
 						<div>
 							<label className="block text-sm font-medium mb-2">Post Title</label>
 							<TextField.Root
 								value={newPostTitle}
 								onChange={(e) => setNewPostTitle(e.target.value)}
-								placeholder="Enter a title for your post..."
+								placeholder="Enter post title..."
 							/>
 						</div>
 						
 						<div>
-							<label className="block text-sm font-medium mb-2">Content (Optional)</label>
+							<label className="block text-sm font-medium mb-2">Content</label>
 							<TextArea
 								value={newPostText}
 								onChange={(e) => setNewPostText(e.target.value)}
-								placeholder="Start writing your post content..."
+								placeholder="What's on your mind?"
 								rows={4}
 							/>
 						</div>
@@ -563,119 +617,48 @@ export default function AccountGroupPage() {
 						<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
 							Cancel
 						</Button>
-										<Button onClick={handleCreatePost} disabled={!newPostTitle.trim()} className="bg-lime-600 hover:bg-lime-700 text-white disabled:bg-gray-400">
-					Create Post
-				</Button>
-					</div>
-				</Dialog.Content>
-			</Dialog.Root>
-			
-			{/* Account Preview Modal */}
-			<Dialog.Root open={showPreview} onOpenChange={setShowPreview}>
-				<Dialog.Content style={{ maxWidth: '90vw', maxHeight: '90vh', width: '1200px' }}>
-					<div className="flex items-center justify-between mb-4">
-						<Dialog.Title>
-							{previewAccount?.name} - {previewMode === 'feed' ? 'Feed View' : 'Profile View'}
-						</Dialog.Title>
-						<Button variant="ghost" size="1" onClick={() => setShowPreview(false)}>
-							<MessageCircle className="w-4 h-4" />
+						<Button onClick={handleCreatePost} className="bg-lime-600 hover:bg-lime-700 text-white">
+							Create Post
 						</Button>
 					</div>
+				</Dialog.Content>
+			</Dialog.Root>
+
+			{/* Preview Modal */}
+			<Dialog.Root open={showPreview} onOpenChange={setShowPreview}>
+				<Dialog.Content style={{ maxWidth: 600 }}>
+					<Dialog.Title>Preview Content</Dialog.Title>
 					
-					<div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-						{previewAccount && previewMode === 'profile' ? (
-							<PlatformProfileView
+					{previewAccount && (
+						<div className="mt-4">
+							<PlatformPreview
+								content={previewAccount.name}
+								platform={previewAccount.platform}
 								account={previewAccount}
-								posts={getPostsArray()}
-								onBack={() => setShowPreview(false)}
-								accountGroupId={accountGroup.id}
-								onCreatePost={(platform) => {
-									setShowPreview(false);
-									setShowCreateDialog(true);
-								}}
+								timestamp={new Date()}
+								media={[]}
 							/>
-						) : previewAccount && previewMode === 'feed' ? (
-							<div className="space-y-4">
-								<div className="text-center mb-6">
-									<div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-										<div className="w-8 h-8 bg-lime-100 rounded-lg flex items-center justify-center">
-											<Text size="2" weight="bold">{previewAccount.platform?.charAt(0).toUpperCase()}</Text>
-										</div>
-										<div>
-											<Text size="3" weight="medium">{previewAccount.name}</Text>
-											<Text size="2" color="gray" className="capitalize">{previewAccount.platform} Feed</Text>
-										</div>
-									</div>
-								</div>
-								
-								{/* Sample posts for feed preview */}
-								<div className="max-w-md mx-auto space-y-4">
-									{getPostsArray().length > 0 ? (
-										getPostsArray().slice(0, 3).map((post: any) => (
-											<PlatformPreview
-												key={post.id}
-												platform={previewAccount.platform}
-												content={post.variants?.base?.text || post.content || "Sample post content"}
-												account={{
-													id: previewAccount.id || previewAccount._id,
-													name: previewAccount.name,
-													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
-													displayName: previewAccount.name,
-													platform: previewAccount.platform,
-													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
-													apiUrl: previewAccount.apiUrl || '',
-													url: previewAccount.url || ''
-												}}
-												timestamp={new Date()}
-												media={post.variants?.base?.media || []}
-											/>
-										))
-									) : (
-										<div className="space-y-4">
-											<PlatformPreview
-												platform={previewAccount.platform}
-												content="🌱 Welcome to my feed! This is how your posts will appear to your followers."
-												account={{
-													id: previewAccount.id || previewAccount._id,
-													name: previewAccount.name,
-													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
-													displayName: previewAccount.name,
-													platform: previewAccount.platform,
-													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
-													apiUrl: previewAccount.apiUrl || '',
-													url: previewAccount.url || ''
-												}}
-												timestamp={new Date()}
-												media={[]}
-											/>
-											<PlatformPreview
-												platform={previewAccount.platform}
-												content="📱 This is a preview of how your content will look on this platform. Create your first post to see it here!"
-												account={{
-													id: previewAccount.id || previewAccount._id,
-													name: previewAccount.name,
-													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
-													displayName: previewAccount.name,
-													platform: previewAccount.platform,
-													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
-													apiUrl: previewAccount.apiUrl || '',
-													url: previewAccount.url || ''
-												}}
-												timestamp={new Date()}
-												media={[]}
-											/>
-										</div>
-									)}
-								</div>
-							</div>
-						) : (
-							<div className="text-center py-12">
-								<Text size="4" color="gray">No preview available</Text>
-							</div>
-						)}
+						</div>
+					)}
+					
+					<div className="flex justify-end gap-2 mt-6">
+						<Button onClick={() => setPreviewMode(previewMode === 'feed' ? 'profile' : 'feed')}>
+							Switch to {previewMode === 'feed' ? 'Profile' : 'Feed'} View
+						</Button>
+						<Button variant="soft" onClick={() => setShowPreview(false)}>
+							Close
+						</Button>
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>
+
+			{/* Collaboration Settings Dialog */}
+			{showCollaborationSettings && jazzAccountGroup && (
+				<CollaborationSettings 
+					accountGroup={jazzAccountGroup as any}
+					onClose={() => setShowCollaborationSettings(false)}
+				/>
+			)}
 		</div>
 	);
 }

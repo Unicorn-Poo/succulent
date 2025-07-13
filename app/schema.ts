@@ -361,42 +361,62 @@ export const CompanyAdminGroup = co.map({
   })),
 });
 
+// Collaboration schemas for team management
+export const CollaboratorRole = z.enum(["owner", "admin", "editor", "viewer"]);
+export type CollaboratorRole = z.infer<typeof CollaboratorRole>;
+
+export const AccountCollaborator = co.map({
+  account: co.account(),
+  role: CollaboratorRole,
+  addedAt: z.date(),
+  addedBy: co.account(),
+  permissions: co.map({
+    canCreatePosts: z.boolean(),
+    canEditPosts: z.boolean(),
+    canDeletePosts: z.boolean(),
+    canManageAccounts: z.boolean(),
+    canInviteOthers: z.boolean(),
+    canManageSubscription: z.boolean(),
+  }),
+});
+
 export const CollaborationGroup = co.map({
-  name: co.plainText(),
-  description: co.plainText(),
+  name: z.string(),
+  description: z.optional(z.string()),
   createdAt: z.date(),
   updatedAt: z.date(),
   settings: co.map({
     allowPosting: z.boolean(),
-    allowEditing: z.boolean(),
-    requireApproval: z.boolean(),
+    allowAnalytics: z.boolean(),
+    allowAccountManagement: z.boolean(),
+    requireApprovalForPosts: z.boolean(),
   }),
-  members: co.list(co.map({
-    accountId: z.string(),
-    role: z.enum(["owner", "admin", "editor", "viewer"]),
-    joinedAt: z.date(),
-  })),
-  // Shared content
-  sharedPosts: co.list(Post),
-  sharedAccountGroups: co.list(AccountGroup),
+  collaborators: co.list(AccountCollaborator),
+  invitedEmails: co.list(z.string()), // Track pending invites
 });
 
-// Update UserProfile to include admin status
-export const UserProfile = co.map({
-  name: co.plainText(),
-  email: co.plainText(),
-  avatar: z.optional(co.plainText()),
-  bio: z.optional(co.plainText()),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  subscription: Subscription,
+// Update UserProfile to work with Jazz's profile system
+export const SucculentProfile = co.profile({
+  name: z.string(),
+  email: z.optional(z.string()),
+  avatar: z.optional(z.string()),
+  bio: z.optional(z.string()),
+  createdAt: z.optional(z.date()),
+  updatedAt: z.optional(z.date()),
+  
+  // Subscription information  
+  subscription: z.optional(Subscription),
+  
   // Admin privileges
-  isSystemAdmin: z.boolean(),
-  adminGroups: co.list(CompanyAdminGroup),
+  isSystemAdmin: z.optional(z.boolean()),
+  adminGroups: z.optional(co.list(CompanyAdminGroup)),
+  
   // Collaboration
-  collaborationGroups: co.list(CollaborationGroup),
-  ownedGroups: co.list(CollaborationGroup),
+  collaborationGroups: z.optional(co.list(CollaborationGroup)),
+  ownedGroups: z.optional(co.list(CollaborationGroup)),
 });
+
+export type SucculentProfile = co.loaded<typeof SucculentProfile>;
 
 // Company root for system-wide management
 export const CompanyRoot = co.map({
@@ -438,110 +458,28 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 }>;
 
 export const MyAppAccount = co.account({
-	root: AccountRoot,
-	profile: UserProfile,
-}).withMigration(account => {
+  root: AccountRoot,
+  profile: SucculentProfile,
+}).withMigration((account, creationProps?: { name: string }) => {
   if (account.root === undefined) {
+    // Create a group for the account root
+    const rootGroup = Group.create();
+    
     account.root = AccountRoot.create({
-      accountGroups: co.list(AccountGroup).create([])
-    })
+      accountGroups: co.list(AccountGroup).create([], rootGroup),
+    }, rootGroup);
   }
-  
-  // Initialize user profile with default subscription
+
   if (account.profile === undefined) {
-    const now = new Date();
-    account.profile = UserProfile.create({
-      name: "User",
-      email: undefined,
-      createdAt: now,
-      lastLoginAt: now,
-      subscription: Subscription.create({
-        tier: "free",
-        status: "active",
-        startDate: now,
-        endDate: undefined,
-        billing: undefined,
-        usage: SubscriptionUsage.create({
-          monthlyPosts: 0,
-          lastResetDate: now,
-          accountGroups: 0,
-          connectedAccounts: 0,
-          storageUsedMB: 0,
-          analyticsRequests: 0,
-          apiCalls: 0,
-          platformVariantsUsed: 0,
-        }),
-        limits: SubscriptionLimits.create({
-          maxPosts: 20,
-          maxAccountGroups: 1,
-          maxConnectedAccounts: 5,
-          maxStorageMB: 100,
-          maxAnalyticsRequests: 50,
-          maxApiCalls: 100,
-          maxPlatformVariants: 3,
-          features: ["basic-posting", "post-history", "profile-info", "basic-comments", "delete-posts", "single-images"],
-        }),
-        trial: undefined,
-        grandfathered: false,
-        adminOverride: undefined,
-      }),
-      preferences: undefined,
-    })
-  }
-  
-  // Initialize subscription for existing users without one
-  if (account.profile && !account.profile.subscription) {
-    const now = new Date();
-    account.profile.subscription = Subscription.create({
-      tier: "free",
-      status: "active",
-      startDate: now,
-      endDate: undefined,
-      billing: undefined,
-      usage: SubscriptionUsage.create({
-        monthlyPosts: 0,
-        lastResetDate: now,
-        accountGroups: 0,
-        connectedAccounts: 0,
-        storageUsedMB: 0,
-        analyticsRequests: 0,
-        apiCalls: 0,
-        platformVariantsUsed: 0,
-      }),
-      limits: SubscriptionLimits.create({
-        maxPosts: 20,
-        maxAccountGroups: 1,
-        maxConnectedAccounts: 5,
-        maxStorageMB: 100,
-        maxAnalyticsRequests: 50,
-        maxApiCalls: 100,
-        maxPlatformVariants: 3,
-        features: ["basic-posting", "post-history", "profile-info", "basic-comments", "delete-posts", "single-images"],
-      }),
-      trial: undefined,
-      grandfathered: false,
-      adminOverride: undefined,
-    })
+    const profileGroup = Group.create();
+    profileGroup.makePublic();
+    
+    account.profile = SucculentProfile.create({
+      name: creationProps?.name ?? "New user",
+      collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
+      ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
+    }, profileGroup);
   }
 });
 
-export type MyAppAccountLoaded = co.loaded<typeof MyAppAccount, {
-	root: {
-		accountGroups: { $each: {
-			accounts: { $each: true },
-			posts: { $each: true },
-			gelatoCredentials: {
-				templates: { $each: true },
-				createdProducts: { $each: true }
-			}
-		}}
-	},
-	profile: {
-		subscription: {
-			billing: true,
-			usage: true,
-			limits: true,
-			trial: true
-		}
-	}
-}>;
+export type MyAppAccount = co.loaded<typeof MyAppAccount>;

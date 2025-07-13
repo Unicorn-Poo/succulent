@@ -136,17 +136,8 @@ export default function HomePage() {
   // 🎵 JAZZ ACCOUNT INTEGRATION (WITH PROPER LOADING)
   // =============================================================================
 
-  // Now get the account with deep loading for collaborative data
-  const { me } = useAccount(MyAppAccount, {
-    resolve: {
-      root: {
-        accountGroups: { $each: {
-          accounts: { $each: true },
-          posts: { $each: true }
-        }}
-      }
-    }
-  });
+  // First get the basic account without deep loading
+  const { me } = useAccount(MyAppAccount);
 
   // Debug logging to understand what's happening with accounts
   useEffect(() => {
@@ -156,7 +147,7 @@ export default function HomePage() {
       const previousAccountId = localStorage.getItem('previousJazzAccountId');
       localStorage.setItem('previousJazzAccountId', me.id);
     }
-  }, [me, me?.root?.accountGroups]); // Add dependency on account groups
+  }, [me]);
 
   const handleCreatePost = async () => {
     // Navigate to the demo account group page
@@ -281,7 +272,9 @@ export default function HomePage() {
                 </Button>
               </Link>
                               <Button 
-                  onClick={() => setShowCreateAccountGroupDialog(true)}
+                  onClick={() => {
+                    setShowCreateAccountGroupDialog(true);
+                  }}
                   intent="primary"
                   className="flex items-center gap-2"
                 >
@@ -338,48 +331,55 @@ export default function HomePage() {
             ))}
 
             {/* Jazz Account Groups - Persistent Display */}
-            {me?.root?.accountGroups?.map((group: any, index: number) => (
-              <Link key={group.id || `jazz-${index}`} href={`/account-group/${group.id}`}>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">{group.name}</h3>
-                    <div className="w-2 h-2 bg-lime-500 rounded-full" title="Jazz Collaborative"></div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      {group.accounts?.length || 0} accounts connected
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {group.posts?.length || 0} posts created
-                    </p>
-                    <p className="text-xs text-lime-600">
-                      ✨ Collaborative account group
-                    </p>
-                  </div>
+            {me?.root?.accountGroups && me.root.accountGroups.map((group: any, index: number) => {
+              // Make sure the group has a valid ID and name
+              if (!group?.id || !group?.name) {
+                return null;
+              }
+              
+              return (
+                <Link key={group.id || `jazz-${index}`} href={`/account-group/${group.id}`}>
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg">{group.name}</h3>
+                      <div className="w-2 h-2 bg-lime-500 rounded-full" title="Jazz Collaborative"></div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">
+                        {group.accounts?.length || 0} accounts connected
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {group.posts?.length || 0} posts created
+                      </p>
+                      <p className="text-xs text-lime-600">
+                        ✨ Collaborative account group
+                      </p>
+                    </div>
 
-                  <div className="flex -space-x-2 mt-4">
-                    {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
-                      <div 
-                        key={account?.id || accountIndex}
-                        						className="w-8 h-8 rounded-full border-2 border-white bg-lime-100 flex items-center justify-center"
-                      >
-                        <span className="text-xs font-medium text-lime-700">
-                          {account?.platform?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    ))}
-                    {(group.accounts?.length || 0) > 3 && (
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-lime-200 flex items-center justify-center">
-                        <span className="text-xs font-medium text-lime-700">
-                          +{(group.accounts?.length || 0) - 3}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex -space-x-2 mt-4">
+                      {(group.accounts || []).slice(0, 3).map((account: any, accountIndex: number) => (
+                        <div 
+                          key={account?.id || accountIndex}
+                          className="w-8 h-8 rounded-full border-2 border-white bg-lime-100 flex items-center justify-center"
+                        >
+                          <span className="text-xs font-medium text-lime-700">
+                            {account?.platform?.charAt(0).toUpperCase() || '?'}
+                          </span>
+                        </div>
+                      ))}
+                      {(group.accounts?.length || 0) > 3 && (
+                        <div className="w-8 h-8 rounded-full border-2 border-white bg-lime-200 flex items-center justify-center">
+                          <span className="text-xs font-medium text-lime-700">
+                            +{(group.accounts?.length || 0) - 3}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
 
             {/* Create New Card */}
             <button
