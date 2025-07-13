@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Post, PostFullyLoaded, ImageMedia, VideoMedia } from "../app/schema";
+import { Post, PostFullyLoaded, ImageMedia, VideoMedia, PostVariant, MediaItem, ReplyTo } from "../app/schema";
 import { co, FileStream } from "jazz-tools";
 // Note: createImage might be imported differently in your Jazz version
 import { 
@@ -92,6 +92,11 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
 	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 	const [currentPost, setPost] = useState(post);
+
+	// Sync currentPost with post prop changes
+	useEffect(() => {
+		setPost(post);
+	}, [post]);
 
 	// Clean up corrupted variants immediately to prevent Jazz loading errors
 	useEffect(() => {
@@ -544,20 +549,57 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
-			setSelectedPlatforms(prev => [...prev, platform]);
-			console.log(`➕ Added platform: ${platform}`);
+			try {
+				// Create a new PostVariant for this platform
+				const baseVariant = post.variants.base;
+				const baseText = baseVariant?.text?.toString() || "";
+				
+				// Create the collaborative objects
+				const platformText = co.plainText().create(baseText, { owner: post._owner });
+				const mediaList = co.list(MediaItem).create([], { owner: post._owner });
+				const replyToObj = ReplyTo.create({}, { owner: post._owner });
+				
+				// Create the platform variant
+				const platformVariant = PostVariant.create({
+					text: platformText,
+					postDate: new Date(),
+					media: mediaList,
+					replyTo: replyToObj,
+					edited: false,
+					lastModified: undefined,
+				}, { owner: post._owner });
+				
+				// Add to post variants
+				post.variants[platform] = platformVariant;
+				
+				setSelectedPlatforms(prev => [...prev, platform]);
+				console.log(`➕ Added platform: ${platform} with Jazz variant`);
+			} catch (error) {
+				console.error('Error creating Jazz variant for platform:', platform, error);
+				// Fallback to just state update
+				setSelectedPlatforms(prev => [...prev, platform]);
+			}
 		}
 		setShowAddAccountDialog(false);
-	}, [selectedPlatforms]);
+	}, [selectedPlatforms, post]);
 
 	const handleRemoveAccount = useCallback((platform: string) => {
+		try {
+			// Remove the Jazz variant
+			if (post.variants[platform]) {
+				delete post.variants[platform];
+				console.log(`🗑️ Removed platform: ${platform} and its Jazz variant`);
+			}
+		} catch (error) {
+			console.error('Error removing Jazz variant for platform:', platform, error);
+		}
+		
 		setSelectedPlatforms(prev => prev.filter(p => p !== platform));
-		console.log(`🗑️ Removed platform: ${platform}`);
 		
 		if (activeTab === platform) {
 			setActiveTab("base");
 		}
-	}, [activeTab]);
+	}, [activeTab, post]);
 
 	const getReplyDescription = useCallback(() => {
 		if (!seriesType || seriesType !== "reply") return "";
