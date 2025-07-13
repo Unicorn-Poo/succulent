@@ -674,6 +674,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				manualThreadMode={manualThreadMode}
 				setManualThreadMode={setManualThreadMode}
 				handlePreview={handlePreview}
+				selectedPlatforms={selectedPlatforms}
 				scheduledDate={scheduledDate}
 				setShowSettings={setShowSettings}
 				showPublishButton={showPublishButton}

@@ -14,6 +14,7 @@ interface PostActionsProps {
     manualThreadMode: boolean;
     setManualThreadMode: (manual: boolean) => void;
     handlePreview: () => void;
+    selectedPlatforms: string[];
     scheduledDate: Date | null;
     setShowSettings: (show: boolean) => void;
     showPublishButton: boolean;
@@ -33,6 +34,7 @@ export const PostActions = ({
     manualThreadMode,
     setManualThreadMode,
     handlePreview,
+    selectedPlatforms,
     scheduledDate,
     setShowSettings,
     showPublishButton,
@@ -41,6 +43,8 @@ export const PostActions = ({
     getReplyDescription,
     isThread
 }: PostActionsProps) => {
+    // Check if any accounts are selected for preview
+    const hasSelectedAccounts = selectedPlatforms.filter(p => p !== 'base').length > 0;
     return (
         <Card>
             <div className="p-4 space-y-4">
@@ -98,15 +102,31 @@ export const PostActions = ({
 
                         <div className="flex items-center gap-2">
                             {/* Preview Button */}
-                            <Button
-                                variant="outline"
-                                size="2"
-                                onClick={handlePreview}
-                                className="border-lime-600 text-lime-600 hover:bg-lime-50"
-                            >
-                                <Eye className="w-4 h-4 mr-2" />
-                                <span className="hidden sm:inline">Preview</span>
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div>
+                                        <Button
+                                            variant="outline"
+                                            size="2"
+                                            onClick={handlePreview}
+                                            disabled={!hasSelectedAccounts}
+                                            className={hasSelectedAccounts 
+                                                ? "border-lime-600 text-lime-600 hover:bg-lime-50" 
+                                                : "border-gray-300 text-gray-400 cursor-not-allowed"
+                                            }
+                                        >
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            <span className="hidden sm:inline">Preview</span>
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {hasSelectedAccounts 
+                                        ? "Preview your post" 
+                                        : "Select an account to enable preview"
+                                    }
+                                </TooltipContent>
+                            </Tooltip>
 
                             {/* Schedule Button */}
                             <Button

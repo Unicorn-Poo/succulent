@@ -4,8 +4,8 @@ import { Card, Avatar, Text, Badge, Button, Box } from "@radix-ui/themes";
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, Send, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { ThreadPost } from "@/utils/threadUtils";
-import { MediaItem } from "@/app/schema";
-import { useState } from "react";
+import { platformLabels } from "@/utils/postConstants";
+import { useState, useEffect } from "react";
 import { ReplyPreview } from "@/components/molecules";
 
 interface AccountInfo {
@@ -24,7 +24,7 @@ interface BasePreviewProps {
 	platform: string;
 	account?: AccountInfo;
 	timestamp?: Date;
-	media?: MediaItem[];
+	media?: any[];
 	isReply?: boolean;
 	isQuote?: boolean;
 	replyTo?: any; 
@@ -144,183 +144,153 @@ export const InstagramPreview = ({
 	replyTo
 }: BasePreviewProps) => {
 	const formatTimestamp = (date: Date) => {
-		return date.toLocaleDateString();
+		const now = new Date();
+		const diff = now.getTime() - date.getTime();
+		const minutes = Math.floor(diff / 60000);
+		const hours = Math.floor(minutes / 60);
+		const days = Math.floor(hours / 24);
+		const weeks = Math.floor(days / 7);
+		
+		if (minutes < 60) return `${minutes}m`;
+		if (hours < 24) return `${hours}h`;
+		if (days < 7) return `${days}d`;
+		return `${weeks}w`;
 	};
-
-	if (isReply && replyTo) {
-		let username = replyTo.authorUsername || 'unknown';
-		const avatar = replyTo.authorAvatar;
-		let likes = replyTo.likesCount || '0';
-		let commentsCount = '0';
-		let postDate = 'Recently';
-		let caption = '';
-	
-		if (replyTo.authorPostContent) {
-			const rawContent = replyTo.authorPostContent;
-			const likesMatch = rawContent.match(/(\d+)\s*likes/);
-			const commentsMatch = rawContent.match(/(\d+)\s*comments/);
-			const userMatch = rawContent.match(/-\s*(\w+)\s*on/);
-			const dateMatch = rawContent.match(/on\s+(.*?):/);
-			const captionMatch = rawContent.match(/:\s*(.*)/);
-	
-			if (likesMatch) likes = likesMatch[1];
-			if (commentsMatch) commentsCount = commentsMatch[1];
-			if (userMatch) username = userMatch[1];
-			if (dateMatch) postDate = dateMatch[1].toUpperCase();
-			if (captionMatch) {
-				caption = captionMatch[1].trim().replace(/^"/, '').replace(/"\.*$/, '').replace(/&quot;/g, '');
-			}
-		}
-
-		return (
-			<Card className="max-w-md mx-auto bg-white shadow-lg rounded-lg">
-				{/* Header */}
-				<div className="flex items-center justify-between p-3 border-b border-gray-200">
-					<div className="flex items-center gap-3">
-						<Avatar size="2" src={avatar} fallback={username.charAt(0).toUpperCase()} radius="full" />
-						<Text weight="bold" size="2">{username}</Text>
-					</div>
-					<Button variant="ghost" size="1"><MoreHorizontal className="w-5 h-5 text-gray-500" /></Button>
-				</div>
-	
-				{/* Media Area */}
-				<div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-					 <ImageIcon className="w-20 h-20 text-gray-300" />
-				</div>
-	
-				{/* Actions & Details */}
-				<div className="p-3">
-					<div className="flex items-center justify-between mb-3 text-gray-600">
-						<div className="flex items-center gap-4">
-							<Heart className="w-6 h-6" />
-							<MessageCircle className="w-6 h-6" />
-							<Send className="w-6 h-6" />
-						</div>
-						<Bookmark className="w-6 h-6" />
-					</div>
-	
-					<Text size="2" weight="bold" className="block mb-1">{likes} likes</Text>
-					
-					 <div className="space-y-1 mb-2">
-						<Text size="2" as="p">
-							<span className="font-semibold">{username}</span>{" "}
-							<span className="whitespace-pre-wrap">{caption}</span>
-						</Text>
-					</div>
-	
-					<Text size="1" color="gray" className="block cursor-pointer mb-2 hover:underline">View all {commentsCount} comments</Text>
-
-					<div className="mt-2">
-						<Text size="2" as="p">
-							<span className="font-semibold">{account?.displayName || account?.username || 'you'}</span>
-							<span className="whitespace-pre-wrap"> {content}</span>
-						</Text>
-					</div>
-
-					<Text size="1" color="gray" className="block mt-2 uppercase">{postDate}</Text>
-				</div>
-			</Card>
-		);
-	}
 
 	const currentPost = isThread && threadPosts.length > 0 ? threadPosts[currentThreadIndex] : null;
 	const displayContent = currentPost ? currentPost.content : content;
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
 	
-	const authorName = isReply ? replyTo?.author : account?.displayName || 'User';
-	const authorUsername = isReply ? replyTo?.authorUsername : account?.username || 'username';
-	const authorAvatar = isReply ? replyTo?.authorAvatar : account?.avatar;
+	const authorName = account?.displayName || account?.name || 'User';
+	const authorUsername = account?.username || account?.name || 'scapesquared';
+	const authorAvatar = account?.avatar;
 	
-	let postContentForDisplay = isReply ? replyTo?.authorPostContent : displayContent;
-	if (isReply && postContentForDisplay) {
-		postContentForDisplay = postContentForDisplay.replace(/"/g, '').replace(/\.$/, '');
-	}
-	
-	const likes = isReply ? (replyTo?.likesCount || '48') : "123";
+	const likes = "123";
+	const commentsCount = "47";
 
 	return (
-		<Card className="max-w-md mx-auto bg-white">
+		<div className="w-full max-w-md mx-auto bg-white" style={{ 
+			fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+			fontSize: '14px',
+			lineHeight: '18px'
+		}}>
 			{/* Header */}
-			<div className="flex items-center justify-between p-4 border-b">
-				<div className="flex items-center gap-3">
-					<Avatar
-						size="2"
-						src={authorAvatar || `https://avatar.vercel.sh/${authorUsername}`}
-						fallback={authorName ? authorName[0] : 'U'}
-					/>
-					<div>
-						<Text weight="bold" size="2">{authorUsername}</Text>
+			<div className="flex items-center justify-between px-4 py-3 bg-white">
+				<div className="flex items-center">
+					{/* Profile Picture with Story Ring */}
+					<div className="relative mr-3">
+						<div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+							<img
+								src={authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&fit=crop&crop=face"}
+								alt={authorName}
+								className="w-full h-full rounded-full object-cover bg-white p-0.5"
+							/>
+						</div>
+					</div>
+					{/* Username */}
+					<div className="flex items-center">
+						<span className="text-sm font-semibold text-black">{authorUsername}</span>
 						{isThread && threadInfo && (
-							<Badge variant="soft" size="1" color="purple" className="ml-2">
+							<span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
 								{threadInfo}
-							</Badge>
+							</span>
 						)}
 					</div>
 				</div>
-				<Button variant="ghost" size="1">
-					<MoreHorizontal className="w-5 h-5" />
-				</Button>
+				{/* Three Dots Menu */}
+				<button className="p-1">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+						<circle cx="12" cy="5" r="1.5" fill="black"/>
+						<circle cx="12" cy="12" r="1.5" fill="black"/>
+						<circle cx="12" cy="19" r="1.5" fill="black"/>
+					</svg>
+				</button>
 			</div>
 
-			{/* Media or Post Content */}
-			<div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-				{isReply && postContentForDisplay ? (
-					<div className="p-4 text-center" dangerouslySetInnerHTML={{ __html: postContentForDisplay }}/>
-				) : media.length > 0 ? (
+			{/* Media Area - Exactly Square */}
+			<div className="relative w-full aspect-square bg-gray-100">
+				{media.length > 0 ? (
 					<MultiImageViewer media={media} platform="instagram" />
 				) : (
-					<ImageIcon className="w-16 h-16 text-gray-300" />
+					<div className="w-full h-full bg-gray-200 flex items-center justify-center">
+						<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
+							<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+							<circle cx="8.5" cy="8.5" r="1.5"/>
+							<polyline points="21,15 16,10 5,21"/>
+						</svg>
+					</div>
 				)}
 			</div>
 
-			{/* Actions */}
-			<div className="p-4">
-				<div className="flex items-center justify-between mb-3">
-					<div className="flex items-center gap-4">
-						<Button variant="ghost" size="1" className="hover:text-red-500">
-							<Heart className="w-6 h-6" />
-						</Button>
-						<Button variant="ghost" size="1">
-							<MessageCircle className="w-6 h-6" />
-						</Button>
-						<Button variant="ghost" size="1">
-							<Send className="w-6 h-6" />
-						</Button>
+			{/* Action Buttons */}
+			<div className="px-4 py-2">
+				<div className="flex items-center justify-between mb-2">
+					<div className="flex items-center space-x-4">
+						{/* Heart */}
+						<button className="p-1 hover:opacity-60">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-black">
+								<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+							</svg>
+						</button>
+						{/* Comment */}
+						<button className="p-1 hover:opacity-60">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-black">
+								<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+							</svg>
+						</button>
+						{/* Share/Send */}
+						<button className="p-1 hover:opacity-60">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-black">
+								<line x1="22" y1="2" x2="11" y2="13"/>
+								<polygon points="22,2 15,22 11,13 2,9 22,2"/>
+							</svg>
+						</button>
 					</div>
-					<Button variant="ghost" size="1">
-						<Bookmark className="w-6 h-6" />
-					</Button>
+					{/* Bookmark */}
+					<button className="p-1 hover:opacity-60">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-black">
+							<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			{/* Content Area */}
+			<div className="px-4 pb-4">
+				{/* Likes */}
+				<div className="mb-1">
+					<span className="text-sm font-semibold text-black">{likes} likes</span>
 				</div>
 
-				{/* Likes */}
-				<Text size="2" weight="bold" className="block mb-2">{likes} likes</Text>
-
 				{/* Caption */}
-				<div className="space-y-1">
-					<Text size="2">
-						<span className="font-semibold">{authorUsername}</span>{" "}
-						<span className="whitespace-pre-wrap">{postContentForDisplay}</span>
-					</Text>
-					
-					{/* Thread continuation */}
-					{isThread && threadPosts.length > 1 && currentThreadIndex < threadPosts.length - 1 && (
-						<Text size="1" color="gray">
-							...more
-						</Text>
-					)}
+				<div className="mb-1 text-sm text-black leading-[18px]">
+					<span className="font-semibold">{authorUsername}</span>
+					<span className="ml-1 whitespace-pre-wrap">{displayContent}</span>
+				</div>
+
+				{/* View Comments */}
+				<div className="mb-1">
+					<button className="text-sm text-gray-500 hover:text-gray-700">
+						View all {commentsCount} comments
+					</button>
 				</div>
 
 				{/* Timestamp */}
-				<Text size="1" color="gray" className="block mt-2">
-					{formatTimestamp(timestamp)}
-				</Text>
-				{isReply && (
-					<div className="mt-4 pt-2 border-t border-gray-200">
-						<p className="text-sm text-gray-500">Replying to <span className="font-semibold">{authorUsername}</span></p>
+				<div className="mb-3">
+					<span className="text-xs text-gray-500 uppercase tracking-wide">
+						{formatTimestamp(timestamp)}
+					</span>
+				</div>
+
+				{/* Add Comment */}
+				<div className="border-t border-gray-200 pt-3">
+					<div className="flex items-center space-x-3">
+						<div className="w-6 h-6 rounded-full bg-gray-300 flex-shrink-0"></div>
+						<span className="text-sm text-gray-500">Add a comment...</span>
 					</div>
-				)}
+				</div>
 			</div>
-		</Card>
+		</div>
 	);
 };
 
@@ -624,7 +594,7 @@ interface PreviewProps {
 	content: string;
 	account?: AccountInfo;
 	timestamp?: Date;
-	media?: MediaItem[];
+	media?: any[];
 	isReply?: boolean;
 	isQuote?: boolean;
 	replyTo?: any; 
@@ -663,7 +633,7 @@ export const PlatformPreview = (props: PreviewProps) => {
 	}
 }; 
 
-const MultiImageViewer = ({ media, platform }: { media: MediaItem[], platform: string }) => {
+const MultiImageViewer = ({ media, platform }: { media: any[], platform: string }) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
 	if (platform === 'twitter' && media.length > 1) {
@@ -693,7 +663,44 @@ const MultiImageViewer = ({ media, platform }: { media: MediaItem[], platform: s
 		);
 	}
 
-	// Default to carousel for other platforms or single image on Twitter
+	// Instagram carousel - no arrow buttons, just dots
+	if (platform === 'instagram') {
+		return (
+			<div className="relative w-full h-full">
+				<div className="overflow-hidden w-full h-full">
+					<div
+						className="flex transition-transform duration-300 ease-in-out h-full"
+						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+					>
+						{media.map((item, index) => (
+							<div key={index} className="flex-shrink-0 w-full h-full">
+								<MediaItemRenderer item={item} isCarousel />
+							</div>
+						))}
+					</div>
+				</div>
+				{/* Instagram-style dots at bottom center */}
+				{media.length > 1 && (
+					<div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1.5 z-10">
+						{media.map((_, index) => (
+							<button
+								key={index}
+								onClick={(e) => {
+									e.stopPropagation();
+									setCurrentIndex(index);
+								}}
+								className={`w-1.5 h-1.5 rounded-full transition-opacity hover:opacity-80 ${
+									currentIndex === index ? 'bg-white' : 'bg-white bg-opacity-40'
+								}`}
+							/>
+						))}
+					</div>
+				)}
+			</div>
+		);
+	}
+
+	// Default carousel for other platforms
 	return (
 		<div className="relative w-full h-full">
 			<div className="overflow-hidden w-full h-full">
@@ -741,34 +748,242 @@ const MultiImageViewer = ({ media, platform }: { media: MediaItem[], platform: s
 	);
 };
 
-const MediaItemRenderer = ({ item, isCarousel }: { item: MediaItem, isCarousel?: boolean }) => {
-	const commonClass = isCarousel ? "absolute inset-0 w-full h-full object-cover" : "absolute inset-0 w-full h-full object-cover";
+// Component to handle Jazz FileStream objects
+const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, className: string, alt: string }) => {
+	const [dataUrl, setDataUrl] = useState<string | null>(null);
+	const [error, setError] = useState<boolean>(false);
 
-	if (item.type === 'image') {
-		return (
-			<Image
-				src={item.image?.toString() || ""}
-				alt={item.alt?.toString() || ""}
-				layout="fill"
-				className={commonClass}
-			/>
-		);
-	}
+	useEffect(() => {
+		let isMounted = true;
+		
+		const loadImage = async () => {
+			try {
+				console.log('Loading blob from FileStream:', fileStream);
+				
+				if (typeof fileStream.getBlob === 'function') {
+					const blob = await fileStream.getBlob();
+					console.log('Got blob:', blob);
+					
+					if (isMounted && blob) {
+						// Convert blob to data URL (same as post creation carousel)
+						const dataUrl = await new Promise<string>((resolve) => {
+							const reader = new FileReader();
+							reader.onload = (e) => resolve(e.target?.result as string);
+							reader.readAsDataURL(blob);
+						});
+						
+						console.log('Created data URL:', dataUrl.substring(0, 50) + '...');
+						setDataUrl(dataUrl);
+					}
+				} else if (typeof fileStream.toBlob === 'function') {
+					// Fallback method
+					const blob = await fileStream.toBlob();
+					console.log('Got blob via toBlob:', blob);
+					
+					if (isMounted && blob) {
+						const dataUrl = await new Promise<string>((resolve) => {
+							const reader = new FileReader();
+							reader.onload = (e) => resolve(e.target?.result as string);
+							reader.readAsDataURL(blob);
+						});
+						
+						console.log('Created data URL via toBlob:', dataUrl.substring(0, 50) + '...');
+						setDataUrl(dataUrl);
+					}
+				} else {
+					console.log('No getBlob or toBlob method available');
+					setError(true);
+				}
+			} catch (err) {
+				console.error('Error loading blob:', err);
+				if (isMounted) {
+					setError(true);
+				}
+			}
+		};
 
-	if (item.type === 'video') {
+		loadImage();
+
+		// No cleanup needed for data URLs (they don't need to be revoked like blob URLs)
+		return () => {
+			isMounted = false;
+		};
+	}, [fileStream]);
+
+	if (error) {
 		return (
-			<div className="relative w-full h-full bg-black">
-				<video
-					src={item.video?.toString() || ""}
-					className={commonClass}
-					controls={false}
-				/>
-				<div className="absolute inset-0 flex items-center justify-center">
-					<Play className="w-12 h-12 text-white" />
-				</div>
+			<div className={`${className} bg-gray-100 flex items-center justify-center`}>
+				<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
+					<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+					<circle cx="8.5" cy="8.5" r="1.5"/>
+					<polyline points="21,15 16,10 5,21"/>
+				</svg>
 			</div>
 		);
 	}
 
+	if (!dataUrl) {
+		return (
+			<div className={`${className} bg-gray-100 flex items-center justify-center`}>
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="relative w-full h-full">
+			<Image
+				src={dataUrl}
+				alt={alt}
+				fill
+				className={className}
+				onError={(e) => {
+					console.error('Image failed to load:', dataUrl.substring(0, 50) + '...', e);
+					setError(true);
+				}}
+				onLoad={() => {
+					console.log('Image loaded successfully:', dataUrl.substring(0, 50) + '...');
+				}}
+			/>
+		</div>
+	);
+};
+
+const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boolean }) => {
+	const commonClass = isCarousel ? "w-full h-full object-cover" : "w-full h-full object-cover";
+
+	console.log('MediaItemRenderer received item:', item);
+	console.log('Item type:', item?.type);
+	console.log('Item image object:', item?.image);
+
+	if (item?.type === 'image') {
+		const imageObject = item.image;
+		
+		console.log('Processing image object:', imageObject);
+		console.log('imageObject constructor:', imageObject?.constructor?.name);
+		console.log('imageObject _type:', imageObject?._type);
+		console.log('Has getBlob method:', typeof imageObject?.getBlob);
+		console.log('getBlob method exists:', 'getBlob' in (imageObject || {}));
+		
+		// Check if it's a Jazz FileStream - be more flexible with detection
+		if (imageObject && (
+			typeof imageObject.getBlob === 'function' || 
+			'getBlob' in imageObject ||
+			imageObject._type === 'BinaryCoStream' ||
+			imageObject.constructor?.name === 'FileStream'
+		)) {
+			console.log('Detected Jazz FileStream, using FileStreamImage component');
+			return (
+				<FileStreamImage 
+					fileStream={imageObject} 
+					className={commonClass}
+					alt={item.alt?.toString() || ""}
+				/>
+			);
+		}
+		
+		// Fallback to regular URL handling for other types
+		const getValidUrl = (fileStreamOrImage: any) => {
+			if (!fileStreamOrImage) {
+				console.log('No fileStreamOrImage provided');
+				return null;
+			}
+			
+			try {
+				// Check if it's already a valid URL string
+				if (typeof fileStreamOrImage === 'string') {
+					console.log('Found string URL:', fileStreamOrImage);
+					if (fileStreamOrImage.startsWith('http') || fileStreamOrImage.startsWith('data:')) {
+						return fileStreamOrImage;
+					}
+					return null;
+				}
+				
+				// Check if it's a Jazz ImageDefinition
+				if (fileStreamOrImage.highestResAvailable) {
+					console.log('Found ImageDefinition with highestResAvailable');
+					const highestRes = fileStreamOrImage.highestResAvailable();
+					console.log('Highest resolution result:', highestRes);
+					if (highestRes && highestRes.publicUrl) {
+						return highestRes.publicUrl;
+					}
+				}
+				
+				// Check for placeholderDataURL in ImageDefinition
+				if (fileStreamOrImage.placeholderDataURL) {
+					console.log('Found placeholderDataURL:', fileStreamOrImage.placeholderDataURL);
+					return fileStreamOrImage.placeholderDataURL;
+				}
+				
+				// Check if it's a Jazz FileStream with publicUrl property
+				if (fileStreamOrImage.publicUrl && typeof fileStreamOrImage.publicUrl === 'string') {
+					console.log('Found publicUrl:', fileStreamOrImage.publicUrl);
+					return fileStreamOrImage.publicUrl;
+				}
+				
+				// Check for other common URL properties
+				if (fileStreamOrImage.url && typeof fileStreamOrImage.url === 'string') {
+					console.log('Found url property:', fileStreamOrImage.url);
+					return fileStreamOrImage.url;
+				}
+				
+				console.log('No valid URL found in object');
+				return null;
+			} catch (error) {
+				console.warn('Error processing media item:', error);
+				return null;
+			}
+		};
+
+		const imageUrl = getValidUrl(imageObject);
+		console.log('Final image URL:', imageUrl);
+		
+		// Show placeholder if no valid URL
+		if (!imageUrl) {
+			console.log('No valid URL found, showing placeholder');
+			return (
+				<div className={`${commonClass} bg-gray-100 flex items-center justify-center`}>
+					<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
+						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+						<circle cx="8.5" cy="8.5" r="1.5"/>
+						<polyline points="21,15 16,10 5,21"/>
+					</svg>
+				</div>
+			);
+		}
+		
+		return (
+			<div className="relative w-full h-full">
+				<Image
+					src={imageUrl}
+					alt={item.alt?.toString() || ""}
+					fill
+					className={commonClass}
+					onError={(e) => {
+						console.error('Image failed to load:', imageUrl, e);
+					}}
+					onLoad={() => {
+						console.log('Image loaded successfully:', imageUrl);
+					}}
+				/>
+			</div>
+		);
+	}
+
+	if (item?.type === 'video') {
+		// Handle video FileStream similarly if needed
+		const videoObject = item.video;
+		
+		if (videoObject && typeof videoObject.getBlob === 'function') {
+			// For now, show placeholder for videos
+			return (
+				<div className={`${commonClass} bg-gray-100 flex items-center justify-center`}>
+					<Play className="w-8 h-8 text-gray-400" />
+				</div>
+			);
+		}
+	}
+
+	console.log('Unknown item type or no item:', item);
 	return null;
 }; 

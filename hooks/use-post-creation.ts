@@ -622,8 +622,12 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, [isThread, activeTab]);
 
 	const handlePreview = useCallback(() => {
-		setShowPreviewModal(true);
-	}, []);
+		// Only allow preview if accounts are selected (excluding 'base')
+		const hasSelectedAccounts = selectedPlatforms.filter(p => p !== 'base').length > 0;
+		if (hasSelectedAccounts) {
+			setShowPreviewModal(true);
+		}
+	}, [selectedPlatforms]);
 
 	const handleImageUpload = useCallback(async () => {
 		// Create a file input element

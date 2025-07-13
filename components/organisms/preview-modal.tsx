@@ -5,7 +5,6 @@ import { Dialog, Button, Tabs, Box, Text, Badge, Card } from "@radix-ui/themes";
 import { X, ChevronLeft, ChevronRight, Grid, Smartphone, Monitor } from "lucide-react";
 import { PlatformPreview } from "./platform-previews";
 import { ThreadPost } from "@/utils/threadUtils";
-import { MediaItem } from "@/app/schema";
 import { platformLabels } from "@/utils/postConstants";
 import Image from "next/image";
 
@@ -26,10 +25,10 @@ interface PreviewModalProps {
 			username?: string;
 			displayName?: string;
 			url?: string;
-		}>;
+		}> | any[]; // Allow both legacy object and Jazz CoList array
 	};
 	activeTab: string;
-	media?: MediaItem[];
+	media?: any[];
 	isReply?: boolean;
 	isQuote?: boolean;
 	replyTo?: any;
@@ -56,26 +55,70 @@ export const PreviewModal = ({
 	const [currentThreadIndex, setCurrentThreadIndex] = useState(0);
 	const [previewMode, setPreviewMode] = useState<'current' | 'all'>('current');
 
-	// Determine the account to display for the preview.
+	// Helper function to find account by ID in both legacy and Jazz formats
+	const findAccountById = (accountId: string) => {
+		if (!accountGroup?.accounts) return null;
+		
+		if (Array.isArray(accountGroup.accounts)) {
+			// Jazz CoList - find by ID
+			return (accountGroup.accounts as any[]).find(acc => acc.id === accountId);
+		} else {
+			// Legacy object - direct lookup
+			return (accountGroup.accounts as any)[accountId];
+		}
+	};
+
+	// Helper function to find account by platform in both legacy and Jazz formats
+	const findAccountByPlatform = (platform: string) => {
+		if (!accountGroup?.accounts) return null;
+		
+		if (Array.isArray(accountGroup.accounts)) {
+			// Jazz CoList - find by platform
+			return (accountGroup.accounts as any[]).find(acc => acc.platform === platform);
+		} else {
+			// Legacy object - find by platform
+			return Object.values(accountGroup.accounts).find((acc: any) => acc.platform === platform);
+		}
+	};
+
+	// Get all selected account platforms (excluding 'base')
+	const selectedAccountPlatforms = selectedPlatforms.filter(p => p !== 'base');
+
+	// Create preview platform data from selected platforms
+	const previewPlatforms = selectedAccountPlatforms.map(platformId => {
+		const account = findAccountById(platformId);
+		return {
+			id: platformId,
+			account: account || { 
+				id: platformId,
+				platform: 'x', 
+				name: 'User', 
+				username: 'user', 
+				displayName: 'User', 
+				avatar: '' 
+			}
+		};
+	});
+
+	// Determine the account to display for the current preview
 	let displayAccount: any;
 	if (isReply && replyTo?.platform) {
-		// For replies, find the account that matches the platform.
-		displayAccount = Object.values(accountGroup.accounts).find(acc => acc.platform === replyTo.platform);
+		// For replies, find the account that matches the platform
+		displayAccount = findAccountByPlatform(replyTo.platform);
 	} else if (activeTab !== 'base') {
-		// For a specific tab, use that account.
-		displayAccount = accountGroup.accounts[activeTab];
+		// For a specific tab, use that account
+		displayAccount = findAccountById(activeTab);
 	} else {
-		// For the 'base' tab, use the first account as a default for preview.
-		displayAccount = Object.values(accountGroup.accounts)[0];
+		// For the 'base' tab, use the first selected account
+		if (previewPlatforms.length > 0) {
+			displayAccount = previewPlatforms[0].account;
+		}
 	}
 
-	// Fallback to a dummy account object if no accounts exist at all.
+	// Fallback to a dummy account object if no accounts exist at all
 	if (!displayAccount) {
 		displayAccount = { platform: 'x', name: 'User', username: 'user', displayName: 'User', avatar: '' };
 	}
-
-	// Filter platforms to show previews for (exclude 'base')
-	const previewPlatforms = selectedPlatforms.filter(platform => platform !== 'base');
 
 	// Thread navigation handlers
 	const handlePreviousThread = () => {
@@ -120,8 +163,8 @@ export const PreviewModal = ({
 				<div className="flex items-center justify-between mb-4">
 					<Dialog.Title>Preview Post</Dialog.Title>
 					<div className="flex items-center gap-2">
-						{/* Preview Mode Toggle - Hide for replies */}
-						{!isReply && (
+						{/* Preview Mode Toggle - Hide for replies or if only one platform selected */}
+						{!isReply && previewPlatforms.length > 1 && (
 							<div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
 								<Button
 									variant={previewMode === 'current' ? 'solid' : 'ghost'}
@@ -196,7 +239,7 @@ export const PreviewModal = ({
 
 				{/* Preview Content */}
 				<div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-					{previewMode === 'current' ? (
+					{previewMode === 'current' || previewPlatforms.length === 1 ? (
 						// Single Platform Preview
 						<div className="flex flex-col items-center">
 							<div className="mb-4">
@@ -212,7 +255,7 @@ export const PreviewModal = ({
 									</Text>
 								</div>
 								<Text size="1" color="gray">
-									@{displayAccount.name}
+									@{displayAccount.name || displayAccount.username || 'user'}
 								</Text>
 							</div>
 							
@@ -231,24 +274,22 @@ export const PreviewModal = ({
 							/>
 						</div>
 					) : (
-						// All Platforms Preview
+						// All Platforms Preview - Only show selected platforms
 						<div className="space-y-8">
-							{previewPlatforms.map((platform) => {
-								const account = accountGroup.accounts[platform];
+							{previewPlatforms.map(({ id, account }) => {
 								const accountInfo = {
-									...account,
-									id: account?.id || '',
-									platform: account?.platform || 'x',
-									name: account?.name || 'User',
-									username: account?.username || 'user',
-									displayName: account?.displayName || 'User',
-      								avatar: account?.avatar || '',
-									apiUrl: account?.apiUrl || '',
-									url: account?.url || '',
+									id: account.id || id,
+									platform: account.platform || 'x',
+									name: account.name || account.displayName || account.username || 'User',
+									username: account.username || account.name || 'user',
+									displayName: account.displayName || account.name || 'User',
+									avatar: account.avatar || '',
+									apiUrl: account.apiUrl || '',
+									url: account.url || '',
 								};
 
 								return (
-									<div key={platform} className="space-y-4">
+									<div key={id} className="space-y-4">
 										<div className="flex items-center gap-2">
 											<Image
 												src={getPlatformIcon(accountInfo.platform)}
@@ -288,11 +329,11 @@ export const PreviewModal = ({
 				<div className="flex justify-between items-center mt-4 pt-4 border-t">
 					<div className="flex items-center gap-2 text-sm text-gray-500">
 						<Text size="1">
-							{previewMode === 'current' && !isReply
+							{previewMode === 'current' || previewPlatforms.length === 1
 								? `Previewing for ${platformLabels[displayAccount.platform as keyof typeof platformLabels] || displayAccount.platform}`
 								: isReply
 								? `Replying on ${platformLabels[replyTo?.platform as keyof typeof platformLabels] || 'platform'}`
-								: `Previewing for ${previewPlatforms.length} platform${previewPlatforms.length === 1 ? '' : 's'}`
+								: `Previewing for ${previewPlatforms.length} selected platform${previewPlatforms.length === 1 ? '' : 's'}`
 							}
 						</Text>
 					</div>
