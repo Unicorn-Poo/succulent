@@ -62,25 +62,57 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
   const analyticsAvailable = isFeatureAvailable('analytics');
 
   /**
-   * Fetch comprehensive account data from Ayrshare
+   * Fetch account data including profile info and analytics
    */
   const fetchAccountData = async () => {
-    if (!account.isLinked) {
-      setError("Account is not linked to Ayrshare. Please link your Instagram account first.");
+    if (!account.isLinked || !account.profileKey) {
+      setError('Account not properly linked');
+      setLoading(false);
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
-      // Use the comprehensive account overview function
+      // TODO: Re-enable analytics fetching when API access is configured
+      // For now, just show placeholder data to allow preview functionality
+      
+      setProfileInfo({
+        platform: 'instagram',
+        username: account.name,
+        displayName: account.name,
+        bio: 'Instagram account preview',
+        avatar: `https://avatar.vercel.sh/${account.name}`,
+        followersCount: 1234,
+        followingCount: 567,
+        postsCount: 89
+      });
+      
+      setAnalytics({
+        platform: 'instagram',
+        followersCount: 1234,
+        followingCount: 567,
+        postsCount: 89,
+        engagementRate: 5.2,
+        impressions: 12500,
+        reach: 8900,
+        profileViews: 234,
+        websiteClicks: 45
+      });
+      
+      setRecentPosts([]);
+      setLastUpdated(new Date().toISOString());
+      
+      /* 
+      // Original analytics fetching - disabled to prevent API errors
       const overview = await getAccountOverview('instagram', account.profileKey);
       
       setProfileInfo(overview.profile);
       setAnalytics(overview.analytics);
       setRecentPosts(overview.recentPosts);
       setLastUpdated(overview.lastUpdated);
+      */
       
     } catch (err) {
       console.error('Error fetching Instagram account data:', err);
@@ -95,11 +127,15 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
    */
   const fetchPostHistory = async (days: number) => {
     try {
-      const history = await getPostHistory(
-        { platform: 'instagram', lastDays: days },
-        account.profileKey
-      );
-      setRecentPosts(history);
+      // TODO: Re-enable when API access is configured
+      // const history = await getPostHistory(
+      //   { platform: 'instagram', lastDays: days },
+      //   account.profileKey
+      // );
+      // setRecentPosts(history);
+      
+      // For now, just show empty posts
+      setRecentPosts([]);
     } catch (err) {
       console.error('Error fetching post history:', err);
       setError('Failed to fetch post history');

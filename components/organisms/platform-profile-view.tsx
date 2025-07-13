@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Badge, Tabs, Text } from "@radix-ui/themes";
 import { Grid, List, Filter, ArrowLeft, Layout, BarChart3, Users } from "lucide-react";
 import InstagramPreview from "./platform-previews/instagram-preview";
@@ -8,21 +8,143 @@ import XPreview from "./platform-previews/x-preview";
 import YouTubePreview from "./platform-previews/youtube-preview";
 import PlatformTimelineView from "./platform-timeline-view";
 import InstagramAccountDashboard from "./instagram-account-dashboard";
+import { PlatformPreview } from "@/components/organisms/platform-previews";
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  platforms: string[];
-  status: 'published' | 'scheduled' | 'draft';
-  publishedAt?: string;
-  scheduledFor?: string;
-  engagement?: {
-    likes: number;
-    comments: number;
-    shares: number;
-  };
-}
+// Import the working extractMediaUrl function approach
+const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
+	if (!fileStream) return null;
+
+	try {
+		// Try different methods to get the URL
+		if (typeof fileStream.createObjectURL === 'function') {
+			return fileStream.createObjectURL();
+		}
+		
+		if (typeof fileStream.getBlob === 'function') {
+			const blob = await fileStream.getBlob();
+			if (blob) return URL.createObjectURL(blob);
+		}
+		
+		if (typeof fileStream.toBlob === 'function') {
+			const blob = await fileStream.toBlob();
+			if (blob) return URL.createObjectURL(blob);
+		}
+		
+		if (typeof fileStream.asBlob === 'function') {
+			const blob = await fileStream.asBlob();
+			if (blob) return URL.createObjectURL(blob);
+		}
+		
+		if (typeof fileStream.getBlobURL === 'function') {
+			return await fileStream.getBlobURL();
+		}
+		
+		// Try accessing raw data
+		if (fileStream._raw && (fileStream._raw.blob || fileStream._raw.data)) {
+			const blob = fileStream._raw.blob || fileStream._raw.data;
+			if (blob instanceof Blob) {
+				return URL.createObjectURL(blob);
+			}
+		}
+		
+		// Check if toString returns a valid URL
+		if (fileStream.toString && typeof fileStream.toString === 'function') {
+			const stringValue = fileStream.toString();
+			if (stringValue.startsWith('blob:') || stringValue.startsWith('data:') || stringValue.startsWith('http')) {
+				return stringValue;
+			}
+		}
+		
+		return null;
+	} catch (error) {
+		return null;
+	}
+};
+
+// Component to display media with proper loading states
+const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
+	const [imageUrl, setImageUrl] = useState<string | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(false);
+
+	useEffect(() => {
+		if (!mediaItem) return;
+
+		const loadMediaUrl = async () => {
+			setLoading(true);
+			setError(false);
+			
+			try {
+				let url = null;
+				
+				if (mediaItem.type === "image" && mediaItem.image) {
+					url = await extractMediaUrl(mediaItem.image);
+				} else if (mediaItem.type === "video" && mediaItem.video) {
+					url = await extractMediaUrl(mediaItem.video);
+				}
+				
+				if (url) {
+					setImageUrl(url);
+				} else {
+					setError(true);
+				}
+			} catch (err) {
+				console.error('Error loading media:', err);
+				setError(true);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadMediaUrl();
+	}, [mediaItem]);
+
+	if (loading) {
+		return (
+			<div className="w-full h-full bg-gray-100 flex items-center justify-center">
+				<div className="text-center text-gray-400">
+					<span className="text-sm">Loading...</span>
+				</div>
+			</div>
+		);
+	}
+
+	if (error || !imageUrl) {
+		return (
+			<div className="w-full h-full bg-gray-100 flex items-center justify-center">
+				<div className="text-center text-gray-400">
+					<span className="text-2xl">📝</span>
+				</div>
+			</div>
+		);
+	}
+
+	if (mediaItem?.type === 'image') {
+		return (
+			<img
+				src={imageUrl}
+				alt={mediaItem.alt?.toString() || "Post image"}
+				className="w-full h-full object-cover"
+			/>
+		);
+	} else if (mediaItem?.type === 'video') {
+		return (
+			<video
+				src={imageUrl}
+				className="w-full h-full object-cover"
+				muted
+			/>
+		);
+	}
+
+	return (
+		<div className="w-full h-full bg-gray-100 flex items-center justify-center">
+			<div className="text-center text-gray-400">
+				<span className="text-2xl">📝</span>
+			</div>
+		</div>
+	);
+};
 
 interface Account {
   id: string;
@@ -34,45 +156,67 @@ interface Account {
 
 interface PlatformProfileViewProps {
   account: Account;
-  posts: Post[];
+  posts: any[]; // Use any[] to handle both Jazz and legacy posts
   onBack: () => void;
   accountGroupId?: string;
+  onCreatePost?: (platform: string) => void;
 }
 
 type ViewModeType = 'feed' | 'grid' | 'analytics';
 
-export default function PlatformProfileView({ account, posts, onBack, accountGroupId }: PlatformProfileViewProps) {
+export default function PlatformProfileView({ account, posts, onBack, accountGroupId, onCreatePost }: PlatformProfileViewProps) {
   const [viewMode, setViewMode] = useState<ViewModeType>('feed');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'scheduled' | 'draft'>('all');
   
-  // Filter posts for this platform
-  const platformPosts = posts.filter(post => 
-    post.platforms.includes(account.platform) || 
-    (account.platform === 'instagram' && post.platforms.includes('instagram')) ||
-    (account.platform === 'x' && post.platforms.includes('x')) ||
-    (account.platform === 'youtube' && post.platforms.includes('youtube'))
-  );
-  
-  // Filter by status
-  const filteredPosts = platformPosts.filter(post => {
-    if (statusFilter === 'all') return true;
-    return post.status === statusFilter;
+  // Filter and sort posts for this platform
+  const platformPosts = posts.filter(post => {
+    // Handle both Jazz and legacy post structures
+    if (post.platforms && Array.isArray(post.platforms)) {
+      return post.platforms.includes(account.platform);
+    }
+    // For Jazz posts, if no platforms specified, assume it's for all platforms
+    return true;
   });
-  
-  // Sort posts by date (most recent first)
-  const sortedPosts = filteredPosts.sort((a, b) => {
-    const dateA = new Date(a.publishedAt || a.scheduledFor || '2024-01-01');
-    const dateB = new Date(b.publishedAt || b.scheduledFor || '2024-01-01');
-    return dateB.getTime() - dateA.getTime();
-  });
+
+  // Sort posts chronologically - newest first, showing all statuses together
+  const sortedPosts = platformPosts
+    .filter(post => {
+      if (statusFilter === 'all') return true;
+      // Extract status from Jazz post structure
+      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      return postStatus === statusFilter;
+    })
+    .sort((a, b) => {
+      // Get the most relevant date for each post
+      const getPostDate = (post: any) => {
+        if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+        if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
+        if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
+        if (post.publishedAt) return new Date(post.publishedAt);
+        if (post.scheduledFor) return new Date(post.scheduledFor);
+        return new Date(); // Default to now for drafts
+      };
+      
+      const dateA = getPostDate(a);
+      const dateB = getPostDate(b);
+      
+      return dateB.getTime() - dateA.getTime(); // Newest first
+    });
   
   const getStatusCounts = () => {
-    return {
-      all: platformPosts.length,
-      published: platformPosts.filter(p => p.status === 'published').length,
-      scheduled: platformPosts.filter(p => p.status === 'scheduled').length,
-      draft: platformPosts.filter(p => p.status === 'draft').length,
-    };
+    const counts = { all: 0, published: 0, scheduled: 0, draft: 0 };
+    
+    platformPosts.forEach(post => {
+      // Extract status from Jazz post structure or legacy post
+      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      
+      counts.all++;
+      if (postStatus === 'published') counts.published++;
+      else if (postStatus === 'scheduled') counts.scheduled++;
+      else counts.draft++;
+    });
+    
+    return counts;
   };
   
   const statusCounts = getStatusCounts();
@@ -131,83 +275,166 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
 
     if (viewMode === 'grid') {
       return (
-        <PlatformTimelineView 
-          account={account} 
-          posts={sortedPosts}
-          accountGroupId={accountGroupId}
-        />
+        <div className="mt-6">
+          {/* Instagram-style grid */}
+          <div className="grid grid-cols-3 gap-1">
+            {/* Create Post Button - always first */}
+            <div 
+              className="aspect-square relative cursor-pointer group"
+              onClick={() => onCreatePost?.(account.platform)}
+            >
+              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-lg">
+                <div className="text-center text-gray-400 group-hover:text-gray-600">
+                  <span className="text-3xl font-light">+</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Actual Posts */}
+            {sortedPosts.length > 0 ? (
+              sortedPosts.map((post: any, index) => {
+                // Extract content from Jazz post structure
+                const postContent = post.variants?.base?.text?.toString() || 
+                                 post.variants?.base?.text || 
+                                 post.content || 
+                                 post.title?.toString() || 
+                                 post.title || 
+                                 "Post content";
+                
+                const postStatus = post.variants?.base?.status || post.status || 'draft';
+                const firstMediaItem = post.variants?.base?.media?.[0];
+                
+                return (
+                  <div key={post.id || index} className="aspect-square relative group cursor-pointer">
+                    {/* Post Image or Content */}
+                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center hover:brightness-90 transition-all rounded-lg overflow-hidden">
+                      {firstMediaItem ? (
+                        <GridMediaComponent mediaItem={firstMediaItem} />
+                      ) : (
+                        // Text preview when no media
+                        <div className="text-center text-gray-600 p-2 flex flex-col items-center justify-center">
+                          <div className="text-2xl mb-2">📝</div>
+                          <div className="text-xs leading-tight line-clamp-3 max-w-20">
+                            {postContent.substring(0, 50)}...
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Status Badge */}
+                    <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                      postStatus === 'published' ? 'bg-green-100 text-green-700' :
+                      postStatus === 'scheduled' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {postStatus}
+                    </div>
+                    
+                    {/* Hover Overlay with Content Preview */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-lg">
+                      <div className="text-white text-center p-3">
+                        <div className="text-sm font-medium mb-1">
+                          {post.title?.toString() || post.title || "Untitled"}
+                        </div>
+                        <div className="text-xs opacity-90 line-clamp-3">
+                          {postContent}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              // Sample grid items when no posts exist
+              Array.from({ length: 8 }, (_, index) => (
+                <div key={`sample-${index}`} className="aspect-square relative">
+                  <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-lg">
+                    <div className="text-center text-gray-300">
+                      <span className="text-lg">📷</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <div className="mt-6 text-center text-sm text-gray-500">
+            {sortedPosts.length > 0 
+              ? `${sortedPosts.length} posts • Click any post to edit it` 
+              : "Create your first post to see it in the grid"}
+          </div>
+        </div>
       );
     }
 
-    // Feed view - platform previews
+    // Feed view - platform previews  
     return (
       <div className="space-y-4 mt-6">
-        {sortedPosts.map((post) => {
-          // Create compatible post format for preview components
-          const previewPost = {
-            id: post.id,
-            title: post.title,
-            content: post.content || "",
-            publishedAt: post.publishedAt,
-            scheduledFor: post.scheduledFor,
-            status: post.status,
-            engagement: post.engagement
-          };
-
-          const accountData = {
-            name: account.name,
-            username: account.name // Fallback to name if username not available
-          };
-
-          switch (account.platform) {
-            case 'instagram':
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+            <div className="w-8 h-8 bg-lime-100 rounded-lg flex items-center justify-center">
+              <Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
+            </div>
+            <div>
+              <Text size="3" weight="medium">{account.name}</Text>
+              <Text size="2" color="gray" className="capitalize">{account.platform} Feed</Text>
+            </div>
+          </div>
+        </div>
+        
+        <div className="max-w-md mx-auto space-y-4">
+          {sortedPosts.length > 0 ? (
+            sortedPosts.map((post: any) => {
+              // Extract content from Jazz post structure
+              const postContent = post.variants?.base?.text?.toString() || 
+                               post.variants?.base?.text || 
+                               post.content || 
+                               post.title?.toString() || 
+                               post.title || 
+                               "Sample post content";
+              
               return (
-                <InstagramPreview 
+                <PlatformPreview
                   key={post.id}
-                  post={previewPost}
-                  account={accountData}
+                  platform={account.platform}
+                  content={postContent}
+                  account={{
+                    id: account.id,
+                    name: account.name,
+                    username: account.name.toLowerCase().replace(/\s+/g, ''),
+                    displayName: account.name,
+                    platform: account.platform,
+                    avatar: `https://avatar.vercel.sh/${account.name}`,
+                    apiUrl: '',
+                    url: ''
+                  }}
+                  timestamp={post.variants?.base?.postDate || post.publishedAt || post.scheduledFor || new Date()}
+                  media={post.variants?.base?.media || []}
                 />
               );
-            case 'x':
-              return (
-                <XPreview 
-                  key={post.id}
-                  post={previewPost}
-                  account={accountData}
-                />
-              );
-            case 'youtube':
-              return (
-                <YouTubePreview 
-                  key={post.id}
-                  post={previewPost}
-                  account={accountData}
-                />
-              );
-            default:
-              return (
-                <div key={post.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <Text size="3" weight="medium">{post.title}</Text>
-                    <Badge color={post.status === 'published' ? 'green' : post.status === 'scheduled' ? 'lime' : 'gray'}>
-                      {post.status}
-                    </Badge>
-                  </div>
-                  <Text size="2" color="gray" className="mb-3 block">
-                    {post.content}
-                  </Text>
-                  <Text size="1" color="gray">
-                    {post.status === 'published' ? 
-                      `Published ${new Date(post.publishedAt!).toLocaleDateString()}` :
-                      post.status === 'scheduled' ?
-                      `Scheduled for ${new Date(post.scheduledFor!).toLocaleDateString()}` :
-                      'Draft'
-                    }
-                  </Text>
-                </div>
-              );
-          }
-        })}
+            })
+          ) : (
+            // Show welcome message when no posts exist
+            <div className="space-y-4">
+              <PlatformPreview
+                platform={account.platform}
+                content={`🌱 Welcome to ${account.name}! This is how your posts will appear to your followers. Create your first post to get started.`}
+                account={{
+                  id: account.id,
+                  name: account.name,
+                  username: account.name.toLowerCase().replace(/\s+/g, ''),
+                  displayName: account.name,
+                  platform: account.platform,
+                  avatar: `https://avatar.vercel.sh/${account.name}`,
+                  apiUrl: '',
+                  url: ''
+                }}
+                timestamp={new Date()}
+                media={[]}
+              />
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -293,25 +520,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
       )}
 
       {/* Content */}
-      {sortedPosts.length === 0 && viewMode !== 'analytics' ? (
-        <div className="text-center py-12">
-          <Layout className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <Text size="4" weight="medium" className="mb-2 block">
-            No Posts Found
-          </Text>
-          <Text size="2" color="gray" className="mb-6 block">
-            {statusFilter === 'all' 
-              ? `No posts have been created for this ${account.platform} account yet.`
-              : `No ${statusFilter} posts found for this account.`
-            }
-          </Text>
-          <Button onClick={() => setStatusFilter('all')} variant="soft">
-            View All Posts
-          </Button>
-        </div>
-      ) : (
-        renderContent()
-      )}
+      {renderContent()}
     </div>
   );
 } 

@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { PostFullyLoaded } from "@/app/schema";
@@ -15,6 +15,8 @@ import AccountGroupTools from "@/components/organisms/account-group-tools";
 import { GelatoSettings } from "@/components/gelato-settings";
 import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
+import { PlatformPreview } from "@/components/organisms/platform-previews";
+import PlatformProfileView from "@/components/organisms/platform-profile-view";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -25,6 +27,14 @@ export default function AccountGroupPage() {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [newPostTitle, setNewPostTitle] = useState("");
 	const [newPostText, setNewPostText] = useState("");
+	
+	// Preview state
+	const [showPreview, setShowPreview] = useState(false);
+	const [previewAccount, setPreviewAccount] = useState<any>(null);
+	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
+	
+	// Get account group ID from params
+	const accountGroupId = params.groupId as string;
 	
 	// Get Jazz account to access collaborative account groups
 	const { me } = useAccount(MyAppAccount, {
@@ -46,11 +56,11 @@ export default function AccountGroupPage() {
 	
 	// Try to find the account group in legacy groups first, then in Jazz groups
 	const legacyAccountGroup = Object.values(accountGroups).find(
-		(group) => group.id === params.groupId
+		(group) => group.id === accountGroupId
 	);
 	
 	const jazzAccountGroup = me?.root?.accountGroups?.find(
-		(group: any) => group.id === params.groupId
+		(group: any) => group.id === accountGroupId
 	);
 	
 	// Use whichever one we found
@@ -125,6 +135,9 @@ export default function AccountGroupPage() {
 				postDate: new Date(),
 				media: mediaList,
 				replyTo: replyToObj,
+				status: "draft",
+				scheduledFor: undefined,
+				publishedAt: undefined,
 				edited: false,
 				lastModified: undefined,
 			}, { owner: jazzAccountGroup._owner });
@@ -328,12 +341,44 @@ export default function AccountGroupPage() {
 													<Text size="2" color="gray">{account.platform}</Text>
 												</div>
 											</div>
-											<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2 mb-4">
 												<div className={`w-2 h-2 rounded-full ${account.isLinked ? 'bg-green-500' : 'bg-gray-300'}`} />
 												<Text size="2" color={account.isLinked ? "green" : "gray"}>
 													{account.isLinked ? 'Connected' : 'Not Connected'}
 												</Text>
 											</div>
+											
+											{/* Preview Buttons */}
+											{account.isLinked && (
+												<div className="flex gap-2">
+													<Button
+														size="1"
+														variant="soft"
+														className="flex-1"
+														onClick={() => {
+															setPreviewAccount(account);
+															setPreviewMode('feed');
+															setShowPreview(true);
+														}}
+													>
+														<List className="w-3 h-3 mr-1" />
+														Feed
+													</Button>
+													<Button
+														size="1"
+														variant="soft"
+														className="flex-1"
+														onClick={() => {
+															setPreviewAccount(account);
+															setPreviewMode('profile');
+															setShowPreview(true);
+														}}
+													>
+														<Grid className="w-3 h-3 mr-1" />
+														Profile
+													</Button>
+												</div>
+											)}
 										</div>
 									))}
 								</div>
@@ -404,6 +449,113 @@ export default function AccountGroupPage() {
 										<Button onClick={handleCreatePost} disabled={!newPostTitle.trim()} className="bg-lime-600 hover:bg-lime-700 text-white disabled:bg-gray-400">
 					Create Post
 				</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Root>
+			
+			{/* Account Preview Modal */}
+			<Dialog.Root open={showPreview} onOpenChange={setShowPreview}>
+				<Dialog.Content style={{ maxWidth: '90vw', maxHeight: '90vh', width: '1200px' }}>
+					<div className="flex items-center justify-between mb-4">
+						<Dialog.Title>
+							{previewAccount?.name} - {previewMode === 'feed' ? 'Feed View' : 'Profile View'}
+						</Dialog.Title>
+						<Button variant="ghost" size="1" onClick={() => setShowPreview(false)}>
+							<MessageCircle className="w-4 h-4" />
+						</Button>
+					</div>
+					
+					<div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+						{previewAccount && previewMode === 'profile' ? (
+							<PlatformProfileView
+								account={previewAccount}
+								posts={getPostsArray()}
+								onBack={() => setShowPreview(false)}
+								accountGroupId={accountGroup.id}
+								onCreatePost={(platform) => {
+									setShowPreview(false);
+									setShowCreateDialog(true);
+								}}
+							/>
+						) : previewAccount && previewMode === 'feed' ? (
+							<div className="space-y-4">
+								<div className="text-center mb-6">
+									<div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+										<div className="w-8 h-8 bg-lime-100 rounded-lg flex items-center justify-center">
+											<Text size="2" weight="bold">{previewAccount.platform?.charAt(0).toUpperCase()}</Text>
+										</div>
+										<div>
+											<Text size="3" weight="medium">{previewAccount.name}</Text>
+											<Text size="2" color="gray" className="capitalize">{previewAccount.platform} Feed</Text>
+										</div>
+									</div>
+								</div>
+								
+								{/* Sample posts for feed preview */}
+								<div className="max-w-md mx-auto space-y-4">
+									{getPostsArray().length > 0 ? (
+										getPostsArray().slice(0, 3).map((post: any) => (
+											<PlatformPreview
+												key={post.id}
+												platform={previewAccount.platform}
+												content={post.variants?.base?.text || post.content || "Sample post content"}
+												account={{
+													id: previewAccount.id || previewAccount._id,
+													name: previewAccount.name,
+													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
+													displayName: previewAccount.name,
+													platform: previewAccount.platform,
+													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
+													apiUrl: previewAccount.apiUrl || '',
+													url: previewAccount.url || ''
+												}}
+												timestamp={new Date()}
+												media={post.variants?.base?.media || []}
+											/>
+										))
+									) : (
+										<div className="space-y-4">
+											<PlatformPreview
+												platform={previewAccount.platform}
+												content="🌱 Welcome to my feed! This is how your posts will appear to your followers."
+												account={{
+													id: previewAccount.id || previewAccount._id,
+													name: previewAccount.name,
+													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
+													displayName: previewAccount.name,
+													platform: previewAccount.platform,
+													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
+													apiUrl: previewAccount.apiUrl || '',
+													url: previewAccount.url || ''
+												}}
+												timestamp={new Date()}
+												media={[]}
+											/>
+											<PlatformPreview
+												platform={previewAccount.platform}
+												content="📱 This is a preview of how your content will look on this platform. Create your first post to see it here!"
+												account={{
+													id: previewAccount.id || previewAccount._id,
+													name: previewAccount.name,
+													username: previewAccount.name.toLowerCase().replace(/\s+/g, ''),
+													displayName: previewAccount.name,
+													platform: previewAccount.platform,
+													avatar: previewAccount.avatar || `https://avatar.vercel.sh/${previewAccount.name}`,
+													apiUrl: previewAccount.apiUrl || '',
+													url: previewAccount.url || ''
+												}}
+												timestamp={new Date()}
+												media={[]}
+											/>
+										</div>
+									)}
+								</div>
+							</div>
+						) : (
+							<div className="text-center py-12">
+								<Text size="4" color="gray">No preview available</Text>
+							</div>
+						)}
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>

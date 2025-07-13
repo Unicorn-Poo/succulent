@@ -65,6 +65,10 @@ export const PostVariant = co.map({
 	postDate: z.date(),
 	media: co.list(MediaItem),
 	replyTo: ReplyTo,
+	// Post status tracking
+	status: z.enum(["draft", "scheduled", "published"]),
+	scheduledFor: z.optional(z.date()),
+	publishedAt: z.optional(z.date()),
 	// New fields for better tracking
 	edited: z.boolean(),
 	lastModified: z.optional(z.string()),
