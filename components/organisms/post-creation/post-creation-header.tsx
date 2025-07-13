@@ -85,13 +85,28 @@ export const PostCreationHeader = ({
             {/* Platform Tabs */}
             <div className="flex items-center gap-2 flex-wrap">
                 {selectedPlatforms.map((platform) => {
-                    const account = accountGroup.accounts[platform];
+                    // Helper function to find account by ID in both legacy and Jazz formats
+                    const findAccount = (accountId: string) => {
+                        if (!accountGroup?.accounts) return null;
+                        
+                        if (Array.isArray(accountGroup.accounts)) {
+                            // Jazz CoList - find by ID
+                            return (accountGroup.accounts as any[]).find(acc => acc.id === accountId);
+                        } else {
+                            // Legacy object - direct lookup
+                            return (accountGroup.accounts as any)[accountId];
+                        }
+                    };
+                    
+                    const account = platform === "base" ? null : findAccount(platform);
                     const platformIcon = platform === "base"
                         ? platformIcons.base
                         : platformIcons[account?.platform as keyof typeof platformIcons] || platformIcons.base;
+                    
                     const displayName = platform === "base"
                         ? "Base"
-                        : account?.name || platform;
+                        : account?.name || account?.displayName || account?.platform || "Unknown";
+                    
                     const isDisabled = seriesType === 'reply' && platform !== 'base' && detectedPlatform && detectedPlatform !== account?.platform;
 
                     return (

@@ -1,4 +1,5 @@
-import { Dialog, Button } from "@radix-ui/themes";
+import { Dialog } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
 import Image from "next/image";
 import { platformIcons } from "@/utils/postConstants";
 
@@ -23,21 +24,30 @@ export const AddAccountDialog = ({ open, onOpenChange, availableAccounts, handle
                         <Button
                             key={key}
                             variant="outline"
+                            intent="secondary"
                             onClick={() => handleAddAccount(key)}
-                            className="w-full flex items-center gap-2 justify-start"
+                            className="w-full flex items-center gap-3 justify-start p-3 h-auto"
                         >
                             <Image
                                 src={platformIcons[account.platform as keyof typeof platformIcons] || platformIcons.base}
                                 alt={account.platform}
-                                width={20}
-                                height={20}
+                                width={24}
+                                height={24}
+                                className="flex-shrink-0"
                             />
-                            <div className="text-left">
-                                <div className="font-medium">{account.name}</div>
-                                <div className="text-sm text-gray-500">{account.platform}</div>
+                            <div className="text-left flex-1">
+                                <div className="font-medium text-base">{account.name || account.displayName || 'Unknown Account'}</div>
+                                <div className="text-sm text-gray-500 capitalize">{account.platform || 'unknown'}</div>
                             </div>
                         </Button>
                     ))}
+                    
+                    {availableAccounts.length === 0 && (
+                        <div className="text-center py-4 text-gray-500">
+                            <p>No additional accounts available</p>
+                            <p className="text-xs mt-1">All accounts are already added to this post</p>
+                        </div>
+                    )}
                 </div>
             </Dialog.Content>
         </Dialog.Root>

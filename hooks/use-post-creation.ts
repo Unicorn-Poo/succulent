@@ -152,10 +152,20 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		if (accountGroup.accounts) {
 			if (Array.isArray(accountGroup.accounts)) {
 				// Jazz CoList - treat as array
-				allAccounts = (accountGroup.accounts as any[]).map((account, index) => [
-					account.id || account.platform || `account-${index}`,
-					account
-				]);
+				allAccounts = (accountGroup.accounts as any[]).map((account, index) => {
+					// Extract the key and ensure proper account structure
+					const accountKey = account.id || account.platform || `account-${index}`;
+					const accountData = {
+						id: account.id,
+						name: account.name || account.displayName || account.username || 'Unknown Account',
+						platform: account.platform || 'unknown',
+						profileKey: account.profileKey,
+						isLinked: account.isLinked || true,
+						status: account.status || 'linked'
+					};
+					
+					return [accountKey, accountData];
+				});
 			} else {
 				// Legacy object - use Object.entries
 				allAccounts = Object.entries(accountGroup.accounts);
@@ -166,23 +176,8 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			([key]) => !selectedPlatforms.includes(key)
 		);
 		
-		// Debug logging to see what's happening after the fix
-		console.log('🔍 Fixed Account Debug:');
-		console.log('- accountGroup.accounts type:', Array.isArray(accountGroup.accounts) ? 'Array (Jazz)' : 'Object (Legacy)');
-		console.log('- accountGroup.accounts length:', accountGroup.accounts?.length || 0);
-		console.log('- All accounts in group:', allAccounts.map(([key, account]) => ({
-			key,
-			platform: account?.platform,
-			name: account?.name,
-			status: account?.status
-		})));
-		console.log('- Selected platforms for this post:', selectedPlatforms);
-		console.log('- Available accounts (not selected):', filtered.map(([key, account]) => ({
-			key,
-			platform: account?.platform,
-			name: account?.name
-		})));
-		console.log('- Available accounts count:', filtered.length);
+		// Minimal logging for monitoring
+		console.log(`💼 Account Manager: ${filtered.length} available accounts`);
 		
 		return filtered;
 	}, [accountGroup.accounts, selectedPlatforms]);
@@ -494,16 +489,58 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
 			setSelectedPlatforms(prev => [...prev, platform]);
+			
+			// Create a variant in the Jazz post object for persistence
+			if (!currentPost.variants[platform]) {
+				setPost(prevPost => {
+					const newVariant = co.postVariant({
+						text: co.plainText(""),
+						postDate: new Date(),
+						media: co.list([]),
+						replyTo: null,
+						edited: false,
+						lastModified: new Date().toISOString()
+					});
+					
+					const updatedPost = {
+						...prevPost,
+						variants: {
+							...prevPost.variants,
+							[platform]: newVariant
+						}
+					};
+					
+					console.log(`💾 Created variant for platform: ${platform}`);
+					return updatedPost;
+				});
+			}
 		}
 		setShowAddAccountDialog(false);
-	}, [selectedPlatforms]);
+	}, [selectedPlatforms, currentPost.variants]);
 
 	const handleRemoveAccount = useCallback((platform: string) => {
 		setSelectedPlatforms(prev => prev.filter(p => p !== platform));
+		
+		// Remove the variant from the Jazz post object
+		if (currentPost.variants[platform]) {
+			setPost(prevPost => {
+				const updatedVariants = { ...prevPost.variants };
+				delete updatedVariants[platform];
+				
+				const updatedPost = {
+					...prevPost,
+					variants: updatedVariants
+				};
+				
+				console.log(`🗑️ Removed variant for platform: ${platform}`);
+				return updatedPost;
+			});
+		}
+		
 		if (activeTab === platform) {
 			setActiveTab("base");
 		}
-	}, [activeTab]);
+	}, [activeTab, currentPost.variants]);
 
 	const getReplyDescription = useCallback(() => {
 		if (!seriesType || seriesType !== "reply") return "";
