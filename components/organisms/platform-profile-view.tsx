@@ -80,7 +80,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
   const getPlatformColor = (platform: string) => {
     switch (platform) {
       case 'instagram': return 'from-purple-500 to-pink-500';
-      case 'x': return 'from-blue-500 to-purple-500';
+      case 'x': return 'from-lime-500 to-purple-500';
       case 'youtube': return 'from-red-500 to-pink-500';
       default: return 'from-gray-500 to-gray-600';
     }
@@ -189,7 +189,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                 <div key={post.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Text size="3" weight="medium">{post.title}</Text>
-                    <Badge color={post.status === 'published' ? 'green' : post.status === 'scheduled' ? 'blue' : 'gray'}>
+                    <Badge color={post.status === 'published' ? 'green' : post.status === 'scheduled' ? 'lime' : 'gray'}>
                       {post.status}
                     </Badge>
                   </div>
@@ -266,7 +266,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                 <p className="text-sm text-gray-500">Published</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{statusCounts.scheduled}</p>
+                <p className="text-2xl font-bold text-lime-600">{statusCounts.scheduled}</p>
                 <p className="text-sm text-gray-500">Scheduled</p>
               </div>
               <div className="text-center">
@@ -280,7 +280,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500"
               >
                 <option value="all">All Posts ({statusCounts.all})</option>
                 <option value="published">Published ({statusCounts.published})</option>

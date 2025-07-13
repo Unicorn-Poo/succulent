@@ -76,8 +76,8 @@ export default function AccountAnalyticsOverview({
   const getPlatformColor = (platform: string) => {
     const colorMap: Record<string, string> = {
       instagram: "purple",
-      facebook: "blue",
-      linkedin: "blue",
+      facebook: "lime",
+      linkedin: "lime",
       youtube: "red",
       x: "gray",
       twitter: "gray",
@@ -204,7 +204,7 @@ export default function AccountAnalyticsOverview({
           <Text size="2" color="gray" className="mb-4 block">
             Link your social media accounts to view analytics and insights.
           </Text>
-          <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+          <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} className="bg-green-600 hover:bg-green-700 text-white">
             <ExternalLink className="w-4 h-4 mr-2" />
             Link Accounts
           </Button>
@@ -264,7 +264,7 @@ export default function AccountAnalyticsOverview({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-4">
             <div className="text-center">
-              <Users className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+              <Users className="w-6 h-6 text-lime-500 mx-auto mb-2" />
               <Text size="4" weight="bold" className="block">
                 {formatNumber(totalMetrics.followers)}
               </Text>
@@ -389,8 +389,8 @@ export default function AccountAnalyticsOverview({
       {/* Feature Availability Notice */}
       {!analyticsAvailable && (
         <Card>
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <Text size="2" color="blue">
+          <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+            <Text size="2" color="lime">
               💡 Upgrade to a premium Ayrshare plan to unlock detailed analytics, engagement metrics, and advanced insights.
             </Text>
           </div>

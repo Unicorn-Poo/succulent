@@ -94,7 +94,7 @@ const TemplateSelector = ({
 				{onRetry && (
 					<button
 						onClick={onRetry}
-						className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+						className="mt-2 text-sm text-lime-600 hover:text-lime-800 underline"
 					>
 						Try Again
 					</button>
@@ -169,7 +169,7 @@ const TemplateSelector = ({
 				const template = templates.find((t: any) => t.id === e.target.value);
 				if (template) onSelect(template);
 			}}
-			className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${className}`}
+							className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lime-500 focus:border-lime-500 ${className}`}
 		>
 			<option value="">Select a template...</option>
 			{templates.map((template: any) => (
@@ -747,7 +747,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 													</span>
 												)}
 												{product?.shopifyStatus === 'syncing' && (
-													<span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-lime-600 bg-lime-100 px-2 py-1 rounded-full">
 														🔄 Syncing to Shopify...
 													</span>
 												)}
@@ -782,7 +782,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="text-sm text-blue-600 hover:text-blue-800 underline"
+														className="text-sm text-lime-600 hover:text-lime-800 underline"
 													>
 														View in Shopify Admin →
 													</a>
@@ -821,7 +821,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														console.log('Retry sync with channels:', product?.publishingChannels);
 														handleShopifyManagement(productResult);
 													}}
-													className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+													className="text-xs bg-lime-500 hover:bg-lime-600 text-white px-3 py-1 rounded"
 												>
 													{product?.shopifyStatus === 'partial' ? 'Fix Channels' : 'Retry Sync'}
 												</button>
@@ -874,7 +874,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				<div className="p-4">
 					<div className="flex items-center justify-between mb-4">
 						<div className="flex items-center gap-2">
-							<Package className="w-5 h-5 text-blue-600" />
+																<Package className="w-5 h-5 text-lime-600" />
 							<Text weight="medium" size="3">Auto-Create Gelato Product</Text>
 							{hasImages && (
 								<span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -895,8 +895,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</Text>
 							<button
 								onClick={handleAutoCreateToggle}
-								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-									autoCreateOnPublish ? 'bg-blue-600' : 'bg-gray-200'
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 ${
+									autoCreateOnPublish ? 'bg-lime-600' : 'bg-gray-200'
 								}`}
 							>
 								<span
@@ -990,7 +990,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</Text>
 							<button
 								onClick={() => setShowGelatoSection(!showGelatoSection)}
-								className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+								className="text-sm text-lime-600 hover:text-lime-700 font-medium"
 							>
 								{showGelatoSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -1001,27 +1001,27 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						<div className="space-y-4">
 							{/* Setup Instructions when credentials are missing */}
 							{!isGelatoConfigured && (
-								<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-									<Text size="2" weight="medium" className="block mb-2 text-blue-800">
-										🔧 Gelato Store Setup Required
+															<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+								<Text size="2" weight="medium" className="block mb-2 text-lime-800">
+									🔧 Gelato Store Setup Required
+								</Text>
+								<Text size="2" className="block mb-3 text-lime-700">
+									Connect your Gelato store to create print-on-demand products from your posts.
+								</Text>
+								<div className="space-y-2">
+									<Text size="2" className="block text-lime-700">
+										<strong>Step 1:</strong> Get your API credentials from{' '}
+										<a href="https://gelato.com/developers" target="_blank" className="underline">
+											gelato.com/developers
+										</a>
 									</Text>
-									<Text size="2" className="block mb-3 text-blue-700">
-										Connect your Gelato store to create print-on-demand products from your posts.
+									<Text size="2" className="block text-lime-700">
+										<strong>Step 2:</strong> Go to the "Settings" tab in this account group
 									</Text>
-									<div className="space-y-2">
-										<Text size="2" className="block text-blue-700">
-											<strong>Step 1:</strong> Get your API credentials from{' '}
-											<a href="https://gelato.com/developers" target="_blank" className="underline">
-												gelato.com/developers
-											</a>
-										</Text>
-										<Text size="2" className="block text-blue-700">
-											<strong>Step 2:</strong> Go to the "Settings" tab in this account group
-										</Text>
-										<Text size="2" className="block text-blue-700">
-											<strong>Step 3:</strong> Enter your credentials and test the connection
-										</Text>
-									</div>
+									<Text size="2" className="block text-lime-700">
+										<strong>Step 3:</strong> Enter your credentials and test the connection
+									</Text>
+								</div>
 									<div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
 										<Text size="1" className="text-green-700">
 											🔐 <strong>Security:</strong> Your credentials are encrypted and stored securely in your profile
@@ -1103,14 +1103,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 									{/* Shopify Integration Options */}
 									{isShopifyConfigured && selectedTemplate && (
-										<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+										<div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
 											<div className="flex items-center justify-between mb-3">
-												<Text size="2" weight="medium" className="text-blue-800">
+												<Text size="2" weight="medium" className="text-lime-800">
 													🛒 Shopify Publishing Options
 												</Text>
 												<button
 													onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-													className="text-xs text-blue-600 hover:text-blue-800"
+													className="text-xs text-lime-600 hover:text-lime-800"
 												>
 													{showAdvancedOptions ? 'Simple' : 'Advanced'}
 												</button>
@@ -1174,12 +1174,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 											{!showAdvancedOptions && (
 												<div className="space-y-2">
-													<Text size="1" className="text-blue-700">
+													<Text size="1" className="text-lime-700">
 														✅ Publishing to: {selectedPublishingChannels.map(id => 
 															availableChannels.find((c: any) => c.id === id)?.name || id
 														).join(', ') || 'Online Store'}
 													</Text>
-													<Text size="1" className="text-blue-700">
+													<Text size="1" className="text-lime-700">
 														🏷️ Using template tags: {selectedTemplate.tags?.slice(0, 3).join(', ') || 'Print on Demand, Custom'}
 													</Text>
 												</div>
@@ -1202,7 +1202,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									<GelatoButton
 										disabled={!selectedTemplate || !hasImages}
 										onClick={createRealGelatoProduct}
-										className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+										className="w-full bg-lime-600 hover:bg-lime-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 									>
 										<Package className="w-4 h-4" />
 										Create {selectedTemplate?.displayName || selectedTemplate?.name || 'Product'}

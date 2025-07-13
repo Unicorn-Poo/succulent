@@ -39,8 +39,8 @@ export default function PostPage() {
     (group: any) => group.id === params.groupId
   );
   
-  // Use whichever one we found
-  const accountGroup = legacyAccountGroup || jazzAccountGroup;
+  // Prioritize Jazz account group (which has real accounts) over legacy account group
+  const accountGroup = jazzAccountGroup || legacyAccountGroup;
   
   // Helper function to get posts array from either format
   const getPostsArray = () => {

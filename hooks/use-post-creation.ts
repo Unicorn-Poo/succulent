@@ -41,7 +41,7 @@ interface PostCreationProps {
 			username?: string;
 			displayName?: string;
 			url?: string;
-		}>;
+		}> | any[]; // Allow array for Jazz CoList
 	};
 }
 
@@ -145,12 +145,47 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		[replyUrl]
 	);
 
-	const availableAccounts = useMemo(() => 
-		Object.entries(accountGroup.accounts).filter(
+	const availableAccounts = useMemo(() => {
+		// Handle both legacy account groups (object) and Jazz account groups (array)
+		let allAccounts: [string, any][] = [];
+		
+		if (accountGroup.accounts) {
+			if (Array.isArray(accountGroup.accounts)) {
+				// Jazz CoList - treat as array
+				allAccounts = (accountGroup.accounts as any[]).map((account, index) => [
+					account.id || account.platform || `account-${index}`,
+					account
+				]);
+			} else {
+				// Legacy object - use Object.entries
+				allAccounts = Object.entries(accountGroup.accounts);
+			}
+		}
+		
+		const filtered = allAccounts.filter(
 			([key]) => !selectedPlatforms.includes(key)
-		), 
-		[accountGroup.accounts, selectedPlatforms]
-	);
+		);
+		
+		// Debug logging to see what's happening after the fix
+		console.log('🔍 Fixed Account Debug:');
+		console.log('- accountGroup.accounts type:', Array.isArray(accountGroup.accounts) ? 'Array (Jazz)' : 'Object (Legacy)');
+		console.log('- accountGroup.accounts length:', accountGroup.accounts?.length || 0);
+		console.log('- All accounts in group:', allAccounts.map(([key, account]) => ({
+			key,
+			platform: account?.platform,
+			name: account?.name,
+			status: account?.status
+		})));
+		console.log('- Selected platforms for this post:', selectedPlatforms);
+		console.log('- Available accounts (not selected):', filtered.map(([key, account]) => ({
+			key,
+			platform: account?.platform,
+			name: account?.name
+		})));
+		console.log('- Available accounts count:', filtered.length);
+		
+		return filtered;
+	}, [accountGroup.accounts, selectedPlatforms]);
 
 	const hasUnsavedChanges = useMemo(() => {
 		if (!contextText) return false;

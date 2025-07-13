@@ -185,7 +185,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 		return (
 			<div className="w-full h-[400px] bg-gray-100 rounded-lg shadow-md flex items-center justify-center">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500 mx-auto mb-2"></div>
 					<p className="text-gray-500 text-sm">Loading media...</p>
 				</div>
 			</div>

@@ -115,7 +115,7 @@ export default function FreeTierDashboard({
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <Text size="3" weight="bold" className="block text-blue-600">
+            <Text size="3" weight="bold" className="block text-lime-600">
               {strategy.dailyBudget}
             </Text>
             <Text size="1" color="gray">Daily Budget</Text>
@@ -139,14 +139,14 @@ export default function FreeTierDashboard({
       {showDetailedView && (
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-blue-500" />
+            <Target className="w-5 h-5 text-lime-500" />
             <Text size="4" weight="bold">Smart Strategy</Text>
           </div>
           
           <div className="space-y-3">
             {strategy.recommendations.map((rec, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                <TrendingUp className="w-4 h-4 text-blue-500 mt-0.5" />
+              <div key={index} className="flex items-start gap-3 p-3 bg-lime-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-lime-500 mt-0.5" />
                 <Text size="2">{rec}</Text>
               </div>
             ))}
@@ -246,7 +246,7 @@ export default function FreeTierDashboard({
       )}
 
       {/* Upgrade CTA */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="p-6 bg-gradient-to-r from-lime-50 to-purple-50">
         <div className="flex items-center justify-between">
           <div>
             <Text size="4" weight="bold" className="mb-2 block">Ready to Scale?</Text>
@@ -254,13 +254,14 @@ export default function FreeTierDashboard({
               Upgrade to Premium for 1,000 posts/month, analytics, scheduling, and more.
             </Text>
             <div className="flex items-center gap-4">
-              <Button onClick={onUpgradeClick} size="2">
+              <Button onClick={onUpgradeClick} size="2" className="bg-purple-600 hover:bg-purple-700 text-white">
                 Upgrade to Premium
               </Button>
               <Button 
                 variant="soft" 
                 size="2"
                 onClick={() => window.open('https://www.ayrshare.com/pricing', '_blank')}
+                className="bg-lime-600 hover:bg-lime-700 text-white"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Pricing
@@ -268,7 +269,7 @@ export default function FreeTierDashboard({
             </div>
           </div>
           <div className="hidden md:block">
-            <BarChart3 className="w-16 h-16 text-blue-200" />
+            <BarChart3 className="w-16 h-16 text-lime-200" />
           </div>
         </div>
       </Card>

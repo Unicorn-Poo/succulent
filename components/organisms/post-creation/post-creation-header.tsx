@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Button, TextField, Badge } from "@radix-ui/themes";
+import { TextField, Badge } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
 import { Edit3, Check, X, Plus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms";
 import { platformIcons } from "@/utils/postConstants";
@@ -98,12 +99,11 @@ export const PostCreationHeader = ({
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="flex items-center">
-                                        <Button
-                                            variant={activeTab === platform ? "solid" : "outline"}
+                                        <Button variant={activeTab === platform ? "solid" : "outline"}
                                             size="2"
                                             onClick={() => !isDisabled && setActiveTab(platform)}
                                             className="flex items-center gap-2"
-                                            disabled={isDisabled}
+                                            disabled={isDisabled || false}
                                         >
                                             <Image
                                                 src={platformIcon}
@@ -129,8 +129,7 @@ export const PostCreationHeader = ({
                                                     <X className="w-3 h-3" />
                                                 </span>
                                             )}
-                                        </Button>
-                                    </div>
+                                        </Button>                                      </div>
                                 </TooltipTrigger>
                                 {isDisabled && (
                                     <TooltipContent>
@@ -146,8 +145,7 @@ export const PostCreationHeader = ({
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button
-                                    variant="outline"
+                                <Button variant="outline"
                                     size="2"
                                     onClick={() => setShowAddAccountDialog(true)}
                                     className="flex items-center gap-2"
@@ -155,8 +153,8 @@ export const PostCreationHeader = ({
                                 >
                                     <Plus className="w-4 h-4" />
                                     Add Account
-                                </Button>
-                            </TooltipTrigger>
+                                </Button>                            
+                              </TooltipTrigger>
                             {seriesType === 'reply' && (
                                 <TooltipContent>
                                     <p>You cannot add accounts while in reply mode.</p>

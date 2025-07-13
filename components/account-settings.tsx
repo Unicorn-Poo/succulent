@@ -16,8 +16,8 @@ export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-						<Settings className="w-5 h-5 text-blue-600" />
+									<div className="flex items-center justify-center w-10 h-10 bg-lime-100 rounded-lg">
+					<Settings className="w-5 h-5 text-lime-600" />
 					</div>
 					<div>
 						<Heading size="5">Account Settings</Heading>
@@ -76,7 +76,7 @@ export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
 												account.profile.name = e.target.value;
 											}
 										}}
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 										placeholder="Enter your display name"
 									/>
 								</div>
@@ -230,11 +230,11 @@ export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
 									</Text>
 								</div>
 
-								<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-									<Text size="2" className="text-blue-800">
+								<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+									<Text size="2" className="text-lime-800">
 										🔑 <strong>API Key Security</strong>
 									</Text>
-									<Text size="2" className="text-blue-700 block mt-1">
+									<Text size="2" className="text-lime-700 block mt-1">
 										Your API keys are encrypted and stored securely. They are never shared or exposed to other users.
 									</Text>
 								</div>

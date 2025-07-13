@@ -220,30 +220,30 @@ export default function AyrshareAccountLinking({
 
   return (
     <Card>
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-lime-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <Text weight="medium" className="text-blue-900 mb-2 block">
+            <Text weight="medium" className="text-lime-900 mb-2 block">
               Connect Pending Accounts to Ayrshare
             </Text>
             
-            <Text size="2" className="text-blue-700 mb-3 block">
+            <Text size="2" className="text-lime-700 mb-3 block">
               You have {pendingAccounts.length} account(s) that need to be connected to Ayrshare for publishing:
             </Text>
             
             {/* List of pending accounts */}
             <div className="mb-4">
               {pendingAccounts.map((account, index) => (
-                <div key={`${account.platform}-${account.name}-${index}`} className="flex items-center gap-2 text-sm text-blue-700 mb-1">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                <div key={`${account.platform}-${account.name}-${index}`} className="flex items-center gap-2 text-sm text-lime-700 mb-1">
+                  <span className="w-2 h-2 bg-lime-400 rounded-full"></span>
                   <strong className="capitalize">{account.platform}</strong>: {account.name}
                 </div>
               ))}
             </div>
             
             {/* Instructions */}
-            <div className="mb-4 p-3 bg-white border border-blue-200 rounded text-sm text-blue-800">
+            <div className="mb-4 p-3 bg-white border border-lime-200 rounded text-sm text-lime-800">
               <strong>To connect your accounts:</strong>
               <ol className="list-decimal list-inside mt-1 space-y-1">
                 <li>Click "Open Ayrshare Dashboard" below</li>
@@ -258,7 +258,7 @@ export default function AyrshareAccountLinking({
               <Button 
                 size="2"
                 onClick={handleOpenDashboard}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-lime-600 hover:bg-lime-700"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Open Ayrshare Dashboard
@@ -286,7 +286,7 @@ export default function AyrshareAccountLinking({
             
             {/* Status messages */}
             {linkingStatus && (
-              <div className="mt-3 p-3 bg-white border border-blue-200 rounded text-sm text-blue-800">
+              <div className="mt-3 p-3 bg-white border border-lime-200 rounded text-sm text-lime-800">
                 <pre className="whitespace-pre-wrap font-mono text-xs">{linkingStatus}</pre>
               </div>
             )}
@@ -298,7 +298,7 @@ export default function AyrshareAccountLinking({
             )}
             
             {/* Additional help */}
-            <div className="mt-3 text-xs text-blue-600">
+            <div className="mt-3 text-xs text-lime-600">
               <strong>Need help?</strong> Make sure you're using the same email address for both Succulent and Ayrshare.
               {isJazzAccountGroup && " This is a collaborative account group - changes will sync automatically."}
             </div>

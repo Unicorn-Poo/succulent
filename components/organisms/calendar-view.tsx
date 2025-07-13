@@ -102,7 +102,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published': return 'bg-green-500 border-green-600';
-      case 'scheduled': return 'bg-blue-500 border-blue-600';
+      case 'scheduled': return 'bg-lime-500 border-lime-600';
       case 'draft': return 'bg-gray-500 border-gray-600';
       default: return 'bg-gray-500 border-gray-600';
     }
@@ -111,7 +111,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   const getStatusTextColor = (status: string) => {
     switch (status) {
       case 'published': return 'text-green-100';
-      case 'scheduled': return 'text-blue-100';
+      case 'scheduled': return 'text-lime-100';
       case 'draft': return 'text-gray-100';
       default: return 'text-gray-100';
     }
@@ -152,7 +152,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
               <span className="text-sm text-gray-600">Published</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
               <span className="text-sm text-gray-600">Scheduled</span>
             </div>
             <div className="flex items-center gap-1">
@@ -194,7 +194,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
               key={index}
               className={`bg-white p-2 min-h-[120px] ${
                 !calendarDay.isCurrentMonth ? 'opacity-30' : ''
-              } ${isToday ? 'ring-2 ring-blue-500 ring-inset' : ''}`}
+              } ${isToday ? 'ring-2 ring-lime-500 ring-inset' : ''}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className={`text-sm ${
@@ -203,7 +203,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
                   {calendarDay.day}
                 </span>
                 {isToday && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-lime-500 rounded-full"></div>
                 )}
               </div>
               
@@ -277,7 +277,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
       
       {/* Legend */}
       <div className="mt-4 text-xs text-gray-500">
-        Click on any post to view or edit it. Today is highlighted with a blue border. 
+        Click on any post to view or edit it. Today is highlighted with a lime border. 
         Platform emojis: 📷 Instagram, 🐦 X/Twitter, 📹 YouTube
       </div>
     </div>

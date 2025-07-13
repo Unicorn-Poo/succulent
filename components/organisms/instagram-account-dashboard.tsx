@@ -173,7 +173,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
     return (
       <Card className="p-6">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-lime-500" />
           <Text>Loading Instagram account data...</Text>
         </div>
       </Card>
@@ -250,7 +250,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
                 {profileInfo.bio}
               </Text>
               {profileInfo.verified && (
-                <Badge color="blue" size="1">✓ Verified</Badge>
+                <Badge color="lime" size="1">✓ Verified</Badge>
               )}
             </div>
           </div>
@@ -299,8 +299,8 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <Eye className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+            <div className="text-center p-4 bg-lime-50 rounded-lg">
+              <Eye className="w-6 h-6 text-lime-500 mx-auto mb-2" />
               <Text size="3" weight="bold" className="block">
                 {formatNumber(analytics.impressions)}
               </Text>
@@ -451,7 +451,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
             <Button variant="soft" onClick={() => setShowSettings(false)}>
               Close
             </Button>
-            <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+            <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} className="bg-green-600 hover:bg-green-700 text-white">
               Manage in Ayrshare
             </Button>
           </div>

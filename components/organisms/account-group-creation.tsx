@@ -342,12 +342,12 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
           {/* Development Mode Notice */}
           {!businessPlanMode && (
             <Card>
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-blue-500" />
-                  <Text weight="medium" color="blue">Development Mode (Free Account)</Text>
+                  <AlertCircle className="w-4 h-4 text-lime-500" />
+                  <Text weight="medium" color="lime">Development Mode (Free Account)</Text>
                 </div>
-                <Text size="2" className="text-blue-700">
+                <Text size="2" className="text-lime-700">
                   Using simplified workflow. Add accounts manually, then link them in Ayrshare dashboard.
                 </Text>
               </div>
@@ -565,8 +565,8 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
           {/* Status Messages */}
           {linkingStatus && (
             <Card>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <Text size="2" color="blue">{linkingStatus}</Text>
+              <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
+                <Text size="2" color="lime">{linkingStatus}</Text>
               </div>
             </Card>
           )}

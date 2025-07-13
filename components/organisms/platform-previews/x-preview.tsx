@@ -51,7 +51,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
   const getStatusBadgeColor = () => {
     switch (post.status) {
       case 'published': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'scheduled': return 'bg-lime-100 text-lime-800';
       case 'draft': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -77,7 +77,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
         <div className="flex space-x-3">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-white text-lg font-semibold">
                 {account.name.charAt(0).toUpperCase()}
               </span>
@@ -120,11 +120,11 @@ export default function XPreview({ post, account }: XPreviewProps) {
             {/* Actions */}
             <div className="flex items-center justify-between mt-3 max-w-md">
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors">
-                  <MessageCircle className="w-4 h-4 text-gray-500 group-hover:text-blue-500" />
+                <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
+                  <MessageCircle className="w-4 h-4 text-gray-500 group-hover:text-lime-500" />
                 </div>
                 {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 group-hover:text-blue-500">
+                  <span className="text-sm text-gray-500 group-hover:text-lime-500">
                     {formatEngagement(post.engagement.comments)}
                   </span>
                 )}
@@ -157,8 +157,8 @@ export default function XPreview({ post, account }: XPreviewProps) {
               </div>
               
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors">
-                  <Share className="w-4 h-4 text-gray-500 group-hover:text-blue-500" />
+                <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
+                  <Share className="w-4 h-4 text-gray-500 group-hover:text-lime-500" />
                 </div>
               </div>
             </div>

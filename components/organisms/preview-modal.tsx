@@ -152,7 +152,7 @@ export const PreviewModal = ({
 				<div className="mb-4">
 					<div className="flex items-center gap-2 mb-2">
 						{isReply && (
-							<Badge variant="soft" color="blue">
+							<Badge variant="soft" color="lime">
 								Reply Post
 							</Badge>
 						)}

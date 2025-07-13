@@ -48,7 +48,7 @@ export const PostContent = ({
                                     variant="soft"
                                     size="1"
                                     onClick={handleImageUpload}
-                                    className="absolute top-2 left-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-blue-500 hover:bg-blue-600 text-white"
+                                    className="absolute top-2 left-2 !rounded-full !w-8 !h-8 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-lime-500 hover:bg-lime-600 text-white"
                                 >
                                     <Plus className="w-4 h-4" />
                                 </Button>
@@ -99,7 +99,7 @@ export const PostContent = ({
                         {/* Character count */}
                         <div className="absolute bottom-2 right-2 text-sm text-gray-500 flex items-center gap-2">
                             {isImplicitThread && (
-                                <Badge color="blue" variant="soft">
+                                <Badge color="lime" variant="soft">
                                     <ListTree className="w-3 h-3 mr-1" />
                                     Auto-threaded
                                 </Badge>

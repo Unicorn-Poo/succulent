@@ -1,7 +1,8 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
 import { useState } from "react";
-import { Button, Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
+import { Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
 import { Plus, Users, BarChart3, Settings, MessageCircle, Cog } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
@@ -179,7 +180,7 @@ export default function AccountGroupPage() {
 								</p>
 							</div>
 						</div>
-						<Button onClick={() => setShowCreateDialog(true)}>
+						<Button onClick={() => setShowCreateDialog(true)} className="bg-lime-600 hover:bg-lime-700 text-white">
 							<Plus className="w-4 h-4 mr-2" />
 							Create Post
 						</Button>
@@ -220,7 +221,7 @@ export default function AccountGroupPage() {
 									<p className="text-lg mb-2">No posts yet</p>
 									<p className="text-sm">Create your first post to get started!</p>
 								</div>
-								<Button onClick={() => setShowCreateDialog(true)}>
+								<Button onClick={() => setShowCreateDialog(true)} className="bg-lime-600 hover:bg-lime-700 text-white">
 									<Plus className="w-4 h-4 mr-2" />
 									Create First Post
 								</Button>
@@ -295,9 +296,9 @@ export default function AccountGroupPage() {
 						<div className="space-y-6">
 							<div className="flex items-center justify-between">
 								<Text size="5" weight="bold">Connected Accounts</Text>
-								<Button 
+																<Button
 									onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}
-									variant="soft"
+									className="bg-green-600 hover:bg-green-700 text-white"
 								>
 									Link More Accounts
 								</Button>
@@ -310,7 +311,7 @@ export default function AccountGroupPage() {
 									<Text size="2" color="gray" className="mb-6 block">
 										Connect your social media accounts to start posting and managing content.
 									</Text>
-									<Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+									<Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} className="bg-green-600 hover:bg-green-700 text-white">
 										Connect Accounts
 									</Button>
 								</div>
@@ -319,7 +320,7 @@ export default function AccountGroupPage() {
 									{accounts.map((account: any) => (
 										<div key={account.id || account._id} className="bg-white rounded-lg p-6 border border-gray-200">
 											<div className="flex items-center gap-3 mb-3">
-												<div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+												<div className="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
 													<Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
 												</div>
 												<div>
@@ -400,9 +401,9 @@ export default function AccountGroupPage() {
 						<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
 							Cancel
 						</Button>
-						<Button onClick={handleCreatePost} disabled={!newPostTitle.trim()}>
-							Create Post
-						</Button>
+										<Button onClick={handleCreatePost} disabled={!newPostTitle.trim()} className="bg-lime-600 hover:bg-lime-700 text-white disabled:bg-gray-400">
+					Create Post
+				</Button>
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>

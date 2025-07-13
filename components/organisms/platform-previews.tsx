@@ -82,10 +82,10 @@ export const TwitterPreview = ({
 					</div>
 				)}
 				<div className="flex items-center justify-between max-w-md text-gray-500">
-					<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500"><MessageCircle className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><MessageCircle className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-green-50 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-red-50 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50 hover:text-blue-500"><Share className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><Share className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-gray-50"><Bookmark className="w-4 h-4" /></Button>
 				</div>
 			</div>
@@ -112,7 +112,7 @@ export const TwitterPreview = ({
 						/>
 						<div className="flex-1">
 							<Text as="p" color="gray" size="2" className="mb-2">
-								Replying to <a href="#" className="text-blue-500">@{replyTo.authorUsername}</a>
+								Replying to <a href="#" className="text-lime-500">@{replyTo.authorUsername}</a>
 							</Text>
 							<div className="whitespace-pre-wrap">{displayContent}</div>
 						</div>
@@ -362,7 +362,7 @@ export const FacebookPreview = ({
 							<div className="flex items-center gap-2">
 								<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 								{threadInfo && (
-									<Badge variant="soft" size="1" color="blue">
+									<Badge variant="soft" size="1" color="lime">
 										{threadInfo}
 									</Badge>
 								)}
@@ -396,22 +396,22 @@ export const FacebookPreview = ({
 
 				{/* Thread continuation */}
 				{isThread && threadPosts.length > 1 && currentThreadIndex < threadPosts.length - 1 && (
-					<Text size="1" color="blue" className="block mb-3">
+					<Text size="1" color="lime" className="block mb-3">
 						Continue reading...
 					</Text>
 				)}
 
 				{/* Actions */}
 				<div className="flex items-center justify-between pt-2 border-t">
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<Heart className="w-4 h-4 mr-2" />
 						Like
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<MessageCircle className="w-4 h-4 mr-2" />
 						Comment
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<Share className="w-4 h-4 mr-2" />
 						Share
 					</Button>
@@ -459,7 +459,7 @@ export const LinkedInPreview = ({
 							<div className="flex items-center gap-2">
 								<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 								{threadInfo && (
-									<Badge variant="soft" size="1" color="blue">
+									<Badge variant="soft" size="1" color="lime">
 										{threadInfo}
 									</Badge>
 								)}
@@ -493,26 +493,26 @@ export const LinkedInPreview = ({
 
 				{/* Thread continuation */}
 				{isThread && threadPosts.length > 1 && currentThreadIndex < threadPosts.length - 1 && (
-					<Text size="1" color="blue" className="block mb-3">
+					<Text size="1" color="lime" className="block mb-3">
 						See more posts in this series...
 					</Text>
 				)}
 
 				{/* Actions */}
 				<div className="flex items-center justify-between pt-3 border-t">
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<Heart className="w-4 h-4 mr-2" />
 						Like
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<MessageCircle className="w-4 h-4 mr-2" />
 						Comment
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<Repeat2 className="w-4 h-4 mr-2" />
 						Repost
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-blue-50">
+					<Button variant="ghost" size="1" className="hover:bg-lime-50">
 						<Send className="w-4 h-4 mr-2" />
 						Send
 					</Button>

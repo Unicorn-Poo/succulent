@@ -61,7 +61,7 @@ export default function AnalyticsDemoPage() {
             This feature allows you to get detailed analytics for individual posts using either:
           </Text>
           <div className="space-y-3">
-            <div className="p-3 bg-blue-50 rounded-lg">
+            <div className="p-3 bg-lime-50 rounded-lg">
               <Text size="2" weight="medium" className="mb-1 block">Ayrshare Post ID</Text>
               <Text size="1" color="gray">For posts published through Ayrshare API</Text>
             </div>
@@ -70,7 +70,7 @@ export default function AnalyticsDemoPage() {
               <Text size="1" color="gray">For any public post on the platform</Text>
             </div>
           </div>
-          <Button className="mt-4" onClick={() => window.open('https://www.ayrshare.com/docs/apis/analytics/overview', '_blank')}>
+          <Button className="mt-4 bg-lime-600 hover:bg-lime-700 text-white" onClick={() => window.open('https://www.ayrshare.com/docs/apis/analytics/overview', '_blank')}>
             <ExternalLink className="w-4 h-4 mr-2" />
             View API Documentation
           </Button>
@@ -93,7 +93,7 @@ export default function AnalyticsDemoPage() {
               <Text size="2" weight="medium" className="block">Blog Posts</Text>
               <Text size="1" color="gray">Auto-share new articles</Text>
             </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-center p-3 bg-lime-50 rounded-lg">
               <Text size="2" weight="medium" className="block">YouTube Videos</Text>
               <Text size="1" color="gray">Share new uploads</Text>
             </div>
@@ -102,7 +102,7 @@ export default function AnalyticsDemoPage() {
               <Text size="1" color="gray">Promote new episodes</Text>
             </div>
           </div>
-          <Button onClick={() => window.open('https://www.ayrshare.com/docs/apis/feeds/overview', '_blank')}>
+          <Button onClick={() => window.open('https://www.ayrshare.com/docs/apis/feeds/overview', '_blank')} className="bg-lime-600 hover:bg-lime-700 text-white">
             <ExternalLink className="w-4 h-4 mr-2" />
             Learn More About RSS Feeds
           </Button>
@@ -122,7 +122,7 @@ export default function AnalyticsDemoPage() {
           </Text>
           <div className="space-y-3">
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-4 h-4 bg-lime-500 rounded-full"></div>
               <div>
                 <Text size="2" weight="medium" className="block">Brand Colors</Text>
                 <Text size="1" color="gray">Define primary and secondary colors</Text>
@@ -165,7 +165,7 @@ export default function AnalyticsDemoPage() {
             Let AI optimize when your posts are published for maximum engagement:
           </Text>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+            <div className="p-4 bg-gradient-to-br from-lime-50 to-lime-100 rounded-lg">
               <Text size="2" weight="medium" className="mb-2 block">Optimal Timing</Text>
               <Text size="1" color="gray">
                 Posts are scheduled when your audience is most active
@@ -178,7 +178,7 @@ export default function AnalyticsDemoPage() {
               </Text>
             </div>
           </div>
-          <Button onClick={() => window.open('https://www.ayrshare.com/docs/apis/auto-schedule/overview', '_blank')}>
+          <Button onClick={() => window.open('https://www.ayrshare.com/docs/apis/auto-schedule/overview', '_blank')} className="bg-lime-600 hover:bg-lime-700 text-white">
             <ExternalLink className="w-4 h-4 mr-2" />
             Auto Schedule Documentation
           </Button>
@@ -209,7 +209,7 @@ export default function AnalyticsDemoPage() {
               </Link>
               <div className="w-px h-6 bg-gray-300" />
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <BarChart3 className="w-5 h-5 text-lime-500" />
                 <Text size="4" weight="bold">Ayrshare Analytics Demo</Text>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function AnalyticsDemoPage() {
               <Badge color={ayrshareConfigured ? "green" : "red"}>
                 {ayrshareConfigured ? "API Configured" : "API Not Configured"}
               </Badge>
-              <Badge color={businessPlan ? "blue" : "gray"}>
+              <Badge color={businessPlan ? "lime" : "gray"}>
                 {businessPlan ? "Business Plan" : "Free Plan"}
               </Badge>
             </div>
@@ -259,7 +259,7 @@ export default function AnalyticsDemoPage() {
                     onClick={() => setSelectedFeature(feature.id)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       selectedFeature === feature.id
-                        ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                        ? 'bg-lime-100 text-lime-900 border border-lime-200'
                         : 'hover:bg-gray-50 border border-transparent'
                     }`}
                   >
@@ -284,7 +284,7 @@ export default function AnalyticsDemoPage() {
                     href="https://www.ayrshare.com/docs/apis/analytics/overview"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                    className="flex items-center gap-2 text-sm text-lime-600 hover:text-lime-800"
                   >
                     <ExternalLink className="w-3 h-3" />
                     Analytics API
@@ -293,7 +293,7 @@ export default function AnalyticsDemoPage() {
                     href="https://www.ayrshare.com/docs/apis/feeds/overview"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                    className="flex items-center gap-2 text-sm text-lime-600 hover:text-lime-800"
                   >
                     <ExternalLink className="w-3 h-3" />
                     RSS Feeds API
@@ -302,7 +302,7 @@ export default function AnalyticsDemoPage() {
                     href="https://www.ayrshare.com/docs/apis/comments/post-comment"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                    className="flex items-center gap-2 text-sm text-lime-600 hover:text-lime-800"
                   >
                     <ExternalLink className="w-3 h-3" />
                     Comments API
@@ -325,7 +325,7 @@ export default function AnalyticsDemoPage() {
         {/* Implementation Guide */}
         <Card className="mt-8 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Info className="w-5 h-5 text-blue-500" />
+            <Info className="w-5 h-5 text-lime-500" />
             <Text size="4" weight="bold">Implementation Guide</Text>
           </div>
           
@@ -334,21 +334,21 @@ export default function AnalyticsDemoPage() {
               <Text size="3" weight="medium" className="mb-3 block">Quick Start</Text>
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">1</div>
+                  <div className="w-6 h-6 bg-lime-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">1</div>
                   <div>
                     <Text size="2" weight="medium" className="block">Configure API Key</Text>
                     <Text size="1" color="gray">Add your Ayrshare API key to environment variables</Text>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">2</div>
+                  <div className="w-6 h-6 bg-lime-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">2</div>
                   <div>
                     <Text size="2" weight="medium" className="block">Link Social Accounts</Text>
                     <Text size="1" color="gray">Connect your Instagram account in Ayrshare dashboard</Text>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">3</div>
+                  <div className="w-6 h-6 bg-lime-500 text-white rounded-full flex items-center justify-center text-xs font-medium mt-0.5">3</div>
                   <div>
                     <Text size="2" weight="medium" className="block">Use Analytics</Text>
                     <Text size="1" color="gray">Import and use the analytics utilities in your components</Text>

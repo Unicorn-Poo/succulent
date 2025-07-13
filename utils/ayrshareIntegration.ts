@@ -193,7 +193,7 @@ export const AYRSHARE_PLATFORM_MAP: Record<string, string> = {
   'reddit': 'reddit',
   'telegram': 'telegram',
   'threads': 'threads',
-  'bluesky': 'bluesky',
+  'limesky': 'limesky',
   'gmb': 'google', // Google My Business
 };
 

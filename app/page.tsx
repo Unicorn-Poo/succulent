@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Dialog, TextField, TextArea } from "@radix-ui/themes";
+import { Dialog, TextField, TextArea } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
 import { Plus, Edit3, Home, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -298,10 +299,14 @@ export default function HomePage() {
                   Analytics Demo
                 </Button>
               </Link>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Account Group
-              </Button>
+                              <Button 
+                  onClick={() => setShowCreateAccountGroupDialog(true)}
+                  intent="primary"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Account Group
+                </Button>
             </div>
           </div>
 
@@ -357,7 +362,7 @@ export default function HomePage() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-lg">{group.name}</h3>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" title="Jazz Collaborative"></div>
+                    <div className="w-2 h-2 bg-lime-500 rounded-full" title="Jazz Collaborative"></div>
                   </div>
                   
                   <div className="space-y-2">
@@ -367,7 +372,7 @@ export default function HomePage() {
                     <p className="text-sm text-gray-600">
                       {group.posts?.length || 0} posts created
                     </p>
-                    <p className="text-xs text-blue-600">
+                    <p className="text-xs text-lime-600">
                       ✨ Collaborative account group
                     </p>
                   </div>
@@ -376,16 +381,16 @@ export default function HomePage() {
                     {group.accounts?.slice(0, 3).map((account: any, accountIndex: number) => (
                       <div 
                         key={account?.id || accountIndex}
-                        className="w-8 h-8 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center"
+                        						className="w-8 h-8 rounded-full border-2 border-white bg-lime-100 flex items-center justify-center"
                       >
-                        <span className="text-xs font-medium text-blue-700">
+                        <span className="text-xs font-medium text-lime-700">
                           {account?.platform?.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     ))}
                     {(group.accounts?.length || 0) > 3 && (
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center">
-                        <span className="text-xs font-medium text-blue-700">
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-lime-200 flex items-center justify-center">
+                        <span className="text-xs font-medium text-lime-700">
                           +{(group.accounts?.length || 0) - 3}
                         </span>
                       </div>
@@ -398,9 +403,9 @@ export default function HomePage() {
             {/* Create New Card */}
             <button
               onClick={() => setShowCreateAccountGroupDialog(true)}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 border-dashed p-6 hover:shadow-md transition-shadow text-center"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 border-dashed p-6 hover:shadow-md hover:border-lime-300 transition-all text-center"
             >
-              <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <Plus className="w-8 h-8 text-lime-600 mx-auto mb-2" />
               <h3 className="font-medium text-gray-900 mb-1">Create Account Group</h3>
               <p className="text-sm text-gray-500">
                 Connect your social media accounts
@@ -418,14 +423,14 @@ export default function HomePage() {
           )}
 
           {me && (
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800">
+            <div className="mt-8 p-4 bg-lime-50 border border-lime-200 rounded-lg">
+              <p className="text-lime-800">
                 ✅ Jazz Foundation Complete! Account: {me.id}
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-lime-600 mt-1">
                 🎯 Account system connected | Freeform account creation working | Ayrshare ready
               </p>
-              <p className="text-xs text-blue-500 mt-1">
+              <p className="text-xs text-lime-500 mt-1">
                 📋 Ready: Create account groups that persist across sessions! 🚀
               </p>
             </div>
@@ -464,7 +469,7 @@ export default function HomePage() {
                 <Button variant="soft" onClick={() => setShowCreateDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleCreatePost}>
+                <Button onClick={handleCreatePost} className="bg-lime-600 hover:bg-lime-700 text-white">
                   Create Post
                 </Button>
               </div>

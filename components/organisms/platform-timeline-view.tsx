@@ -59,8 +59,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId }:
     }
     if (post.status === 'scheduled') {
       return (
-        <div className="absolute inset-0 bg-blue-900 bg-opacity-60 flex items-center justify-center">
-          <span className="text-white text-xs font-medium px-2 py-1 bg-blue-700 rounded">
+        <div className="absolute inset-0 bg-lime-900 bg-opacity-60 flex items-center justify-center">
+          <span className="text-white text-xs font-medium px-2 py-1 bg-lime-700 rounded">
             SCHEDULED
           </span>
         </div>
@@ -160,7 +160,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId }:
         {/* Profile Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xl font-semibold">
                 {account.name.charAt(0).toUpperCase()}
               </span>
@@ -180,7 +180,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId }:
               <div className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors relative cursor-pointer">
                 <div className="flex space-x-3">
                   {/* Avatar */}
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-sm font-semibold">
                       {account.name.charAt(0).toUpperCase()}
                     </span>
@@ -225,7 +225,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId }:
                 {/* Status Overlay */}
                 {(post.status === 'draft' || post.status === 'scheduled') && (
                   <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                    post.status === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
+                    post.status === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-lime-100 text-lime-700'
                   }`}>
                     {post.status.toUpperCase()}
                   </div>

@@ -1,4 +1,5 @@
-import { Button, Card, Switch, Box, Text } from "@radix-ui/themes";
+import { Card, Switch, Box, Text } from "@radix-ui/themes";
+import { Button } from "@/components/atoms/button";
 import { Label } from "radix-ui";
 import { MessageSquare, Eye, CalendarDays, Calendar, Loader2, Globe } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms/tooltip";
@@ -101,6 +102,7 @@ export const PostActions = ({
                                 variant="outline"
                                 size="2"
                                 onClick={handlePreview}
+                                className="border-lime-600 text-lime-600 hover:bg-lime-50"
                             >
                                 <Eye className="w-4 h-4 mr-2" />
                                 <span className="hidden sm:inline">Preview</span>
@@ -111,7 +113,7 @@ export const PostActions = ({
                                 variant="outline"
                                 size="2"
                                 onClick={() => setShowSettings(true)}
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 border-amber-600 text-amber-600 hover:bg-amber-50"
                             >
                                 {scheduledDate ? (
                                     <>
@@ -141,11 +143,11 @@ export const PostActions = ({
 
                             {/* Publish Button - appears when content is saved and ready to publish */}
                             {showPublishButton && (
-                                <Button
-                                    onClick={handlePublishPost}
-                                    disabled={isScheduling}
-                                    className="flex items-center gap-2"
-                                >
+                                                <Button
+                    onClick={handlePublishPost}
+                    disabled={isScheduling}
+                    className="flex items-center gap-2 bg-lime-600 hover:bg-lime-700 text-white disabled:bg-gray-400"
+                >
                                     {isScheduling ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -165,8 +167,8 @@ export const PostActions = ({
 
                 {/* Post Type Descriptions */}
                 {seriesType === "reply" && (
-                    <Box className="bg-blue-50 p-3 rounded-lg mt-4">
-                        <Text size="2" color="blue">
+                    <Box className="bg-lime-50 p-3 rounded-lg mt-4">
+                        <Text size="2" color="lime">
                             {getReplyDescription()} Replies do not support media.
                         </Text>
                     </Box>

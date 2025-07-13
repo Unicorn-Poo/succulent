@@ -87,7 +87,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <RefreshCw className="w-4 h-4 animate-spin" />,
 					label: 'Syncing...',
-					color: 'text-blue-600 bg-blue-100'
+					color: 'text-lime-600 bg-lime-100'
 				};
 			case 'synced':
 				return {
@@ -210,7 +210,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 													href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="text-sm text-blue-600 hover:text-blue-800 underline"
+													className="text-sm text-lime-600 hover:text-lime-800 underline"
 												>
 													View in Shopify Admin →
 												</a>
@@ -223,7 +223,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 										<button
 											onClick={() => retryShopifySync(product?.productId, product?.publishingChannels || [])}
 											disabled={isRetrying}
-											className="ml-4 flex items-center gap-1 text-xs bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded"
+											className="ml-4 flex items-center gap-1 text-xs bg-lime-500 hover:bg-lime-600 disabled:bg-gray-400 text-white px-3 py-1 rounded"
 										>
 											{isRetrying ? (
 												<RefreshCw className="w-3 h-3 animate-spin" />
@@ -255,7 +255,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 							<Text size="1" color="gray">Synced</Text>
 						</div>
 						<div>
-							<Text weight="medium" size="2" className="block text-blue-600">
+							<Text weight="medium" size="2" className="block text-lime-600">
 								{createdProducts.filter((p: any) => p?.shopifyStatus === 'syncing').length}
 							</Text>
 							<Text size="1" color="gray">Syncing</Text>

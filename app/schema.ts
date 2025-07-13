@@ -2,7 +2,7 @@
 import { co, z } from "jazz-tools";
 
 export const PlatformNames = [
-	"instagram", "facebook", "x", "linkedin", "youtube", "tiktok", "pinterest", "reddit", "telegram", "threads", "bluesky", "google"
+	"instagram", "facebook", "x", "linkedin", "youtube", "tiktok", "pinterest", "reddit", "telegram", "threads", "limesky", "google"
 ] as const;
 
 // =============================================================================

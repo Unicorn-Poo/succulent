@@ -121,7 +121,7 @@ export default function AccountGroupTools({
           <Text size="2" color="gray" className="mb-4 block">
             Link your social media accounts to access enhanced tools and features.
           </Text>
-          <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+          <Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} className="bg-green-600 hover:bg-green-700 text-white">
             <ExternalLink className="w-4 h-4 mr-2" />
             Link Accounts
           </Button>
@@ -177,7 +177,7 @@ export default function AccountGroupTools({
               setShowDialog(true);
             }}>
               <div className="text-center">
-                <ToolIcon className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                <ToolIcon className="w-8 h-8 text-lime-500 mx-auto mb-3" />
                 <Text size="3" weight="medium" className="mb-2 block">
                   {tool.name}
                 </Text>
@@ -302,7 +302,7 @@ function BrandManager({ profileKey, onUpdate }: { profileKey?: string; onUpdate?
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-blue-50 rounded-lg">
+          <div className="p-3 bg-lime-50 rounded-lg">
             <Text size="2" weight="medium" className="mb-1 block">Brand Colors</Text>
             <Text size="1" color="gray">Primary and secondary colors</Text>
           </div>

@@ -64,7 +64,7 @@ export default function DemoAccountGroupPage() {
   const getStatusBadge = (status: string) => {
     const styles = {
       published: "bg-green-100 text-green-800",
-      scheduled: "bg-blue-100 text-blue-800",
+      scheduled: "bg-lime-100 text-lime-800",
       draft: "bg-gray-100 text-gray-800"
     };
     return styles[status as keyof typeof styles] || styles.draft;
@@ -120,7 +120,7 @@ export default function DemoAccountGroupPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleCreatePost} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleCreatePost} className="bg-lime-600 hover:bg-lime-700 text-white">
             <Plus className="w-4 h-4 mr-2" />
             Create Post
           </Button>
@@ -158,7 +158,7 @@ export default function DemoAccountGroupPage() {
                     <p className="text-sm font-medium text-gray-600">Connected Accounts</p>
                     <p className="text-2xl font-bold text-gray-900">{Object.keys(accountGroup.accounts).length}</p>
                   </div>
-                  <Users className="w-8 h-8 text-blue-500" />
+                  <Users className="w-8 h-8 text-lime-500" />
                 </div>
               </div>
               
@@ -206,7 +206,7 @@ export default function DemoAccountGroupPage() {
                 {Object.values(accountGroup.accounts).map((account: any, index: number) => (
                   <div 
                     key={index} 
-                    className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer hover:border-blue-200"
+                    className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer hover:border-lime-200"
                     onClick={() => handleAccountClick(account)}
                   >
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -233,14 +233,14 @@ export default function DemoAccountGroupPage() {
             </div>
 
             {/* Demo Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <div className="bg-lime-50 border border-lime-200 rounded-lg p-4 mb-8">
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 bg-lime-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-white text-xs font-bold">i</span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-blue-900 mb-1">Demo Account Group</h3>
-                  <p className="text-blue-700 text-sm">
+                  <h3 className="font-medium text-lime-900 mb-1">Demo Account Group</h3>
+                  <p className="text-lime-700 text-sm">
                     This is a demonstration account group with sample social media accounts. 
                     Posts created here won't actually be published to social media platforms.
                     Click on any account above to view platform-specific previews.
@@ -253,7 +253,7 @@ export default function DemoAccountGroupPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Recent Posts</h2>
-                <Button variant="outline" size="1" onClick={handleCreatePost}>
+                <Button variant="outline" size="1" onClick={handleCreatePost} className="border-lime-600 text-lime-600 hover:bg-lime-50">
                   <Plus className="w-4 h-4 mr-2" />
                   New Post
                 </Button>
@@ -264,7 +264,7 @@ export default function DemoAccountGroupPage() {
                   <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No posts yet</h3>
                   <p className="text-gray-600 mb-4">Create your first post to get started</p>
-                  <Button onClick={handleCreatePost}>
+                  <Button onClick={handleCreatePost} className="bg-lime-600 hover:bg-lime-700 text-white">
                     <Plus className="w-4 h-4 mr-2" />
                     Create First Post
                   </Button>
@@ -275,11 +275,11 @@ export default function DemoAccountGroupPage() {
                     <Link 
                       key={index} 
                       href={`/account-group/demo/post/${post.id}`}
-                      className="block border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer hover:border-blue-200"
+                      className="block border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer hover:border-lime-200"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">{post.title}</h3>
+                          <h3 className="font-semibold text-gray-900 mb-2 hover:text-lime-600 transition-colors">{post.title}</h3>
                           <p className="text-gray-700 leading-relaxed">{post.content}</p>
                         </div>
                         <span className={`ml-4 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(post.status)}`}>

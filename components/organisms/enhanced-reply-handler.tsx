@@ -61,14 +61,14 @@ export default function EnhancedReplyHandler({
     facebook: {
       name: "Facebook", 
       icon: Facebook,
-      color: "blue",
+      color: "lime",
       supportsComments: true,
       description: "Reply to Facebook posts and comments"
     },
     linkedin: {
       name: "LinkedIn",
       icon: Linkedin,
-      color: "blue",
+      color: "lime",
       supportsComments: true,
       description: "Reply to LinkedIn posts and comments"
     },
@@ -187,7 +187,7 @@ export default function EnhancedReplyHandler({
       key={comment.id}
       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
         selectedComment?.id === comment.id 
-          ? 'border-blue-500 bg-blue-50' 
+          ? 'border-lime-500 bg-lime-50' 
           : 'border-gray-200 hover:border-gray-300'
       }`}
       onClick={() => setSelectedComment(selectedComment?.id === comment.id ? null : comment)}
@@ -220,7 +220,7 @@ export default function EnhancedReplyHandler({
             {comment.comment}
           </Text>
           {selectedComment?.id === comment.id && (
-            <Text size="1" color="blue" className="mt-1 block">
+            <Text size="1" color="lime" className="mt-1 block">
               Click "Reply" to respond to this comment
             </Text>
           )}
@@ -350,8 +350,8 @@ export default function EnhancedReplyHandler({
             </div>
 
             {selectedComment && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
-                <Text size="2" color="blue" weight="medium" className="mb-1 block">
+              <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg mb-3">
+                <Text size="2" color="lime" weight="medium" className="mb-1 block">
                   Replying to:
                 </Text>
                 <Text size="2" className="break-words">
