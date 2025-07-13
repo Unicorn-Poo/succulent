@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 							}
 						}
 					} catch (error) {
-						// console.log(`Error fetching products from catalog: ${error}`);
+				
 					}
 				}
 			}

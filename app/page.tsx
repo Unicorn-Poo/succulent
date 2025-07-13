@@ -151,27 +151,10 @@ export default function HomePage() {
 
   // Debug logging to understand what's happening with accounts
   useEffect(() => {
-    console.log('🎵 Jazz Account Status:');
-    console.log('- Account exists:', !!me);
-    console.log('- Account ID:', me?.id);
-    console.log('- Root exists:', !!me?.root);
-    console.log('- Account groups count:', me?.root?.accountGroups?.length || 0);
-    
-    // Debug the actual account groups
-    if (me?.root?.accountGroups) {
-      console.log('- Account groups details:', me.root.accountGroups.map((g: any) => ({
-        id: g.id,
-        name: g.name,
-        accountsCount: g.accounts?.length || 0
-      })));
-    }
-    
     if (me) {
       // Store account ID in localStorage for debugging
       localStorage.setItem('lastJazzAccountId', me.id);
       const previousAccountId = localStorage.getItem('previousJazzAccountId');
-      console.log('- Previous account ID:', previousAccountId);
-      console.log('- Same account as before:', previousAccountId === me.id);
       localStorage.setItem('previousJazzAccountId', me.id);
     }
   }, [me, me?.root?.accountGroups]); // Add dependency on account groups
@@ -205,7 +188,6 @@ export default function HomePage() {
     }
 
     try {
-      console.log('🔧 Creating Jazz AccountGroup...');
 
       // to manage permissions
       const accountGroupGroup = Group.create();
@@ -223,12 +205,8 @@ export default function HomePage() {
         ayrshareProfileTitle: undefined,
       }, { owner: accountGroupGroup });
 
-      console.log('✅ Jazz AccountGroup created:', jazzAccountGroup.id);
-
       // Add accounts to the collaborative list after creation
-      console.log('🔧 Adding accounts to group...');
       groupData.accounts.forEach((accountData, index) => {
-        console.log(`Adding account ${index + 1}:`, accountData.name);
         const platformAccount = PlatformAccount.create({
           name: accountData.name,
           platform: accountData.platform as any,

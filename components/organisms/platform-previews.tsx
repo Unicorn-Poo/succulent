@@ -758,11 +758,9 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 		
 		const loadImage = async () => {
 			try {
-				console.log('Loading blob from FileStream:', fileStream);
 				
 				if (typeof fileStream.getBlob === 'function') {
 					const blob = await fileStream.getBlob();
-					console.log('Got blob:', blob);
 					
 					if (isMounted && blob) {
 						// Convert blob to data URL (same as post creation carousel)
@@ -772,13 +770,11 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 							reader.readAsDataURL(blob);
 						});
 						
-						console.log('Created data URL:', dataUrl.substring(0, 50) + '...');
 						setDataUrl(dataUrl);
 					}
 				} else if (typeof fileStream.toBlob === 'function') {
 					// Fallback method
 					const blob = await fileStream.toBlob();
-					console.log('Got blob via toBlob:', blob);
 					
 					if (isMounted && blob) {
 						const dataUrl = await new Promise<string>((resolve) => {
@@ -787,11 +783,9 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 							reader.readAsDataURL(blob);
 						});
 						
-						console.log('Created data URL via toBlob:', dataUrl.substring(0, 50) + '...');
 						setDataUrl(dataUrl);
 					}
 				} else {
-					console.log('No getBlob or toBlob method available');
 					setError(true);
 				}
 			} catch (err) {
@@ -804,7 +798,6 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 		loadImage();
 
-		// No cleanup needed for data URLs (they don't need to be revoked like blob URLs)
 		return () => {
 			isMounted = false;
 		};
@@ -812,58 +805,34 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 	if (error) {
 		return (
-			<div className={`${className} bg-gray-100 flex items-center justify-center`}>
-				<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
-					<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-					<circle cx="8.5" cy="8.5" r="1.5"/>
-					<polyline points="21,15 16,10 5,21"/>
-				</svg>
+			<div className={`${className} bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+				<span className="text-gray-500 text-sm">Failed to load image</span>
 			</div>
 		);
 	}
 
 	if (!dataUrl) {
 		return (
-			<div className={`${className} bg-gray-100 flex items-center justify-center`}>
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+			<div className={`${className} bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+				<span className="text-gray-500 text-sm">Loading...</span>
 			</div>
 		);
 	}
 
 	return (
-		<div className="relative w-full h-full">
-			<Image
-				src={dataUrl}
-				alt={alt}
-				fill
-				className={className}
-				onError={(e) => {
-					console.error('Image failed to load:', dataUrl.substring(0, 50) + '...', e);
-					setError(true);
-				}}
-				onLoad={() => {
-					console.log('Image loaded successfully:', dataUrl.substring(0, 50) + '...');
-				}}
-			/>
-		</div>
+		<img
+			src={dataUrl}
+			alt={alt}
+			className={className}
+		/>
 	);
 };
 
 const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boolean }) => {
 	const commonClass = isCarousel ? "w-full h-full object-cover" : "w-full h-full object-cover";
 
-	console.log('MediaItemRenderer received item:', item);
-	console.log('Item type:', item?.type);
-	console.log('Item image object:', item?.image);
-
 	if (item?.type === 'image') {
 		const imageObject = item.image;
-		
-		console.log('Processing image object:', imageObject);
-		console.log('imageObject constructor:', imageObject?.constructor?.name);
-		console.log('imageObject _type:', imageObject?._type);
-		console.log('Has getBlob method:', typeof imageObject?.getBlob);
-		console.log('getBlob method exists:', 'getBlob' in (imageObject || {}));
 		
 		// Check if it's a Jazz FileStream - be more flexible with detection
 		if (imageObject && (
@@ -872,7 +841,6 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 			imageObject._type === 'BinaryCoStream' ||
 			imageObject.constructor?.name === 'FileStream'
 		)) {
-			console.log('Detected Jazz FileStream, using FileStreamImage component');
 			return (
 				<FileStreamImage 
 					fileStream={imageObject} 
@@ -885,14 +853,12 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		// Fallback to regular URL handling for other types
 		const getValidUrl = (fileStreamOrImage: any) => {
 			if (!fileStreamOrImage) {
-				console.log('No fileStreamOrImage provided');
 				return null;
 			}
 			
 			try {
 				// Check if it's already a valid URL string
 				if (typeof fileStreamOrImage === 'string') {
-					console.log('Found string URL:', fileStreamOrImage);
 					if (fileStreamOrImage.startsWith('http') || fileStreamOrImage.startsWith('data:')) {
 						return fileStreamOrImage;
 					}
@@ -901,9 +867,7 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 				
 				// Check if it's a Jazz ImageDefinition
 				if (fileStreamOrImage.highestResAvailable) {
-					console.log('Found ImageDefinition with highestResAvailable');
 					const highestRes = fileStreamOrImage.highestResAvailable();
-					console.log('Highest resolution result:', highestRes);
 					if (highestRes && highestRes.publicUrl) {
 						return highestRes.publicUrl;
 					}
@@ -911,23 +875,19 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 				
 				// Check for placeholderDataURL in ImageDefinition
 				if (fileStreamOrImage.placeholderDataURL) {
-					console.log('Found placeholderDataURL:', fileStreamOrImage.placeholderDataURL);
 					return fileStreamOrImage.placeholderDataURL;
 				}
 				
 				// Check if it's a Jazz FileStream with publicUrl property
 				if (fileStreamOrImage.publicUrl && typeof fileStreamOrImage.publicUrl === 'string') {
-					console.log('Found publicUrl:', fileStreamOrImage.publicUrl);
 					return fileStreamOrImage.publicUrl;
 				}
 				
 				// Check for other common URL properties
 				if (fileStreamOrImage.url && typeof fileStreamOrImage.url === 'string') {
-					console.log('Found url property:', fileStreamOrImage.url);
 					return fileStreamOrImage.url;
 				}
 				
-				console.log('No valid URL found in object');
 				return null;
 			} catch (error) {
 				console.warn('Error processing media item:', error);
@@ -936,11 +896,9 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		};
 
 		const imageUrl = getValidUrl(imageObject);
-		console.log('Final image URL:', imageUrl);
 		
 		// Show placeholder if no valid URL
 		if (!imageUrl) {
-			console.log('No valid URL found, showing placeholder');
 			return (
 				<div className={`${commonClass} bg-gray-100 flex items-center justify-center`}>
 					<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
@@ -962,9 +920,6 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 					onError={(e) => {
 						console.error('Image failed to load:', imageUrl, e);
 					}}
-					onLoad={() => {
-						console.log('Image loaded successfully:', imageUrl);
-					}}
 				/>
 			</div>
 		);
@@ -984,6 +939,5 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		}
 	}
 
-	console.log('Unknown item type or no item:', item);
 	return null;
 }; 

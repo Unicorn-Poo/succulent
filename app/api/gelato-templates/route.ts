@@ -194,8 +194,7 @@ async function saveTemplateToJazzAccount(processedTemplate: any, jazzAccountId: 
 		// For now, we'll simulate the save and return success
 		// In a real implementation, this would use the Jazz client/SDK
 		
-		console.log('Jazz account integration not yet implemented - simulating save');
-		console.log('Template data to save:', JSON.stringify(processedTemplate, null, 2));
+
 		
 		// Simulate successful save
 		return {
@@ -226,7 +225,6 @@ async function saveTemplateToJazzAccount(processedTemplate: any, jazzAccountId: 
 
 // Function to process template data for Jazz account storage
 function processTemplateForJazz(templateData: any, templateId: string, endpoint: string | null) {
-	console.log('Processing template data for Jazz account...');
 	
 	// Extract key information from the Gelato template
 	const template = {
@@ -269,7 +267,6 @@ function processTemplateForJazz(templateData: any, templateId: string, endpoint:
 		}
 	};
 
-	console.log(`Processed template: ${template.name} with ${template.variants.length} variants`);
 	return template;
 }
 
@@ -290,8 +287,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Original functionality - fetch product catalog
-		console.log('Fetching available products from Gelato API...');
-		console.log('Note: Gelato does not provide a "list all templates" endpoint. Templates work differently.');
+
 		
 		// Updated endpoints based on official Gelato API documentation
 		// Note: Template list endpoints don't exist in Gelato API
@@ -316,7 +312,6 @@ export async function POST(request: NextRequest) {
 		let successfulEndpoint = null;
 
 		for (const endpoint of productEndpoints) {
-			console.log(`Trying endpoint: ${endpoint}`);
 			try {
 				const response = await fetch(endpoint, {
 					method: 'GET',
@@ -403,7 +398,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Process data from Gelato API
-		console.log('Processing API response...');
+
 		
 		// The response contains products from Gelato's catalog
 		let rawItems = [];
@@ -427,12 +422,11 @@ export async function POST(request: NextRequest) {
 			dataSource = 'direct-array';
 		}
 		
-		console.log(`Found ${rawItems.length} products from data source: ${dataSource}`);
+
 		
 		const processedProducts = [];
 		
 		if (rawItems.length > 0) {
-			console.log(`Processing ${Math.min(rawItems.length, 25)} products as template bases`);
 			
 			// Process first 25 items as potential template bases
 			const itemsToProcess = rawItems.slice(0, 25);
@@ -501,8 +495,7 @@ export async function POST(request: NextRequest) {
 			return acc;
 		}, {});
 
-		console.log(`Successfully processed ${processedProducts.length} products`);
-		console.log(`Product types found: ${Object.keys(productsByType).join(', ')}`);
+
 		
 		return NextResponse.json({
 			success: true,

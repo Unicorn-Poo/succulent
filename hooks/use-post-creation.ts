@@ -50,7 +50,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	try {
 		const corruptedVariantId = 'co_zerhbvzPjo6yVD4HZ7URSzung3k';
 		if (post?.variants && post.variants[corruptedVariantId]) {
-			console.log('🧹 Immediately removing corrupted variant:', corruptedVariantId);
+	
 			delete post.variants[corruptedVariantId];
 		}
 	} catch (error) {
@@ -105,7 +105,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			
 			// Check if the corrupted variant exists and remove it
 			if (post.variants && post.variants[corruptedVariantId]) {
-				console.log('🧹 Removing corrupted variant:', corruptedVariantId);
+
 				delete post.variants[corruptedVariantId];
 			}
 			
@@ -114,7 +114,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				if (key !== 'title') {
 					const variant = post.variants[key];
 					if (variant && (variant.text === null || variant.media === null || variant.replyTo === null)) {
-						console.log('🧹 Removing broken variant:', key);
+
 						delete post.variants[key];
 					}
 				}
@@ -222,7 +222,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		);
 		
 		// Minimal logging for monitoring
-		console.log(`💼 Account Manager: ${filtered.length} available accounts`);
+
 		
 		return filtered;
 	}, [accountGroup.accounts, selectedPlatforms]);
@@ -573,7 +573,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				post.variants[platform] = platformVariant;
 				
 				setSelectedPlatforms(prev => [...prev, platform]);
-				console.log(`➕ Added platform: ${platform} with Jazz variant`);
+
 			} catch (error) {
 				console.error('Error creating Jazz variant for platform:', platform, error);
 				// Fallback to just state update
@@ -588,7 +588,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// Remove the Jazz variant
 			if (post.variants[platform]) {
 				delete post.variants[platform];
-				console.log(`🗑️ Removed platform: ${platform} and its Jazz variant`);
+
 			}
 		} catch (error) {
 			console.error('Error removing Jazz variant for platform:', platform, error);
