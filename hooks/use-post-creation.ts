@@ -46,6 +46,17 @@ interface PostCreationProps {
 }
 
 export function usePostCreation({ post, accountGroup }: PostCreationProps) {
+	// Immediate cleanup of corrupted variants before any other processing
+	try {
+		const corruptedVariantId = 'co_zerhbvzPjo6yVD4HZ7URSzung3k';
+		if (post?.variants && post.variants[corruptedVariantId]) {
+			console.log('🧹 Immediately removing corrupted variant:', corruptedVariantId);
+			delete post.variants[corruptedVariantId];
+		}
+	} catch (error) {
+		console.error('Error during immediate cleanup:', error);
+	}
+
 	const [activeTab, setActiveTab] = useState("base");
 	const [seriesType, setSeriesType] = useState<"reply" | null>(null);
 	const [title, setTitle] = useState(post.title?.toString() || "");
@@ -82,6 +93,31 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 	const [currentPost, setPost] = useState(post);
 
+	// Clean up corrupted variants immediately to prevent Jazz loading errors
+	useEffect(() => {
+		try {
+			const corruptedVariantId = 'co_zerhbvzPjo6yVD4HZ7URSzung3k';
+			
+			// Check if the corrupted variant exists and remove it
+			if (post.variants && post.variants[corruptedVariantId]) {
+				console.log('🧹 Removing corrupted variant:', corruptedVariantId);
+				delete post.variants[corruptedVariantId];
+			}
+			
+			// Also clean up any other variants with broken references
+			Object.keys(post.variants || {}).forEach(key => {
+				if (key !== 'title') {
+					const variant = post.variants[key];
+					if (variant && (variant.text === null || variant.media === null || variant.replyTo === null)) {
+						console.log('🧹 Removing broken variant:', key);
+						delete post.variants[key];
+					}
+				}
+			});
+		} catch (error) {
+			console.error('Error cleaning up variants:', error);
+		}
+	}, [post]);
 
 	const hasMultipleAccounts = useMemo(() => {
 		return selectedPlatforms.filter(p => p !== 'base').length > 1;
@@ -111,12 +147,16 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, []);
 
 	const isExplicitThread = useMemo(() => {
-		const content = contextText ?? currentPost.variants[activeTab]?.text?.toString() ?? "";
+		// Safely access variant text with fallback to empty string for broken references
+		const variant = currentPost.variants[activeTab];
+		const content = contextText ?? (variant?.text && typeof variant.text.toString === 'function' ? variant.text.toString() : "") ?? "";
 		return manualThreadMode && content.includes('\n\n');
 	}, [manualThreadMode, contextText, currentPost.variants, activeTab]);
 
 	const isImplicitThread = useMemo(() => {
-		const content = contextText ?? currentPost.variants[activeTab]?.text?.toString() ?? "";
+		// Safely access variant text with fallback to empty string for broken references
+		const variant = currentPost.variants[activeTab];
+		const content = contextText ?? (variant?.text && typeof variant.text.toString === 'function' ? variant.text.toString() : "") ?? "";
 		const platform = accountGroup.accounts[activeTab]?.platform || 'default';
 		const limit = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
 		return content.length > limit;
@@ -125,7 +165,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const isThread = isExplicitThread || isImplicitThread;
 
 	useEffect(() => {
-		const replyToData = currentPost.variants[activeTab]?.replyTo;
+		const replyToData = post.variants[activeTab]?.replyTo;
 		if (replyToData?.url) {
 			setReplyUrl(replyToData.url);
 			setSeriesType('reply');
@@ -133,7 +173,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			setReplyUrl('');
 			setSeriesType(null);
 		}
-	}, [activeTab, currentPost.variants]);
+	}, [activeTab, post.variants]);
 
 	const isValidReplyUrl = useMemo(() => 
 		replyUrl ? validateReplyUrl(replyUrl) : false, 
@@ -184,12 +224,16 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 	const hasUnsavedChanges = useMemo(() => {
 		if (!contextText) return false;
-		const savedContent = currentPost.variants[activeTab]?.text?.toString() || "";
+		// Safely access variant text with fallback for broken references
+		const variant = currentPost.variants[activeTab];
+		const savedContent = (variant?.text && typeof variant.text.toString === 'function' ? variant.text.toString() : "") || "";
 		return contextText !== savedContent;
 	}, [contextText, currentPost.variants, activeTab]);
 
 	const canPublish = useMemo(() => {
-		const content = currentPost.variants[activeTab]?.text?.toString() || "";
+		// Safely access variant text with fallback for broken references
+		const variant = currentPost.variants[activeTab];
+		const content = (variant?.text && typeof variant.text.toString === 'function' ? variant.text.toString() : "") || "";
 		return content.trim().length > 0 && selectedPlatforms.length > 1;
 	}, [currentPost.variants, activeTab, selectedPlatforms]);
 
@@ -207,7 +251,27 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, []);
 
 	useEffect(() => {
-		const platforms = Object.keys(currentPost.variants).filter(key => key !== "title");
+			// Only include known safe variants to avoid corrupted ones
+		const platforms = ['base']; // Start with just base variant to avoid corruption
+		
+		// Safely check for additional variants without triggering Jazz loading errors
+		try {
+			Object.keys(currentPost.variants || {}).forEach(key => {
+				if (key !== "title" && key !== "base" && key !== 'co_zerhbvzPjo6yVD4HZ7URSzung3k') {
+					// Only add if it's a valid platform key and not corrupted
+					try {
+						const variant = currentPost.variants[key];
+						if (variant && variant.text !== null && variant.text !== undefined) {
+							platforms.push(key);
+						}
+					} catch (e) {
+						console.warn(`Skipping corrupted variant: ${key}`);
+					}
+				}
+			});
+		} catch (error) {
+			console.warn('Error accessing variants, using base only:', error);
+		}
 		setSelectedPlatforms(platforms);
 	}, [currentPost.variants]);
 
@@ -232,23 +296,23 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		if (contextText) {
 			updateThreadPreview(contextText);
 		} else {
-			const savedContent = currentPost.variants[activeTab]?.text?.toString() || "";
+			const savedContent = post.variants[activeTab]?.text?.toString() || "";
 			updateThreadPreview(savedContent);
 		}
-	}, [contextText, currentPost.variants, activeTab, updateThreadPreview]);
+	}, [contextText, post.variants, activeTab, updateThreadPreview]);
 
 	useEffect(() => {
-		const text = contextText ?? currentPost.variants[activeTab]?.text?.toString() ?? '';
+		const text = contextText ?? post.variants[activeTab]?.text?.toString() ?? '';
 		if (isThread) {
 			const threads = generateThreadPreview(text, activeTab);
 			setThreadPosts(threads);
 		} else {
 			setThreadPosts([]);
 		}
-	}, [contextText, currentPost.variants, activeTab, isThread]);
+	}, [contextText, post.variants, activeTab, isThread]);
 
 	useEffect(() => {
-		const replyToData = currentPost.variants[activeTab]?.replyTo;
+		const replyToData = post.variants[activeTab]?.replyTo;
 
 		const shouldFetch = isValidReplyUrl && seriesType === 'reply' && (!replyToData || replyToData.url !== replyUrl || !replyToData.authorPostContent);
 
@@ -259,22 +323,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				try {
 					const postContent = await fetchPostContent(replyUrl);
 					
-					setPost(prevPost => {
-						const newPost = { ...prevPost };
-						const variant = newPost.variants[activeTab];
-						if (variant) {
-							variant.replyTo = {
-								url: replyUrl,
-								platform: detectedPlatform || undefined,
-								author: postContent.author,
-								authorUsername: postContent.authorUsername,
-								authorPostContent: postContent.authorPostContent,
-								authorAvatar: postContent.authorAvatar,
-								likesCount: postContent.likesCount,
-							};
-						}
-						return newPost;
-					});
+					// Update the Jazz object directly
+					const variant = post.variants[activeTab];
+					if (variant) {
+						variant.replyTo = {
+							url: replyUrl,
+							platform: detectedPlatform || undefined,
+							author: postContent.author,
+							authorUsername: postContent.authorUsername,
+							authorPostContent: postContent.authorPostContent,
+							authorAvatar: postContent.authorAvatar,
+							likesCount: postContent.likesCount,
+						};
+					}
 
 				} catch (error) {
 					setFetchReplyError(error instanceof Error ? error.message : "Failed to fetch post.");
@@ -288,16 +349,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		}
 
 		if (!isValidReplyUrl && replyToData?.url) {
-			setPost(prevPost => {
-				const newPost = { ...prevPost };
-				const variant = newPost.variants[activeTab];
-				if (variant && variant.replyTo) {
-					variant.replyTo = {};
-				}
-				return newPost;
-			});
+			// Clear reply data in Jazz object
+			const variant = post.variants[activeTab];
+			if (variant && variant.replyTo) {
+				variant.replyTo = {};
+			}
 		}
-	}, [replyUrl, isValidReplyUrl, seriesType, activeTab, currentPost.variants, detectedPlatform]);
+	}, [replyUrl, isValidReplyUrl, seriesType, activeTab, post.variants, detectedPlatform]);
 
 	// Removed automatic tab switching when platform is detected for replies
 	// useEffect(() => {
@@ -321,7 +379,8 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		try {
 			// Update the Jazz CoPlainText using applyDiff (as per Jazz docs)
 			const variant = currentPost.variants[activeTab];
-			if (variant?.text && contextText) {
+			// Only attempt to save if we have a valid variant with proper text reference
+			if (variant?.text && typeof variant.text.applyDiff === 'function' && contextText) {
 				variant.text.applyDiff(contextText);
 				
 				// Update metadata fields directly on the Jazz object
@@ -338,7 +397,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		} finally {
 			setIsSaving(false);
 		}
-	}, [contextText, currentPost.variants, activeTab]);
+	}, [contextText, post.variants, activeTab]);
 
 	const handlePublishPost = useCallback(async () => {
 		setIsScheduling(true);
@@ -347,7 +406,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 		try {
 			const platforms = selectedPlatforms.filter(p => p !== "base");
-			const postText = currentPost.variants[activeTab]?.text?.toString() || "";
+			const postText = post.variants[activeTab]?.text?.toString() || "";
 
 			if (!postText.trim()) {
 				throw new Error("Post content cannot be empty");
@@ -358,7 +417,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// =============================================================================
 			if (!isBusinessPlanMode()) {
 				// Free account mode - no profile keys needed
-				const mediaUrls = currentPost.variants[activeTab]?.media?.map(item => 
+				const mediaUrls = post.variants[activeTab]?.media?.map(item => 
 					item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
 				).filter(Boolean) as string[] || [];
 
@@ -397,7 +456,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("No Ayrshare profile found. Please create and link your accounts first.");
 			}
 
-			const mediaUrls = currentPost.variants[activeTab]?.media?.map(item => 
+			const mediaUrls = post.variants[activeTab]?.media?.map(item => 
 				item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
 			).filter(Boolean) as string[] || [];
 
@@ -433,7 +492,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		}
 	}, [
 		selectedPlatforms,
-		currentPost,
+		post,
 		activeTab,
 		scheduledDate,
 		seriesType,
@@ -451,22 +510,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		const newUrl = e.target.value;
 		setReplyUrl(newUrl);
 
-		setPost(prevPost => {
-			const newPost = { ...prevPost };
-			const variant = newPost.variants[activeTab];
-			if (variant) {
-				if (!variant.replyTo) {
-					variant.replyTo = {};
-				}
-				variant.replyTo.url = newUrl;
-				if (!newUrl) {
-					variant.replyTo = {};
-				} else {
-					variant.replyTo.authorPostContent = undefined;
-				}
+		// Update the Jazz object directly
+		const variant = post.variants[activeTab];
+		if (variant) {
+			if (!variant.replyTo) {
+				variant.replyTo = {};
 			}
-			return newPost;
-		});
+			variant.replyTo.url = newUrl;
+			if (!newUrl) {
+				variant.replyTo = {};
+			} else {
+				variant.replyTo.authorPostContent = undefined;
+			}
+		}
 	};
 
 	const handleTitleSave = useCallback(() => {
@@ -489,58 +545,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
 			setSelectedPlatforms(prev => [...prev, platform]);
-			
-			// Create a variant in the Jazz post object for persistence
-			if (!currentPost.variants[platform]) {
-				setPost(prevPost => {
-					const newVariant = co.postVariant({
-						text: co.plainText(""),
-						postDate: new Date(),
-						media: co.list([]),
-						replyTo: null,
-						edited: false,
-						lastModified: new Date().toISOString()
-					});
-					
-					const updatedPost = {
-						...prevPost,
-						variants: {
-							...prevPost.variants,
-							[platform]: newVariant
-						}
-					};
-					
-					console.log(`💾 Created variant for platform: ${platform}`);
-					return updatedPost;
-				});
-			}
+			console.log(`➕ Added platform: ${platform}`);
 		}
 		setShowAddAccountDialog(false);
-	}, [selectedPlatforms, currentPost.variants]);
+	}, [selectedPlatforms]);
 
 	const handleRemoveAccount = useCallback((platform: string) => {
 		setSelectedPlatforms(prev => prev.filter(p => p !== platform));
-		
-		// Remove the variant from the Jazz post object
-		if (currentPost.variants[platform]) {
-			setPost(prevPost => {
-				const updatedVariants = { ...prevPost.variants };
-				delete updatedVariants[platform];
-				
-				const updatedPost = {
-					...prevPost,
-					variants: updatedVariants
-				};
-				
-				console.log(`🗑️ Removed variant for platform: ${platform}`);
-				return updatedPost;
-			});
-		}
+		console.log(`🗑️ Removed platform: ${platform}`);
 		
 		if (activeTab === platform) {
 			setActiveTab("base");
 		}
-	}, [activeTab, currentPost.variants]);
+	}, [activeTab]);
 
 	const getReplyDescription = useCallback(() => {
 		if (!seriesType || seriesType !== "reply") return "";
@@ -593,7 +610,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					}
 					
 					// Get the current post's owner for creating new objects
-					const variant = currentPost.variants[activeTab];
+					const variant = post.variants[activeTab];
 					if (!variant || !variant.media) {
 						setErrors(prev => [...prev, 'No media list found for current post variant']);
 						continue;
@@ -639,7 +656,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		
 		// Trigger the file dialog
 		fileInput.click();
-	}, [activeTab, currentPost]);
+	}, [activeTab, post]);
 
     return {
         activeTab, setActiveTab,
@@ -665,7 +682,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         isFetchingReply,
         fetchReplyError,
         isQuoteTweet, setIsQuoteTweet,
-        post: currentPost, setPost,
+        		post: currentPost, setPost,
         hasMultipleAccounts,
         isThread,
         isValidReplyUrl,
