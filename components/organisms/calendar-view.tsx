@@ -18,6 +18,16 @@ interface Post {
     comments: number;
     shares: number;
   };
+  variants?: {
+    base?: {
+      status: 'published' | 'scheduled' | 'draft';
+      publishedAt?: string;
+      scheduledFor?: string;
+      postDate?: string;
+      text?: string; // Added for new_code
+    };
+  };
+  createdAt?: string;
 }
 
 interface CalendarViewProps {
@@ -80,10 +90,23 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   const getPostsForDate = (date: Date) => {
     const dateStr = date.toDateString();
     return posts.filter(post => {
-      const postDate = post.status === 'scheduled' 
-        ? new Date(post.scheduledFor!) 
-        : new Date(post.publishedAt!);
-      return postDate.toDateString() === dateStr;
+      // Extract status and dates from Jazz post structure or legacy post
+      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      
+      let postDate;
+      if (postStatus === 'scheduled') {
+        postDate = post.variants?.base?.scheduledFor || post.scheduledFor;
+      } else if (postStatus === 'published') {
+        postDate = post.variants?.base?.publishedAt || post.publishedAt;
+      } else {
+        // For drafts, use the post creation date
+        postDate = post.variants?.base?.postDate || post.createdAt || new Date();
+      }
+      
+      if (postDate) {
+        return new Date(postDate).toDateString() === dateStr;
+      }
+      return false;
     });
   };
   
@@ -209,61 +232,78 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
               
               {/* Posts for this day */}
               <div className="space-y-1">
-                {dayPosts.slice(0, 2).map(post => (
-                  <Link
-                    key={post.id}
-                    href={accountGroupId ? `/account-group/${accountGroupId}/post/${post.id}` : `/account-group/demo/post/${post.id}`}
-                    className="block"
-                  >
-                    <div className={`border rounded-md p-2 cursor-pointer hover:shadow-sm transition-all ${getStatusColor(post.status)}`}>
-                      {/* Platform badges and status */}
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1">
-                          {post.platforms.slice(0, 2).map((platform, platformIndex) => (
-                            <span key={platformIndex} className="text-xs">
-                              {getPlatformEmoji(platform)}
-                            </span>
-                          ))}
-                          {post.platforms.length > 2 && (
-                            <span className="text-xs text-white">+{post.platforms.length - 2}</span>
+                {dayPosts.slice(0, 2).map(post => {
+                  // Extract post data from Jazz structure or legacy structure
+                  const postTitle = post.title?.toString() || post.title || "Untitled Post";
+                  const postContent = post.variants?.base?.text?.toString() || 
+                                   post.variants?.base?.text || 
+                                   post.content || 
+                                   "No content";
+                  const postStatus = post.variants?.base?.status || post.status || 'draft';
+                  const postPlatforms = post.platforms || ['instagram']; // Default to instagram if no platforms
+                  
+                  return (
+                    <Link
+                      key={post.id}
+                      href={accountGroupId ? `/account-group/${accountGroupId}/post/${post.id}` : `/account-group/demo/post/${post.id}`}
+                      className="block"
+                    >
+                      <div className={`border rounded-md p-2 cursor-pointer hover:shadow-sm transition-all ${getStatusColor(postStatus)}`}>
+                        {/* Platform badges and status */}
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
+                            {postPlatforms.slice(0, 2).map((platform, platformIndex) => (
+                              <span key={platformIndex} className="text-xs">
+                                {getPlatformEmoji(platform)}
+                              </span>
+                            ))}
+                            {postPlatforms.length > 2 && (
+                              <span className="text-xs text-white">+{postPlatforms.length - 2}</span>
+                            )}
+                          </div>
+                          <div className={`${getStatusTextColor(postStatus)}`}>
+                            {getStatusIcon(postStatus)}
+                          </div>
+                        </div>
+                        
+                        {/* Post title */}
+                        <div className="text-xs font-medium text-white mb-1 leading-tight">
+                          {truncateContent(postTitle, 30)}
+                        </div>
+                        
+                        {/* Post content preview */}
+                        <div className={`text-xs ${getStatusTextColor(postStatus)} leading-tight opacity-90`}>
+                          {truncateContent(postContent, 35)}
+                        </div>
+                        
+                        {/* Time indicator */}
+                        <div className={`text-xs ${getStatusTextColor(postStatus)} mt-1 opacity-75`}>
+                          {postStatus === 'scheduled' ? (
+                            (() => {
+                              const scheduledTime = post.variants?.base?.scheduledFor || post.scheduledFor;
+                              return scheduledTime ? new Date(scheduledTime).toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit',
+                                hour12: true 
+                              }) : 'Scheduled';
+                            })()
+                          ) : postStatus === 'published' ? (
+                            (() => {
+                              const publishedTime = post.variants?.base?.publishedAt || post.publishedAt;
+                              return publishedTime ? new Date(publishedTime).toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit',
+                                hour12: true 
+                              }) : 'Published';
+                            })()
+                          ) : (
+                            'Draft'
                           )}
                         </div>
-                        <div className={`${getStatusTextColor(post.status)}`}>
-                          {getStatusIcon(post.status)}
-                        </div>
                       </div>
-                      
-                      {/* Post title */}
-                      <div className="text-xs font-medium text-white mb-1 leading-tight">
-                        {truncateContent(post.title, 30)}
-                      </div>
-                      
-                      {/* Post content preview */}
-                      <div className={`text-xs ${getStatusTextColor(post.status)} leading-tight opacity-90`}>
-                        {truncateContent(post.content, 35)}
-                      </div>
-                      
-                      {/* Time indicator */}
-                      <div className={`text-xs ${getStatusTextColor(post.status)} mt-1 opacity-75`}>
-                        {post.status === 'scheduled' ? (
-                          new Date(post.scheduledFor!).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit',
-                            hour12: true 
-                          })
-                        ) : post.status === 'published' ? (
-                          new Date(post.publishedAt!).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit',
-                            hour12: true 
-                          })
-                        ) : (
-                          'Draft'
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
                 {dayPosts.length > 2 && (
                   <div className="text-xs text-gray-500 text-center bg-gray-50 rounded px-2 py-1">
                     +{dayPosts.length - 2} more

@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { PostFullyLoaded } from "@/app/schema";
@@ -17,6 +17,7 @@ import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import PlatformProfileView from "@/components/organisms/platform-profile-view";
+import CalendarView from "@/components/organisms/calendar-view";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -220,6 +221,10 @@ export default function AccountGroupPage() {
 							<Users className="w-4 h-4 mr-2" />
 							Accounts
 						</Tabs.Trigger>
+						<Tabs.Trigger value="calendar">
+							<Calendar className="w-4 h-4 mr-2" />
+							Calendar
+						</Tabs.Trigger>
 						<Tabs.Trigger value="settings">
 							<Cog className="w-4 h-4 mr-2" />
 							Settings
@@ -384,6 +389,11 @@ export default function AccountGroupPage() {
 								</div>
 							)}
 						</div>
+					</Tabs.Content>
+
+					{/* Calendar Tab */}
+					<Tabs.Content value="calendar" className="mt-6">
+						<CalendarView posts={posts} accountGroupId={accountGroup.id} />
 					</Tabs.Content>
 
 					{/* Settings Tab */}
