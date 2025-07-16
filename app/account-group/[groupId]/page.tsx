@@ -13,6 +13,8 @@ import { MyAppAccount } from "@/app/schema";
 import AccountAnalyticsOverview from "@/components/organisms/account-analytics-overview";
 import AccountGroupTools from "@/components/organisms/account-group-tools";
 import { GelatoSettings } from "@/components/gelato-settings";
+import { ProdigiSettings } from "@/components/prodigi-settings";
+import { ExternalStoreSettings } from "@/components/external-store-settings";
 import { CollaborationSettings } from "@/components/organisms/collaboration-settings";
 import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
@@ -568,6 +570,16 @@ export default function AccountGroupPage() {
 							{/* Gelato Integration */}
 							{jazzAccountGroup && (
 								<GelatoSettings accountGroup={jazzAccountGroup as any} />
+							)}
+
+							{/* Prodigi Integration */}
+							{jazzAccountGroup && (
+								<ProdigiSettings accountGroup={jazzAccountGroup as any} />
+							)}
+
+							{/* External Store Integration */}
+							{jazzAccountGroup && (
+								<ExternalStoreSettings accountGroup={jazzAccountGroup as any} />
 							)}
 
 							{/* Future settings can be added here */}

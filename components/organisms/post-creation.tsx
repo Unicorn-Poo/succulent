@@ -7,7 +7,7 @@ import {
 	Package,
 	Loader2,
 } from "lucide-react";
-import { PostFullyLoaded, GelatoProduct } from "@/app/schema";
+import { PostFullyLoaded, GelatoProduct, ProdigiProduct } from "@/app/schema";
 import { co } from "jazz-tools";
 import { PreviewModal } from "./preview-modal";
 import { usePostCreation } from "@/hooks/use-post-creation";
@@ -236,6 +236,246 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			setSelectedTemplate(gelatoTemplates[0]);
 		}
 	}, [gelatoTemplates.length, selectedTemplate?.id]);
+
+	// =============================================================================
+	// 🎨 PRODIGI INTEGRATION
+	// =============================================================================
+
+	// Get account group's secure Prodigi credentials
+	const accountGroupProdigiCredentials = accountGroup?.prodigiCredentials;
+	const isProdigiConfigured = accountGroupProdigiCredentials?.isConfigured || false;
+	
+	// Prodigi state
+	const [selectedProdigiTemplate, setSelectedProdigiTemplate] = useState<any | null>(null);
+	const [showProdigiSection, setShowProdigiSection] = useState(false);
+	
+	// Get created products from Jazz object instead of local state
+	const createdProdigiProducts = accountGroupProdigiCredentials?.createdProducts || [];
+	
+	// Get templates directly from Jazz collaborative data structure
+	const prodigiTemplates = useMemo(() => {
+		if (!accountGroupProdigiCredentials?.templates) {
+			return [];
+		}
+		
+		const filteredTemplates = accountGroupProdigiCredentials.templates
+			.filter((template: any) => {
+				return template && (template.id || template.name);
+			});
+		
+		const mappedTemplates = filteredTemplates.map((template: any, index: number) => {
+			const displayId = template.id || `template-${index}-${template.name?.replace(/[^a-zA-Z0-9]/g, '-')}`;
+			
+			return {
+				id: displayId,
+				prodigiTemplateId: template.id,
+				name: template.name,
+				displayName: template.displayName || template.name,
+				productType: template.productType,
+				description: template.description,
+				details: template.details,
+				variants: template.variants || [],
+				printAreas: template.printAreas || [],
+				fetchedAt: template.fetchedAt,
+				isActive: template.isActive,
+				tags: template.tags || [],
+			};
+		});
+		
+		return mappedTemplates;
+	}, [accountGroupProdigiCredentials?.templates]);
+	
+	const prodigiTemplateError = prodigiTemplates.length === 0 && isProdigiConfigured ? 
+		'No templates imported yet. Use the Settings tab to import templates from Prodigi.' : null;
+
+	// Set first template as default when templates are available
+	useEffect(() => {
+		if (prodigiTemplates.length > 0 && !selectedProdigiTemplate) {
+			setSelectedProdigiTemplate(prodigiTemplates[0]);
+		}
+	}, [prodigiTemplates.length, selectedProdigiTemplate?.id]);
+
+	// Auto-create settings for Prodigi
+	const [autoCreateProdigiOnPublish, setAutoCreateProdigiOnPublish] = useState(
+		accountGroupProdigiCredentials?.autoCreateOnPublish ?? false
+	);
+
+	// Create real Prodigi product
+	const createRealProdigiProduct = async () => {
+		if (!isProdigiConfigured || !selectedProdigiTemplate || !accountGroupProdigiCredentials) {
+			handleProdigiError('Missing Prodigi configuration or template selection');
+			return;
+		}
+
+		try {
+			// Convert Jazz images to data URLs for Prodigi API
+			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
+			const imageUrls = await convertImagesToDataUrls(mediaArray);
+			
+			if (imageUrls.length === 0) {
+				handleProdigiError('No images found in this post to create a product');
+				return;
+			}
+
+			// Prepare product data for Prodigi API
+			const productData = {
+				apiKey: accountGroupProdigiCredentials.apiKey,
+				sandboxMode: accountGroupProdigiCredentials.sandboxMode,
+				template: selectedProdigiTemplate,
+				images: imageUrls,
+				post: {
+					id: post.id,
+					title: (currentPost.variants[activeTab]?.text?.toString() || '').substring(0, 100) || 'Untitled Post',
+					content: currentPost.variants[activeTab]?.text?.toString() || '',
+					createdAt: post._createdAt,
+				},
+			};
+
+			const response = await fetch('/api/create-prodigi-product', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(productData),
+			});
+
+			if (response.ok) {
+				const result = await response.json();
+				if (result.success) {
+					handleProdigiProductCreated({
+						...result,
+						template: selectedProdigiTemplate,
+					});
+				} else {
+					handleProdigiError(result.error || 'Failed to create product');
+				}
+			} else {
+				const errorData = await response.json();
+				handleProdigiError(errorData.error || 'Failed to create product');
+			}
+		} catch (error) {
+			console.error('Error creating Prodigi product:', error);
+			handleProdigiError(error instanceof Error ? error.message : 'Unknown error occurred');
+		}
+	};
+
+	// Initialize Prodigi created products if not already done
+	const initializeProdigiCreatedProducts = () => {
+		if (!accountGroupProdigiCredentials) return;
+
+		if (!accountGroupProdigiCredentials.createdProducts) {
+			// Initialize the createdProducts list if it doesn't exist
+			accountGroupProdigiCredentials.createdProducts = co.list(ProdigiProduct).create([], {
+				owner: accountGroupProdigiCredentials._owner
+			});
+		}
+	};
+
+	const addProdigiProductToJazz = (productData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		if (!accountGroupProdigiCredentials) return;
+
+		// Ensure created products list exists
+		initializeProdigiCreatedProducts();
+
+		const prodigiProduct = ProdigiProduct.create({
+			productId: productData.productId,
+			title: productData.title,
+			description: productData.description,
+			tags: productData.tags || [],
+			productType: productData.productType,
+			sourcePost: {
+				title: productData.sourcePost?.title || 'Untitled Post',
+				variant: productData.sourcePost?.variant,
+				postId: productData.sourcePost?.postId,
+			},
+			templateId: productData.template?.prodigiTemplateId,
+			templateName: productData.template?.name,
+			baseProductId: productData.baseProductId,
+			status: 'created',
+			createdAt: new Date(),
+			lastUpdated: new Date(),
+			selectedVariant: productData.selectedVariant,
+			assets: productData.assets || [],
+			baseCost: productData.baseCost,
+			retailPrice: productData.retailPrice,
+			currency: productData.currency,
+		}, { owner: accountGroupProdigiCredentials.createdProducts._owner });
+
+		accountGroupProdigiCredentials.createdProducts.push(prodigiProduct);
+		return prodigiProduct;
+	};
+
+	const updateProdigiProductInJazz = (productId: string, updates: Partial<any>) => {
+		const product = accountGroupProdigiCredentials?.createdProducts?.find((p: any) => p?.productId === productId);
+		if (product) {
+			Object.assign(product, updates);
+		}
+	};
+
+	// Prodigi handlers
+	const handleProdigiProductCreated = async (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		try {
+			// Add to Jazz collaborative object
+			const prodigiProduct = addProdigiProductToJazz(result);
+			
+			console.log('Prodigi product created and added to Jazz:', prodigiProduct);
+			
+			// Handle external store integration if configured
+			const externalStoreCredentials = accountGroup?.externalStore;
+			if (externalStoreCredentials?.isConfigured) {
+				const response = await fetch('/api/post-to-external-store', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						storeConfig: externalStoreCredentials,
+						productData: {
+							...result,
+							prodigiProductId: result.productId,
+						},
+					}),
+				});
+
+				if (response.ok) {
+					const storeResult = await response.json();
+					if (storeResult.success) {
+						updateProdigiProductInJazz(result.productId, {
+							externalStoreStatus: 'synced',
+							externalProductId: storeResult.productId,
+							externalProductUrl: storeResult.productUrl,
+							externalMessage: 'Successfully posted to external store',
+						});
+					} else {
+						updateProdigiProductInJazz(result.productId, {
+							externalStoreStatus: 'error',
+							externalMessage: storeResult.error || 'Failed to post to external store',
+						});
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Error in handleProdigiProductCreated:', error);
+			handleProdigiError(error instanceof Error ? error.message : 'Unknown error occurred');
+		}
+	};
+
+	const handleProdigiError = (error: string) => {
+		console.error('Prodigi product creation failed:', error);
+		// You can add toast notifications here
+	};
+
+	// Update auto-create setting
+	const handleAutoCreateProdigiToggle = useCallback((newValue: boolean) => {
+		setAutoCreateProdigiOnPublish(newValue);
+		if (accountGroupProdigiCredentials) {
+			accountGroupProdigiCredentials.autoCreateOnPublish = newValue;
+		}
+	}, [autoCreateProdigiOnPublish, accountGroupProdigiCredentials]);
+
+	// =============================================================================
+	// 🖼️ IMAGE CONVERSION UTILITIES
+	// =============================================================================
 
 	// Convert Jazz images to data URLs for direct use in Gelato API
 	const convertImagesToDataUrls = async (media: any[]): Promise<string[]> => {
@@ -635,13 +875,28 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				// Don't fail the entire publish if auto-creation fails
 			}
 		}
+
+		// Also check for Prodigi auto-creation
+		if (autoCreateProdigiOnPublish && hasImages && isProdigiConfigured && selectedProdigiTemplate) {
+			try {
+				console.log('Auto-creating Prodigi product after publish...');
+				await createRealProdigiProduct();
+			} catch (error) {
+				console.error('Prodigi auto-creation failed:', error);
+				// Don't fail the entire publish if auto-creation fails
+			}
+		}
 	}, [
 		handlePublishPost,
 		autoCreateOnPublish,
 		hasImages,
 		isGelatoConfigured,
 		selectedTemplate,
-		createRealGelatoProduct
+		createRealGelatoProduct,
+		autoCreateProdigiOnPublish,
+		isProdigiConfigured,
+		selectedProdigiTemplate,
+		createRealProdigiProduct
 	]);
 
 	return (
@@ -1239,6 +1494,201 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							)}
 						</div>
 					)}
+				</div>
+			</Card>
+			
+			{/* Prodigi Product Creation Section */}
+			<Card>
+				<div className="p-4 space-y-4">
+					<div className="flex items-center justify-between">
+						<Text weight="medium" size="3">Auto-Create Prodigi Product</Text>
+						<label className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								checked={autoCreateProdigiOnPublish}
+								onChange={(e) => handleAutoCreateProdigiToggle(e.target.checked)}
+								className="w-4 h-4"
+							/>
+							<Text size="2">Auto-create on publish</Text>
+						</label>
+					</div>
+
+					{/* Integration Status */}
+					<div className="grid grid-cols-2 gap-4">
+						<div className="flex items-center gap-2">
+							<div className={`w-2 h-2 rounded-full ${
+								isProdigiConfigured ? 'bg-green-500' : 'bg-orange-500'
+							}`}></div>
+							<Text size="2" className={
+								isProdigiConfigured ? 'text-green-600' : 'text-orange-600'
+							}>
+								<span className="text-gray-600">Prodigi:</span>
+							</Text>
+							<Text size="2" className={
+								isProdigiConfigured ? 'text-green-600' : 'text-orange-600'
+							}>
+								{isProdigiConfigured ? 'Connected' : 'Setup Required'}
+							</Text>
+						</div>
+
+						<div className="flex items-center gap-2">
+							<div className={`w-2 h-2 rounded-full ${
+								currentPost.variants[activeTab]?.media?.some((m: any) => m?.type === 'image') ? 'bg-green-500' : 'bg-gray-400'
+							}`}></div>
+							<Text size="2">
+								<span className="text-gray-600">Images:</span>
+							</Text>
+							<Text size="2">
+								{currentPost.variants[activeTab]?.media?.filter((m: any) => m?.type === 'image')?.length || 0} found
+							</Text>
+						</div>
+					</div>
+
+					{/* Warning Messages */}
+					{autoCreateProdigiOnPublish && !isProdigiConfigured && (
+						<div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+							<Text size="2" color="orange">
+								<strong>Setup Required:</strong> Configure Prodigi credentials in Settings to enable auto-creation
+							</Text>
+						</div>
+					)}
+
+					{/* Prodigi Options */}
+					<div className="space-y-2">
+						<div className="flex items-center justify-between">
+							<Text size="2" weight="medium">Product Creation Options</Text>
+							<button
+								onClick={() => setShowProdigiSection(!showProdigiSection)}
+								className="text-xs text-blue-600 hover:text-blue-800"
+							>
+								{showProdigiSection ? 'Hide Options' : 'Show Options'}
+							</button>
+						</div>
+
+						{showProdigiSection && (
+							<div className="space-y-4">
+								{!isProdigiConfigured && (
+									<div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+										<Text size="2" weight="medium" className="block mb-2">
+											🔧 Prodigi Store Setup Required
+										</Text>
+										<Text size="2" color="gray" className="block mb-3">
+											Connect your Prodigi store to create print-on-demand products from your posts.
+										</Text>
+										<Text size="1" color="gray" className="block">
+											Setup your Prodigi credentials in the Settings tab to get started.
+										</Text>
+									</div>
+								)}
+
+								{!hasImages && (
+									<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+										<Text size="2" weight="medium" className="block mb-1">
+											⚠️ This post doesn&apos;t have any images. Add images to create Prodigi products.
+										</Text>
+									</div>
+								)}
+
+								{/* Template Selection */}
+								{isProdigiConfigured && (
+									<>
+										<div>
+											<Text size="2" weight="medium" className="block mb-2">
+												Select Template:
+											</Text>
+											<TemplateSelector
+												templates={prodigiTemplates}
+												selectedTemplate={selectedProdigiTemplate}
+												onSelect={setSelectedProdigiTemplate}
+												className="w-full"
+												loading={false}
+												error={prodigiTemplateError}
+												onRetry={() => {
+													// You can add a retry mechanism here
+												}}
+											/>
+										</div>
+
+										{/* Template Details */}
+										{selectedProdigiTemplate && (
+											<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+												<Text size="2" weight="medium" className="block mb-2">
+													Template Details:
+												</Text>
+												<div className="grid grid-cols-2 gap-2 text-sm">
+													<div>
+														<strong>Product Type:</strong> {selectedProdigiTemplate.productType}
+													</div>
+													<div>
+														<strong>Template ID:</strong> {selectedProdigiTemplate.prodigiTemplateId?.substring(0, 12) || 'N/A'}...
+													</div>
+													{selectedProdigiTemplate.variants && selectedProdigiTemplate.variants.length > 0 && (
+														<div>
+															<strong>Variants:</strong> {selectedProdigiTemplate.variants.length}
+														</div>
+													)}
+													{selectedProdigiTemplate.printAreas && selectedProdigiTemplate.printAreas.length > 0 && (
+														<div>
+															<strong>Print Areas:</strong> {selectedProdigiTemplate.printAreas.length}
+														</div>
+													)}
+													{selectedProdigiTemplate.description && (
+														<div className="col-span-2">
+															<strong>Description:</strong> {selectedProdigiTemplate.description.substring(0, 100)}...
+														</div>
+													)}
+												</div>
+											</div>
+										)}
+
+										{/* Platform Variant Selection */}
+										<div>
+											<Text size="2" weight="medium" className="block mb-2">
+												Platform Variant:
+											</Text>
+											<Text size="2" color="gray" className="block mb-1">
+												Using: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+											</Text>
+										</div>
+
+										{/* External Store Integration Options */}
+										{accountGroup?.externalStore?.isConfigured && selectedProdigiTemplate && (
+											<div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+												<Text size="2" weight="medium" className="text-purple-800">
+													🛒 External Store Publishing
+												</Text>
+												<Text size="1" color="gray" className="block mt-1">
+													Products will be automatically posted to your connected external store.
+												</Text>
+											</div>
+										)}
+
+										{/* Create Product Button */}
+										<button
+											disabled={!selectedProdigiTemplate || !hasImages}
+											onClick={createRealProdigiProduct}
+											className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+										>
+											<Package className="w-4 h-4" />
+											Create {selectedProdigiTemplate?.displayName || selectedProdigiTemplate?.name || 'Product'}
+										</button>
+									</>
+								)}
+
+								{/* Demo/Test Button when not configured */}
+								{!isProdigiConfigured && hasImages && (
+									<button
+										onClick={() => {
+											handleProdigiError('Please add your Prodigi API credentials to create real products');
+										}}
+										className="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-medium"
+									>
+										Demo Mode - Add API Key to Create Real Products
+									</button>
+								)}
+							</div>
+						)}
+					</div>
 				</div>
 			</Card>
 			

@@ -209,6 +209,66 @@ export const GelatoProduct = co.map({
 	retryCount: z.optional(z.number()),
 });
 
+// Prodigi Product Schema (for tracking created products)
+export const ProdigiProduct = co.map({
+	// Prodigi product details
+	productId: z.string(),
+	title: z.string(),
+	description: z.optional(z.string()),
+	tags: z.optional(z.array(z.string())),
+	productType: z.optional(z.string()),
+	
+	// Source information
+	sourcePost: z.object({
+		title: z.string(),
+		variant: z.optional(z.string()),
+		postId: z.optional(z.string()),
+	}),
+	
+	// Template information
+	templateId: z.optional(z.string()),
+	templateName: z.optional(z.string()),
+	baseProductId: z.optional(z.string()),
+	
+	// Status tracking
+	status: z.enum(['created', 'publishing', 'published', 'error']),
+	createdAt: z.date(),
+	lastUpdated: z.date(),
+	
+	// External store integration status
+	externalStoreStatus: z.optional(z.enum(['pending', 'syncing', 'synced', 'error'])),
+	externalProductId: z.optional(z.string()),
+	externalProductUrl: z.optional(z.string()),
+	externalMessage: z.optional(z.string()),
+	
+	// Prodigi specific fields
+	selectedVariant: z.optional(z.object({
+		id: z.string(),
+		sku: z.optional(z.string()),
+		size: z.optional(z.string()),
+		color: z.optional(z.string()),
+		material: z.optional(z.string()),
+	})),
+	
+	// Assets used
+	assets: z.optional(z.array(z.object({
+		id: z.string(),
+		url: z.string(),
+		filename: z.optional(z.string()),
+		format: z.optional(z.string()),
+	}))),
+	
+	// Pricing info
+	baseCost: z.optional(z.string()),
+	retailPrice: z.optional(z.string()),
+	currency: z.optional(z.string()),
+	
+	// Error tracking
+	errorMessage: z.optional(z.string()),
+	errorDetails: z.optional(z.string()),
+	retryCount: z.optional(z.number()),
+});
+
 // Gelato Integration Schema
 export const GelatoCredentials = co.map({
 	apiKey: z.string(),
@@ -223,6 +283,96 @@ export const GelatoCredentials = co.map({
 	createdProducts: co.list(GelatoProduct),
 	// Shopify integration
 	shopifyCredentials: z.optional(ShopifyCredentials),
+	// Auto-creation settings
+	autoCreateOnPublish: z.optional(z.boolean()),
+});
+
+// External Store Integration Schema
+export const ExternalStore = co.map({
+	name: z.string(),
+	storeType: z.enum(["woocommerce", "shopify", "custom", "medusa", "magento"]),
+	apiUrl: z.string(),
+	apiKey: z.string(),
+	webhookSecret: z.optional(z.string()),
+	isConfigured: z.boolean(),
+	connectedAt: z.optional(z.date()),
+	// Store settings
+	settings: z.optional(z.object({
+		currency: z.optional(z.string()),
+		taxIncluded: z.optional(z.boolean()),
+		autoPublish: z.optional(z.boolean()),
+		defaultCategory: z.optional(z.string()),
+		markupPercentage: z.optional(z.number()),
+	})),
+	// Posted products tracking
+	postedProducts: co.list(co.map({
+		id: z.string(),
+		externalProductId: z.string(),
+		externalProductUrl: z.optional(z.string()),
+		name: z.string(),
+		description: z.optional(z.string()),
+		price: z.optional(z.string()),
+		currency: z.optional(z.string()),
+		status: z.enum(["draft", "published", "archived"]),
+		postedAt: z.date(),
+		sourcePostId: z.optional(z.string()),
+		// Prodigi connection
+		prodigiProductId: z.optional(z.string()),
+		prodigiVariantSku: z.optional(z.string()),
+		// Store-specific metadata
+		storeMetadata: z.optional(z.object({
+			category: z.optional(z.string()),
+			tags: z.optional(z.array(z.string())),
+			slug: z.optional(z.string()),
+			featured: z.optional(z.boolean()),
+		})),
+	})),
+	// Sync settings
+	lastSync: z.optional(z.date()),
+	syncErrors: z.optional(z.array(z.string())),
+});
+
+// Prodigi Integration Schema
+export const ProdigiCredentials = co.map({
+	apiKey: z.string(),
+	sandboxMode: z.boolean(),
+	isConfigured: z.boolean(),
+	connectedAt: z.optional(z.date()),
+	// Products as templates (like Gelato templates)
+	templates: co.list(co.map({
+		id: z.string(),
+		name: z.string(),
+		displayName: z.optional(z.string()),
+		productType: z.optional(z.string()),
+		description: z.optional(z.string()),
+		variants: z.optional(z.array(z.object({
+			id: z.string(),
+			sku: z.optional(z.string()),
+			size: z.optional(z.string()),
+			material: z.optional(z.string()),
+			color: z.optional(z.string()),
+			price: z.optional(z.string()),
+			currency: z.optional(z.string()),
+		}))),
+		printAreas: z.optional(z.array(z.object({
+			id: z.string(),
+			name: z.string(),
+			width: z.optional(z.number()),
+			height: z.optional(z.number()),
+			dpi: z.optional(z.number()),
+		}))),
+		details: z.optional(z.object({
+			sizes: z.optional(z.array(z.string())),
+			materials: z.optional(z.array(z.string())),
+			colors: z.optional(z.array(z.string())),
+			category: z.optional(z.string()),
+			minDpi: z.optional(z.number()),
+			maxDpi: z.optional(z.number()),
+		})),
+	})),
+	templatesLastFetched: z.optional(z.date()),
+	// Created product designs (before posting to store)
+	createdProducts: co.list(ProdigiProduct),
 	// Auto-creation settings
 	autoCreateOnPublish: z.optional(z.boolean()),
 });
@@ -253,6 +403,12 @@ export const AccountGroup = co.map({
 	// Gelato Integration (per account group)
 	gelatoCredentials: z.optional(GelatoCredentials),
 	
+	// Prodigi Integration (per account group)
+	prodigiCredentials: z.optional(ProdigiCredentials),
+	
+	// External Store Integration (per account group)
+	externalStore: z.optional(ExternalStore),
+	
 	// Account Group Settings
 	settings: z.optional(z.object({
 		autoCreateProducts: z.optional(z.boolean()),
@@ -267,6 +423,13 @@ export type AccountGroupType = co.loaded<typeof AccountGroup, {
 	gelatoCredentials: {
 		templates: { $each: true },
 		createdProducts: { $each: true }
+	},
+	prodigiCredentials: {
+		templates: { $each: true },
+		createdProducts: { $each: true }
+	},
+	externalStore: {
+		postedProducts: { $each: true }
 	}
 }>;
 
@@ -453,6 +616,13 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 		gelatoCredentials: {
 			templates: { $each: true },
 			createdProducts: { $each: true }
+		},
+		prodigiCredentials: {
+			templates: { $each: true },
+			createdProducts: { $each: true }
+		},
+		externalStore: {
+			postedProducts: { $each: true }
 		}
 	}}
 }>;
