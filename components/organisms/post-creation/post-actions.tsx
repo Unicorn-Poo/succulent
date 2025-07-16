@@ -102,31 +102,33 @@ export const PostActions = ({
 
                         <div className="flex items-center gap-2">
                             {/* Preview Button */}
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div>
-                                        <Button
-                                            variant="outline"
-                                            size="2"
-                                            onClick={handlePreview}
-                                            disabled={!hasSelectedAccounts}
-                                            className={hasSelectedAccounts 
-                                                ? "border-lime-600 text-lime-600 hover:bg-lime-50" 
-                                                : "border-gray-300 text-gray-400 cursor-not-allowed"
-                                            }
-                                        >
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            <span className="hidden sm:inline">Preview</span>
-                                        </Button>
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    {hasSelectedAccounts 
-                                        ? "Preview your post" 
-                                        : "Select an account to enable preview"
-                                    }
-                                </TooltipContent>
-                            </Tooltip>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div>
+                                            <Button
+                                                variant="outline"
+                                                size="2"
+                                                onClick={handlePreview}
+                                                disabled={!hasSelectedAccounts}
+                                                className={hasSelectedAccounts 
+                                                    ? "border-lime-600 text-lime-600 hover:bg-lime-50" 
+                                                    : "border-gray-300 text-gray-400 cursor-not-allowed"
+                                                }
+                                            >
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                <span className="hidden sm:inline">Preview</span>
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {hasSelectedAccounts 
+                                            ? "Preview your post" 
+                                            : "Select an account to enable preview"
+                                        }
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
 
                             {/* Schedule Button */}
                             <Button

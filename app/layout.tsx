@@ -33,12 +33,14 @@ export default function RootLayout({
         <JazzProvider
           sync={{ peer: "wss://cloud.jazz.tools" }}
         >
-          <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            <main>
-              {children}
-            </main>
-          </div>
+          <Theme>
+            <div className="min-h-screen bg-gray-50">
+              <Navigation />
+              <main>
+                {children}
+              </main>
+            </div>
+          </Theme>
         </JazzProvider>
       </body>
     </html>
