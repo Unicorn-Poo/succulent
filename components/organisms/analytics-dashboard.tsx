@@ -232,11 +232,6 @@ export default function AnalyticsDashboard({
 
   // Load stored analytics data from Jazz (fast, immediate)
   const loadStoredAnalyticsData = () => {
-    console.log('📊 Loading stored analytics data...', {
-      selectedPlatforms,
-      accountGroup: !!accountGroup,
-      accounts: accountGroup?.accounts?.length || 0
-    });
     
     const results = {
       overview: {} as Record<string, any>,
@@ -248,45 +243,14 @@ export default function AnalyticsDashboard({
     let hasAnyData = false;
     let newestTimestamp: Date | null = null;
 
-    console.log('🔍 Account group structure:', {
-      hasAccountGroup: !!accountGroup,
-      accountGroupName: accountGroup?.name,
-      hasAccountsArray: !!accountGroup?.accounts,
-      accountsLength: accountGroup?.accounts?.length,
-      accountsType: typeof accountGroup?.accounts,
-      accounts: accountGroup?.accounts?.map((acc: any) => ({
-        platform: acc?.platform,
-        isLinked: acc?.isLinked,
-        hasCurrentAnalytics: !!acc?.currentAnalytics
-      }))
-    });
-
     selectedPlatforms?.forEach(platform => {
-      console.log(`🔍 Looking for ${platform} account...`);
       const account = accountGroup?.accounts?.find((acc: any) => acc.platform === platform && acc.isLinked);
-      console.log(`🔍 Found account for ${platform}:`, {
-        found: !!account,
-        platform: account?.platform,
-        isLinked: account?.isLinked,
-        hasCurrentAnalytics: !!account?.currentAnalytics,
-        hasHistoricalAnalytics: !!account?.historicalAnalytics
-      });
       
       if (!account) {
-        console.log(`❌ No linked account found for ${platform}`);
         return;
       }
 
       const storedData = getStoredAnalytics(account);
-      
-      console.log(`🔍 Stored data for ${platform}:`, {
-        hasStoredData: !!storedData,
-        hasCurrent: !!storedData.current,
-        currentData: storedData.current,
-        followerCount: storedData.current?.followerCount,
-        totalLikes: storedData.current?.totalLikes,
-        isStale: storedData.isStale
-      });
       
       // Jazz CoMap objects need to be accessed properly
       const currentAnalytics = storedData.current;
@@ -300,17 +264,6 @@ export default function AnalyticsDashboard({
         const totalShares = currentAnalytics.totalShares || 0;
         const engagementRate = currentAnalytics.engagementRate || 0;
         const dataLastUpdated = currentAnalytics.lastUpdated;
-        
-        console.log(`🔧 Extracted Jazz data for ${platform}:`, {
-          followerCount,
-          followingCount,
-          postsCount,
-          totalLikes,
-          totalComments,
-          totalShares,
-          engagementRate,
-          lastUpdated: dataLastUpdated
-        });
         
         hasAnyData = true;
         const updateTimestamp = new Date(dataLastUpdated);
@@ -380,22 +333,11 @@ export default function AnalyticsDashboard({
           note: storedData.isStale ? 'Data may be outdated - refresh for latest' : 'Based on recent activity'
         };
 
-        console.log(`📊 Mapped stored data for ${platform}:`, {
-          followersCount: followerCount,
-          totalEngagement,
-          postsCount: postsCount,
-          engagementRate: engagementRate
-        });
+
       }
     });
 
-    console.log('📊 Final results being set to data state:', {
-      overview: Object.keys(results.overview),
-      insights: Object.keys(results.insights),
-      overviewData: results.overview,
-      insightsData: results.insights,
-      hasAnyData
-    });
+
 
     setData(results);
     setLastUpdated(newestTimestamp);
@@ -418,7 +360,6 @@ export default function AnalyticsDashboard({
 
     // TEMPORARY: Test with hardcoded data to verify UI works
     if (!hasAnyData || !hasMeaningfulData) {
-      console.log('🧪 No stored data found, testing with hardcoded data...');
       
       const testData = {
         overview: {
@@ -478,16 +419,10 @@ export default function AnalyticsDashboard({
         }
       };
 
-      console.log('🧪 Setting test data with structure:', testData);
       const timestamp = new Date();
       setData(testData);
       setError(null);
       setLastUpdated(timestamp);
-      
-      console.log('🧪 Test data set, verifying structure:', {
-        overviewInstagram: testData.overview.instagram,
-        followersCount: testData.overview.instagram?.profile?.followersCount
-      });
       
       return true;
     }
@@ -506,7 +441,6 @@ export default function AnalyticsDashboard({
     if (!forceRefresh && useStoredData) {
       const hasStoredData = loadStoredAnalyticsData();
       if (hasStoredData) {
-        console.log('📊 Using stored analytics data');
         setIsLoading(false);
         return;
       }
@@ -514,8 +448,6 @@ export default function AnalyticsDashboard({
 
     setIsLoading(true);
     setError(null);
-    
-    console.log('🔄 Fetching fresh analytics data from Ayrshare...');
 
     try {
       // Update analytics for the entire account group
@@ -523,8 +455,6 @@ export default function AnalyticsDashboard({
       
       // After storing fresh data, load it into the dashboard
       loadStoredAnalyticsData();
-      
-      console.log('✅ Analytics refresh completed:', updateResults);
       
     } catch (error) {
       console.error('❌ Error fetching analytics:', error);
@@ -536,24 +466,18 @@ export default function AnalyticsDashboard({
 
   // Manual refresh functions
   const handleRefreshClick = () => {
-    console.log('🔄 Manual refresh - fetching fresh data...');
     setIsLoading(true);
     fetchAnalyticsData(true);
   };
 
   const handleRetryClick = () => {
-    console.log('🔄 Manual retry - reloading stored data...');
     setIsLoading(true);
     const hasStoredData = loadStoredAnalyticsData();
     setIsLoading(false);
-    if (!hasStoredData) {
-      console.log('No stored data found on retry');
-    }
   };
 
   const handleDataModeToggle = () => {
     const newMode = !useStoredData;
-    console.log(`🔄 Switching to ${newMode ? 'stored' : 'live'} data mode`);
     
     setUseStoredData(newMode);
     
@@ -582,35 +506,15 @@ export default function AnalyticsDashboard({
   }, []); // Empty dependencies - run ONLY once on mount
 
   const aggregatedMetrics = useMemo(() => {
-    console.log('🧮 Calculating aggregated metrics with data:', {
-      selectedPlatforms,
-      dataOverview: data.overview,
-      dataInsights: data.insights,
-      dataKeys: Object.keys(data.overview || {}),
-      dataState: data,
-      instagramOverview: data.overview?.instagram,
-      instagramProfile: data.overview?.instagram?.profile,
-      instagramFollowers: data.overview?.instagram?.profile?.followersCount
-    });
 
     const totals = selectedPlatforms.reduce((acc, platform) => {
       const overview = data.overview[platform];
       const insights = data.insights[platform];
       
-      console.log(`🧮 Processing ${platform}:`, {
-        hasOverview: !!overview,
-        hasInsights: !!insights,
-        followersCount: overview?.profile?.followersCount,
-        totalEngagement: insights?.totalEngagement,
-        overview,
-        insights
-      });
-      
       if (overview) {
         // Only add real data, skip null values
         if (overview.profile?.followersCount) {
           acc.followers += overview.profile.followersCount;
-          console.log(`➕ Added ${overview.profile.followersCount} followers for ${platform}`);
         }
         if (overview.profile?.followingCount) acc.following += overview.profile.followingCount;
         if (overview.profile?.postsCount) acc.posts += overview.profile.postsCount;
@@ -619,7 +523,6 @@ export default function AnalyticsDashboard({
       if (insights) {
         acc.engagement += insights.totalEngagement || 0;
         acc.engagementRate += insights.engagementRate || 0;
-        console.log(`➕ Added ${insights.totalEngagement} engagement for ${platform}`);
       }
       
       return acc;
@@ -646,8 +549,6 @@ export default function AnalyticsDashboard({
     totals.engagementRate = selectedPlatforms.length > 0 ? 
       totals.engagementRate / selectedPlatforms.length : 0;
 
-    console.log('🧮 Final aggregated metrics:', totals);
-
     // TEMPORARY: Force show test data in UI to verify components work (disabled to test real structure)
     // if (totals.followers === 0 && totals.engagement === 0) {
     //   console.log('🧪 Forcing test metrics to verify UI components work');
@@ -665,17 +566,7 @@ export default function AnalyticsDashboard({
     return totals;
   }, [data, selectedPlatforms]);
 
-  // Debug: Log current state when component renders
-  console.log('🎨 Analytics component rendering:', {
-    activeTab,
-    isLoading,
-    hasError: !!error,
-    dataKeys: Object.keys(data?.overview || {}),
-    hasInstagramData: !!data?.overview?.instagram,
-    instagramFollowers: data?.overview?.instagram?.profile?.followersCount,
-    aggregatedFollowers: aggregatedMetrics?.followers,
-    dataPersistsAcrossTabs: Object.keys(data?.overview || {}).length > 0
-  });
+
 
   if (!businessPlanAvailable) {
     return (
@@ -711,11 +602,9 @@ export default function AnalyticsDashboard({
             </Button>
             <Button 
               onClick={async () => {
-                console.log('🔍 Testing basic API connection...');
                 try {
                   const response = await fetch('/api/test-ayrshare-connection');
                   const result = await response.json();
-                  console.log('🔍 API test result:', result);
                 } catch (err) {
                   console.error('🔍 API test failed:', err);
                 }
@@ -825,12 +714,6 @@ export default function AnalyticsDashboard({
                     <Badge variant="soft">
                       {(() => {
                         const followers = data.overview[platform]?.profile?.followersCount;
-                        console.log(`🏷️ Badge rendering for ${platform}:`, {
-                          hasOverview: !!data.overview[platform],
-                          hasProfile: !!data.overview[platform]?.profile,
-                          followersCount: followers,
-                          fullOverview: data.overview[platform]
-                        });
                         return followers || 0;
                       })()} followers
                     </Badge>
