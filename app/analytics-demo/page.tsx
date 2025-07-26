@@ -17,6 +17,9 @@ import Link from "next/link";
 import InstagramAccountDashboard from "@/components/organisms/instagram-account-dashboard";
 import EnhancedReplyHandler from "@/components/organisms/enhanced-reply-handler";
 import FreeTierDashboard from "@/components/organisms/free-tier-dashboard";
+import AnalyticsDashboard from "@/components/organisms/analytics-dashboard";
+import UserProfileManagement from "@/components/organisms/user-profile-management";
+import WebhookManagement from "@/components/organisms/webhook-management";
 import { validateAyrshareConfig, isBusinessPlanMode } from "@/utils/ayrshareIntegration";
 
 // Demo Instagram account data
@@ -48,6 +51,36 @@ export default function AnalyticsDemoPage() {
       description: "View profile stats, engagement metrics, and recent posts",
       available: true,
       component: <InstagramAccountDashboard account={demoInstagramAccount} />
+    },
+    {
+      id: "comprehensive-analytics",
+      name: "Comprehensive Analytics Dashboard",
+      description: "Advanced analytics with engagement insights, optimal timing, and audience data",
+      available: ayrshareConfigured && businessPlan,
+      component: (
+        <AnalyticsDashboard 
+          accountGroup={{
+            ayrshareProfileKey: 'demo-profile-key', // Replace with actual profile key
+            name: 'Demo Account Group'
+          }}
+          selectedPlatforms={['instagram', 'x', 'linkedin']}
+          timeframe="30d"
+        />
+      )
+    },
+    {
+      id: "user-profile-management",
+      name: "User Profile Management",
+      description: "Create and manage multiple user profiles for client management",
+      available: ayrshareConfigured && businessPlan,
+      component: <UserProfileManagement />
+    },
+    {
+      id: "webhook-management",
+      name: "Webhook Management",
+      description: "Set up real-time notifications for post events and social media activities",
+      available: ayrshareConfigured && businessPlan,
+      component: <WebhookManagement />
     },
     {
       id: "post-analytics",

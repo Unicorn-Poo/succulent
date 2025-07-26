@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
 import { useState } from "react";
-import { Dialog, TextField, TextArea, Text, Tabs, Card } from "@radix-ui/themes";
+import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
 import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -10,12 +10,13 @@ import { PostFullyLoaded } from "@/app/schema";
 import { Home } from "lucide-react";
 import { useAccount } from "jazz-react";
 import { MyAppAccount } from "@/app/schema";
-import AccountAnalyticsOverview from "@/components/organisms/account-analytics-overview";
+import AnalyticsDashboard from "@/components/organisms/analytics-dashboard";
 import AccountGroupTools from "@/components/organisms/account-group-tools";
 import { GelatoSettings } from "@/components/gelato-settings";
 import { ProdigiSettings } from "@/components/prodigi-settings";
 import { ExternalStoreSettings } from "@/components/external-store-settings";
 import { CollaborationSettings } from "@/components/organisms/collaboration-settings";
+import AccountLinkingManager from "@/components/organisms/account-linking-manager";
 import { co, z } from "jazz-tools";
 import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
@@ -68,7 +69,21 @@ export default function AccountGroupPage() {
 	);
 	
 	const jazzAccountGroup = me?.root?.accountGroups?.find(
-		(group: any) => group.id === accountGroupId
+		(group: any, index: number) => {
+			// Try exact ID match first
+			if (group.id === accountGroupId) {
+				return true;
+			}
+			
+			// Try fallback ID pattern: jazz-{index}-{name-with-dashes}
+			const fallbackId = `jazz-${index}-${group.name?.replace(/\s+/g, '-')}`;
+			if (fallbackId === accountGroupId) {
+				console.log(`✅ Found account group using fallback ID: ${fallbackId}`);
+				return true;
+			}
+			
+			return false;
+		}
 	);
 	
 	// Use whichever one we found
@@ -92,12 +107,33 @@ export default function AccountGroupPage() {
 		);
 	}
 
+	// Helper function to safely access potentially corrupted Jazz collaborative arrays
+	const safeArrayAccess = (collaborativeArray: any): any[] => {
+		try {
+			if (!collaborativeArray) {
+				return [];
+			}
+			
+			// Handle null references in collaborative lists
+			if (Array.isArray(collaborativeArray)) {
+				return collaborativeArray.filter(item => item != null);
+			}
+			
+			// Try to convert Jazz collaborative list to regular array
+			const array = Array.from(collaborativeArray || []);
+			return array.filter(item => item != null);
+		} catch (error) {
+			console.error('🚨 Jazz collaborative array is corrupted:', error);
+			return [];
+		}
+	};
+
 	// Helper function to get accounts array from either format
 	const getAccountsArray = () => {
 		if (legacyAccountGroup) {
 			return Object.values(legacyAccountGroup.accounts || {});
 		} else if (jazzAccountGroup) {
-			return jazzAccountGroup.accounts || [];
+			return safeArrayAccess(jazzAccountGroup.accounts);
 		}
 		return [];
 	};
@@ -107,7 +143,7 @@ export default function AccountGroupPage() {
 		if (legacyAccountGroup) {
 			return legacyAccountGroup.posts || [];
 		} else if (jazzAccountGroup) {
-			return jazzAccountGroup.posts || [];
+			return safeArrayAccess(jazzAccountGroup.posts);
 		}
 		return [];
 	};
@@ -403,11 +439,50 @@ export default function AccountGroupPage() {
 
 					{/* Analytics Tab */}
 					<Tabs.Content value="analytics" className="mt-6">
-						<AccountAnalyticsOverview 
-							accounts={transformedAccounts}
-							accountGroupId={accountGroup.id}
-							title="Account Group Analytics"
-						/>
+						{(() => {
+							const linkedAccounts = transformedAccounts.filter(account => account.isLinked);
+							const supportedPlatforms = linkedAccounts
+								.map(account => account.platform)
+								.filter(platform => ['instagram', 'x', 'twitter', 'linkedin', 'facebook', 'youtube', 'tiktok'].includes(platform));
+
+							if (linkedAccounts.length === 0) {
+								return (
+									<div className="text-center py-12">
+										<BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+										<Text size="4" weight="medium" className="mb-2 block">No Connected Accounts</Text>
+										<Text size="2" color="gray" className="mb-6 block">
+											Connect your social media accounts to start viewing analytics data.
+										</Text>
+										<RadixButton onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+											Connect Accounts
+										</RadixButton>
+									</div>
+								);
+							}
+
+							if (supportedPlatforms.length === 0) {
+								return (
+									<div className="text-center py-12">
+										<BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+										<Text size="4" weight="medium" className="mb-2 block">Unsupported Platforms</Text>
+										<Text size="2" color="gray" className="mb-6 block">
+											Analytics are available for Instagram, X (Twitter), LinkedIn, Facebook, YouTube, and TikTok.
+										</Text>
+										<Text size="2" color="gray" className="block">
+											Connected platforms: {linkedAccounts.map(a => a.platform).join(', ')}
+										</Text>
+									</div>
+								);
+							}
+
+							return (
+								<AnalyticsDashboard 
+									accountGroup={jazzAccountGroup || accountGroup}
+									selectedPlatforms={supportedPlatforms}
+									timeframe="30d"
+								/>
+							);
+						})()}
 					</Tabs.Content>
 
 					{/* Enhanced Tools Tab */}
@@ -515,6 +590,33 @@ export default function AccountGroupPage() {
 								<Cog className="w-5 h-5 text-gray-600" />
 								<Text size="5" weight="bold">Account Group Settings</Text>
 							</div>
+
+							{/* Account Linking Management */}
+							{jazzAccountGroup && (
+								<AccountLinkingManager 
+									accountGroup={jazzAccountGroup}
+									onAccountsUpdated={(updatedAccounts) => {
+										// Update the accounts in the Jazz object using safe array access
+										if (jazzAccountGroup.accounts) {
+											try {
+												const safeAccounts = safeArrayAccess(jazzAccountGroup.accounts);
+												updatedAccounts.forEach((updatedAccount, index) => {
+													const existingAccount = safeAccounts[index];
+													if (existingAccount) {
+														existingAccount.isLinked = updatedAccount.isLinked;
+														existingAccount.status = updatedAccount.status;
+														if (updatedAccount.linkedAt) {
+															existingAccount.linkedAt = updatedAccount.linkedAt;
+														}
+													}
+												});
+											} catch (error) {
+												console.error('🚨 Jazz accounts update failed due to corruption:', error);
+											}
+										}
+									}}
+								/>
+							)}
 
 							{/* Collaboration Settings */}
 							{jazzAccountGroup && (

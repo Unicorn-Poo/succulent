@@ -42,12 +42,33 @@ export default function PostPage() {
   // Prioritize Jazz account group (which has real accounts) over legacy account group
   const accountGroup = jazzAccountGroup || legacyAccountGroup;
   
+  // Helper function to safely access potentially corrupted Jazz collaborative arrays
+  const safeArrayAccess = (collaborativeArray: any): any[] => {
+    try {
+      if (!collaborativeArray) {
+        return [];
+      }
+      
+      // Handle null references in collaborative lists
+      if (Array.isArray(collaborativeArray)) {
+        return collaborativeArray.filter(item => item != null);
+      }
+      
+      // Try to convert Jazz collaborative list to regular array
+      const array = Array.from(collaborativeArray || []);
+      return array.filter(item => item != null);
+    } catch (error) {
+      console.error('🚨 Jazz collaborative array is corrupted:', error);
+      return [];
+    }
+  };
+
   // Helper function to get posts array from either format
   const getPostsArray = () => {
     if (legacyAccountGroup) {
       return legacyAccountGroup.posts || [];
     } else if (jazzAccountGroup) {
-      return jazzAccountGroup.posts || [];
+      return safeArrayAccess(jazzAccountGroup.posts);
     }
     return [];
   };

@@ -28,6 +28,8 @@ interface PostCreationProps {
 	accountGroup: {
 		id: string;
 		name: string;
+		ayrshareProfileKey?: string;
+		ayrshareProfileTitle?: string;
 		accounts: Record<string, {
 			id: string;
 			platform: string;
@@ -450,15 +452,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			}
 
 			// =============================================================================
-			// 🚀 BUSINESS PLAN MODE (COMMENTED OUT FOR DEVELOPMENT)
+			// 🚀 BUSINESS PLAN MODE (ACTIVE)
 			// =============================================================================
-			/*
+			
 			// Business Plan mode - requires profile keys
-			const firstAccount = Object.values(accountGroup.accounts)[0];
-			const profileKey = firstAccount?.profileKey;
+			const profileKey = accountGroup.ayrshareProfileKey;
 
 			if (!profileKey) {
-				throw new Error("No Ayrshare profile found. Please create and link your accounts first.");
+				throw new Error("No Ayrshare profile found for this account group. Please check the account group settings.");
 			}
 
 			const mediaUrls = post.variants[activeTab]?.media?.map(item => 
@@ -485,8 +486,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			}
 
 			setSuccess("Post published successfully!");
-			setResults(results);
-			*/
+			// setResults(results); // Uncomment when you add results state if needed
 
 		} catch (error) {
 			const errorMessage = handleApiError(error);

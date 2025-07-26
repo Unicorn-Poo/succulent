@@ -165,8 +165,8 @@ export interface HistoricalPost {
 }
 
 /**
- * Get post history from Ayrshare
- * @param options - Query options for filtering posts
+ * Get historical posts for analytics
+ * @param options - Query options (platform, records, days)
  * @param profileKey - Profile key (Business Plan only)
  * @returns Array of historical posts
  */
@@ -178,6 +178,11 @@ export const getPostHistory = async (
   } = {},
   profileKey?: string
 ): Promise<HistoricalPost[]> => {
+  // Check for Business Plan requirements
+  if (isBusinessPlanMode() && !profileKey) {
+    throw new Error('Profile key is required for Business Plan analytics. Please ensure your account group has been migrated and has an Ayrshare user profile.');
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${AYRSHARE_API_KEY}`
@@ -203,7 +208,47 @@ export const getPostHistory = async (
   const result = await response.json();
   
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to get post history');
+    // Log the exact error for debugging
+    console.error('Ayrshare API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      message: result.message,
+      platform: options.platform,
+      url: url
+    });
+
+    // Provide more specific error messages
+    if (response.status === 400) {
+      const errorMessage = result.message?.toLowerCase() || '';
+      
+      // Check for various "no accounts linked" patterns
+      if (errorMessage.includes('no social media accounts') || 
+          errorMessage.includes('account not found') ||
+          errorMessage.includes('no accounts linked') ||
+          errorMessage.includes('no connected accounts') ||
+          errorMessage.includes('platform not connected') ||
+          errorMessage.includes('no posts found')) {
+        throw new Error(`No ${options.platform || 'social media'} accounts are linked to this Ayrshare profile. Please link your accounts in the Settings tab first.`);
+      }
+      
+      // Check for profile-related errors
+      if (errorMessage.includes('profile') || errorMessage.includes('invalid profile')) {
+        throw new Error('Invalid or missing Ayrshare profile. Please ensure your account group has been properly migrated with an Ayrshare user profile.');
+      }
+      
+      // Check for permission/access errors
+      if (errorMessage.includes('access') || errorMessage.includes('permission')) {
+        throw new Error(`Access denied for ${options.platform || 'this platform'}. Please check your account permissions and try linking again.`);
+      }
+    }
+    if (response.status === 401) {
+      throw new Error('Invalid Ayrshare API key. Please check your environment variables.');
+    }
+    if (response.status === 403) {
+      throw new Error('Access denied. This feature may require a higher Ayrshare plan or additional permissions.');
+    }
+    
+    throw new Error(result.message || `Failed to get post history (${response.status})`);
   }
 
   return result.posts || [];
@@ -628,6 +673,401 @@ export const updateAutoScheduleSettings = async (settings: AutoScheduleSettings,
   
   if (!response.ok) {
     throw new Error(result.message || 'Failed to update auto schedule settings');
+  }
+
+  return result;
+};
+
+// =============================================================================
+// 📧 DIRECT MESSAGES API INTEGRATION (BUSINESS PLAN)
+// =============================================================================
+
+/**
+ * Interface for direct message data
+ */
+export interface DirectMessage {
+  id?: string;
+  platform: string;
+  recipient: string;
+  message: string;
+  mediaUrls?: string[];
+  sentAt?: string;
+  status?: 'sent' | 'delivered' | 'read' | 'failed';
+}
+
+/**
+ * Send a direct message
+ * @param messageData - Direct message data
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Message send result
+ */
+export const sendDirectMessage = async (messageData: DirectMessage, profileKey?: string) => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Direct messages require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/message`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(messageData)
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to send direct message');
+  }
+
+  return result;
+};
+
+/**
+ * Get direct message history
+ * @param platform - Platform name
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Array of direct messages
+ */
+export const getDirectMessageHistory = async (platform: string, profileKey?: string): Promise<DirectMessage[]> => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Direct message history requires Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/message/history?platform=${platform}`, {
+    method: 'GET',
+    headers
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get direct message history');
+  }
+
+  return result.messages || [];
+};
+
+// =============================================================================
+// 📈 ADVANCED ANALYTICS & INSIGHTS (BUSINESS PLAN)
+// =============================================================================
+
+/**
+ * Interface for engagement insights
+ */
+export interface EngagementInsights {
+  platform: string;
+  timeframe: string;
+  totalEngagement: number;
+  engagementRate: number;
+  bestPerformingPosts: HistoricalPost[];
+  optimalPostTimes: string[];
+  audienceInsights: {
+    demographics?: Record<string, any>;
+    interests?: string[];
+    activeHours?: Record<string, number>;
+  };
+}
+
+/**
+ * Get engagement insights for a platform
+ * @param platform - Platform name
+ * @param timeframe - Time period ('7d', '30d', '90d')
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Engagement insights
+ */
+export const getEngagementInsights = async (
+  platform: string, 
+  timeframe: string = '30d', 
+  profileKey?: string
+): Promise<EngagementInsights> => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Engagement insights require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/analytics/insights`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ 
+      platform, 
+      timeframe,
+      includeAudience: true,
+      includeOptimalTimes: true
+    })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get engagement insights');
+  }
+
+  return result;
+};
+
+/**
+ * Interface for competitor analysis
+ */
+export interface CompetitorAnalysis {
+  competitor: string;
+  platform: string;
+  metrics: {
+    followers?: number;
+    engagement?: number;
+    postFrequency?: number;
+    averageLikes?: number;
+    averageComments?: number;
+  };
+  topContent: {
+    posts: any[];
+    hashtags: string[];
+    contentTypes: string[];
+  };
+}
+
+/**
+ * Get competitor analysis
+ * @param competitors - Array of competitor usernames
+ * @param platform - Platform name
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Competitor analysis data
+ */
+export const getCompetitorAnalysis = async (
+  competitors: string[], 
+  platform: string, 
+  profileKey?: string
+): Promise<CompetitorAnalysis[]> => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Competitor analysis requires Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/analytics/competitors`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ 
+      competitors, 
+      platform,
+      includeContent: true
+    })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get competitor analysis');
+  }
+
+  return result.analysis || [];
+};
+
+// =============================================================================
+// 🎯 HASHTAG & CONTENT OPTIMIZATION (BUSINESS PLAN)
+// =============================================================================
+
+/**
+ * Interface for hashtag suggestions
+ */
+export interface HashtagSuggestions {
+  trending: string[];
+  relevant: string[];
+  competitive: string[];
+  performance: Record<string, {
+    usage: number;
+    engagement: number;
+    reach: number;
+  }>;
+}
+
+/**
+ * Get hashtag suggestions for content
+ * @param content - Post content
+ * @param platform - Platform name
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Hashtag suggestions
+ */
+export const getHashtagSuggestions = async (
+  content: string, 
+  platform: string, 
+  profileKey?: string
+): Promise<HashtagSuggestions> => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Hashtag suggestions require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/hashtags/suggest`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ 
+      content, 
+      platform,
+      includePerformance: true
+    })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get hashtag suggestions');
+  }
+
+  return result;
+};
+
+/**
+ * Get optimal posting times for a platform
+ * @param platform - Platform name
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Optimal posting times
+ */
+export const getOptimalPostTimes = async (platform: string, profileKey?: string) => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Optimal posting times require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/analytics/optimal-times`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ platform })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get optimal posting times');
+  }
+
+  return result;
+};
+
+// =============================================================================
+// 🔔 WEBHOOK MANAGEMENT (BUSINESS PLAN)
+// =============================================================================
+
+/**
+ * Interface for webhook configuration
+ */
+export interface WebhookConfig {
+  url: string;
+  events: string[];
+  secret?: string;
+  active?: boolean;
+}
+
+/**
+ * Set up webhook for real-time notifications
+ * @param config - Webhook configuration
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Webhook setup result
+ */
+export const setupWebhook = async (config: WebhookConfig, profileKey?: string) => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Webhooks require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/webhook`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(config)
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to setup webhook');
+  }
+
+  return result;
+};
+
+/**
+ * Get webhook configuration
+ * @param profileKey - Profile key (Business Plan only)
+ * @returns Current webhook configuration
+ */
+export const getWebhookConfig = async (profileKey?: string) => {
+  if (!isBusinessPlanMode()) {
+    throw new Error('Webhooks require Business Plan');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+  };
+
+  if (profileKey) {
+    headers['Profile-Key'] = profileKey;
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/webhook`, {
+    method: 'GET',
+    headers
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to get webhook configuration');
   }
 
   return result;

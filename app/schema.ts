@@ -630,25 +630,58 @@ export type AccountRootLoaded = co.loaded<typeof AccountRoot, {
 export const MyAppAccount = co.account({
   root: AccountRoot,
   profile: SucculentProfile,
-}).withMigration((account, creationProps?: { name: string }) => {
-  if (account.root === undefined) {
-    // Create a group for the account root
-    const rootGroup = Group.create();
-    
-    account.root = AccountRoot.create({
-      accountGroups: co.list(AccountGroup).create([], rootGroup),
-    }, rootGroup);
-  }
+}).withMigration(async (account, creationProps?: { name: string }) => {
+  console.log('🎵 Jazz account migration running...', {
+    hasRoot: account.root !== undefined,
+    hasProfile: account.profile !== undefined,
+    creationProps
+  });
 
-  if (account.profile === undefined) {
-    const profileGroup = Group.create();
-    profileGroup.makePublic();
+  try {
+    // Initialize root if undefined
+    if (account.root === undefined) {
+      console.log('🔧 Creating account root...');
+      const rootGroup = Group.create();
+      
+      account.root = AccountRoot.create({
+        accountGroups: co.list(AccountGroup).create([], rootGroup),
+      }, rootGroup);
+      
+      console.log('✅ Account root created successfully');
+    }
+
+    // Initialize profile if undefined
+    if (account.profile === undefined) {
+      console.log('🔧 Creating account profile...');
+      const profileGroup = Group.create();
+      profileGroup.makePublic();
+      
+      account.profile = SucculentProfile.create({
+        name: creationProps?.name ?? "New user",
+        collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
+        ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
+      }, profileGroup);
+      
+      console.log('✅ Account profile created successfully');
+    }
     
-    account.profile = SucculentProfile.create({
-      name: creationProps?.name ?? "New user",
-      collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
-      ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
-    }, profileGroup);
+    // Ensure root is properly loaded and accessible
+    if (account.root) {
+      const { root } = await account.ensureLoaded({
+        resolve: { root: { accountGroups: true } }
+      });
+      
+      console.log('🔄 Root loaded and verified:', {
+        hasAccountGroups: !!root.accountGroups,
+        accountGroupsLength: root.accountGroups?.length || 0
+      });
+    }
+    
+    console.log('✅ Jazz account migration completed successfully');
+    
+  } catch (error) {
+    console.error('❌ Jazz account migration failed:', error);
+    throw error;
   }
 });
 

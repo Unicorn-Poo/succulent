@@ -3,6 +3,8 @@
  * Tracks and optimizes usage of the 20 posts/month limit
  */
 
+import { useState, useEffect } from 'react';
+
 interface FreeTierUsage {
   postsThisMonth: number;
   postsRemaining: number;
@@ -194,4 +196,59 @@ export class FreeTierManager {
       }
     };
   }
+}
+
+/**
+ * React hook for using FreeTierManager in components
+ */
+export function useFreeTier() {
+  const [usage, setUsage] = useState<FreeTierUsage>(() => FreeTierManager.getUsageStats());
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  // Refresh usage stats periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newUsage = FreeTierManager.getUsageStats();
+      setUsage(newUsage);
+      setLastRefresh(Date.now());
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Manual refresh function
+  const refresh = () => {
+    const newUsage = FreeTierManager.getUsageStats();
+    setUsage(newUsage);
+    setLastRefresh(Date.now());
+  };
+
+  // Record a post and update usage
+  const recordPost = (platforms: string[], priority: 'urgent' | 'high' | 'medium' | 'low' = 'medium') => {
+    FreeTierManager.recordPost(platforms.length);
+    refresh();
+  };
+
+  // Get posting strategy
+  const getStrategy = () => {
+    return FreeTierManager.getPostingStrategy();
+  };
+
+  // Get optimization tips
+  const tips = FreeTierManager.getOptimizationTips();
+
+  // Get platform suggestions
+  const getSuggestions = (platforms: string[], priority: 'urgent' | 'high' | 'medium' | 'low') => {
+    return FreeTierManager.suggestPlatforms(platforms, priority);
+  };
+
+  return {
+    usage,
+    getStrategy,
+    tips,
+    recordPost,
+    refresh,
+    getSuggestions,
+    lastRefresh
+  };
 } 

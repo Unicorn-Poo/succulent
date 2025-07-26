@@ -1,11 +1,15 @@
 "use client";
 
-import { Card, Text } from "@radix-ui/themes";
+import { Card, Text, Tabs } from "@radix-ui/themes";
 import {
 	AlertCircle,
 	Check,
 	Package,
 	Loader2,
+	Hash,
+	Clock,
+	TrendingUp,
+	BarChart3,
 } from "lucide-react";
 import { PostFullyLoaded, GelatoProduct, ProdigiProduct } from "@/app/schema";
 import { co } from "jazz-tools";
@@ -18,6 +22,8 @@ import { PostContent } from "./post-creation/post-content";
 import { ThreadPreview } from "./post-creation/thread-preview";
 import { AddAccountDialog } from "./post-creation/add-account-dialog";
 import { SettingsDialog } from "./post-creation/settings-dialog";
+import HashtagSuggestions from "./hashtag-suggestions";
+import { getOptimalPostTimes, isFeatureAvailable } from "@/utils/ayrshareAnalytics";
 import { useState, useEffect, useMemo, useCallback } from "react";
 
 interface PostCreationProps {
@@ -631,6 +637,60 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		isExplicitThread,
 		isImplicitThread
 	} = usePostCreation({ post, accountGroup });
+
+	// =============================================================================
+	// 📊 ANALYTICS & HASHTAG FEATURES
+	// =============================================================================
+
+	// State for hashtag suggestions
+	const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+	const [showHashtagPanel, setShowHashtagPanel] = useState(false);
+	
+	// State for optimal timing
+	const [optimalTimes, setOptimalTimes] = useState<any>(null);
+	const [showOptimalTiming, setShowOptimalTiming] = useState(false);
+	const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+
+	// Check if analytics features are available
+	const analyticsAvailable = isFeatureAvailable('analytics');
+	const profileKey = accountGroup?.ayrshareProfileKey;
+
+	// Fetch optimal posting times
+	const fetchOptimalTimes = useCallback(async () => {
+		if (!analyticsAvailable || !activeTab) return;
+
+		setIsLoadingTimes(true);
+		try {
+			const times = await getOptimalPostTimes(activeTab, profileKey);
+			setOptimalTimes(times);
+		} catch (error) {
+			console.error('Failed to fetch optimal times:', error);
+		} finally {
+			setIsLoadingTimes(false);
+		}
+	}, [activeTab, profileKey, analyticsAvailable]);
+
+	// Auto-fetch optimal times when switching platforms
+	useEffect(() => {
+		if (showOptimalTiming && analyticsAvailable) {
+			fetchOptimalTimes();
+		}
+	}, [showOptimalTiming, fetchOptimalTimes, analyticsAvailable]);
+
+	// Handle hashtag selection
+	const handleHashtagsSelected = useCallback((hashtags: string[]) => {
+		setSelectedHashtags(hashtags);
+		
+		// Auto-append hashtags to current content
+		const currentText = currentPost.variants[activeTab]?.text?.toString() || '';
+		const hashtagsText = hashtags.map(tag => `#${tag}`).join(' ');
+		
+		// Only append if not already present
+		if (currentText && !currentText.includes(hashtagsText)) {
+			const newContent = `${currentText}\n\n${hashtagsText}`;
+			handleContentChange(newContent);
+		}
+	}, [activeTab, currentPost, handleContentChange]);
 
 	// Helper function to initialize createdProducts list if it doesn't exist
 	const initializeCreatedProducts = () => {
@@ -1691,6 +1751,126 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					</div>
 				</div>
 			</Card>
+
+			{/* Analytics Features */}
+			{analyticsAvailable && (
+				<Card>
+					<div className="p-4">
+						<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center gap-2">
+								<BarChart3 className="w-5 h-5 text-blue-600" />
+								<Text weight="medium" size="3">Content Optimization</Text>
+							</div>
+						</div>
+
+						<Tabs.Root defaultValue="hashtags">
+							<Tabs.List>
+								<Tabs.Trigger value="hashtags">
+									<Hash className="w-4 h-4 mr-2" />
+									Hashtag Suggestions
+								</Tabs.Trigger>
+								<Tabs.Trigger value="timing">
+									<Clock className="w-4 h-4 mr-2" />
+									Optimal Timing
+								</Tabs.Trigger>
+							</Tabs.List>
+
+							<div className="mt-4">
+								<Tabs.Content value="hashtags">
+									<HashtagSuggestions
+										content={currentPost.variants[activeTab]?.text?.toString() || ''}
+										platform={activeTab}
+										profileKey={profileKey}
+										onHashtagsSelected={handleHashtagsSelected}
+									/>
+								</Tabs.Content>
+
+								<Tabs.Content value="timing">
+									<div className="space-y-4">
+										<div className="flex items-center justify-between">
+											<Text size="3" weight="medium">Optimal Posting Times</Text>
+											<button
+												onClick={fetchOptimalTimes}
+												disabled={isLoadingTimes}
+												className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 disabled:opacity-50"
+											>
+												{isLoadingTimes ? (
+													<Loader2 className="w-4 h-4 animate-spin" />
+												) : (
+													<TrendingUp className="w-4 h-4" />
+												)}
+												{isLoadingTimes ? 'Loading...' : 'Refresh'}
+											</button>
+										</div>
+
+										{optimalTimes ? (
+											<div className="space-y-3">
+												<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+													<Text size="2" weight="medium" className="block mb-2">
+														Best times for {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+													</Text>
+													<div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+														{optimalTimes.times?.slice(0, 8).map((time: string, index: number) => (
+															<div key={index} className="bg-white p-2 rounded text-center border">
+																<Text size="1" weight="medium">{time}</Text>
+															</div>
+														))}
+													</div>
+													<Text size="1" color="gray" className="block mt-2">
+														Times shown in your local timezone
+													</Text>
+												</div>
+
+												{optimalTimes.engagement && (
+													<div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+														<Text size="2" weight="medium" className="block mb-1">
+															Average Engagement
+														</Text>
+														<Text size="3" className="text-green-700 font-bold">
+															{optimalTimes.engagement.toFixed(1)}%
+														</Text>
+														<Text size="1" color="gray">
+															Expected engagement rate for optimal times
+														</Text>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="text-center py-8">
+												<Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+												<Text size="2" color="gray">
+													{isLoadingTimes ? 'Analyzing your posting patterns...' : 'Click refresh to get optimal posting times'}
+												</Text>
+											</div>
+										)}
+									</div>
+								</Tabs.Content>
+							</div>
+						</Tabs.Root>
+					</div>
+				</Card>
+			)}
+
+			{/* Analytics Upgrade Prompt */}
+			{!analyticsAvailable && (
+				<Card>
+					<div className="p-4 text-center space-y-3">
+						<BarChart3 className="w-8 h-8 text-gray-400 mx-auto" />
+						<div>
+							<Text size="3" weight="medium" className="block">Content Optimization Features</Text>
+							<Text size="2" color="gray" className="block mt-1">
+								Get AI-powered hashtag suggestions and optimal posting times
+							</Text>
+						</div>
+						<button
+							onClick={() => window.open('https://www.ayrshare.com/pricing', '_blank')}
+							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+						>
+							Upgrade to Business Plan
+						</button>
+					</div>
+				</Card>
+			)}
 			
 			{/* Status Messages */}
 			{errors.length > 0 && (

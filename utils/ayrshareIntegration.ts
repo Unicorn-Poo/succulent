@@ -30,6 +30,7 @@ export interface GenerateJWTData {
   domain?: string;
   redirect?: string;
   logout?: boolean;
+  expiresIn?: number;
 }
 
 /*
@@ -66,27 +67,41 @@ export const createAyrshareProfile = async (profileData: CreateProfileData = {})
 };
 
 /*
+ * Generates a direct linking URL for Business Plan (non-JWT approach)
+ * @param profileKey - Ayrshare Profile Key
+ * @param redirectUrl - Optional URL to redirect back to after linking
+ * @returns Direct linking URL for Ayrshare dashboard
+ */
+export const generateDirectLinkingURL = (profileKey: string, redirectUrl?: string): string => {
+  console.log('🔗 Generating direct linking URL for profile:', profileKey);
+  
+  // Use the direct Ayrshare dashboard URL with profile context
+  // This approach works within Business Plan limits without requiring JWT
+  let linkingURL = `https://app.ayrshare.com/social-accounts?profile=${profileKey}&source=api`;
+  
+  // Add redirect URL if provided
+  if (redirectUrl) {
+    const encodedRedirect = encodeURIComponent(redirectUrl);
+    linkingURL += `&redirect=${encodedRedirect}`;
+  }
+  
+  console.log('📋 Direct linking URL:', linkingURL);
+  return linkingURL;
+};
+
+/*
+ * DEPRECATED: JWT generation requires Max Pack features
  * Generates a JWT token for social account linking
  * @param jwtData - JWT generation parameters
  * @returns JWT token and linking URL
  */
 export const generateLinkingJWT = async (jwtData: GenerateJWTData): Promise<JWTResponse> => {
-  const response = await fetch(`${AYRSHARE_API_URL}/profiles/generateJWT`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-    },
-    body: JSON.stringify(jwtData)
-  });
-
-  const result = await response.json();
+  console.log('🔗 JWT Generation attempted - requires Max Pack features');
+  console.log('🔑 API Key present:', !!AYRSHARE_API_KEY);
+  console.log('🌐 API URL:', AYRSHARE_API_URL);
   
-  if (!response.ok) {
-    throw new Error(result.message || 'Failed to generate JWT');
-  }
-
-  return result;
+  // For Business Plan, use direct linking instead of JWT
+  throw new Error('JWT generation requires Max Pack features. Use direct linking instead.');
 };
 
 /*
@@ -95,19 +110,85 @@ export const generateLinkingJWT = async (jwtData: GenerateJWTData): Promise<JWTR
  * @returns Connected social accounts information
  */
 export const getConnectedAccounts = async (profileKey: string) => {
+  console.log('🔗 getConnectedAccounts called with:', {
+    profileKey,
+    profileKeyLength: profileKey?.length,
+    apiUrl: AYRSHARE_API_URL,
+    hasApiKey: !!AYRSHARE_API_KEY,
+    apiKeyLength: AYRSHARE_API_KEY?.length
+  });
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${AYRSHARE_API_KEY}`,
+    'Profile-Key': profileKey
+  };
+
+  console.log('📡 Request headers:', {
+    hasAuthorization: !!headers.Authorization,
+    hasProfileKey: !!headers['Profile-Key'],
+    authorizationLength: headers.Authorization?.length,
+    profileKeyValue: headers['Profile-Key']
+  });
+
   const response = await fetch(`${AYRSHARE_API_URL}/user`, {
+    method: 'GET',
+    headers
+  });
+
+  console.log('📡 Response status:', {
+    status: response.status,
+    statusText: response.statusText,
+    ok: response.ok,
+    url: response.url
+  });
+
+  const result = await response.json();
+  
+  console.log('📡 Response body:', {
+    fullResult: result,
+    hasUser: !!result.user,
+    hasSocialMediaAccounts: !!result.user?.socialMediaAccounts,
+    hasActiveSocialAccounts: !!result.user?.activeSocialAccounts,
+    hasTopLevelActiveSocialAccounts: !!result.activeSocialAccounts,
+    socialMediaAccountsKeys: result.user?.socialMediaAccounts ? Object.keys(result.user.socialMediaAccounts) : [],
+    activeSocialAccountsArray: result.user?.activeSocialAccounts || [],
+    topLevelActiveSocialAccountsArray: result.activeSocialAccounts || [],
+    status: result.status,
+    message: result.message
+  });
+  
+  if (!response.ok) {
+    console.error('❌ API request failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      message: result.message,
+      errors: result.errors,
+      fullResult: result
+    });
+    throw new Error(result.message || 'Failed to get connected accounts');
+  }
+
+  return result;
+};
+
+/*
+ * Lists all Ayrshare User Profiles
+ * @returns Array of user profiles
+ */
+export const listAyrshareProfiles = async () => {
+  const response = await fetch(`${AYRSHARE_API_URL}/profiles`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AYRSHARE_API_KEY}`,
-      'Profile-Key': profileKey
+      'Authorization': `Bearer ${AYRSHARE_API_KEY}`
     }
   });
 
   const result = await response.json();
   
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to get connected accounts');
+    throw new Error(result.message || 'Failed to list profiles');
   }
 
   return result;
@@ -132,6 +213,67 @@ export const deleteAyrshareProfile = async (profileKey: string) => {
   
   if (!response.ok) {
     throw new Error(result.message || 'Failed to delete profile');
+  }
+
+  return result;
+};
+
+/*
+ * Configure webhooks for real-time account linking notifications
+ * @param profileKey - Ayrshare Profile Key
+ * @returns Webhook configuration response
+ */
+export const configureAccountLinkingWebhooks = async (profileKey: string) => {
+  const response = await fetch(`${AYRSHARE_API_URL}/webhooks`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AYRSHARE_API_KEY}`,
+      'Profile-Key': profileKey
+    },
+    body: JSON.stringify({
+      url: `${window.location.origin}/api/ayrshare-webhooks`,
+      events: [
+        'social.account.added',
+        'social.account.removed',
+        'social.account.error'
+      ],
+      active: true
+    })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to configure webhooks');
+  }
+
+  return result;
+};
+
+/*
+ * Unlink a social media platform from an Ayrshare user profile
+ * @param platform - Social media platform to unlink
+ * @param profileKey - Ayrshare Profile Key
+ * @returns Unlink response
+ */
+export const unlinkSocialAccount = async (platform: string, profileKey: string) => {
+  const response = await fetch(`${AYRSHARE_API_URL}/profiles/unlink`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AYRSHARE_API_KEY}`,
+      'Profile-Key': profileKey
+    },
+    body: JSON.stringify({
+      platform: platform
+    })
+  });
+
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to unlink social account');
   }
 
   return result;
@@ -236,7 +378,7 @@ export const handleAyrshareError = (error: any): string => {
  * Set to true when you upgrade to Business Plan
  * Set to false for free account development
  */
-export const USE_BUSINESS_PLAN = false;
+export const USE_BUSINESS_PLAN = true;
 
 /**
  * Helper to determine which workflow to use
