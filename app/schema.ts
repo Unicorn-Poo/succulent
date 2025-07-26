@@ -9,6 +9,63 @@ export const PlatformNames = [
 // 🎭 PLATFORM ACCOUNT SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
+// Analytics data point for historical tracking
+export const AnalyticsDataPoint = co.map({
+	timestamp: z.date(),
+	followerCount: z.optional(z.number()),
+	followingCount: z.optional(z.number()),
+	postsCount: z.optional(z.number()),
+	likesCount: z.optional(z.number()),
+	commentsCount: z.optional(z.number()),
+	sharesCount: z.optional(z.number()),
+	viewsCount: z.optional(z.number()),
+	engagementRate: z.optional(z.number()),
+	totalEngagement: z.optional(z.number()),
+	// Platform-specific metrics
+	storiesCount: z.optional(z.number()),
+	reelsCount: z.optional(z.number()),
+	igtv: z.optional(z.number()),
+	// Metadata
+	dataSource: z.enum(["ayrshare", "manual", "api"]),
+	isValidated: z.boolean(),
+});
+
+// Current analytics snapshot
+export const CurrentAnalytics = co.map({
+	// Profile data
+	followerCount: z.optional(z.number()),
+	followingCount: z.optional(z.number()),
+	postsCount: z.optional(z.number()),
+	biography: z.optional(z.string()),
+	website: z.optional(z.string()),
+	profilePictureUrl: z.optional(z.string()),
+	isVerified: z.optional(z.boolean()),
+	isBusinessAccount: z.optional(z.boolean()),
+	
+	// Engagement metrics
+	totalLikes: z.optional(z.number()),
+	totalComments: z.optional(z.number()),
+	totalShares: z.optional(z.number()),
+	totalViews: z.optional(z.number()),
+	engagementRate: z.optional(z.number()),
+	avgLikesPerPost: z.optional(z.number()),
+	avgCommentsPerPost: z.optional(z.number()),
+	
+	// Platform-specific data (stored as JSON string)
+	platformSpecific: z.optional(z.string()), // Raw platform data as JSON
+	
+	// Metadata
+	lastUpdated: z.date(),
+	dataSource: z.enum(["ayrshare", "manual", "api"]),
+	updateFrequency: z.optional(z.enum(["hourly", "daily", "weekly", "manual"])),
+	nextUpdateDue: z.optional(z.date()),
+	
+	// Data quality indicators
+	isComplete: z.boolean(),
+	missingFields: z.optional(z.array(z.string())),
+	confidence: z.optional(z.number()), // 0-1 confidence in data accuracy
+});
+
 export const PlatformAccount = co.map({
 	name: z.string(),
 	platform: z.enum(PlatformNames),
@@ -30,6 +87,21 @@ export const PlatformAccount = co.map({
 	// Connection Status
 	status: z.enum(["pending", "linked", "error", "expired"]),
 	lastError: z.optional(z.string()),
+	
+	// 📊 ANALYTICS DATA STORAGE
+	currentAnalytics: z.optional(CurrentAnalytics),
+	historicalAnalytics: co.list(AnalyticsDataPoint),
+	
+	// Analytics settings
+	analyticsSettings: z.optional(z.object({
+		autoUpdate: z.boolean(),
+		updateFrequency: z.enum(["hourly", "daily", "weekly"]),
+		trackMetrics: z.array(z.string()), // Which metrics to track
+		alertThresholds: z.optional(z.object({
+			followerDrop: z.optional(z.number()),
+			engagementDrop: z.optional(z.number()),
+		})),
+	})),
 });
 
 // =============================================================================

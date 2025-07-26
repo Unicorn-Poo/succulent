@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
 import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar } from "lucide-react";
@@ -26,7 +26,37 @@ import CalendarView from "@/components/organisms/calendar-view";
 export default function AccountGroupPage() {
 	const params = useParams();
 	const router = useRouter();
-	const [activeTab, setActiveTab] = useState("posts");
+	// Tab state with hash routing
+	const [activeTab, setActiveTab] = useState(() => {
+		if (typeof window !== 'undefined') {
+			const hash = window.location.hash.replace('#', '');
+			const validTabs = ['posts', 'analytics', 'tools', 'accounts', 'calendar', 'settings'];
+			if (validTabs.includes(hash)) {
+				return hash;
+			}
+		}
+		return 'posts';
+	});
+
+	// Handle tab changes with hash update
+	const handleTabChange = (newTab: string) => {
+		setActiveTab(newTab);
+		window.location.hash = newTab;
+	};
+
+	// Listen for hash changes (back/forward navigation)
+	useEffect(() => {
+		const handleHashChange = () => {
+			const hash = window.location.hash.replace('#', '');
+			const validTabs = ['posts', 'analytics', 'tools', 'accounts', 'calendar', 'settings'];
+			if (validTabs.includes(hash)) {
+				setActiveTab(hash);
+			}
+		};
+
+		window.addEventListener('hashchange', handleHashChange);
+		return () => window.removeEventListener('hashchange', handleHashChange);
+	}, []);
 	const [showCollaborationSettings, setShowCollaborationSettings] = useState(false);
 	
 	// Create post dialog state
@@ -246,7 +276,7 @@ export default function AccountGroupPage() {
 			</div>
 
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+				<Tabs.Root value={activeTab} onValueChange={handleTabChange}>
 					<Tabs.List>
 						<Tabs.Trigger value="posts">
 							<MessageCircle className="w-4 h-4 mr-2" />
