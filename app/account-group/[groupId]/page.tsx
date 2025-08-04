@@ -6,7 +6,6 @@ import { Button } from "@/components/atoms/button";
 import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
-import { PostFullyLoaded } from "@/app/schema";
 import { Home } from "lucide-react";
 import { useAccount } from "jazz-react";
 import { MyAppAccount } from "@/app/schema";
@@ -18,9 +17,8 @@ import { ExternalStoreSettings } from "@/components/external-store-settings";
 import { CollaborationSettings } from "@/components/organisms/collaboration-settings";
 import AccountLinkingManager from "@/components/organisms/account-linking-manager";
 import { co, z } from "jazz-tools";
-import { Post, AccountGroup, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
+import { Post, PostVariant, MediaItem, ReplyTo, PlatformAccount, AnalyticsDataPoint } from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
-import PlatformProfileView from "@/components/organisms/platform-profile-view";
 import CalendarView from "@/components/organisms/calendar-view";
 
 export default function AccountGroupPage() {
@@ -626,22 +624,49 @@ export default function AccountGroupPage() {
 								<AccountLinkingManager 
 									accountGroup={jazzAccountGroup}
 									onAccountsUpdated={(updatedAccounts) => {
-										// Update the accounts in the Jazz object using safe array access
+										// Simple approach: only add new accounts that don't already exist
 										if (jazzAccountGroup.accounts) {
 											try {
-												const safeAccounts = safeArrayAccess(jazzAccountGroup.accounts);
-												updatedAccounts.forEach((updatedAccount, index) => {
-													const existingAccount = safeAccounts[index];
-													if (existingAccount) {
-														existingAccount.isLinked = updatedAccount.isLinked;
-														existingAccount.status = updatedAccount.status;
-														if (updatedAccount.linkedAt) {
-															existingAccount.linkedAt = updatedAccount.linkedAt;
+												const currentAccounts = safeArrayAccess(jazzAccountGroup.accounts);
+												const existingPlatforms = new Set(currentAccounts.map((acc: any) => acc?.platform).filter(Boolean));
+												
+												// Only add truly new accounts to avoid infinite loops
+												updatedAccounts.forEach((account) => {
+													if (!existingPlatforms.has(account.platform) && account.autoCreated) {
+														// Create and add only new auto-created accounts
+														const newAccount = PlatformAccount.create({
+															name: account.name,
+															platform: account.platform,
+															apiUrl: undefined,
+															profileKey: account.profileKey,
+															isLinked: account.isLinked,
+															linkedAt: account.linkedAt,
+															username: account.username,
+															displayName: account.displayName,
+															avatar: account.avatar,
+															url: account.url,
+															status: account.status,
+															lastError: undefined,
+															historicalAnalytics: co.list(AnalyticsDataPoint).create([], { owner: jazzAccountGroup._owner }),
+														}, { owner: jazzAccountGroup._owner });
+														
+														jazzAccountGroup.accounts.push(newAccount);
+													} else if (existingPlatforms.has(account.platform)) {
+														// Update existing accounts in place
+														const existingAccount = currentAccounts.find((acc: any) => acc?.platform === account.platform);
+														if (existingAccount) {
+															existingAccount.isLinked = account.isLinked;
+															existingAccount.status = account.status;
+															if (account.linkedAt) existingAccount.linkedAt = account.linkedAt;
+															if (account.username) existingAccount.username = account.username;
+															if (account.displayName) existingAccount.displayName = account.displayName;
+															if (account.avatar) existingAccount.avatar = account.avatar;
+															if (account.url) existingAccount.url = account.url;
 														}
 													}
 												});
 											} catch (error) {
-												console.error('🚨 Jazz accounts update failed due to corruption:', error);
+												// Don't reload page, just log error
 											}
 										}
 									}}

@@ -19,7 +19,9 @@ import {
   generateDirectLinkingURL,
   getConnectedAccounts,
   isBusinessPlanMode,
-  unlinkSocialAccount
+  unlinkSocialAccount,
+  extractAccountDetails,
+  createAccountFromAyrshareData
 } from "@/utils/ayrshareIntegration";
 import { platformIcons, platformLabels } from "@/utils/postConstants";
 import { Input } from "@/components/atoms";
@@ -97,7 +99,6 @@ export default function AccountLinkingManager({
     const profileParam = urlParams.get('profile');
     
     if (linkedParam === 'true' && profileParam === profileKey) {
-      console.log('🔄 Detected redirect from Ayrshare linking, refreshing accounts...');
       setSuccess('🎉 Welcome back! Checking for newly linked accounts...');
       
       // Remove the URL parameters
@@ -115,8 +116,6 @@ export default function AccountLinkingManager({
 
   const refreshConnectedAccounts = async () => {
     if (!profileKey) {
-      console.error('❌ No profile key available for refresh');
-      setError('No profile key available');
       return;
     }
 
@@ -124,108 +123,76 @@ export default function AccountLinkingManager({
     setError(null);
 
     try {
-      console.log('🔄 Refreshing connected accounts for profile:', profileKey);
-      console.log('🔑 Profile key format check:', {
-        length: profileKey.length,
-        format: /^[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}$/i.test(profileKey),
-        value: profileKey
-      });
-      
       const result = await getConnectedAccounts(profileKey);
-      console.log('📡 Full Ayrshare API response:', result);
-      console.log('📡 Response status:', result.status);
-      console.log('📡 Response user object:', result.user);
       
-      // Check multiple possible locations for connected accounts
-      let platforms: string[] = [];
-      
-      // Try top-level activeSocialAccounts first (most common)
-      if (result.activeSocialAccounts && Array.isArray(result.activeSocialAccounts) && result.activeSocialAccounts.length > 0) {
-        platforms = result.activeSocialAccounts;
-        console.log('✅ Found platforms at top level activeSocialAccounts:', platforms);
-      } 
-      // Try user.activeSocialAccounts
-      else if (result.user?.activeSocialAccounts && Array.isArray(result.user.activeSocialAccounts) && result.user.activeSocialAccounts.length > 0) {
-        platforms = result.user.activeSocialAccounts;
-        console.log('✅ Found platforms at user.activeSocialAccounts:', platforms);
+      // Extract platform list and detailed account information using utility function
+      const { platforms, accountDetails } = extractAccountDetails(result);
+
+      if (platforms.length === 0) {
+        setSuccess('No connected accounts found on Ayrshare. Connect your social media accounts in the Ayrshare dashboard to see them here.');
+        return;
       }
-      // Fall back to user.socialMediaAccounts (object format)
-      else if (result.user?.socialMediaAccounts && typeof result.user.socialMediaAccounts === 'object') {
-        platforms = Object.keys(result.user.socialMediaAccounts);
-        console.log('✅ Found platforms at user.socialMediaAccounts:', platforms);
-      }
-      // No platforms found
-      else {
-        platforms = [];
-        console.log('❌ No platforms found in any location');
-      }
+
+      // Create new accounts from Ayrshare data automatically using utility function
+      const autoCreatedAccounts = platforms.map(platform => 
+        createAccountFromAyrshareData(platform, accountDetails[platform] || {}, profileKey)
+      );
+
+      // Combine with any existing manually created accounts, avoiding duplicates
+      const existingAccounts = accountGroup?.accounts ? safeArrayAccess(accountGroup.accounts) : [];
+      const existingPlatforms = new Set(existingAccounts.map((acc: any) => acc.platform));
       
-      console.log('🔗 Raw socialMediaAccounts object:', result.user?.socialMediaAccounts);
-      console.log('🔗 Raw activeSocialAccounts array (user level):', result.user?.activeSocialAccounts);
-      console.log('🔗 Raw activeSocialAccounts array (top level):', result.activeSocialAccounts);
-      console.log('🔗 Final extracted platform keys:', platforms);
-      console.log('📊 Previous connected accounts:', connectedAccounts);
-      console.log('📊 New connected accounts:', platforms);
+      // Only add new platforms that don't already exist
+      const newAccounts = autoCreatedAccounts.filter(account => !existingPlatforms.has(account.platform));
       
-      setConnectedAccounts(platforms);
-      
-      // Debug account group state
-      console.log('🏢 Account Group Debug:', {
-        hasAccountGroup: !!accountGroup,
-        hasAccounts: !!accountGroup?.accounts,
-        hasOnAccountsUpdated: !!onAccountsUpdated,
-        accountGroupKeys: accountGroup ? Object.keys(accountGroup) : [],
-        accountsType: typeof accountGroup?.accounts,
-        accountsValue: accountGroup?.accounts
-      });
-      
-      // Update the account group's accounts with linking status
-      if (accountGroup?.accounts && onAccountsUpdated) {
-        // Use safe array access to handle corrupted Jazz collaborative objects
-        const safeAccounts = safeArrayAccess(accountGroup.accounts);
-        console.log('🛡️ Safe accounts array:', safeAccounts);
-        console.log('🛡️ Safe accounts length:', safeAccounts.length);
+      // Update existing accounts' linking status
+      const updatedExistingAccounts = existingAccounts.map((account: any) => {
+        if (!account || !account.platform) return account;
         
-        if (safeAccounts.length === 0) {
-          console.log('⚠️ No accounts in account group to update linking status for');
-          console.log('💡 Suggestion: Add platforms to your account group first, then link them in Ayrshare');
-          setSuccess(`✅ Connected to Ayrshare: ${platforms.join(', ')} - Add platforms to your account group to see them linked!`);
-          return;
-        }
+        const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
+        const isLinked = platforms.includes(platformKey);
         
-        const updatedAccounts = safeAccounts.map((account: any) => {
-          if (!account || !account.platform) {
-            console.warn('⚠️ Skipping corrupted account:', account);
-            return null;
-          }
-          
-          const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
-          const isLinked = platforms.includes(platformKey);
-          
-          console.log(`🔍 Checking ${account.platform} (${platformKey}): ${isLinked ? 'linked' : 'not linked'}`);
-          
+        if (isLinked && accountDetails[platformKey]) {
+          const details = accountDetails[platformKey];
           return {
             ...account,
-            isLinked,
-            status: isLinked ? 'linked' : 'pending',
-            linkedAt: isLinked ? new Date() : account.linkedAt
+            isLinked: true,
+            status: "linked" as const,
+            linkedAt: new Date(),
+            // Update details from Ayrshare if they weren't set
+            username: account.username || details.username || details.handle || details.screen_name,
+            displayName: account.displayName || details.display_name || details.full_name || details.name,
+            avatar: account.avatar || details.profile_image_url || details.profile_picture,
+            url: account.url || details.url || details.profile_url
           };
-        }).filter(account => account != null);
+        }
         
-        console.log('📝 Updated accounts being sent to parent:', updatedAccounts);
-        onAccountsUpdated(updatedAccounts);
-        
-        const linkedCount = updatedAccounts.filter(acc => acc.isLinked).length;
-        setSuccess(`✅ Account status updated! ${linkedCount} of ${updatedAccounts.length} accounts are now linked.`);
+        return {
+          ...account,
+          isLinked,
+          status: isLinked ? "linked" as const : "pending" as const,
+          linkedAt: isLinked ? new Date() : account.linkedAt
+        };
+      });
+
+      // Combine updated existing accounts with new auto-created accounts
+      const allAccounts = [...updatedExistingAccounts, ...newAccounts];
+      
+      if (onAccountsUpdated) {
+        onAccountsUpdated(allAccounts);
+      }
+      
+      const linkedCount = allAccounts.filter(acc => acc.isLinked).length;
+      const newAccountsCount = newAccounts.length;
+      
+      if (newAccountsCount > 0) {
+        setSuccess(`✅ ${newAccountsCount} new account(s) automatically added from Ayrshare! ${linkedCount} of ${allAccounts.length} accounts are now linked.`);
       } else {
-        // No account group accounts to update, but we have connected accounts
-        console.log('⚠️ Cannot update account group (missing accounts or callback)');
-        setSuccess(`✅ Connected to Ayrshare: ${platforms.join(', ')} - But no account group platforms to update.`);
+        setSuccess(`✅ Account status updated! ${linkedCount} of ${allAccounts.length} accounts are now linked.`);
       }
       
     } catch (error) {
-      console.error('❌ Error refreshing connected accounts:', error);
-      setError(error instanceof Error ? error.message : 'Failed to refresh accounts');
+      setError(error instanceof Error ? error.message : 'Failed to refresh connected accounts');
     } finally {
       setIsRefreshing(false);
     }
@@ -717,16 +684,22 @@ export default function AccountLinkingManager({
           {/* Account Group Management */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Text size="2" weight="medium">Account Group Platforms</Text>
-              <Button
-                size="1"
-                variant="soft"
-                onClick={() => setShowAddAccountForm(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-3 h-3" />
-                Add Platform
-              </Button>
+              <Text size="2" weight="medium">Connected Accounts</Text>
+              <div className="flex items-center gap-2">
+                <Badge variant="soft" color="blue" size="1">
+                  Auto-populated from Ayrshare
+                </Badge>
+                <Button
+                  size="1"
+                  variant="soft"
+                  onClick={handleLinkAccounts}
+                  disabled={isLinking}
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Add More
+                </Button>
+              </div>
             </div>
 
             {/* Jazz Database Corruption Warning */}
@@ -869,11 +842,14 @@ export default function AccountLinkingManager({
                   <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
                     <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <Text size="2" color="gray" className="block mb-3">
-                      No platforms added to this account group
+                      No accounts found
                     </Text>
-                    <Button size="2" onClick={() => setShowAddAccountForm(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Your First Platform
+                    <Text size="1" color="gray" className="block mb-4">
+                      Connect your social media accounts in Ayrshare and they'll automatically appear here
+                    </Text>
+                    <Button size="2" onClick={handleLinkAccounts} disabled={isLinking}>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Connect Accounts in Ayrshare
                     </Button>
                   </div>
                 );
@@ -883,81 +859,7 @@ export default function AccountLinkingManager({
             })()}
           </div>
 
-          {/* Connected Accounts Summary */}
-          <div className="space-y-3 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <Text size="2" weight="medium">Ayrshare Connected Accounts</Text>
-              <Badge variant="soft" color={connectedAccounts.length > 0 ? 'green' : 'gray'}>
-                {connectedAccounts.length} connected
-              </Badge>
-            </div>
 
-            {connectedAccounts.length > 0 ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {connectedAccounts.map((platform) => (
-                    <div key={platform} className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <Text size="2" className="capitalize">{platform}</Text>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Show suggestion if no platforms in account group */}
-                {(() => {
-                  const accountsArray = getAccountsArray();
-                  const connectedInGroup = accountsArray.filter((account: any) => {
-                    if (!account?.platform) return false;
-                    const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
-                    return connectedAccounts.includes(platformKey);
-                  });
-                  
-                  if (connectedInGroup.length === 0 && accountsArray.length === 0) {
-                    return (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <Text size="2" className="text-blue-800 block mb-2">
-                          💡 <strong>Next Step:</strong> Add these connected platforms to your account group
-                        </Text>
-                        <Text size="1" className="text-blue-700">
-                          Click "Add Platform" below to add {connectedAccounts.join(', ')} to your account group.
-                        </Text>
-                      </div>
-                    );
-                  } else if (connectedInGroup.length < connectedAccounts.length) {
-                    const notInGroup = connectedAccounts.filter(platform => 
-                      !accountsArray.some((account: any) => {
-                        const platformKey = account?.platform === 'x' ? 'twitter' : account?.platform;
-                        return platformKey === platform;
-                      })
-                    );
-                    
-                    return (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <Text size="2" className="text-blue-800 block mb-2">
-                          💡 <strong>Connected but not in group:</strong> {notInGroup.join(', ')}
-                        </Text>
-                        <Text size="1" className="text-blue-700">
-                          Add these platforms to your account group to see them as linked.
-                        </Text>
-                      </div>
-                    );
-                  }
-                  
-                  return null;
-                })()}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <Text size="2" color="gray" className="block mb-3">
-                  No accounts connected to Ayrshare profile
-                </Text>
-                <Button size="2" onClick={handleLinkAccounts} disabled={isLinking}>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Connect Your First Account
-                </Button>
-              </div>
-            )}
-          </div>
 
           {/* Profile Information */}
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">

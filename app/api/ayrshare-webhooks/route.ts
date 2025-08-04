@@ -10,15 +10,10 @@ export async function POST(request: NextRequest) {
     // Process different webhook events
     switch (body.event) {
       case 'social.account.added':
-        console.log('✅ Social account linked:', {
-          profileKey: body.profileKey,
-          platform: body.platform,
-          accountName: body.accountName,
-          timestamp: body.timestamp
-        });
         
-        // You could emit a real-time event here for immediate UI updates
-        // For example: emit to WebSocket clients, trigger server-sent events, etc.
+        // TODO: Implement real-time UI updates
+        // Could use WebSocket, Server-Sent Events, or database triggers
+        // to notify the UI that new accounts are available
         break;
         
       case 'social.account.removed':

@@ -321,6 +321,79 @@ export const getFreeConnectedAccounts = async () => {
 // =============================================================================
 
 /**
+ * Extracts detailed account information from Ayrshare API response
+ * @param ayrshareResponse - The response from getConnectedAccounts
+ * @returns Object with platforms and detailed account information
+ */
+export const extractAccountDetails = (ayrshareResponse: any) => {
+  let platforms: string[] = [];
+  let accountDetails: Record<string, any> = {};
+  
+  // Extract platform list from activeSocialAccounts
+  if (ayrshareResponse.activeSocialAccounts && Array.isArray(ayrshareResponse.activeSocialAccounts)) {
+    platforms = ayrshareResponse.activeSocialAccounts;
+  } else if (ayrshareResponse.user?.activeSocialAccounts && Array.isArray(ayrshareResponse.user.activeSocialAccounts)) {
+    platforms = ayrshareResponse.user.activeSocialAccounts;
+  } else if (ayrshareResponse.user?.socialMediaAccounts && typeof ayrshareResponse.user.socialMediaAccounts === 'object') {
+    platforms = Object.keys(ayrshareResponse.user.socialMediaAccounts);
+  }
+  
+  // Extract detailed account information from displayNames array (where Ayrshare actually stores account details)
+  if (ayrshareResponse.displayNames && Array.isArray(ayrshareResponse.displayNames)) {
+    ayrshareResponse.displayNames.forEach((account: any) => {
+      if (account.platform && account.username) {
+        accountDetails[account.platform] = {
+          username: account.username,
+          displayName: account.displayName || account.pageName,
+          profile_image_url: account.userImage,
+          profileUrl: account.profileUrl,
+          platform: account.platform,
+          id: account.id,
+          userId: account.userId,
+          pageName: account.pageName,
+          created: account.created
+        };
+      }
+    });
+  }
+  
+  return { platforms, accountDetails };
+};
+
+/**
+ * Creates a standardized account object from Ayrshare platform data
+ * @param platform - Platform name from Ayrshare (e.g., 'twitter', 'instagram')
+ * @param details - Detailed account information from Ayrshare
+ * @param profileKey - Ayrshare profile key
+ * @returns Standardized account object
+ */
+export const createAccountFromAyrshareData = (platform: string, details: any, profileKey: string) => {
+  // Map Ayrshare platform names to our internal names
+  const internalPlatform = AYRSHARE_PLATFORM_MAP[platform] || platform;
+  
+  // Extract account details using the actual Ayrshare structure
+  const username = details?.username || `${platform}-account`;
+  const displayName = details?.displayName || details?.pageName || username;
+  const avatar = details?.profile_image_url || details?.userImage;
+  const url = details?.profileUrl || `https://${platform}.com/${username}`;
+  
+  return {
+    id: `ayrshare-${platform}-${Date.now()}`,
+    name: username,
+    platform: internalPlatform,
+    profileKey,
+    isLinked: true,
+    linkedAt: new Date(),
+    username: username,
+    displayName: displayName,
+    avatar: avatar,
+    url: url,
+    status: "linked" as const,
+    autoCreated: true // Flag to identify auto-created accounts
+  };
+};
+
+/**
  * Maps Ayrshare platform names to our internal platform names
  */
 export const AYRSHARE_PLATFORM_MAP: Record<string, string> = {

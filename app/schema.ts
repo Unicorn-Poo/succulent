@@ -703,58 +703,56 @@ export const MyAppAccount = co.account({
   root: AccountRoot,
   profile: SucculentProfile,
 }).withMigration(async (account, creationProps?: { name: string }) => {
-  console.log('🎵 Jazz account migration running...', {
-    hasRoot: account.root !== undefined,
-    hasProfile: account.profile !== undefined,
+  console.log('🎵 Jazz account migration starting...', {
+    accountId: account.id,
+    hasRoot: !!account.root,
+    hasProfile: !!account.profile,
     creationProps
   });
 
-  try {
-    // Initialize root if undefined
-    if (account.root === undefined) {
-      console.log('🔧 Creating account root...');
+  // Create root if it doesn't exist
+  if (!account.root) {
+    console.log('🔧 Creating account root...');
+    try {
       const rootGroup = Group.create();
-      
       account.root = AccountRoot.create({
         accountGroups: co.list(AccountGroup).create([], rootGroup),
       }, rootGroup);
-      
       console.log('✅ Account root created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create account root:', error);
+      throw error;
     }
+  } else {
+    console.log('ℹ️ Root already exists');
+  }
 
-    // Initialize profile if undefined
-    if (account.profile === undefined) {
-      console.log('🔧 Creating account profile...');
+  // Create profile if it doesn't exist
+  if (!account.profile) {
+    console.log('🔧 Creating account profile...');
+    try {
       const profileGroup = Group.create();
       profileGroup.makePublic();
-      
       account.profile = SucculentProfile.create({
         name: creationProps?.name ?? "New user",
         collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
         ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
       }, profileGroup);
-      
       console.log('✅ Account profile created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create account profile:', error);
+      throw error;
     }
-    
-    // Ensure root is properly loaded and accessible
-    if (account.root) {
-      const { root } = await account.ensureLoaded({
-        resolve: { root: { accountGroups: true } }
-      });
-      
-      console.log('🔄 Root loaded and verified:', {
-        hasAccountGroups: !!root.accountGroups,
-        accountGroupsLength: root.accountGroups?.length || 0
-      });
-    }
-    
-    console.log('✅ Jazz account migration completed successfully');
-    
-  } catch (error) {
-    console.error('❌ Jazz account migration failed:', error);
-    throw error;
+  } else {
+    console.log('ℹ️ Profile already exists');
   }
+
+  console.log('🔍 Migration completed. Final state:', {
+    hasRoot: !!account.root,
+    hasProfile: !!account.profile,
+    hasAccountGroups: account.root ? !!account.root.accountGroups : false,
+    accountGroupsLength: account.root?.accountGroups?.length || 0
+  });
 });
 
 export type MyAppAccount = co.loaded<typeof MyAppAccount>;

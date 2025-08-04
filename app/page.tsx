@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Edit3, Home, BarChart3, Shield, AlertTriangle } from "lucide-react";
+import { Plus, BarChart3, Shield, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
 import ProfileMigrationManager from "@/components/organisms/profile-migration-manager";
-import { AccountGroup, AccountGroupType, PlatformAccount, MyAppAccount, AccountRoot, Post } from "@/app/schema";
-import { useAccount, useAcceptInvite } from "jazz-react";
-import { Group, ID } from "jazz-tools";
+import { AccountGroup, PlatformAccount, MyAppAccount, Post, AnalyticsDataPoint } from "@/app/schema";
+import { useAccount } from "jazz-react";
+import { Group } from "jazz-tools";
 import { co } from "jazz-tools";
 
 // =============================================================================
@@ -140,15 +140,8 @@ export default function HomePage() {
   // 🎵 JAZZ ACCOUNT INTEGRATION (WITH PROPER LOADING)
   // =============================================================================
 
-  // Get the account with full resolution to ensure migration runs
-  const { me } = useAccount(MyAppAccount, {
-    resolve: {
-      root: {
-        accountGroups: { $each: true }
-      },
-      profile: true
-    }
-  });
+  // Get the account with basic loading - let migration complete first
+  const { me } = useAccount(MyAppAccount);
 
   // Debug logging and manual root initialization
   useEffect(() => {
@@ -205,8 +198,8 @@ export default function HomePage() {
           index: i,
           id: g?.id,
           name: g?.name,
-          hasId: !!g?.id,
-          hasName: !!g?.name
+          accountsCount: g?.accounts?.length || 0,
+          postsCount: g?.posts?.length || 0
         }))
       });
     }
@@ -280,6 +273,7 @@ export default function HomePage() {
           url: undefined,
           status: accountData.status,
           lastError: accountData.lastError,
+          historicalAnalytics: co.list(AnalyticsDataPoint).create([], { owner: accountGroupGroup }),
         }, { owner: accountGroupGroup });
 
         jazzAccountGroup.accounts.push(platformAccount);
