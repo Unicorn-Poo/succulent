@@ -9,6 +9,8 @@ import YouTubePreview from "./platform-previews/youtube-preview";
 import PlatformTimelineView from "./platform-timeline-view";
 import InstagramAccountDashboard from "./instagram-account-dashboard";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
+import { PlatformAnalyticsDashboard } from "@/components/organisms/platform-analytics-dashboard";
+import { PlatformFeedView } from "@/components/organisms/platform-feed-view";
 
 // Import the working extractMediaUrl function approach
 const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
@@ -159,12 +161,13 @@ interface PlatformProfileViewProps {
   posts: any[]; // Use any[] to handle both Jazz and legacy posts
   onBack: () => void;
   accountGroupId?: string;
+  jazzAccountGroup?: any; // Jazz AccountGroup object
   onCreatePost?: (platform: string) => void;
 }
 
 type ViewModeType = 'feed' | 'grid' | 'analytics';
 
-export default function PlatformProfileView({ account, posts, onBack, accountGroupId, onCreatePost }: PlatformProfileViewProps) {
+export default function PlatformProfileView({ account, posts, onBack, accountGroupId, jazzAccountGroup, onCreatePost }: PlatformProfileViewProps) {
   const [viewMode, setViewMode] = useState<ViewModeType>('feed');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'scheduled' | 'draft'>('all');
   
@@ -252,23 +255,13 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
           </div>
         );
       } else {
-        // For other platforms, show a placeholder for now
+        // For other platforms, show real analytics from Ayrshare
         return (
-          <div className="mt-6 text-center py-12">
-            <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <Text size="4" weight="medium" className="mb-2 block">
-              Analytics Coming Soon
-            </Text>
-            <Text size="2" color="gray" className="mb-6 block">
-              Detailed analytics for {account.platform} accounts will be available soon.
-            </Text>
-            <Button 
-              onClick={() => window.open('https://app.ayrshare.com/dashboard', '_blank')}
-              variant="soft"
-            >
-              View in Ayrshare Dashboard
-            </Button>
-          </div>
+          <PlatformAnalyticsDashboard 
+            account={transformedAccount}
+            accountGroupId={accountGroupId}
+            jazzAccountGroup={jazzAccountGroup}
+          />
         );
       }
     }
@@ -367,75 +360,15 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
       );
     }
 
-    // Feed view - platform previews  
+    // Feed view with historical data integration
     return (
-      <div className="space-y-4 mt-6">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-            <div className="w-8 h-8 bg-lime-100 rounded-lg flex items-center justify-center">
-              <Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
-            </div>
-            <div>
-              <Text size="3" weight="medium">{account.name}</Text>
-              <Text size="2" color="gray" className="capitalize">{account.platform} Feed</Text>
-            </div>
-          </div>
-        </div>
-        
-        <div className="max-w-md mx-auto space-y-4">
-          {sortedPosts.length > 0 ? (
-            sortedPosts.map((post: any) => {
-              // Extract content from Jazz post structure
-              const postContent = post.variants?.base?.text?.toString() || 
-                               post.variants?.base?.text || 
-                               post.content || 
-                               post.title?.toString() || 
-                               post.title || 
-                               "Sample post content";
-              
-              return (
-                <PlatformPreview
-                  key={post.id}
-                  platform={account.platform}
-                  content={postContent}
-                  account={{
-                    id: account.id,
-                    name: account.name,
-                    username: account.name.toLowerCase().replace(/\s+/g, ''),
-                    displayName: account.name,
-                    platform: account.platform,
-                    avatar: `https://avatar.vercel.sh/${account.name}`,
-                    apiUrl: '',
-                    url: ''
-                  }}
-                  timestamp={post.variants?.base?.postDate || post.publishedAt || post.scheduledFor || new Date()}
-                  media={post.variants?.base?.media || []}
-                />
-              );
-            })
-          ) : (
-            // Show welcome message when no posts exist
-            <div className="space-y-4">
-              <PlatformPreview
-                platform={account.platform}
-                content={`🌱 Welcome to ${account.name}! This is how your posts will appear to your followers. Create your first post to get started.`}
-                account={{
-                  id: account.id,
-                  name: account.name,
-                  username: account.name.toLowerCase().replace(/\s+/g, ''),
-                  displayName: account.name,
-                  platform: account.platform,
-                  avatar: `https://avatar.vercel.sh/${account.name}`,
-                  apiUrl: '',
-                  url: ''
-                }}
-                timestamp={new Date()}
-                media={[]}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <PlatformFeedView
+        account={transformedAccount}
+        localPosts={sortedPosts}
+        accountGroupId={accountGroupId}
+        jazzAccountGroup={jazzAccountGroup}
+        onCreatePost={onCreatePost}
+      />
     );
   };
 

@@ -5,4 +5,6 @@ export { default as AyrshareAccountLinking } from './ayrshare-account-linking';
 export { default as CalendarView } from './calendar-view';
 export { default as PlatformProfileView } from './platform-profile-view';
 export { default as PlatformTimelineView } from './platform-timeline-view';
-export { PreviewModal } from './preview-modal'; 
+export { PreviewModal } from './preview-modal';
+export { PlatformAnalyticsDashboard } from './platform-analytics-dashboard';
+export { PlatformFeedView } from './platform-feed-view'; 

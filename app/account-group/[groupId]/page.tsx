@@ -20,6 +20,7 @@ import { co, z } from "jazz-tools";
 import { Post, PostVariant, MediaItem, ReplyTo, PlatformAccount, AnalyticsDataPoint } from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import CalendarView from "@/components/organisms/calendar-view";
+import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -594,8 +595,8 @@ export default function AccountGroupPage() {
 															setShowPreview(true);
 														}}
 													>
-														<Grid className="w-3 h-3 mr-1" />
-														Profile
+														<BarChart3 className="w-3 h-3 mr-1" />
+														Analytics
 													</Button>
 												</div>
 											)}
@@ -795,24 +796,55 @@ export default function AccountGroupPage() {
 
 			{/* Preview Modal */}
 			<Dialog.Root open={showPreview} onOpenChange={setShowPreview}>
-				<Dialog.Content style={{ maxWidth: 600 }}>
-					<Dialog.Title>Preview Content</Dialog.Title>
+				<Dialog.Content style={{ maxWidth: previewMode === 'feed' ? 600 : 800, maxHeight: '90vh', overflow: 'auto' }}>
+					<Dialog.Title>
+						{previewAccount?.name} - {previewMode === 'feed' ? 'Feed' : 'Analytics'} View
+					</Dialog.Title>
 					
 					{previewAccount && (
 						<div className="mt-4">
-							<PlatformPreview
-								content={previewAccount.name}
-								platform={previewAccount.platform}
-								account={previewAccount}
-								timestamp={new Date()}
-								media={[]}
-							/>
+							{previewMode === 'feed' ? (
+								<PlatformFeedView
+									account={{
+										id: previewAccount.id,
+										name: previewAccount.name,
+										platform: previewAccount.platform,
+										profileKey: previewAccount.profileKey,
+										isLinked: previewAccount.isLinked
+									}}
+									localPosts={posts.filter(post => {
+										// Filter posts for this specific platform
+										if (post.platforms && Array.isArray(post.platforms)) {
+											return post.platforms.includes(previewAccount.platform);
+										}
+										return true; // Include all posts if no platform filter
+									})}
+									accountGroupId={accountGroup.id}
+									jazzAccountGroup={jazzAccountGroup} // Pass Jazz AccountGroup for real database access
+									onCreatePost={(platform) => {
+										setShowPreview(false);
+										setShowCreateDialog(true);
+									}}
+								/>
+							) : (
+								<PlatformAnalyticsDashboard
+									account={{
+										id: previewAccount.id,
+										name: previewAccount.name,
+										platform: previewAccount.platform,
+										profileKey: previewAccount.profileKey,
+										isLinked: previewAccount.isLinked
+									}}
+									accountGroupId={accountGroup.id}
+									jazzAccountGroup={jazzAccountGroup} // Pass Jazz AccountGroup for real database access
+								/>
+							)}
 						</div>
 					)}
 					
 					<div className="flex justify-end gap-2 mt-6">
 						<Button onClick={() => setPreviewMode(previewMode === 'feed' ? 'profile' : 'feed')}>
-							Switch to {previewMode === 'feed' ? 'Profile' : 'Feed'} View
+							Switch to {previewMode === 'feed' ? 'Analytics' : 'Feed'} View
 						</Button>
 						<Button variant="soft" onClick={() => setShowPreview(false)}>
 							Close

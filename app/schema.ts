@@ -132,6 +132,39 @@ export const VideoMedia = co.map({
 
 export const MediaItem = z.discriminatedUnion("type", [ImageMedia, VideoMedia]);
 
+// Post performance tracking schema
+export const PostPerformance = co.map({
+	// Ayrshare integration
+	ayrsharePostId: z.optional(z.string()),
+	socialPostId: z.optional(z.string()),
+	
+	// Engagement metrics
+	likes: z.optional(z.number()),
+	comments: z.optional(z.number()),
+	shares: z.optional(z.number()),
+	views: z.optional(z.number()),
+	impressions: z.optional(z.number()),
+	reach: z.optional(z.number()),
+	clicks: z.optional(z.number()),
+	
+	// Calculated metrics
+	engagementRate: z.optional(z.number()),
+	totalEngagement: z.optional(z.number()),
+	
+	// Platform-specific data (stored as JSON string)
+	platformSpecific: z.optional(z.string()),
+	
+	// Metadata
+	lastUpdated: z.date(),
+	dataSource: z.enum(["ayrshare", "manual", "api"]),
+	fetchedAt: z.date(),
+	
+	// Data quality indicators
+	isComplete: z.boolean(),
+	hasError: z.boolean(),
+	errorMessage: z.optional(z.string()),
+});
+
 export const PostVariant = co.map({
 	text: co.plainText(),
 	postDate: z.date(),
@@ -144,6 +177,11 @@ export const PostVariant = co.map({
 	// New fields for better tracking
 	edited: z.boolean(),
 	lastModified: z.optional(z.string()),
+	// Performance tracking
+	performance: z.optional(PostPerformance),
+	// Ayrshare integration
+	ayrsharePostId: z.optional(z.string()),
+	socialPostUrl: z.optional(z.string()),
 });
 
 export const Post = co.map({
