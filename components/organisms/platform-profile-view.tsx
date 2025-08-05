@@ -8,6 +8,7 @@ import XPreview from "./platform-previews/x-preview";
 import YouTubePreview from "./platform-previews/youtube-preview";
 import PlatformTimelineView from "./platform-timeline-view";
 import InstagramAccountDashboard from "./instagram-account-dashboard";
+import InstagramProfileView from "./instagram-profile-view";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import { PlatformAnalyticsDashboard } from "@/components/organisms/platform-analytics-dashboard";
 import { PlatformFeedView } from "@/components/organisms/platform-feed-view";
@@ -243,6 +244,30 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
   };
 
   const renderContent = () => {
+    // Special Instagram profile view that looks like the Instagram app
+    if (account.platform === 'instagram' && viewMode === 'grid') {
+      return (
+        <div className="mt-6">
+          <InstagramProfileView
+            account={transformedAccount}
+            posts={sortedPosts}
+            accountGroupId={accountGroupId}
+            jazzAccountGroup={jazzAccountGroup}
+            onCreatePost={onCreatePost}
+            profileInfo={{
+              followersCount: 1234, // These would come from real analytics
+              followingCount: 567,
+              postsCount: sortedPosts.length,
+              biography: "✨ Creating amazing content with Succulent",
+              website: "https://succulent.app",
+              isVerified: false,
+              isBusinessAccount: true
+            }}
+          />
+        </div>
+      );
+    }
+
     if (viewMode === 'analytics') {
       // Show analytics view for supported platforms
       if (account.platform === 'instagram') {
@@ -251,6 +276,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
             <InstagramAccountDashboard 
               account={transformedAccount}
               accountGroupId={accountGroupId}
+              jazzAccountGroup={jazzAccountGroup}
             />
           </div>
         );

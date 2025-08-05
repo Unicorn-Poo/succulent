@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Text, Button } from '@radix-ui/themes';
-import { RefreshCw, Calendar, ExternalLink } from 'lucide-react';
+import { RefreshCw, Calendar, ExternalLink, AlertCircle } from 'lucide-react';
 import { PlatformPreview } from "@/components/organisms/platform-previews";
-import { Post, PostVariant, ReplyTo, MediaItem } from '@/app/schema';
+import { Post, PostVariant, ReplyTo, MediaItem, ImageMedia, VideoMedia } from '@/app/schema';
 import { co, z } from 'jazz-tools';
+import { syncProfileAvatar } from '@/utils/ayrshareSync';
 
 // =============================================================================
 // 📱 PLATFORM FEED VIEW WITH HISTORICAL DATA
@@ -48,6 +49,65 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
   const [historicalPosts, setHistoricalPosts] = useState<HistoricalPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+
+  // Function to get avatar from Jazz account or sync from Ayrshare
+  const getAccountAvatar = async () => {
+    if (!jazzAccountGroup || !account.isLinked || !account.profileKey) {
+      return;
+    }
+
+    try {
+      // Find the account in Jazz group
+      const accounts = jazzAccountGroup.accounts;
+      const jazzAccount = accounts.find((acc: any) => acc.platform === account.platform);
+      
+      if (jazzAccount) {
+        // Check if we have a Jazz FileStream avatar
+        if (jazzAccount.avatarImage) {
+          // Convert Jazz FileStream to URL for display
+          try {
+            if (typeof jazzAccount.avatarImage.getBlob === 'function') {
+              const blob = await jazzAccount.avatarImage.getBlob();
+              if (blob) {
+                const dataUrl = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = (e) => resolve(e.target?.result as string);
+                  reader.readAsDataURL(blob);
+                });
+                setAvatarUrl(dataUrl);
+                return;
+              }
+            }
+          } catch (streamError) {
+            console.log('Could not load Jazz FileStream avatar, trying URL fallback...');
+          }
+        }
+        
+        // Fallback to URL avatar
+        if (jazzAccount.avatar) {
+          setAvatarUrl(jazzAccount.avatar);
+          return;
+        }
+      }
+      
+      // No avatar found, try to sync from Ayrshare
+      console.log(`🔄 No avatar found for ${account.platform}, syncing from Ayrshare...`);
+      const result = await syncProfileAvatar(account.platform, account.profileKey, jazzAccountGroup);
+      
+      if (result.success && result.avatarUrl) {
+        setAvatarUrl(result.avatarUrl);
+      }
+      
+    } catch (error) {
+      console.error('Error getting account avatar:', error);
+    }
+  };
+
+  // Load avatar when component mounts or account changes
+  useEffect(() => {
+    getAccountAvatar();
+  }, [account.id, jazzAccountGroup]);
 
   // Jazz import function - creates real Jazz Post objects
   const importPostsToJazz = async (ayrshareHistoryPosts: any[]) => {
@@ -61,6 +121,120 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
     let skipped = 0;
 
     console.log(`📥 Starting real Jazz import of ${ayrshareHistoryPosts.length} ${account.platform} posts...`);
+
+    // Helper function to update profile avatar
+    const updateProfileAvatar = async () => {
+      try {
+        console.log(`🖼️ Fetching profile info for ${account.platform}...`);
+        console.log(`🔑 Using profileKey: ${account.profileKey}`);
+        console.log(`🏢 AccountGroup:`, jazzAccountGroup?.id);
+        console.log(`👥 Existing accounts:`, jazzAccountGroup.accounts?.map((acc: any) => ({ platform: acc.platform, name: acc.name, avatar: acc.avatar })));
+        
+        // Call Ayrshare user endpoint to get profile data
+        const params = new URLSearchParams();
+        if (account.profileKey && account.profileKey !== 'undefined') {
+          params.append('profileKey', account.profileKey);
+        }
+        
+        const userResponse = await fetch(`/api/ayrshare-user-info?${params.toString()}`);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          console.log(`📊 Ayrshare user data:`, userData);
+          
+          const displayNames = userData.data?.displayNames || [];
+          console.log(`👤 Display names from Ayrshare:`, displayNames);
+          
+          // Find the matching platform account
+          const platformData = displayNames.find((acc: any) => acc.platform === account.platform);
+          console.log(`🎯 Matching platform data:`, platformData);
+          
+          if (platformData?.userImage) {
+            console.log(`🖼️ Found avatar for ${account.platform}: ${platformData.userImage}`);
+            
+            // Update the Jazz PlatformAccount avatar
+            const existingAccount = jazzAccountGroup.accounts?.find((acc: any) => 
+              acc.platform === account.platform || acc.name === account.name
+            );
+            
+            console.log(`🔍 Found existing account:`, existingAccount);
+            
+            if (existingAccount) {
+              const oldAvatar = existingAccount.avatar;
+              existingAccount.avatar = platformData.userImage;
+              existingAccount.displayName = platformData.displayName || platformData.pageName;
+              existingAccount.username = platformData.username;
+              
+              console.log(`✅ Updated ${account.platform} avatar in Jazz:`);
+              console.log(`   Old: ${oldAvatar}`);
+              console.log(`   New: ${platformData.userImage}`);
+              console.log(`   DisplayName: ${platformData.displayName || platformData.pageName}`);
+              console.log(`   Username: ${platformData.username}`);
+            } else {
+              console.log(`❌ No existing account found for platform ${account.platform}`);
+            }
+          } else {
+            console.log(`❌ No userImage found for ${account.platform} in:`, platformData);
+          }
+        } else {
+          console.log(`❌ Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Failed to update avatar for ${account.platform}:`, error);
+      }
+    };
+
+        // Helper function to download media and create Jazz FileStream
+    const createMediaFromUrl = async (mediaUrl: string, mediaType: 'image' | 'video'): Promise<any> => {
+      try {
+        console.log(`🖼️ Downloading ${mediaType} from: ${mediaUrl}`);
+        
+        // Fetch the media file
+        const response = await fetch(mediaUrl, {
+          mode: 'cors', // Handle CORS for external media
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; Succulent/1.0)'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
+        }
+        
+        const blob = await response.blob();
+        console.log(`📦 Downloaded ${mediaType} blob:`, blob.size, 'bytes');
+        
+        // Create Jazz FileStream from blob
+        const fileStream = await co.fileStream().createFromBlob(blob, { owner: jazzAccountGroup._owner });
+        console.log(`💾 Created Jazz FileStream for ${mediaType}`);
+        
+        if (mediaType === 'image') {
+          const imageMedia = ImageMedia.create({
+            type: 'image' as const,
+            image: fileStream,
+            alt: co.plainText().create(`Imported ${mediaType} from ${account.platform}`, { owner: jazzAccountGroup._owner })
+          }, { owner: jazzAccountGroup._owner });
+          
+          console.log(`✅ Created ImageMedia object for ${mediaUrl}`);
+          return imageMedia;
+        } else {
+          const videoMedia = VideoMedia.create({
+            type: 'video' as const,
+            video: fileStream,
+            alt: co.plainText().create(`Imported ${mediaType} from ${account.platform}`, { owner: jazzAccountGroup._owner })
+          }, { owner: jazzAccountGroup._owner });
+          
+          console.log(`✅ Created VideoMedia object for ${mediaUrl}`);
+          return videoMedia;
+        }
+      } catch (error) {
+        console.error(`❌ Failed to download/process ${mediaType} from ${mediaUrl}:`, error);
+        return null;
+      }
+    };
+
+    // First, update the profile avatar if we can get user data
+    await updateProfileAvatar();
 
     for (const ayrsharePost of ayrshareHistoryPosts) {
       try {
@@ -88,7 +262,48 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
           { owner: jazzAccountGroup._owner }
         );
         
+        // Process media from Ayrshare post
         const mediaList = co.list(MediaItem).create([], { owner: jazzAccountGroup._owner });
+        
+        // Process media from Ayrshare post (handle both mediaUrls array and mediaUrl single)
+        const mediaUrls = ayrsharePost.mediaUrls || (ayrsharePost.mediaUrl ? [ayrsharePost.mediaUrl] : []);
+        
+        if (mediaUrls && mediaUrls.length > 0) {
+          console.log(`🖼️ Processing ${mediaUrls.length} media items for post ${ayrsharePost.id}`);
+          console.log(`📷 Media URLs:`, mediaUrls);
+          
+          for (const mediaUrl of mediaUrls) {
+            // Determine media type based on URL extension or MIME type hints
+            const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(mediaUrl) || 
+                           mediaUrl.includes('image') || 
+                           mediaUrl.includes('photo');
+            const isVideo = /\.(mp4|mov|avi|webm|mkv|flv|wmv)$/i.test(mediaUrl) || 
+                           mediaUrl.includes('video');
+            
+            if (isImage) {
+              const imageMedia = await createMediaFromUrl(mediaUrl, 'image');
+              if (imageMedia) {
+                mediaList.push(imageMedia);
+                console.log(`✅ Added image to post ${ayrsharePost.id}`);
+              }
+            } else if (isVideo) {
+              const videoMedia = await createMediaFromUrl(mediaUrl, 'video');
+              if (videoMedia) {
+                mediaList.push(videoMedia);
+                console.log(`✅ Added video to post ${ayrsharePost.id}`);
+              }
+            } else {
+              console.log(`⚠️ Unknown media type for URL: ${mediaUrl}, treating as image`);
+              // Default to image if we can't determine the type
+              const imageMedia = await createMediaFromUrl(mediaUrl, 'image');
+              if (imageMedia) {
+                mediaList.push(imageMedia);
+                console.log(`✅ Added media (as image) to post ${ayrsharePost.id}`);
+              }
+            }
+          }
+        }
+        
         const replyToObj = ReplyTo.create({}, { owner: jazzAccountGroup._owner });
 
         // Create the platform variant
@@ -136,6 +351,8 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
     return { imported, errors, skipped, message };
   };
 
+
+
   // Check Jazz posts first, then supplement with Ayrshare if needed
   const syncPostsWithAyrshare = async () => {
     if (!account.isLinked || !account.profileKey) {
@@ -167,13 +384,17 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
           status: 'all' // Get all posts regardless of status
         });
 
+        // Add profileKey if available for proper Ayrshare API access
+        if (account.profileKey && account.profileKey !== 'undefined') {
+          params.append('profileKey', account.profileKey);
+          console.log(`🔑 Using profileKey: ${account.profileKey}`);
+        } else {
+          console.log(`⚠️ No profileKey available for ${account.platform} account: ${account.profileKey}`);
+        }
+
         // Always auto-import when we have an accountGroupId
         params.append('import', 'true');
         params.append('accountGroupId', accountGroupId);
-
-        if (account.profileKey) {
-          params.append('profileKey', account.profileKey);
-        }
 
         // Use platform-specific endpoint for better results
         const response = await fetch(`/api/post-history/${account.platform}?${params.toString()}`);
@@ -286,7 +507,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
 
             {/* Feed Controls */}
       {account.isLinked && (
-        <div className="flex justify-center mb-4">
+        <div className="text-center mb-4">
           <Button 
             onClick={syncPostsWithAyrshare} 
             disabled={loading}
@@ -294,7 +515,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
             size="2"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Syncing...' : 'Sync Posts'}
+            {loading ? 'Syncing Posts...' : 'Sync Posts'}
           </Button>
         </div>
       )}
@@ -330,6 +551,12 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
                      media={post.mediaUrls.map((url: string) => ({ type: 'image', url }))}
                      timestamp={new Date(post.created)}
                      replyTo={undefined}
+                     engagement={{
+                       likes: 0, // Historical posts don't have engagement data yet
+                       comments: 0,
+                       shares: 0,
+                       views: 0
+                     }}
                    />
                   
                   {/* View original post link */}
@@ -348,16 +575,76 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
                 </div>
               );
             } else {
-              // For local posts, use the existing logic
+              // For local posts, extract media URLs from Jazz objects
+              const postVariant = post.post?.variants?.[account.platform] || post.post?.variants?.base;
+              const mediaItems = postVariant?.media || [];
+              
+              // IMMEDIATE DEBUG: Check what we're getting
+              console.log(`🔍 IMMEDIATE DEBUG for post ${post.id}:`, {
+                hasPostVariant: !!postVariant,
+                mediaItemsCount: mediaItems.length,
+                firstItemExists: !!mediaItems[0],
+                firstItemType: mediaItems[0]?.type,
+                variantKeys: postVariant ? Object.keys(postVariant) : []
+              });
+              
+              // Convert Jazz media items to URL format for PlatformPreview
+              const mediaForPreview = mediaItems.map((item: any, index: number) => {
+                if (!item) return null;
+                
+                console.log(`🔍 DEBUG: Media item ${index}:`, {
+                  type: item.type,
+                  hasImage: !!item.image,
+                  hasVideo: !!item.video,
+                  hasOriginalUrl: !!item.originalUrl,
+                  originalUrl: item.originalUrl ? item.originalUrl.substring(0, 80) + '...' : 'NONE',
+                  imageKeys: item.image ? Object.keys(item.image) : [],
+                  videoKeys: item.video ? Object.keys(item.video) : []
+                });
+                
+                                try {
+                  // Pass Jazz media items directly to MediaItemRenderer
+                  // MediaItemRenderer will handle Jazz FileStreams properly with FileStreamImage component
+                  return {
+                    type: item.type,
+                    image: item.type === 'image' ? item.image : undefined,
+                    video: item.type === 'video' ? item.video : undefined,
+                    alt: item.alt || ""
+                  };
+                } catch (error) {
+                  console.error('Error extracting media URL:', error, item);
+                }
+                
+                return null;
+              }).filter(Boolean);
+              
               return (
                 <div key={post.id} className="relative">
-                                     <PlatformPreview
-                     platform={account.platform}
-                     content={post.content}
-                     media={post.post?.variants?.base?.media || []}
-                     timestamp={new Date(post.created)}
-                     replyTo={post.post?.variants?.base?.replyTo}
-                   />
+                  <PlatformPreview
+                    platform={account.platform}
+                    content={post.content}
+                    media={mediaForPreview}
+                    timestamp={new Date(post.created)}
+                    replyTo={postVariant?.replyTo}
+                    engagement={{
+                      likes: postVariant?.performance?.likes,
+                      comments: postVariant?.performance?.comments,
+                      shares: postVariant?.performance?.shares,
+                      views: postVariant?.performance?.views
+                    }}
+                    account={{
+                      id: account.id,
+                      platform: account.platform,
+                      name: account.name,
+                      apiUrl: '', // Placeholder for interface compliance
+                      avatar: avatarUrl || `https://avatar.vercel.sh/${account.name}`, // Use Jazz avatar or fallback
+                      username: account.name,
+                      displayName: account.name,
+                      url: '' // Placeholder for interface compliance
+                    }}
+                  />
+                  
+
                 </div>
               );
             }
@@ -382,14 +669,14 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
       </div>
 
       {/* Feed Info */}
-      {allPosts.length > 0 && (
+      {/* {allPosts.length > 0 && (
         <div className="text-center py-4 border-t border-gray-200">
                      <Text size="1" color="gray">
              Showing {transformedLocalPosts.length} Jazz posts
              {historicalPosts.length > 0 && ` and ${historicalPosts.length} from Ayrshare`} for {account.platform}
            </Text>
         </div>
-      )}
+      )} */}
     </div>
   );
 }; 

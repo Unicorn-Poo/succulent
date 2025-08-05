@@ -79,7 +79,8 @@ export const PlatformAccount = co.map({
 	linkedAt: z.optional(z.date()), // When the account was linked
 	
 	// Social Account Details
-	avatar: z.optional(z.string()),
+	avatar: z.optional(z.string()), // URL fallback for compatibility
+	avatarImage: z.optional(co.fileStream()), // Jazz FileStream for proper avatar storage
 	username: z.optional(z.string()),
 	displayName: z.optional(z.string()),
 	url: z.optional(z.string()),
@@ -120,7 +121,7 @@ export const ReplyTo = co.map({
 
 export const ImageMedia = co.map({
 	type: z.literal("image"),
-	image: co.fileStream(), // Temporarily use fileStream until we fix co.image()
+	image: co.fileStream(),
 	alt: z.optional(co.plainText()),
 });
 

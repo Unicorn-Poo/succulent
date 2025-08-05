@@ -30,6 +30,12 @@ interface BasePreviewProps {
 	isThread?: boolean;
 	threadPosts?: ThreadPost[];
 	currentThreadIndex?: number;
+	engagement?: {
+		likes?: number;
+		comments?: number;
+		shares?: number;
+		views?: number;
+	};
 }
 
 // Twitter/X Preview Component
@@ -139,7 +145,8 @@ export const InstagramPreview = ({
 	threadPosts = [],
 	currentThreadIndex = 0,
 	isReply,
-	replyTo
+	replyTo,
+	engagement // Add engagement data prop
 }: BasePreviewProps) => {
 	const formatTimestamp = (date: Date) => {
 		const now = new Date();
@@ -163,8 +170,9 @@ export const InstagramPreview = ({
 	const authorUsername = account?.username || account?.name || 'scapesquared';
 	const authorAvatar = account?.avatar;
 	
-	const likes = "123";
-	const commentsCount = "47";
+	// Use real engagement data from Jazz instead of hardcoded values
+	const likes = engagement?.likes?.toLocaleString() || "0";
+	const commentsCount = engagement?.comments?.toString() || "0";
 
 	return (
 		<div className="w-full max-w-md mx-auto bg-white" style={{ 
@@ -599,6 +607,12 @@ interface PreviewProps {
 	isThread?: boolean;
 	threadPosts?: ThreadPost[];
 	currentThreadIndex?: number;
+	engagement?: {
+		likes?: number;
+		comments?: number;
+		shares?: number;
+		views?: number;
+	};
 }
 
 export const PlatformPreview = (props: PreviewProps) => {
@@ -756,8 +770,7 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 		
 		const loadImage = async () => {
 			try {
-				
-				if (typeof fileStream.getBlob === 'function') {
+								if (typeof fileStream.getBlob === 'function') {
 					const blob = await fileStream.getBlob();
 					
 					if (isMounted && blob) {
@@ -828,6 +841,8 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boolean }) => {
 	const commonClass = isCarousel ? "w-full h-full object-cover" : "w-full h-full object-cover";
+	
+
 
 	if (item?.type === 'image') {
 		const imageObject = item.image;
@@ -839,11 +854,12 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 			imageObject._type === 'BinaryCoStream' ||
 			imageObject.constructor?.name === 'FileStream'
 		)) {
+
 			return (
 				<FileStreamImage 
 					fileStream={imageObject} 
 					className={commonClass}
-					alt={item.alt?.toString() || ""}
+					alt={item.alt || ""}
 				/>
 			);
 		}
@@ -910,14 +926,15 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		
 		return (
 			<div className="relative w-full h-full">
-				<Image
+				<img
 					src={imageUrl}
-					alt={item.alt?.toString() || ""}
-					fill
+					alt={item.alt || ""}
 					className={commonClass}
+					style={{ width: '100%', height: '100%', objectFit: 'cover' }}
 					onError={(e) => {
 						console.error('Image failed to load:', imageUrl, e);
 					}}
+					crossOrigin="anonymous"
 				/>
 			</div>
 		);

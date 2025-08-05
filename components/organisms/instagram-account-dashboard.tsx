@@ -29,6 +29,7 @@ import {
   HistoricalPost,
   isFeatureAvailable
 } from "@/utils/ayrshareAnalytics";
+import { quickSyncMedia } from "@/utils/ayrshareSync";
 
 interface InstagramAccount {
   id: string;
@@ -41,9 +42,10 @@ interface InstagramAccount {
 interface InstagramAccountDashboardProps {
   account: InstagramAccount;
   accountGroupId?: string;
+  jazzAccountGroup?: any; // Add Jazz account group for syncing
 }
 
-export default function InstagramAccountDashboard({ account, accountGroupId }: InstagramAccountDashboardProps) {
+export default function InstagramAccountDashboard({ account, accountGroupId, jazzAccountGroup }: InstagramAccountDashboardProps) {
   // State management
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -57,6 +59,10 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
   // UI state
   const [selectedTimeframe, setSelectedTimeframe] = useState<'7' | '30' | '90'>('30');
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Add sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResults, setSyncResults] = useState<string>("");
 
   // Check if analytics features are available
   const analyticsAvailable = isFeatureAvailable('analytics');
@@ -119,6 +125,48 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
       setError(err instanceof Error ? err.message : 'Failed to fetch account data');
     } finally {
       setLoading(false);
+    }
+  };
+
+    /**
+   * Sync real media data from Ayrshare to Jazz
+   */
+  const syncRealMediaData = async () => {
+    if (!account.isLinked || !account.profileKey) {
+      setError('Account not properly linked to Ayrshare');
+      return;
+    }
+
+    if (!jazzAccountGroup) {
+      setError('Jazz account group not available for syncing');
+      return;
+    }
+
+    setIsSyncing(true);
+    setSyncResults("");
+    setError("");
+
+    try {
+      console.log('🚀 Starting Jazz collaborative sync from Instagram dashboard...');
+      
+      const result = await quickSyncMedia('instagram', account.profileKey, jazzAccountGroup);
+      
+      if (result.success) {
+        setSyncResults(result.message);
+        console.log('✅ Jazz sync completed from dashboard:', result.details);
+        
+        // No need to refresh - Jazz should sync automatically
+        console.log('🎉 Jazz collaborative objects updated, changes should appear automatically');
+      } else {
+        setError(result.message);
+        console.error('❌ Jazz sync failed from dashboard:', result);
+      }
+      
+    } catch (err) {
+      console.error('Error syncing real media data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync media data');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -242,6 +290,19 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+          
+          {/* Temporary Sync Button */}
+          <Button 
+            variant="solid" 
+            size="2"
+            onClick={syncRealMediaData}
+            disabled={isSyncing || !account.isLinked}
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Real Media'}
+          </Button>
+          
           <Button 
             variant="outline" 
             size="2"
@@ -252,6 +313,18 @@ export default function InstagramAccountDashboard({ account, accountGroupId }: I
           </Button>
         </div>
       </div>
+
+      {/* Sync Results Display */}
+      {syncResults && (
+        <Card>
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-blue-500" />
+              <Text size="2" color="blue">{syncResults}</Text>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Error Display */}
       {error && (
