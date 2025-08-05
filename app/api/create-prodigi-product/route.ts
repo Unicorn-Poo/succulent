@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
 			'https://api.sandbox.prodigi.com/v4.0' : 
 			'https://api.prodigi.com/v4.0';
 
-		// First, get the product details to understand the structure
-		const productResponse = await fetch(`${baseUrl}/products/${productId}`, {
+		// First, get the product details to understand the structure using v4.0 API
+		const productResponse = await fetch(`${baseUrl}/ProductDetails/${productId}`, {
 			method: 'GET',
 			headers: {
 				'X-API-Key': apiKey,
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 		if (!productResponse.ok) {
 			const errorText = await productResponse.text();
 			return NextResponse.json(
-				{ error: `Failed to fetch product: ${productResponse.status} - ${errorText}` },
+				{ error: `Failed to fetch product details: ${productResponse.status} - ${errorText}` },
 				{ status: productResponse.status }
 			);
 		}

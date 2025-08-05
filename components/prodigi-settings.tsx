@@ -48,7 +48,11 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			});
 
 			const result = await response.json();
-			setTestResult(result.success ? 'success' : 'error');
+			if (result.success) {
+				setTestResult('success');
+			} else {
+				setTestResult('error');
+			}
 		} catch (error) {
 			setTestResult('error');
 		} finally {
@@ -72,7 +76,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 				apiKey: formData.apiKey.trim(),
 				sandboxMode: formData.sandboxMode,
 				templates: [],
-				connectedAt: new Date().toISOString(),
+				connectedAt: new Date(),
 			};
 		}
 
@@ -123,14 +127,14 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			
 			if (result.success && result.templates) {
 				// Clear existing templates and add new ones
-				if (accountGroup.prodigiCredentials.templates) {
+				if (accountGroup.prodigiCredentials?.templates) {
 					// Clear the list first
 					while (accountGroup.prodigiCredentials.templates.length > 0) {
 						accountGroup.prodigiCredentials.templates.splice(0, 1);
 					}
 					// Add new templates
 					result.templates.forEach((template: any) => {
-						accountGroup.prodigiCredentials.templates.push(template);
+						accountGroup.prodigiCredentials?.templates.push(template);
 					});
 				}
 				setProductFetchResult('success');
@@ -187,8 +191,9 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 				const newProduct = result.templates.find((t: any) => t.id === productIdToImport.trim());
 				if (newProduct) {
 					// Add to existing products
-					if (!accountGroup.prodigiCredentials.templates) {
-						accountGroup.prodigiCredentials.templates = [];
+					if (!accountGroup.prodigiCredentials?.templates) {
+						// Templates list will be initialized properly when credentials are created
+						return;
 					}
 					
 					// Check if product already exists
