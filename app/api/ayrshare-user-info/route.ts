@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AYRSHARE_API_URL = 'https://app.ayrshare.com/api';
+const AYRSHARE_API_URL = 'https://api.ayrshare.com/api';
 const AYRSHARE_API_KEY = process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
 
 export async function GET(request: NextRequest) {

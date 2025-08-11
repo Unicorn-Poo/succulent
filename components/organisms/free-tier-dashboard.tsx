@@ -14,7 +14,7 @@ import {
   Clock,
   Lightbulb
 } from "lucide-react";
-import { FreeTierManager, useFreeTier } from "@/utils/freeTierManager";
+import { useFreeTier } from "@/hooks/use-free-tier";
 
 interface FreeTierDashboardProps {
   onUpgradeClick?: () => void;

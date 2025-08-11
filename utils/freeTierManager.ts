@@ -3,7 +3,7 @@
  * Tracks and optimizes usage of the 20 posts/month limit
  */
 
-import { useState, useEffect } from 'react';
+// Removed React hooks: this is a pure utility usable on server or client
 
 interface FreeTierUsage {
   postsThisMonth: number;
@@ -19,6 +19,17 @@ interface PostPriority {
   low: number;       // Optional posts (general content)
 }
 
+function getLocalStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export class FreeTierManager {
   private static MONTHLY_LIMIT = 20;
   private static STORAGE_KEY = 'ayrshare_free_tier_usage';
@@ -27,7 +38,8 @@ export class FreeTierManager {
    * Get current free tier usage stats
    */
   static getUsageStats(): FreeTierUsage {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
+    const ls = getLocalStorage();
+    const stored = ls?.getItem(this.STORAGE_KEY) || null;
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
     
@@ -64,7 +76,8 @@ export class FreeTierManager {
       lastUpdated: now.toISOString()
     };
     
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(usage));
+    const ls = getLocalStorage();
+    ls?.setItem(this.STORAGE_KEY, JSON.stringify(usage));
     return usage;
   }
 
@@ -77,7 +90,8 @@ export class FreeTierManager {
     usage.postsRemaining = Math.max(0, this.MONTHLY_LIMIT - usage.postsThisMonth);
     usage.lastUpdated = new Date().toISOString();
     
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(usage));
+    const ls = getLocalStorage();
+    ls?.setItem(this.STORAGE_KEY, JSON.stringify(usage));
     return usage;
   }
 
@@ -102,8 +116,8 @@ export class FreeTierManager {
     const resetDate = new Date(usage.resetDate);
     const daysRemaining = Math.ceil((resetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
-    const dailyBudget = Math.floor(usage.postsRemaining / daysRemaining);
-    const weeklyBudget = Math.floor(usage.postsRemaining / Math.ceil(daysRemaining / 7));
+    const dailyBudget = Math.floor(usage.postsRemaining / Math.max(daysRemaining, 1));
+    const weeklyBudget = Math.floor(usage.postsRemaining / Math.max(Math.ceil(daysRemaining / 7), 1));
     
     const recommendations: string[] = [];
     
@@ -139,7 +153,7 @@ export class FreeTierManager {
       high: ['instagram', 'x', 'facebook'],        // Broad reach
       medium: ['instagram', 'linkedin'],           // Good engagement
       low: ['x']                                   // Quick, low effort
-    };
+    } as Record<'urgent' | 'high' | 'medium' | 'low', string[]>;
     
     const maxPlatforms = priority === 'urgent' ? 3 : 
                         priority === 'high' ? 2 : 1;
@@ -198,57 +212,4 @@ export class FreeTierManager {
   }
 }
 
-/**
- * React hook for using FreeTierManager in components
- */
-export function useFreeTier() {
-  const [usage, setUsage] = useState<FreeTierUsage>(() => FreeTierManager.getUsageStats());
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
-
-  // Refresh usage stats periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newUsage = FreeTierManager.getUsageStats();
-      setUsage(newUsage);
-      setLastRefresh(Date.now());
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Manual refresh function
-  const refresh = () => {
-    const newUsage = FreeTierManager.getUsageStats();
-    setUsage(newUsage);
-    setLastRefresh(Date.now());
-  };
-
-  // Record a post and update usage
-  const recordPost = (platforms: string[], priority: 'urgent' | 'high' | 'medium' | 'low' = 'medium') => {
-    FreeTierManager.recordPost(platforms.length);
-    refresh();
-  };
-
-  // Get posting strategy
-  const getStrategy = () => {
-    return FreeTierManager.getPostingStrategy();
-  };
-
-  // Get optimization tips
-  const tips = FreeTierManager.getOptimizationTips();
-
-  // Get platform suggestions
-  const getSuggestions = (platforms: string[], priority: 'urgent' | 'high' | 'medium' | 'low') => {
-    return FreeTierManager.suggestPlatforms(platforms, priority);
-  };
-
-  return {
-    usage,
-    getStrategy,
-    tips,
-    recordPost,
-    refresh,
-    getSuggestions,
-    lastRefresh
-  };
-} 
+// Removed the useFreeTier React hook from this file. Implemented in hooks/useFreeTier.ts for client-only usage. 

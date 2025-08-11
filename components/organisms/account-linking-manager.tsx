@@ -291,27 +291,43 @@ export default function AccountLinkingManager({
         
         // Check multiple possible locations for connected accounts
         let currentPlatforms: string[] = [];
+        const platformSet = new Set<string>();
         
-        // Try top-level activeSocialAccounts first (most common)
-        if (result.activeSocialAccounts && Array.isArray(result.activeSocialAccounts) && result.activeSocialAccounts.length > 0) {
-          currentPlatforms = result.activeSocialAccounts;
-          console.log('✅ Polling: Found platforms at top level activeSocialAccounts:', currentPlatforms);
-        } 
+        // Try top-level activeSocialAccounts
+        if (Array.isArray(result.activeSocialAccounts)) {
+          result.activeSocialAccounts.forEach((p: string) => platformSet.add(p));
+        } else if (result.activeSocialAccounts && typeof result.activeSocialAccounts === 'object') {
+          Object.keys(result.activeSocialAccounts).forEach((p) => platformSet.add(p));
+        }
+        
         // Try user.activeSocialAccounts
-        else if (result.user?.activeSocialAccounts && Array.isArray(result.user.activeSocialAccounts) && result.user.activeSocialAccounts.length > 0) {
-          currentPlatforms = result.user.activeSocialAccounts;
-          console.log('✅ Polling: Found platforms at user.activeSocialAccounts:', currentPlatforms);
+        if (Array.isArray(result.user?.activeSocialAccounts)) {
+          result.user.activeSocialAccounts.forEach((p: string) => platformSet.add(p));
+        } else if (result.user?.activeSocialAccounts && typeof result.user.activeSocialAccounts === 'object') {
+          Object.keys(result.user.activeSocialAccounts).forEach((p) => platformSet.add(p));
         }
-        // Fall back to user.socialMediaAccounts (object format)
-        else if (result.user?.socialMediaAccounts && typeof result.user.socialMediaAccounts === 'object') {
-          currentPlatforms = Object.keys(result.user.socialMediaAccounts);
-          console.log('✅ Polling: Found platforms at user.socialMediaAccounts:', currentPlatforms);
+        
+        // user.socialMediaAccounts object
+        if (result.user?.socialMediaAccounts && typeof result.user.socialMediaAccounts === 'object') {
+          Object.keys(result.user.socialMediaAccounts).forEach((p) => platformSet.add(p));
         }
-        // No platforms found
-        else {
-          currentPlatforms = [];
-          console.log('❌ Polling: No platforms found in any location');
+
+        // Top-level socialMediaAccounts if present
+        if (result.socialMediaAccounts && typeof result.socialMediaAccounts === 'object') {
+          Object.keys(result.socialMediaAccounts).forEach((p) => platformSet.add(p));
         }
+        
+        // displayNames array (top-level or user-level)
+        const displayNamesArr = Array.isArray(result.displayNames)
+          ? result.displayNames
+          : Array.isArray(result.user?.displayNames)
+            ? result.user.displayNames
+            : [];
+        displayNamesArr.forEach((acc: any) => {
+          if (acc?.platform) platformSet.add(acc.platform);
+        });
+
+        currentPlatforms = Array.from(platformSet);
         
         console.log(`📊 Raw socialMediaAccounts:`, result.user?.socialMediaAccounts);
         console.log(`📊 Raw activeSocialAccounts (user level):`, result.user?.activeSocialAccounts);

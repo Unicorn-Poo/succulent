@@ -106,11 +106,14 @@ export default function AyrshareAccountLinking({
         
         // Update account statuses based on what's linked
         const updatedAccounts = accounts.map(account => {
-          // Map our platform names to Ayrshare's platform names
-          const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
-          const isLinked = linkedPlatforms.includes(platformKey);
+          // Recognize both 'x' and 'twitter'
+          const platformKeysToCheck = new Set(
+            [account.platform, account.platform === 'x' ? 'twitter' : null, account.platform === 'twitter' ? 'x' : null]
+              .filter(Boolean) as string[]
+          );
+          const isLinked = linkedPlatforms.some(p => platformKeysToCheck.has(p));
           
-          console.log(`🔗 Checking ${account.platform} (mapped to ${platformKey}): ${isLinked ? 'LINKED' : 'NOT LINKED'}`);
+          console.log(`🔗 Checking ${account.platform} against ${Array.from(platformKeysToCheck).join('/')}: ${isLinked ? 'LINKED' : 'NOT LINKED'}`);
           
           return {
             ...account,

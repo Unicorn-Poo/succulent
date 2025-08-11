@@ -327,34 +327,69 @@ export const getFreeConnectedAccounts = async () => {
  */
 export const extractAccountDetails = (ayrshareResponse: any) => {
   let platforms: string[] = [];
-  let accountDetails: Record<string, any> = {};
+  const platformSet = new Set<string>();
+  const accountDetails: Record<string, any> = {};
   
-  // Extract platform list from activeSocialAccounts
-  if (ayrshareResponse.activeSocialAccounts && Array.isArray(ayrshareResponse.activeSocialAccounts)) {
-    platforms = ayrshareResponse.activeSocialAccounts;
-  } else if (ayrshareResponse.user?.activeSocialAccounts && Array.isArray(ayrshareResponse.user.activeSocialAccounts)) {
-    platforms = ayrshareResponse.user.activeSocialAccounts;
-  } else if (ayrshareResponse.user?.socialMediaAccounts && typeof ayrshareResponse.user.socialMediaAccounts === 'object') {
-    platforms = Object.keys(ayrshareResponse.user.socialMediaAccounts);
-  }
+  const addPlatforms = (value: any) => {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach((p) => typeof p === 'string' && platformSet.add(p));
+    } else if (typeof value === 'object') {
+      Object.keys(value).forEach((p) => platformSet.add(p));
+    }
+  };
+
+  // Collect platforms from multiple possible locations
+  addPlatforms(ayrshareResponse.activeSocialAccounts);
+  addPlatforms(ayrshareResponse.user?.activeSocialAccounts);
+  addPlatforms(ayrshareResponse.user?.socialMediaAccounts);
+  addPlatforms(ayrshareResponse.socialMediaAccounts);
+
+  // Also collect from display names if present
+  const displayNamesArr = Array.isArray(ayrshareResponse.displayNames)
+    ? ayrshareResponse.displayNames
+    : Array.isArray(ayrshareResponse.user?.displayNames)
+      ? ayrshareResponse.user.displayNames
+      : [];
+
+  displayNamesArr.forEach((account: any) => {
+    if (account?.platform) platformSet.add(account.platform);
+  });
+
+  platforms = Array.from(platformSet);
   
-  // Extract detailed account information from displayNames array (where Ayrshare actually stores account details)
-  if (ayrshareResponse.displayNames && Array.isArray(ayrshareResponse.displayNames)) {
-    ayrshareResponse.displayNames.forEach((account: any) => {
-      if (account.platform && account.username) {
-        accountDetails[account.platform] = {
-          username: account.username,
-          displayName: account.displayName || account.pageName,
-          profile_image_url: account.userImage,
-          profileUrl: account.profileUrl,
-          platform: account.platform,
-          id: account.id,
-          userId: account.userId,
-          pageName: account.pageName,
-          created: account.created
+  // Prefer details from displayNames
+  displayNamesArr.forEach((account: any) => {
+    const platform = account?.platform;
+    if (!platform) return;
+    accountDetails[platform] = {
+      username: account.username,
+      displayName: account.displayName || account.pageName,
+      profile_image_url: account.userImage,
+      profileUrl: account.profileUrl,
+      platform,
+      id: account.id,
+      userId: account.userId,
+      pageName: account.pageName,
+      created: account.created
+    };
+  });
+
+  // Fallback: derive details from socialMediaAccounts object if needed
+  if (Object.keys(accountDetails).length === 0) {
+    const smObj = ayrshareResponse.user?.socialMediaAccounts || ayrshareResponse.socialMediaAccounts;
+    if (smObj && typeof smObj === 'object') {
+      Object.keys(smObj).forEach((platform) => {
+        const info = smObj[platform] || {};
+        accountDetails[platform] = {
+          username: info.username || info.handle || info.screen_name,
+          displayName: info.display_name || info.full_name || info.name,
+          profile_image_url: info.profile_image_url || info.profile_picture,
+          profileUrl: info.url || info.profile_url,
+          platform,
         };
-      }
-    });
+      });
+    }
   }
   
   return { platforms, accountDetails };

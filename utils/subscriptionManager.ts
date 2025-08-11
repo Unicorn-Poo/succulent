@@ -1,6 +1,5 @@
 import { MyAppAccount, MyAppAccountLoaded, SubscriptionTier, Subscription, SubscriptionUsage, SubscriptionLimits, SubscriptionTrial, SubscriptionBilling } from '@/app/schema';
 import { z } from 'jazz-tools';
-import { FreeTierManager } from './freeTierManager';
 
 // =============================================================================
 // 💳 SUBSCRIPTION PLAN DEFINITIONS
@@ -182,11 +181,9 @@ export const PLAN_DEFINITIONS: Record<SubscriptionTierType, PlanDefinition> = {
 
 export class SubscriptionManager {
   private account: MyAppAccountLoaded;
-  private freeTierManager: FreeTierManager;
 
   constructor(account: MyAppAccountLoaded) {
     this.account = account;
-    this.freeTierManager = new FreeTierManager();
   }
 
   // =============================================================================
@@ -319,9 +316,6 @@ export class SubscriptionManager {
 
     subscription.usage.monthlyPosts += count;
     subscription.usage.apiCalls += 1;
-    
-         // Also update the free tier manager for consistency
-     FreeTierManager.recordPost(count);
     
     return true;
   }
