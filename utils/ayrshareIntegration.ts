@@ -122,7 +122,7 @@ export const getConnectedAccounts = async (profileKey: string) => {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${AYRSHARE_API_KEY}`,
     'Profile-Key': profileKey
-  };
+  } as Record<string, string>;
 
   console.log('📡 Request headers:', {
     hasAuthorization: !!headers.Authorization,
@@ -146,7 +146,6 @@ export const getConnectedAccounts = async (profileKey: string) => {
   const result = await response.json();
   
   console.log('📡 Response body:', {
-    fullResult: result,
     hasUser: !!result.user,
     hasSocialMediaAccounts: !!result.user?.socialMediaAccounts,
     hasActiveSocialAccounts: !!result.user?.activeSocialAccounts,
@@ -167,6 +166,129 @@ export const getConnectedAccounts = async (profileKey: string) => {
       fullResult: result
     });
     throw new Error(result.message || 'Failed to get connected accounts');
+  }
+
+  // If no connected accounts info found, fall back to /profiles and merge
+  const noAccountsInfo = !result?.activeSocialAccounts &&
+                         !result?.user?.activeSocialAccounts &&
+                         !result?.user?.socialMediaAccounts &&
+                         !result?.displayNames &&
+                         !result?.user?.displayNames &&
+                         !result?.socialMediaAccounts;
+  
+  if (noAccountsInfo) {
+    try {
+      // 1) Try /profiles/profile with Profile-Key header (single profile details)
+      try {
+        const profileDetailRes = await fetch(`${AYRSHARE_API_URL}/profiles/profile`, {
+          method: 'GET',
+          headers
+        });
+        if (profileDetailRes.ok) {
+          const profileDetail = await profileDetailRes.json();
+          if (profileDetail) {
+            const merged = {
+              ...result,
+              ...(profileDetail.displayNames ? { displayNames: profileDetail.displayNames } : {}),
+              ...(profileDetail.activeSocialAccounts ? { activeSocialAccounts: profileDetail.activeSocialAccounts } : {}),
+              ...(profileDetail.user?.activeSocialAccounts ? { activeSocialAccounts: profileDetail.user.activeSocialAccounts } : {}),
+              ...(profileDetail.user?.socialMediaAccounts ? { socialMediaAccounts: profileDetail.user.socialMediaAccounts } : {}),
+            };
+            return merged;
+          }
+        }
+      } catch {}
+
+      // 2) Try /profiles?profileKey=... with API key only
+      try {
+        const { ['Profile-Key']: _omit, ...profilesHeaders } = headers;
+        const refId = result?.refId;
+        const byKeyUrl = refId
+          ? `${AYRSHARE_API_URL}/profiles?refId=${encodeURIComponent(refId)}`
+          : `${AYRSHARE_API_URL}/profiles`;
+        const byKeyRes = await fetch(byKeyUrl, {
+          method: 'GET',
+          headers: profilesHeaders
+        });
+        if (byKeyRes.ok) {
+          const byKeyJson: any = await byKeyRes.json();
+          if (byKeyJson) {
+            // Some responses wrap in { profiles: [...] }
+            const list = Array.isArray(byKeyJson)
+              ? byKeyJson
+              : Array.isArray(byKeyJson.profiles)
+                ? byKeyJson.profiles
+                : [byKeyJson];
+            const candidate = refId
+              ? (list.find((p: any) => p?.refId === refId) || list[0])
+              : list[0];
+            const merged = {
+              ...result,
+              ...(candidate?.displayNames ? { displayNames: candidate.displayNames } : {}),
+              ...(candidate?.activeSocialAccounts ? { activeSocialAccounts: candidate.activeSocialAccounts } : {}),
+              ...(candidate?.user?.activeSocialAccounts ? { activeSocialAccounts: candidate.user.activeSocialAccounts } : {}),
+              ...(candidate?.user?.socialMediaAccounts ? { socialMediaAccounts: candidate.user.socialMediaAccounts } : {}),
+            };
+            return merged;
+          }
+        }
+      } catch {}
+
+      // 3) Fall back to listing all profiles and selecting match
+      const { ['Profile-Key']: _omit, ...profilesHeaders } = headers;
+      const profilesRes = await fetch(`${AYRSHARE_API_URL}/profiles`, {
+        method: 'GET',
+        headers: profilesHeaders
+      });
+      const profilesJson = await profilesRes.json();
+
+      if (profilesRes.ok && profilesJson) {
+        // Try to extract displayNames or social accounts from various shapes
+        let displayNames: any[] | undefined;
+        let activeSocialAccounts: string[] | undefined;
+        let socialMediaAccounts: Record<string, any> | undefined;
+
+        const tryExtract = (obj: any) => {
+          if (!obj) return;
+          if (Array.isArray(obj.displayNames)) displayNames = obj.displayNames;
+          if (Array.isArray(obj.user?.displayNames)) displayNames = obj.user.displayNames;
+          if (Array.isArray(obj.activeSocialAccounts)) activeSocialAccounts = obj.activeSocialAccounts;
+          if (Array.isArray(obj.user?.activeSocialAccounts)) activeSocialAccounts = obj.user.activeSocialAccounts;
+          if (obj.user?.socialMediaAccounts && typeof obj.user.socialMediaAccounts === 'object') socialMediaAccounts = obj.user.socialMediaAccounts;
+          if (obj.socialMediaAccounts && typeof obj.socialMediaAccounts === 'object') socialMediaAccounts = obj.socialMediaAccounts;
+        };
+
+        const list = Array.isArray(profilesJson)
+          ? profilesJson
+          : Array.isArray(profilesJson.profiles)
+            ? profilesJson.profiles
+            : [profilesJson];
+        if (Array.isArray(list)) {
+          // Prefer the entry that matches our refId
+          const refId = result?.refId;
+          const match = refId
+            ? list.find((p: any) => p?.refId === refId)
+            : list.find((p: any) => p?.profileKey === profileKey || p?.key === profileKey);
+          if (match) {
+            tryExtract(match);
+          } else {
+            list.forEach((p: any) => tryExtract(p));
+          }
+        } else if (profilesJson && typeof profilesJson === 'object') {
+          tryExtract(profilesJson);
+        }
+
+        // Merge into the original result so downstream parsing works
+        return {
+          ...result,
+          ...(displayNames ? { displayNames } : {}),
+          ...(activeSocialAccounts ? { activeSocialAccounts } : {}),
+          ...(socialMediaAccounts ? { socialMediaAccounts } : {}),
+        };
+      }
+    } catch (e) {
+      console.warn('⚠️ Fallbacks to /profiles failed:', e);
+    }
   }
 
   return result;
@@ -339,6 +461,60 @@ export const extractAccountDetails = (ayrshareResponse: any) => {
     }
   };
 
+  // If the response is an array (e.g., /profiles list), scan each element
+  if (Array.isArray(ayrshareResponse)) {
+    ayrshareResponse.forEach((p) => {
+      addPlatforms(p?.activeSocialAccounts);
+      addPlatforms(p?.user?.activeSocialAccounts);
+      addPlatforms(p?.user?.socialMediaAccounts);
+      if (Array.isArray(p?.displayNames)) {
+        p.displayNames.forEach((acc: any) => {
+          if (acc?.platform) platformSet.add(acc.platform);
+          if (acc?.platform && !accountDetails[acc.platform]) {
+            accountDetails[acc.platform] = {
+              username: acc.username,
+              displayName: acc.displayName || acc.pageName,
+              profile_image_url: acc.userImage,
+              profileUrl: acc.profileUrl,
+              platform: acc.platform,
+              id: acc.id,
+              userId: acc.userId,
+              pageName: acc.pageName,
+              created: acc.created
+            };
+          }
+        });
+      }
+    });
+  }
+
+  // If response has a nested profiles array
+  if (Array.isArray(ayrshareResponse?.profiles)) {
+    ayrshareResponse.profiles.forEach((p: any) => {
+      addPlatforms(p?.activeSocialAccounts);
+      addPlatforms(p?.user?.activeSocialAccounts);
+      addPlatforms(p?.user?.socialMediaAccounts);
+      if (Array.isArray(p?.displayNames)) {
+        p.displayNames.forEach((acc: any) => {
+          if (acc?.platform) platformSet.add(acc.platform);
+          if (acc?.platform && !accountDetails[acc.platform]) {
+            accountDetails[acc.platform] = {
+              username: acc.username,
+              displayName: acc.displayName || acc.pageName,
+              profile_image_url: acc.userImage,
+              profileUrl: acc.profileUrl,
+              platform: acc.platform,
+              id: acc.id,
+              userId: acc.userId,
+              pageName: acc.pageName,
+              created: acc.created
+            };
+          }
+        });
+      }
+    });
+  }
+
   // Collect platforms from multiple possible locations
   addPlatforms(ayrshareResponse.activeSocialAccounts);
   addPlatforms(ayrshareResponse.user?.activeSocialAccounts);
@@ -362,17 +538,19 @@ export const extractAccountDetails = (ayrshareResponse: any) => {
   displayNamesArr.forEach((account: any) => {
     const platform = account?.platform;
     if (!platform) return;
-    accountDetails[platform] = {
-      username: account.username,
-      displayName: account.displayName || account.pageName,
-      profile_image_url: account.userImage,
-      profileUrl: account.profileUrl,
-      platform,
-      id: account.id,
-      userId: account.userId,
-      pageName: account.pageName,
-      created: account.created
-    };
+    if (!accountDetails[platform]) {
+      accountDetails[platform] = {
+        username: account.username,
+        displayName: account.displayName || account.pageName,
+        profile_image_url: account.userImage,
+        profileUrl: account.profileUrl,
+        platform,
+        id: account.id,
+        userId: account.userId,
+        pageName: account.pageName,
+        created: account.created
+      };
+    }
   });
 
   // Fallback: derive details from socialMediaAccounts object if needed

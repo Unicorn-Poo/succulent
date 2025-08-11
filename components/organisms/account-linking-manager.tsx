@@ -78,6 +78,11 @@ export default function AccountLinkingManager({
   const [accountToRemove, setAccountToRemove] = useState<{index: number, account: any} | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
 
+  // Change profile key state
+  const [showChangeProfileKey, setShowChangeProfileKey] = useState(false);
+  const [newProfileKey, setNewProfileKey] = useState("");
+  const [isSavingProfileKey, setIsSavingProfileKey] = useState(false);
+
   const businessPlanAvailable = isBusinessPlanMode();
   const profileKey = accountGroup?.ayrshareProfileKey;
   const profileTitle = accountGroup?.ayrshareProfileTitle || accountGroup?.name;
@@ -123,10 +128,27 @@ export default function AccountLinkingManager({
     setError(null);
 
     try {
-      const result = await getConnectedAccounts(profileKey);
+      // Prefer server route that merges /profiles fallback
+      let result: any = null;
+      try {
+        const res = await fetch(`/api/ayrshare-user-info?profileKey=${encodeURIComponent(profileKey)}`);
+        const json = await res.json();
+        if (res.ok && json?.data) {
+          result = json.data;
+        }
+      } catch {}
+      // Fallback to direct client call if server route not available
+      if (!result) {
+        result = await getConnectedAccounts(profileKey);
+      }
       
       // Extract platform list and detailed account information using utility function
       const { platforms, accountDetails } = extractAccountDetails(result);
+
+      // Ensure UI "Connected" state matches freshly fetched platforms
+      if (Array.isArray(platforms)) {
+        setConnectedAccounts(platforms);
+      }
 
       if (platforms.length === 0) {
         setSuccess('No connected accounts found on Ayrshare. Connect your social media accounts in the Ayrshare dashboard to see them here.');
@@ -177,6 +199,35 @@ export default function AccountLinkingManager({
 
       // Combine updated existing accounts with new auto-created accounts
       const allAccounts = [...updatedExistingAccounts, ...newAccounts];
+      
+      // Persist to Jazz: update existing entries and append new ones
+      try {
+        if (accountGroup?.accounts) {
+          // Update existing entries in-place
+          for (let i = 0; i < accountGroup.accounts.length; i++) {
+            const acc = accountGroup.accounts[i];
+            if (!acc || !acc.platform) continue;
+            const platformKeyExisting = acc.platform === 'x' ? 'twitter' : acc.platform;
+            const isLinkedExisting = platforms.includes(platformKeyExisting);
+            acc.isLinked = isLinkedExisting;
+            acc.status = isLinkedExisting ? 'linked' : 'pending';
+            if (isLinkedExisting && accountDetails[platformKeyExisting]) {
+              const details = accountDetails[platformKeyExisting];
+              acc.linkedAt = new Date();
+              acc.username = acc.username || details.username || details.handle || details.screen_name;
+              acc.displayName = acc.displayName || details.display_name || details.full_name || details.name;
+              acc.avatar = acc.avatar || details.profile_image_url || details.profile_picture;
+              acc.url = acc.url || details.url || details.profile_url;
+            }
+          }
+          // Append newly discovered accounts
+          if (typeof accountGroup.accounts.push === 'function') {
+            newAccounts.forEach((a) => accountGroup.accounts.push(a));
+          }
+        }
+      } catch (e) {
+        console.error('❌ Failed to persist refreshed accounts to Jazz:', e);
+      }
       
       if (onAccountsUpdated) {
         onAccountsUpdated(allAccounts);
@@ -282,11 +333,21 @@ export default function AccountLinkingManager({
       try {
         console.log(`🔄 Polling attempt ${pollCount}/${maxPolls} - checking for new accounts...`);
         console.log(`🔑 Using profile key: ${profileKey}`);
-        console.log(`🔗 API URL: https://app.ayrshare.com/api`);
         console.log(`📈 Initial account count: ${initialCount}`);
         
-        // Get fresh account data directly from API with detailed logging
-        const result = await getConnectedAccounts(profileKey!);
+        // Prefer server route that merges /profiles fallback
+        let result: any = null;
+        try {
+          const res = await fetch(`/api/ayrshare-user-info?profileKey=${encodeURIComponent(profileKey!)}`);
+          const json = await res.json();
+          if (res.ok && json?.data) {
+            result = json.data;
+          }
+        } catch {}
+        // Fallback to direct client call if server route not available
+        if (!result) {
+          result = await getConnectedAccounts(profileKey!);
+        }
         console.log(`📡 Full API response:`, result);
         
         // Check multiple possible locations for connected accounts
@@ -597,7 +658,17 @@ export default function AccountLinkingManager({
                   setError(null);
                   setSuccess('🔍 Testing API connection...');
                   try {
-                    const result = await getConnectedAccounts(profileKey!);
+                    let result: any = null;
+                    try {
+                      const res = await fetch(`/api/ayrshare-user-info?profileKey=${encodeURIComponent(profileKey!)}`);
+                      const json = await res.json();
+                      if (res.ok && json?.data) {
+                        result = json.data;
+                      }
+                    } catch {}
+                    if (!result) {
+                      result = await getConnectedAccounts(profileKey!);
+                    }
                     setSuccess(`✅ API Test Success! Response: ${JSON.stringify(result, null, 2)}`);
                   } catch (error) {
                     setError(`❌ API Test Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -814,7 +885,7 @@ export default function AccountLinkingManager({
                       if (!account) return null; // Skip null/undefined accounts
                       
                       const platformKey = account.platform === 'x' ? 'twitter' : account.platform;
-                      const isConnected = connectedAccounts.includes(platformKey);
+                      const isConnected = account.isLinked || connectedAccounts.includes(platformKey);
                       
                       return (
                         <Card key={account.id || index} className="p-3">
@@ -827,7 +898,7 @@ export default function AccountLinkingManager({
                                 height={20} 
                               />
                               <div>
-                                <Text size="2" weight="medium">{account.name || 'Unknown Account'}</Text>
+                                <Text size="2" weight="medium">{account.displayName || account.username || account.name || 'Unknown Account'}</Text>
                                 <Text size="1" color="gray" className="block capitalize">
                                   {platformLabels[account.platform as keyof typeof platformLabels] || account.platform}
                                 </Text>
@@ -895,6 +966,17 @@ export default function AccountLinkingManager({
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />
                   Manage in Ayrshare
+                </Button>
+                <Button 
+                  size="1" 
+                  variant="outline"
+                  className="ml-2"
+                  onClick={() => {
+                    setNewProfileKey("");
+                    setShowChangeProfileKey(true);
+                  }}
+                >
+                  Change Profile Key
                 </Button>
               </div>
             </div>
@@ -971,6 +1053,64 @@ export default function AccountLinkingManager({
               </div>
             </div>
           )}
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Change Profile Key Dialog */}
+      <Dialog.Root open={showChangeProfileKey} onOpenChange={setShowChangeProfileKey}>
+        <Dialog.Content className="max-w-md">
+          <Dialog.Title className="flex items-center gap-2">
+            <Settings className="w-5 h-5 text-blue-500" />
+            Change Ayrshare Profile Key
+          </Dialog.Title>
+          <div className="space-y-4 mt-4">
+            <Text size="2" className="block">Paste the new Ayrshare Profile Key for this account group.</Text>
+            <Input
+              value={newProfileKey}
+              onChange={(e) => setNewProfileKey(e.target.value.trim())}
+              placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="soft" onClick={() => setShowChangeProfileKey(false)} disabled={isSavingProfileKey}>
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!newProfileKey) {
+                    setError('Please enter a Profile Key');
+                    return;
+                  }
+                  if (!/^[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}$/i.test(newProfileKey)) {
+                    setError('Invalid profile key format. Expected XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX');
+                    return;
+                  }
+                  setIsSavingProfileKey(true);
+                  setError(null);
+                  try {
+                    // Verify the profile key via Ayrshare /user
+                    const userData = await getConnectedAccounts(newProfileKey);
+                    // Save into Jazz
+                    if (accountGroup) {
+                      accountGroup.ayrshareProfileKey = newProfileKey;
+                      if (userData?.title) {
+                        accountGroup.ayrshareProfileTitle = userData.title;
+                      }
+                    }
+                    setSuccess('✅ Profile key updated. Refreshing connected accounts...');
+                    setShowChangeProfileKey(false);
+                    await refreshConnectedAccounts();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Failed to verify profile key');
+                  } finally {
+                    setIsSavingProfileKey(false);
+                  }
+                }}
+                disabled={isSavingProfileKey}
+              >
+                {isSavingProfileKey ? 'Saving...' : 'Verify & Save'}
+              </Button>
+            </div>
+          </div>
         </Dialog.Content>
       </Dialog.Root>
     </>
