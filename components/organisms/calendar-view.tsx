@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, Badge } from "@radix-ui/themes";
 import { ChevronLeft, ChevronRight, Calendar, Clock, Edit3, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { getPostStatus } from "@/utils/postValidation";
 
 interface Post {
   id: string;
@@ -91,7 +92,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
     const dateStr = date.toDateString();
     return posts.filter(post => {
       // Extract status and dates from Jazz post structure or legacy post
-      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      const postStatus = getPostStatus(post);
       
       let postDate;
       if (postStatus === 'scheduled') {
@@ -239,7 +240,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
                                    post.variants?.base?.text || 
                                    post.content || 
                                    "No content";
-                  const postStatus = post.variants?.base?.status || post.status || 'draft';
+                  const postStatus = getPostStatus(post);
                   const postPlatforms = post.platforms || ['instagram']; // Default to instagram if no platforms
                   
                   return (

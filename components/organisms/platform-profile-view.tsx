@@ -12,6 +12,7 @@ import InstagramProfileView from "./instagram-profile-view";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import { PlatformAnalyticsDashboard } from "@/components/organisms/platform-analytics-dashboard";
 import { PlatformFeedView } from "@/components/organisms/platform-feed-view";
+import { getPostStatus } from "@/utils/postValidation";
 
 // Import the working extractMediaUrl function approach
 const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
@@ -187,7 +188,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
     .filter(post => {
       if (statusFilter === 'all') return true;
       // Extract status from Jazz post structure
-      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      const postStatus = getPostStatus(post);
       return postStatus === statusFilter;
     })
     .sort((a, b) => {
@@ -212,7 +213,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
     
     platformPosts.forEach(post => {
       // Extract status from Jazz post structure or legacy post
-      const postStatus = post.variants?.base?.status || post.status || 'draft';
+      const postStatus = getPostStatus(post);
       
       counts.all++;
       if (postStatus === 'published') counts.published++;
@@ -320,7 +321,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                                  post.title || 
                                  "Post content";
                 
-                const postStatus = post.variants?.base?.status || post.status || 'draft';
+                const postStatus = getPostStatus(post);
                 const firstMediaItem = post.variants?.base?.media?.[0];
                 
                 return (

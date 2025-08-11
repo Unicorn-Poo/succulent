@@ -2,6 +2,7 @@
 
 import { Heart, MessageCircle, Play, Eye, Plus } from "lucide-react";
 import Link from "next/link";
+import { getPostStatus } from "@/utils/postValidation";
 
 interface Post {
   id: string;
@@ -62,7 +63,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
   };
 
   const getStatusOverlay = (post: Post) => {
-    if (post.status === 'draft') {
+    const postStatus = getPostStatus(post);
+    if (postStatus === 'draft') {
       return (
         <div className="absolute inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center">
           <span className="text-white text-xs font-medium px-2 py-1 bg-gray-700 rounded">
@@ -71,7 +73,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
         </div>
       );
     }
-    if (post.status === 'scheduled') {
+    if (postStatus === 'scheduled') {
       return (
         <div className="absolute inset-0 bg-lime-900 bg-opacity-60 flex items-center justify-center">
           <span className="text-white text-xs font-medium px-2 py-1 bg-lime-700 rounded">
@@ -144,7 +146,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <div className="flex items-center gap-4 text-white">
-                        {post.engagement && post.status === 'published' && (
+                        {post.engagement && getPostStatus(post) === 'published' && (
                           <>
                             <div className="flex items-center gap-1">
                               <Heart className="w-5 h-5 fill-current" />
@@ -252,8 +254,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                           <span className="text-gray-500">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</span>
                           <span className="text-gray-500">·</span>
                           <span className="text-sm text-gray-500">
-                            {post.status === 'published' ? 'published' : 
-                             post.status === 'scheduled' ? 'scheduled' : 'draft'}
+                            {getPostStatus(post)}
                           </span>
                         </div>
                         
@@ -262,7 +263,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                         </div>
                         
                         {/* Engagement */}
-                        {post.engagement && post.status === 'published' && (
+                        {post.engagement && getPostStatus(post) === 'published' && (
                           <div className="flex items-center space-x-6 text-sm text-gray-500">
                             <div className="flex items-center space-x-1">
                               <MessageCircle className="w-4 h-4" />
@@ -282,13 +283,16 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                     </div>
                     
                     {/* Status Overlay */}
-                    {(post.status === 'draft' || post.status === 'scheduled') && (
-                      <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                        post.status === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-lime-100 text-lime-700'
-                      }`}>
-                        {post.status.toUpperCase()}
-                      </div>
-                    )}
+                    {(() => {
+                      const postStatus = getPostStatus(post);
+                      return (postStatus === 'draft' || postStatus === 'scheduled') && (
+                        <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                          postStatus === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-lime-100 text-lime-700'
+                        }`}>
+                          {postStatus.toUpperCase()}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
               );
@@ -392,15 +396,14 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                           </h4>
                           <p className="text-sm text-gray-500">{account.name}</p>
                           <div className="flex items-center gap-1 text-xs text-gray-500">
-                            {post.engagement && post.status === 'published' && (
+                            {post.engagement && getPostStatus(post) === 'published' && (
                               <>
                                 <span>{formatNumber(post.engagement.likes * 20)} views</span>
                                 <span>•</span>
                               </>
                             )}
                             <span>
-                              {post.status === 'published' ? 'published' : 
-                               post.status === 'scheduled' ? 'scheduled' : 'draft'}
+                              {getPostStatus(post)}
                             </span>
                           </div>
                         </div>

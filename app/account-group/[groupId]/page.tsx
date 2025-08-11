@@ -21,6 +21,7 @@ import { Post, PostVariant, MediaItem, ReplyTo, PlatformAccount, AnalyticsDataPo
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
+import { getPostStatus } from "@/utils/postValidation";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -326,9 +327,9 @@ export default function AccountGroupPage() {
 											{(() => {
 												const filterCounts = {
 													all: posts.length,
-													draft: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'draft').length,
-													scheduled: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'scheduled').length,
-													published: posts.filter(p => (p.variants?.base?.status || p.status || 'draft') === 'published').length
+													draft: posts.filter(p => getPostStatus(p) === 'draft').length,
+													scheduled: posts.filter(p => getPostStatus(p) === 'scheduled').length,
+													published: posts.filter(p => getPostStatus(p) === 'published').length
 												};
 												return `${filterCounts[postsFilter]} ${postsFilter === 'all' ? 'total' : postsFilter} post${filterCounts[postsFilter] !== 1 ? 's' : ''}`;
 											})()}
@@ -362,7 +363,7 @@ export default function AccountGroupPage() {
 									{posts
 										.filter(post => {
 											if (postsFilter === 'all') return true;
-											const postStatus = post.variants?.base?.status || post.status || 'draft';
+											const postStatus = getPostStatus(post);
 											return postStatus === postsFilter;
 										})
 										.map((post: any, index: number) => {
@@ -374,7 +375,7 @@ export default function AccountGroupPage() {
 															  post.variants?.base?.text || 
 															  post.content || 
 															  "";
-											const postStatus = post.variants?.base?.status || post.status || 'draft';
+											const postStatus = getPostStatus(post);
 											const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
 											const hasMedia = post.variants?.base?.media && post.variants.base.media.length > 0;
 											
@@ -447,7 +448,7 @@ export default function AccountGroupPage() {
 								{/* Empty state for filtered results */}
 								{posts.filter(post => {
 									if (postsFilter === 'all') return true;
-									const postStatus = post.variants?.base?.status || post.status || 'draft';
+									const postStatus = getPostStatus(post);
 									return postStatus === postsFilter;
 								}).length === 0 && postsFilter !== 'all' && (
 									<div className="text-center py-8">

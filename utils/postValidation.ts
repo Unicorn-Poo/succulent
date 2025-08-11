@@ -115,3 +115,50 @@ export const validatePostContent = (content: string, platform: string) => {
 		errors
 	};
 }; 
+
+/**
+ * Extract post status from platform variants, falling back to legacy fields
+ * @param post - Post object with variants
+ * @returns The actual post status, with proper fallback logic
+ */
+export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
+  // First check if there's a direct status field (legacy posts)
+  if (post.status && ['draft', 'scheduled', 'published'].includes(post.status)) {
+    return post.status;
+  }
+
+  // Check variants for status - look in all platform variants
+  if (post.variants) {
+    // Check common variant names first
+    const commonVariants = ['base', 'instagram', 'x', 'twitter', 'facebook', 'linkedin', 'youtube', 'tiktok'];
+    
+    for (const variantKey of commonVariants) {
+      const variant = post.variants[variantKey];
+      if (variant?.status && ['draft', 'scheduled', 'published'].includes(variant.status)) {
+        return variant.status;
+      }
+    }
+    
+    // If not found in common variants, check all variants
+    for (const [variantKey, variant] of Object.entries(post.variants)) {
+      if (variant && typeof variant === 'object' && (variant as any).status) {
+        const status = (variant as any).status;
+        if (['draft', 'scheduled', 'published'].includes(status)) {
+          return status;
+        }
+      }
+    }
+  }
+
+  // Final fallback - if post has publishedAt or scheduledFor, it's likely not a draft
+  if (post.publishedAt || (post.variants && Object.values(post.variants).some((v: any) => v?.publishedAt))) {
+    return 'published';
+  }
+  
+  if (post.scheduledFor || (post.variants && Object.values(post.variants).some((v: any) => v?.scheduledFor))) {
+    return 'scheduled';
+  }
+
+  // Only default to draft if we truly can't determine the status
+  return 'draft';
+} 
