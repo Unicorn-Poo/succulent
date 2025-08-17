@@ -8,7 +8,7 @@ export function JazzAndAuth({ children }: { children: React.ReactNode }) {
   return (
     <JazzReactProvider
       sync={{
-        peer: "wss://cloud.jazz.tools/?key=succulent@sammii.dev",
+        peer: "wss://cloud.jazz.tools/?key=" + process.env.NEXT_PUBLIC_JAZZ_API_KEY,
       }}
       AccountSchema={MyAppAccount}
     >
