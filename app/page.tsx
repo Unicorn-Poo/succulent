@@ -12,6 +12,7 @@ import { AccountGroup, PlatformAccount, MyAppAccount, Post, AnalyticsDataPoint }
 import { useAccount } from "jazz-react";
 import { Group } from "jazz-tools";
 import { co } from "jazz-tools";
+import { AccountRoot } from "@/app/schema";
 
 // =============================================================================
 // 🏢 ACCOUNT GROUP MANAGEMENT (JAZZ INTEGRATED)
@@ -132,78 +133,103 @@ export default function HomePage() {
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
   const [showCreateAccountGroupDialog, setShowCreateAccountGroupDialog] = useState(false);
-  const [jazzInitialized, setJazzInitialized] = useState(false);
-  const [jazzError, setJazzError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isCreatingAccountGroup, setIsCreatingAccountGroup] = useState(false);
+  const [accountGroupsUpdateTrigger, setAccountGroupsUpdateTrigger] = useState(0);
   
   // =============================================================================
   // 🎵 JAZZ ACCOUNT INTEGRATION (WITH PROPER LOADING)
   // =============================================================================
 
-  // Get the account with basic loading - let migration complete first
-  const { me } = useAccount(MyAppAccount);
+  // Get the account with proper loading configuration
+  const { me } = useAccount(MyAppAccount, { 
+    resolve: {
+      root: {
+        accountGroups: { $each: true }
+      },
+      profile: true
+    }
+  });
 
-  // Debug logging and manual root initialization
+  // Debug logging for account state
   useEffect(() => {
-    const initializeJazzAccount = async () => {
-      if (!me) return;
-      
-      // Store account ID in localStorage for debugging
-      localStorage.setItem('lastJazzAccountId', me.id);
-      const previousAccountId = localStorage.getItem('previousJazzAccountId');
-      localStorage.setItem('previousJazzAccountId', me.id);
-      
-      // Debug account groups
-      console.log('🎵 Jazz Account Debug:', {
+    if (me) {
+      console.log('🎵 Jazz Account State:', {
         hasMe: !!me,
         hasRoot: !!me.root,
         hasAccountGroups: !!me.root?.accountGroups,
         accountGroupsLength: me.root?.accountGroups?.length || 0,
-        accountGroupsType: typeof me.root?.accountGroups,
-        accountGroups: me.root?.accountGroups
-      });
-      
-             // Check initialization status (migration should handle creation)
-       if (me.root && me.root.accountGroups) {
-         console.log('✅ Jazz account fully initialized');
-         setJazzInitialized(true);
-         setJazzError(null);
-       } else {
-         console.log('⏳ Jazz account still initializing...', {
-           hasRoot: !!me.root,
-           hasAccountGroups: !!me.root?.accountGroups
-         });
-         
-         // Wait a bit longer for migration to complete
-         setTimeout(() => {
-           if (me.root && me.root.accountGroups) {
-             setJazzInitialized(true);
-             setJazzError(null);
-           } else {
-             setJazzError('Jazz account initialization timed out. Try refreshing the page.');
-           }
-         }, 5000);
-       }
-    };
-    
-    initializeJazzAccount();
-  }, [me]);
-  
-  // Additional effect to monitor account groups changes
-  useEffect(() => {
-    if (me?.root?.accountGroups) {
-      console.log('📊 Account Groups Array Changed:', {
-        length: me.root.accountGroups.length,
-        groups: me.root.accountGroups.map((g: any, i: number) => ({
-          index: i,
-          id: g?.id,
-          name: g?.name,
-          accountsCount: g?.accounts?.length || 0,
-          postsCount: g?.posts?.length || 0
-        }))
+        accountGroups: me.root?.accountGroups,
+        rootOwner: me.root?._owner?.id,
+        accountOwner: me.id
       });
     }
-  }, [me?.root?.accountGroups]);
+  }, [me, accountGroupsUpdateTrigger]);
+
+  // Debug function to check and fix root ownership
+  const debugRootOwnership = () => {
+    if (!me || !me.root) {
+      console.log('❌ No account or root available for debugging');
+      return;
+    }
+
+    console.log('🔍 Debugging root ownership...');
+    console.log('Account ID:', me.id);
+    console.log('Root owner:', me.root._owner?.id);
+    console.log('Account groups list owner:', me.root.accountGroups?._owner?.id);
+    console.log('Account groups count:', me.root.accountGroups?.length || 0);
+    
+    // Check if ownership is correct
+    if (me.root._owner?.id === me.id) {
+      console.log('✅ Root ownership is correct');
+    } else {
+      console.log('❌ Root ownership is incorrect - should be account ID');
+    }
+    
+    if (me.root.accountGroups?._owner?.id === me.id) {
+      console.log('✅ Account groups list ownership is correct');
+    } else {
+      console.log('❌ Account groups list ownership is incorrect - should be account ID');
+    }
+  };
+
+  // Function to attempt to fix ownership issues
+  const fixRootOwnership = async () => {
+    if (!me) {
+      console.log('❌ No account available for fixing');
+      return;
+    }
+
+    console.log('🔧 Attempting to fix root ownership...');
+    
+    try {
+      // Check if we need to recreate the root
+      if (me.root && me.root._owner?.id !== me.id) {
+        console.log('🔄 Recreating root with correct ownership...');
+        
+        // Create new root with account as owner
+        const newRoot = AccountRoot.create({
+          accountGroups: co.list(AccountGroup).create([], { owner: me }),
+        }, { owner: me });
+        
+        // Replace the old root
+        me.root = newRoot;
+        
+        console.log('✅ Root ownership fixed');
+        console.log('New root owner:', me.root._owner?.id);
+        
+        // Force a re-render
+        setAccountGroupsUpdateTrigger(prev => prev + 1);
+        
+        alert('Root ownership has been fixed! Please try creating an account group again.');
+      } else {
+        console.log('✅ Root ownership is already correct');
+        alert('Root ownership is already correct. No fix needed.');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fix root ownership:', error);
+      alert(`Failed to fix root ownership: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   const handleCreatePost = async () => {
     // Navigate to the demo account group page
@@ -223,6 +249,7 @@ export default function HomePage() {
     ayrshareProfileKey?: string;
     ayrshareProfileTitle?: string;
   }) => {
+    setIsCreatingAccountGroup(true);
     console.log('🎯 SAVING ACCOUNT GROUP - START');
     console.log('Jazz Account Group data received:', groupData);
     console.log('Jazz account connected:', !!me);
@@ -230,19 +257,30 @@ export default function HomePage() {
     console.log('Jazz root exists:', !!me?.root);
     console.log('Current account groups before save:', me?.root?.accountGroups?.length || 0);
     
-    if (!me || !me.root || !me.root.accountGroups) {
-      console.error('❌ Jazz account not properly initialized', {
-        hasMe: !!me,
-        hasRoot: !!me?.root,
-        hasAccountGroups: !!me?.root?.accountGroups
-      });
-      setError('Jazz account not properly initialized. Please refresh the page and try again.');
+    // Check if Jazz system is ready
+    if (!me) {
+      console.error('❌ No Jazz account available');
+      alert('Jazz account not available. Please wait for the system to initialize.');
+      setIsCreatingAccountGroup(false);
+      return;
+    }
+    
+    if (!me.root) {
+      console.error('❌ Jazz account root not initialized');
+      alert('Jazz account root not initialized yet. Please wait for the system to be ready.');
+      setIsCreatingAccountGroup(false);
+      return;
+    }
+    
+    if (!me.root.accountGroups) {
+      console.error('❌ Jazz account groups list not ready');
+      alert('Jazz account groups list not ready yet. Please wait for the system to be ready.');
+      setIsCreatingAccountGroup(false);
       return;
     }
 
     try {
-
-      // to manage permissions
+      // Create a new group to manage permissions for the account group itself
       const accountGroupGroup = Group.create();
       
       // Create Jazz AccountGroup with properly initialized empty co-lists
@@ -257,6 +295,9 @@ export default function HomePage() {
         ayrshareProfileKey: groupData.ayrshareProfileKey,
         ayrshareProfileTitle: groupData.ayrshareProfileTitle,
       }, { owner: accountGroupGroup });
+
+      console.log('✅ Jazz AccountGroup created:', jazzAccountGroup.id);
+      console.log('✅ AccountGroup owner:', accountGroupGroup.id);
 
       // Add accounts to the collaborative list after creation
       groupData.accounts.forEach((accountData, index) => {
@@ -282,14 +323,43 @@ export default function HomePage() {
 
       console.log('🔧 Adding account group to root...');
       console.log('Root account groups before push:', me.root.accountGroups?.length || 0);
+      console.log('Root owner:', me.root._owner?.id);
       
-      // Add the account group to the root
+      // Ensure the account groups list exists and add the new group
       if (me.root.accountGroups) {
+        // Add the account group to the root's account groups list
         me.root.accountGroups.push(jazzAccountGroup);
+        console.log('✅ Account group added to root');
+        console.log('Root account groups after push:', me.root.accountGroups?.length || 0);
+        
+        // Verify the account group is actually in the list
+        const foundGroup = me.root.accountGroups.find((group: any) => group?.id === jazzAccountGroup.id);
+        console.log('🔍 Verification - Group found in root:', !!foundGroup);
+        console.log('🔍 Verification - Group ID match:', foundGroup?.id === jazzAccountGroup.id);
+        
+        if (!foundGroup) {
+          throw new Error('Account group was not properly added to root');
+        }
+
+        // Additional verification - check if the group persists after a small delay
+        console.log('⏳ Verifying persistence...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const persistenceCheck = me.root.accountGroups.find((group: any) => group?.id === jazzAccountGroup.id);
+        console.log('🔍 Persistence check - Group still in root:', !!persistenceCheck);
+        
+        if (!persistenceCheck) {
+          console.warn('⚠️ Account group was not persistent - ownership issue suspected');
+          console.log('🔍 Debug info:', {
+            accountId: me.id,
+            rootOwner: me.root._owner?.id,
+            accountGroupsOwner: me.root.accountGroups._owner?.id,
+            jazzAccountGroupOwner: jazzAccountGroup._owner?.id
+          });
+        }
+      } else {
+        throw new Error('Account groups list is not available');
       }
-      
-      console.log('✅ Account group added to root');
-      console.log('Root account groups after push:', me.root.accountGroups?.length || 0);
 
       console.log('✅ Jazz Account Group created successfully!');
       console.log('Jazz Account Group ID:', jazzAccountGroup.id);
@@ -299,16 +369,42 @@ export default function HomePage() {
       console.log('⏳ Waiting for Jazz sync...');
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Check if data is still there after sync wait
-      console.log('🔄 Post-sync check - Account groups count:', me?.root?.accountGroups?.length || 0);
+      // Verify the data was saved
+      const finalCount = me.root.accountGroups?.length || 0;
+      console.log('🔄 Final account groups count:', finalCount);
       
-      // Force a small delay to let Jazz sync
-      setTimeout(() => {
-        console.log('🔄 Post-save check - Account groups count:', me?.root?.accountGroups?.length || 0);
-      }, 1000);
+      // Log all account groups for debugging
+      if (me.root.accountGroups) {
+        console.log('📋 All account groups after creation:', me.root.accountGroups.map((group: any, index: number) => ({
+          index,
+          id: group?.id,
+          name: group?.name,
+          accountsCount: group?.accounts?.length || 0,
+          postsCount: group?.posts?.length || 0,
+          owner: group?._owner?.id
+        })));
+      }
+      
+      if (finalCount > 0) {
+        console.log('✅ Account group successfully saved to Jazz!');
+        alert(`Account group "${groupData.name}" created successfully!`);
+        
+        // Force a re-render by updating state
+        setAccountGroupsUpdateTrigger(prev => prev + 1);
+        
+        setTimeout(() => {
+          console.log('🔄 Post-alert account groups count:', me.root.accountGroups?.length || 0);
+        }, 100);
+      } else {
+        console.error('❌ Account group was not saved properly');
+        alert('Account group was created but not saved properly. Please try again.');
+      }
       
     } catch (error) {
       console.error('❌ Failed to create Jazz account group:', error);
+      alert(`Failed to create account group: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingAccountGroup(false);
     }
     
     // Close dialog
@@ -338,15 +434,25 @@ export default function HomePage() {
                 </Button>
               </Link>
                               <Button 
-                  onClick={() => {
-                    setShowCreateAccountGroupDialog(true);
-                  }}
-                  intent="primary"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Account Group
-                </Button>
+                onClick={() => {
+                  setShowCreateAccountGroupDialog(true);
+                }}
+                intent="primary"
+                className="flex items-center gap-2"
+                disabled={isCreatingAccountGroup}
+              >
+                {isCreatingAccountGroup ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Create Account Group
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -360,6 +466,64 @@ export default function HomePage() {
                   console.log('Migration completed!');
                 }}
               />
+            </div>
+          )}
+
+          {/* Jazz System Status */}
+          {me && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-blue-800">
+                    Jazz System Status
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="soft" 
+                    size="1"
+                    onClick={debugRootOwnership}
+                  >
+                    🔍 Debug
+                  </Button>
+                  {me.root && me.root._owner?.id !== me.id && (
+                    <Button 
+                      variant="soft" 
+                      color="red"
+                      size="1"
+                      onClick={fixRootOwnership}
+                    >
+                      🔧 Fix Ownership
+                    </Button>
+                  )}
+                  <Button 
+                    variant="soft" 
+                    size="1"
+                    onClick={() => setAccountGroupsUpdateTrigger(prev => prev + 1)}
+                  >
+                    🔄 Refresh
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-blue-700">
+                <p>✅ Account connected: {me.id}</p>
+                <p>✅ Root initialized: {me.root ? 'Yes' : 'No'}</p>
+                <p>✅ Root owner: {me.root?._owner?.id === me.id ? 'Account' : 'Other'}</p>
+                <p className="font-medium">📊 Account groups: {me.root?.accountGroups?.length || 0}</p>
+                {isCreatingAccountGroup && (
+                  <p className="text-blue-600 font-medium">🔄 Creating account group...</p>
+                )}
+                {!me.root && (
+                  <p className="text-orange-600 font-medium">⚠️ Account root not initialized yet</p>
+                )}
+                {me.root && !me.root.accountGroups && (
+                  <p className="text-orange-600 font-medium">⚠️ Account groups list not ready yet</p>
+                )}
+                {me.root && me.root._owner?.id !== me.id && (
+                  <p className="text-red-600 font-medium">🚨 Root ownership issue detected!</p>
+                )}
+              </div>
             </div>
           )}
 
@@ -479,11 +643,15 @@ export default function HomePage() {
             <button
               onClick={() => setShowCreateAccountGroupDialog(true)}
               className="bg-white rounded-lg shadow-sm border border-gray-200 border-dashed p-6 hover:shadow-md hover:border-lime-300 transition-all text-center"
+              disabled={!me?.root?.accountGroups}
             >
               <Plus className="w-8 h-8 text-lime-600 mx-auto mb-2" />
               <h3 className="font-medium text-gray-900 mb-1">Create Account Group</h3>
               <p className="text-sm text-gray-500">
-                Connect your social media accounts
+                {me?.root?.accountGroups 
+                  ? "Connect your social media accounts"
+                  : "Loading Jazz system..."
+                }
               </p>
             </button>
           </div>
@@ -494,29 +662,6 @@ export default function HomePage() {
               <p className="text-yellow-800">
                 🎵 Connecting to Jazz collaborative system...
               </p>
-            </div>
-          )}
-          
-          {me && !jazzInitialized && !jazzError && (
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800">
-                🔧 Initializing Jazz account storage...
-              </p>
-            </div>
-          )}
-          
-          {jazzError && (
-            <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <div>
-                  <p className="text-red-800 font-medium">Jazz Initialization Error</p>
-                  <p className="text-red-700 text-sm mt-1">{jazzError}</p>
-                  <p className="text-red-600 text-xs mt-2">
-                    Try refreshing the page. If the problem persists, check the browser console for more details.
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 
@@ -575,11 +720,11 @@ export default function HomePage() {
           </Dialog.Root>
 
           {/* Account Group Creation Dialog */}
-          <AccountGroupCreation
+          {me && <AccountGroupCreation
             isOpen={showCreateAccountGroupDialog}
             onOpenChange={setShowCreateAccountGroupDialog}
             onSave={handleSaveAccountGroup}
-          />
+          />}
         </div>
       </div>
     </div>

@@ -32,6 +32,7 @@ export default function RootLayout({
       <body>
         <JazzProvider
           sync={{ peer: "wss://cloud.jazz.tools" }}
+          AccountSchema={MyAppAccount}
         >
           <Theme>
             <div className="min-h-screen bg-gray-50">

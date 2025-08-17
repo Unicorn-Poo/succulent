@@ -742,56 +742,63 @@ export const MyAppAccount = co.account({
   root: AccountRoot,
   profile: SucculentProfile,
 }).withMigration(async (account, creationProps?: { name: string }) => {
-  console.log('🎵 Jazz account migration starting...', {
-    accountId: account.id,
-    hasRoot: !!account.root,
-    hasProfile: !!account.profile,
-    creationProps
-  });
+  try {
+    console.log('🎵 Jazz account migration starting...', {
+      accountId: account.id,
+      hasRoot: !!account.root,
+      hasProfile: !!account.profile,
+      creationProps
+    });
 
-  // Create root if it doesn't exist
-  if (!account.root) {
-    console.log('🔧 Creating account root...');
-    try {
-      const rootGroup = Group.create();
-      account.root = AccountRoot.create({
-        accountGroups: co.list(AccountGroup).create([], rootGroup),
-      }, rootGroup);
-      console.log('✅ Account root created successfully');
-    } catch (error) {
-      console.error('❌ Failed to create account root:', error);
-      throw error;
+    // Create root if it doesn't exist
+    if (account.root === undefined) {
+      console.log('🔧 Creating account root...');
+      try {
+        // Create the root with the account as the owner
+        account.root = AccountRoot.create({
+          accountGroups: co.list(AccountGroup).create([], { owner: account }),
+        }, { owner: account });
+        console.log('✅ Account root created successfully');
+        console.log('✅ Root owner:', account.id);
+      } catch (error) {
+        console.error('❌ Failed to create account root:', error);
+        throw error;
+      }
+    } else {
+      console.log('ℹ️ Root already exists');
     }
-  } else {
-    console.log('ℹ️ Root already exists');
-  }
 
-  // Create profile if it doesn't exist
-  if (!account.profile) {
-    console.log('🔧 Creating account profile...');
-    try {
-      const profileGroup = Group.create();
-      profileGroup.makePublic();
-      account.profile = SucculentProfile.create({
-        name: creationProps?.name ?? "New user",
-        collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
-        ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
-      }, profileGroup);
-      console.log('✅ Account profile created successfully');
-    } catch (error) {
-      console.error('❌ Failed to create account profile:', error);
-      throw error;
+    // Create profile if it doesn't exist
+    if (account.profile === undefined) {
+      console.log('🔧 Creating account profile...');
+      try {
+        const profileGroup = Group.create();
+        profileGroup.makePublic();
+        account.profile = SucculentProfile.create({
+          name: creationProps?.name ?? "New user",
+          collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
+          ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
+        }, profileGroup);
+        console.log('✅ Account profile created successfully');
+      } catch (error) {
+        console.error('❌ Failed to create account profile:', error);
+        throw error;
+      }
+    } else {
+      console.log('ℹ️ Profile already exists');
     }
-  } else {
-    console.log('ℹ️ Profile already exists');
-  }
 
-  console.log('🔍 Migration completed. Final state:', {
-    hasRoot: !!account.root,
-    hasProfile: !!account.profile,
-    hasAccountGroups: account.root ? !!account.root.accountGroups : false,
-    accountGroupsLength: account.root?.accountGroups?.length || 0
-  });
+    console.log('🔍 Migration completed. Final state:', {
+      hasRoot: !!account.root,
+      hasProfile: !!account.profile,
+      hasAccountGroups: account.root ? !!account.root.accountGroups : false,
+      accountGroupsLength: account.root?.accountGroups?.length || 0,
+      rootOwner: account.root?._owner?.id
+    });
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    throw error;
+  }
 });
 
 export type MyAppAccount = co.loaded<typeof MyAppAccount>;
