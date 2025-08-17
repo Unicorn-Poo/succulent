@@ -5,7 +5,7 @@ import PostCreationComponent from "@/components/organisms/post-creation";
 import { PostFullyLoaded } from "@/app/schema";
 import { Button } from "@radix-ui/themes";
 import { Home, Users } from "lucide-react";
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 
 export default function PostPage() {

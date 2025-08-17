@@ -3,7 +3,7 @@
 import { Card, Text, Button, Badge, Tabs, Heading, Flex, Box, Container } from "@radix-ui/themes";
 import { Lock, Star, Zap, Crown, TrendingUp, Users, Database, BarChart3, Shield, Calendar, Package } from "lucide-react";
 import { useState } from "react";
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import { 
   PaywallBlock, 

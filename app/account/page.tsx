@@ -1,6 +1,6 @@
 'use client';
 
-import { useAccount } from 'jazz-react';
+import { useAccount } from 'jazz-tools/react';
 import { MyAppAccount, MyAppAccountLoaded } from '@/app/schema';
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Flex } from '@radix-ui/themes';
 import { User, CreditCard, Settings, BarChart3, Shield, Bell } from 'lucide-react';
@@ -13,7 +13,7 @@ import { useState } from 'react';
 // =============================================================================
 
 export default function AccountDashboard() {
-  const { me } = useAccount<MyAppAccount>();
+  const { me } = useAccount(MyAppAccount);
   
   if (!me) {
     return (

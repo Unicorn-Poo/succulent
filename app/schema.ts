@@ -80,7 +80,7 @@ export const PlatformAccount = co.map({
 	
 	// Social Account Details
 	avatar: z.optional(z.string()), // URL fallback for compatibility
-	avatarImage: z.optional(co.fileStream()), // Jazz FileStream for proper avatar storage
+	avatarImage: co.optional(co.fileStream()), // Jazz FileStream for proper avatar storage
 	username: z.optional(z.string()),
 	displayName: z.optional(z.string()),
 	url: z.optional(z.string()),
@@ -90,7 +90,7 @@ export const PlatformAccount = co.map({
 	lastError: z.optional(z.string()),
 	
 	// 📊 ANALYTICS DATA STORAGE
-	currentAnalytics: z.optional(CurrentAnalytics),
+	currentAnalytics: co.optional(CurrentAnalytics),
 	historicalAnalytics: co.list(AnalyticsDataPoint),
 	
 	// Analytics settings
@@ -122,16 +122,16 @@ export const ReplyTo = co.map({
 export const ImageMedia = co.map({
 	type: z.literal("image"),
 	image: co.fileStream(),
-	alt: z.optional(co.plainText()),
+	alt: co.optional(co.plainText()),
 });
 
 export const VideoMedia = co.map({
 	type: z.literal("video"),
 	video: co.fileStream(),
-	alt: z.optional(co.plainText()),
+	alt: co.optional(co.plainText()),
 });
 
-export const MediaItem = z.discriminatedUnion("type", [ImageMedia, VideoMedia]);
+export const MediaItem = co.discriminatedUnion("type", [ImageMedia, VideoMedia]);
 
 // Post performance tracking schema
 export const PostPerformance = co.map({
@@ -179,7 +179,7 @@ export const PostVariant = co.map({
 	edited: z.boolean(),
 	lastModified: z.optional(z.string()),
 	// Performance tracking
-	performance: z.optional(PostPerformance),
+	performance: co.optional(PostPerformance),
 	// Ayrshare integration
 	ayrsharePostId: z.optional(z.string()),
 	socialPostUrl: z.optional(z.string()),
@@ -393,7 +393,7 @@ export const GelatoCredentials = co.map({
 	// Created products tracking
 	createdProducts: co.list(GelatoProduct),
 	// Shopify integration
-	shopifyCredentials: z.optional(ShopifyCredentials),
+	shopifyCredentials: co.optional(ShopifyCredentials),
 	// Auto-creation settings
 	autoCreateOnPublish: z.optional(z.boolean()),
 });
@@ -512,13 +512,13 @@ export const AccountGroup = co.map({
 	ayrshareProfileTitle: z.optional(z.string()),
 	
 	// Gelato Integration (per account group)
-	gelatoCredentials: z.optional(GelatoCredentials),
+	gelatoCredentials: co.optional(GelatoCredentials),
 	
 	// Prodigi Integration (per account group)
-	prodigiCredentials: z.optional(ProdigiCredentials),
+	prodigiCredentials: co.optional(ProdigiCredentials),
 	
 	// External Store Integration (per account group)
-	externalStore: z.optional(ExternalStore),
+	externalStore: co.optional(ExternalStore),
 	
 	// Account Group Settings
 	settings: z.optional(z.object({
@@ -596,10 +596,10 @@ export const Subscription = co.map({
 	status: z.enum(["active", "canceled", "past_due", "unpaid", "incomplete", "trialing"]),
 	startDate: z.date(),
 	endDate: z.optional(z.date()),
-	billing: z.optional(SubscriptionBilling),
+	billing: co.optional(SubscriptionBilling),
 	usage: SubscriptionUsage,
 	limits: SubscriptionLimits,
-	trial: z.optional(SubscriptionTrial),
+	trial: co.optional(SubscriptionTrial),
 	grandfathered: z.boolean(),
 	adminOverride: z.optional(z.object({
 		tier: z.optional(SubscriptionTier),
@@ -679,15 +679,15 @@ export const SucculentProfile = co.profile({
   updatedAt: z.optional(z.date()),
   
   // Subscription information  
-  subscription: z.optional(Subscription),
+  subscription: co.optional(Subscription),
   
   // Admin privileges
   isSystemAdmin: z.optional(z.boolean()),
-  adminGroups: z.optional(co.list(CompanyAdminGroup)),
+  adminGroups: co.optional(co.list(CompanyAdminGroup)),
   
   // Collaboration
-  collaborationGroups: z.optional(co.list(CollaborationGroup)),
-  ownedGroups: z.optional(co.list(CollaborationGroup)),
+  collaborationGroups: co.optional(co.list(CollaborationGroup)),
+  ownedGroups: co.optional(co.list(CollaborationGroup)),
 });
 
 export type SucculentProfile = co.loaded<typeof SucculentProfile>;
@@ -802,3 +802,6 @@ export const MyAppAccount = co.account({
 });
 
 export type MyAppAccount = co.loaded<typeof MyAppAccount>;
+
+// TODO: this is used in a lot of places, what do we actually need loaded?
+export type MyAppAccountLoaded = MyAppAccount;

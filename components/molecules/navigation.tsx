@@ -1,15 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useAccount } from 'jazz-react';
-import { MyAppAccount, MyAppAccountLoaded } from '@/app/schema';
+import { useAccount } from 'jazz-tools/react';
+import { MyAppAccount } from '@/app/schema';
 import { Button } from '@/components/atoms/button';
 import { User, Settings, LogOut, Shield } from 'lucide-react';
 import { useSubscription } from '@/utils/subscriptionManager';
 import { useState } from 'react';
 
 export function Navigation() {
-  const { me, logOut } = useAccount<MyAppAccount>();
+  const { me, logOut } = useAccount(MyAppAccount);
   const [showDropdown, setShowDropdown] = useState(false);
   
   const { currentTier, currentPlan } = me ? useSubscription(me) : { currentTier: 'free', currentPlan: null };

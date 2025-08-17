@@ -3,18 +3,17 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Theme } from "@radix-ui/themes";
-import { JazzProvider } from "jazz-react";
-import { MyAppAccount } from "./schema";
 import { Navigation } from "@/components/molecules/navigation";
+import { JazzAndAuth } from "@/components/jazz-provider";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+	variable: "--font-geist-sans",
+	subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+	variable: "--font-geist-mono",
+	subsets: ["latin"],
 });
 
 // export const metadata: Metadata = {
@@ -23,27 +22,22 @@ const geistMono = Geist_Mono({
 // };
 
 export default function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body>
-        <JazzProvider
-          sync={{ peer: "wss://cloud.jazz.tools" }}
-          AccountSchema={MyAppAccount}
-        >
-          <Theme>
-            <div className="min-h-screen bg-gray-50">
-              <Navigation />
-              <main>
-                {children}
-              </main>
-            </div>
-          </Theme>
-        </JazzProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<body>
+				<Theme>
+					<JazzAndAuth>
+						<div className="min-h-screen bg-gray-50">
+							<Navigation />
+							<main>{children}</main>
+						</div>
+					</JazzAndAuth>
+				</Theme>
+			</body>
+		</html>
+	);
 }

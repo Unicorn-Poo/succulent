@@ -9,7 +9,7 @@ import Link from "next/link";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
 import ProfileMigrationManager from "@/components/organisms/profile-migration-manager";
 import { AccountGroup, PlatformAccount, MyAppAccount, Post, AnalyticsDataPoint } from "@/app/schema";
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { Group } from "jazz-tools";
 import { co } from "jazz-tools";
 import { AccountRoot } from "@/app/schema";

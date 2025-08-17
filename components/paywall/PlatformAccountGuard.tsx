@@ -1,6 +1,6 @@
 "use client";
 
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import { useSubscription } from "@/utils/subscriptionManager";
 import { Card, Text, Badge, Button } from "@radix-ui/themes";

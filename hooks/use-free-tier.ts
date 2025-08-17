@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAccount } from 'jazz-react';
+import { useAccount } from 'jazz-tools/react';
 import { MyAppAccount } from '@/app/schema';
 
 export function useFreeTier() {

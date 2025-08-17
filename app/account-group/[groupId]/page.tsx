@@ -7,7 +7,7 @@ import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, 
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { Home } from "lucide-react";
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import AnalyticsDashboard from "@/components/organisms/analytics-dashboard";
 import AccountGroupTools from "@/components/organisms/account-group-tools";

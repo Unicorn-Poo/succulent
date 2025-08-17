@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'jazz-react';
+import { useAccount } from 'jazz-tools/react';
 import { MyAppAccount, MyAppAccountLoaded } from '@/app/schema';
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Table, Dialog, TextField, Select } from '@radix-ui/themes';
 import { Shield, Users, Crown, Settings, BarChart3, UserPlus, AlertTriangle, Database } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useAdminGroups, useCollaboration } from '@/utils/adminGroupManager';
 // =============================================================================
 
 export default function CompanyDashboard() {
-  const { me } = useAccount<MyAppAccount>();
+  const { me } = useAccount(MyAppAccount);
   
   // SECURITY: Only allow specific creator emails
   const creatorEmails = ['sammi@succulent.app', 'admin@succulent.app'];

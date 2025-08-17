@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Table, Dialog, TextField, Select } from '@radix-ui/themes';
 import { Users, CreditCard, Settings, BarChart3, Shield, Search, Plus, Edit, Trash2, Download } from 'lucide-react';
-import { useAccount } from 'jazz-react';
+import { useAccount } from 'jazz-tools/react';
 import { MyAppAccount } from '@/app/schema';
 import { PLAN_DEFINITIONS, formatPrice } from '@/utils/subscriptionManager';
 
@@ -12,7 +12,7 @@ import { PLAN_DEFINITIONS, formatPrice } from '@/utils/subscriptionManager';
 // =============================================================================
 
 export default function AdminDashboard() {
-  const { me } = useAccount<MyAppAccount>();
+  const { me } = useAccount(MyAppAccount);
 
   // Check if user is admin (you would implement proper admin auth)
   const isAdmin = true; // Replace with actual admin check

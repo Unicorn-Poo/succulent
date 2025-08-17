@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dialog, TextField, Button, Select, Badge, Card, Text, Heading, Box, Flex } from "@radix-ui/themes";
 import { Plus, UserPlus, Settings, Mail, Copy, Check, X, Crown, Shield, Edit, Eye } from "lucide-react";
 import { AccountGroup, CollaboratorRole } from "@/app/schema";
-import { useAccount } from "jazz-react";
+import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import { co } from "jazz-tools";
 
