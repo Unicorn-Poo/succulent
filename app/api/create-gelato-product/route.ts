@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 
 export async function POST(request: NextRequest) {
 	try {
@@ -52,10 +53,22 @@ export async function POST(request: NextRequest) {
 					// Convert data URL to blob
 					const response = await fetch(dataUrl);
 					const blob = await response.blob();
+
+          // TODO: handle multiple variants and multiple image placeholders (print areas) per variant
+          const printArea = template.variants[0].imagePlaceholders[0];
+
+          const mmToInches = 0.0393701;
+          const dpi = 300;
+
+          const rescaled = await sharp(await blob.arrayBuffer()).resize(
+            printArea.width * mmToInches * dpi,
+            printArea.height * mmToInches * dpi, {
+            fit: "cover"
+          }).toFormat("png").toBuffer();
 					
 					// Upload to Gelato
 					const formData = new FormData();
-					formData.append('file', blob, 'image.jpg');
+					formData.append('file', new Blob([rescaled]), 'image.png');
 					
 					const uploadResponse = await fetch('https://ecommerce.gelatoapis.com/v1/files', {
 						method: 'POST',
