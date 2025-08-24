@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 		if (!response.ok) {
 			const errorText = await response.text();
 			let errorMessage = `Connection failed: ${response.status}`;
-			let debugInfo: any = {
+			const debugInfo: any = {
 				status: response.status,
 				statusText: response.statusText,
 				url: `${baseUrl}/Orders`,

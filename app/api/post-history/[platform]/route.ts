@@ -66,7 +66,7 @@ export async function GET(
 
     // Note: Jazz import will be handled client-side where we have access to Jazz context
     // The API just fetches the data from Ayrshare
-    let importResult = {
+    const importResult = {
       shouldImport: shouldImport && accountGroupId && historyResponse.history.length > 0,
       postsCount: historyResponse.history.length,
       accountGroupId,

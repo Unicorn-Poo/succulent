@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 		const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
 		
 		let testEndpoint = '';
-		let headers: Record<string, string> = {
+		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
 		};
 

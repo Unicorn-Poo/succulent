@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 		const product = await productResponse.json();
 
 		// Upload images as assets for later use
-		let uploadedImages: any[] = [];
+		const uploadedImages: any[] = [];
 		if (imageUrls && imageUrls.length > 0) {
 			for (const dataUrl of imageUrls) {
 				try {

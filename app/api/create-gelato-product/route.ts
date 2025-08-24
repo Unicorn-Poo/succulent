@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 		const template = await templateResponse.json();
 
 		// Upload data URLs to Gelato first if provided
-		let uploadedFileUrls: string[] = [];
+		const uploadedFileUrls: string[] = [];
 		if (imageUrls && imageUrls.length > 0) {
 			
 			for (const dataUrl of imageUrls) {

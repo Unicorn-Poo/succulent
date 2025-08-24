@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Mock user data storage (in a real app, this would be in a database)
-let mockUsers = [
+const mockUsers = [
   {
     id: '1',
     name: 'John Doe',
