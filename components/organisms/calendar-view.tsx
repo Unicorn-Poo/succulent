@@ -246,7 +246,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
                   return (
                     <Link
                       key={post.id}
-                      href={accountGroupId ? `/account-group/${accountGroupId}/post/${post.id}` : `/account-group/demo/post/${post.id}`}
+                      href={accountGroupId ? `/account-group/${accountGroupId}/post/${post.id}` : '#'}
                       className="block"
                     >
                       <div className={`border rounded-md p-2 cursor-pointer hover:shadow-sm transition-all ${getStatusColor(postStatus)}`}>

@@ -80,7 +80,7 @@ export default function InstagramProfileView({
   };
 
   const getPostUrl = (postId: string) => {
-    return accountGroupId ? `/account-group/${accountGroupId}/post/${postId}` : `/account-group/demo/post/${postId}`;
+    return accountGroupId ? `/account-group/${accountGroupId}/post/${postId}` : '#';
   };
 
   const syncRealMedia = async () => {

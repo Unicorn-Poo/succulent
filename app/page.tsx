@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, BarChart3, Shield, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
@@ -38,94 +38,8 @@ interface LegacyAccountGroup {
   posts: any[];
 }
 
-// Legacy account groups (keeping for now)
-export const accountGroup1: LegacyAccountGroup = {
-  id: "1",
-  name: "Demo Account Group",
-  accounts: {
-    sammiisparkle_ig: {
-      id: "1",
-      platform: "instagram",
-      name: "sammiisparkle",
-      profileKey: "demo-profile-key-123",
-      isLinked: true,
-      status: "linked",
-      avatar: "/icons8-instagram.svg",
-      username: "@sammiisparkle",
-      displayName: "Sammii Sparkle",
-      url: "https://instagram.com/sammiisparkle",
-    },
-    sammii_x: {
-      id: "2", 
-      platform: "x",
-      name: "sammii",
-      profileKey: "demo-profile-key-123",
-      isLinked: true,
-      status: "linked",
-      avatar: "/icons8-twitter.svg",
-      username: "@sammii",
-      displayName: "Sammii",
-      url: "https://x.com/sammii",
-    },
-    sammii_yt: {
-      id: "3",
-      platform: "youtube", 
-      name: "Sammii's Channel",
-      profileKey: "demo-profile-key-123",
-      isLinked: false,
-      status: "pending",
-      avatar: "/icons8-youtube-logo.svg",
-      username: "@sammiischannel",
-      displayName: "Sammii's Channel",
-      url: "https://youtube.com/@sammiischannel",
-    },
-  },
-  posts: [
-    {
-      id: "demo-post-1",
-      title: "Welcome to Succulent! 🌱",
-      content: "Excited to launch our new social media management platform! Create, schedule, and manage all your content from one place. #SocialMediaMarketing #Succulent",
-      platforms: ["instagram", "x"],
-      status: "published",
-      publishedAt: "2024-01-15T10:30:00Z",
-      engagement: {
-        likes: 142,
-        comments: 23,
-        shares: 8
-      }
-    },
-    {
-      id: "demo-post-2", 
-      title: "Tips for Better Social Media Content",
-      content: "💡 Pro tip: Consistency is key! Post regularly and engage with your audience. Quality content builds lasting relationships. What's your favorite content creation tip?",
-      platforms: ["instagram", "x", "youtube"],
-      status: "published", 
-      publishedAt: "2024-01-12T14:15:00Z",
-      engagement: {
-        likes: 89,
-        comments: 15,
-        shares: 12
-      }
-    },
-    {
-      id: "demo-post-3",
-      title: "Behind the Scenes",
-      content: "Working late into the night building something amazing! The Succulent team is passionate about helping creators and businesses thrive online. 🚀",
-      platforms: ["instagram"],
-      status: "scheduled",
-      scheduledFor: "2024-01-20T09:00:00Z",
-      engagement: {
-        likes: 0,
-        comments: 0,
-        shares: 0
-      }
-    }
-  ]
-};
-
-export const accountGroups: Record<string, LegacyAccountGroup> = {
-  "1": accountGroup1,
-};
+// Legacy account groups (removed - no longer needed after demo cleanup)
+export const accountGroups: Record<string, LegacyAccountGroup> = {};
 
 export default function HomePage() {
   const router = useRouter();
@@ -232,8 +146,9 @@ export default function HomePage() {
   };
 
   const handleCreatePost = async () => {
-    // Navigate to the demo account group page
-    router.push(`/account-group/demo`);
+    // Prompt user to create an account group first
+    alert('Please create an account group first to start creating posts.');
+    setShowCreateAccountGroupDialog(true);
   };
 
   const handleSaveAccountGroup = async (groupData: {
@@ -421,19 +336,7 @@ export default function HomePage() {
               <p className="text-gray-600">Your social media management platform</p>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/analytics-demo">
-                <Button variant="soft" size="2">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics Demo
-                </Button>
-              </Link>
-              <Link href="/paywall-demo">
-                <Button variant="soft" size="2">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Paywall Demo
-                </Button>
-              </Link>
-                              <Button 
+              <Button 
                 onClick={() => {
                   setShowCreateAccountGroupDialog(true);
                 }}
@@ -529,49 +432,7 @@ export default function HomePage() {
 
           {/* Account Groups Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Legacy Account Groups */}
-            {Object.entries(accountGroups).map(([id, group]) => (
-              <Link key={id} href={`/account-group/demo`}>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">{group.name}</h3>
-                    <div className="w-2 h-2 bg-green-500 rounded-full" title="Demo Account Group"></div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      {Object.keys(group.accounts).length} accounts connected
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {group.posts.length} posts created
-                    </p>
-                    <p className="text-xs text-green-600">
-                      🎭 Demo account group
-                    </p>
-                  </div>
 
-                  <div className="flex -space-x-2 mt-4">
-                    {Object.values(group.accounts).slice(0, 3).map((account, index) => (
-                      <div 
-                        key={index}
-                        className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center"
-                      >
-                        <span className="text-xs font-medium">
-                          {account.platform.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    ))}
-                    {Object.keys(group.accounts).length > 3 && (
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
-                        <span className="text-xs font-medium">
-                          +{Object.keys(group.accounts).length - 3}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
 
             {/* Jazz Account Groups - Persistent Display */}
             {me?.root?.accountGroups && me.root.accountGroups.map((group: any, index: number) => {

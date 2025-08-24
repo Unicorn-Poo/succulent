@@ -7,6 +7,7 @@ import { User, CreditCard, Settings, BarChart3, Shield, Bell } from 'lucide-reac
 import { useSubscription } from '@/utils/subscriptionManager';
 import { usePaymentManager } from '@/utils/paymentIntegration';
 import { useState } from 'react';
+import FreeTierDashboard from '@/components/organisms/free-tier-dashboard';
 
 // =============================================================================
 // 🏠 MAIN ACCOUNT DASHBOARD
@@ -280,7 +281,7 @@ function SubscriptionTab({ account }: { account: MyAppAccountLoaded }) {
 // =============================================================================
 
 function UsageTab({ account }: { account: MyAppAccountLoaded }) {
-  const { getUsageSummary } = useSubscription(account);
+  const { getUsageSummary, currentTier } = useSubscription(account);
   const usageSummary = getUsageSummary();
 
   if (!usageSummary) {
@@ -297,6 +298,14 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
 
   return (
     <div className="space-y-6">
+      {/* Free Tier Dashboard - show for free tier users */}
+      {currentTier === 'free' && (
+        <FreeTierDashboard 
+          onUpgradeClick={() => window.open('https://www.ayrshare.com/pricing', '_blank')}
+          showDetailedView={true}
+        />
+      )}
+
       <Card>
         <Box p="6">
           <Heading size="5" className="mb-6">Usage Overview</Heading>

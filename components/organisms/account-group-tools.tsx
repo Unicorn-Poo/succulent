@@ -12,10 +12,14 @@ import {
   ExternalLink,
   Plus,
   Users,
-  Package
+  Package,
+  Webhook,
+  UserPlus
 } from "lucide-react";
 import EnhancedReplyHandler from "./enhanced-reply-handler";
 import GelatoProductsOverview from "./gelato-products-overview";
+import UserProfileManagement from "./user-profile-management";
+import WebhookManagement from "./webhook-management";
 import {
   getRSSFeeds,
   addRSSFeed,
@@ -25,6 +29,7 @@ import {
   updateAutoScheduleSettings,
   isFeatureAvailable
 } from "@/utils/ayrshareAnalytics";
+import { isBusinessPlanMode } from "@/utils/ayrshareIntegration";
 
 interface Account {
   id: string;
@@ -56,6 +61,7 @@ export default function AccountGroupTools({
   const rssAvailable = isFeatureAvailable('rss-feeds');
   const brandAvailable = isFeatureAvailable('brand-management');
   const scheduleAvailable = isFeatureAvailable('auto-schedule');
+  const businessPlan = isBusinessPlanMode();
 
   // Get first linked account's profile key (for API calls)
   const profileKey = linkedAccounts[0]?.profileKey;
@@ -73,6 +79,26 @@ export default function AccountGroupTools({
           onReplySuccess={(result) => onToolUsed?.('replies', result)}
         />
       )
+    },
+    {
+      id: "user-profiles",
+      name: "User Profile Management",
+      icon: UserPlus,
+      description: "Create and manage multiple user profiles for client management",
+      available: businessPlan,
+      component: (
+        <UserProfileManagement 
+          onProfileCreated={(profile) => onToolUsed?.('user-profiles', profile)}
+        />
+      )
+    },
+    {
+      id: "webhooks",
+      name: "Webhook Management",
+      icon: Webhook,
+      description: "Set up real-time notifications for post events and social media activities",
+      available: businessPlan,
+      component: <WebhookManagement />
     },
     {
       id: "rss",

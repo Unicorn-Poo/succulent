@@ -402,10 +402,10 @@ export default function AccountAnalyticsOverview({
         <div className="flex items-center justify-between">
           <Text size="3" weight="medium">Quick Actions</Text>
           <div className="flex items-center gap-2">
-            <Link href={`/analytics-demo`}>
+            <Link href={`/account`}>
               <Button variant="soft" size="2">
                 <BarChart3 className="w-4 h-4 mr-2" />
-                View Demo Features
+                Manage Account
               </Button>
             </Link>
             <Button 

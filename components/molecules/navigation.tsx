@@ -42,11 +42,8 @@ export function Navigation() {
           <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
             Dashboard
           </Link>
-          <Link href="/analytics-demo" className="text-gray-600 hover:text-gray-900">
-            Analytics
-          </Link>
-          <Link href="/paywall-demo" className="text-gray-600 hover:text-gray-900">
-            Paywall Demo
+          <Link href="/account" className="text-gray-600 hover:text-gray-900">
+            Account
           </Link>
         </div>
       </div>
