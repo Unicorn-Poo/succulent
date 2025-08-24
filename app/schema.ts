@@ -6,6 +6,68 @@ export const PlatformNames = [
 ] as const;
 
 // =============================================================================
+// 🔐 API KEY MANAGEMENT SCHEMAS
+// =============================================================================
+
+export const APIKey = co.map({
+  // Key identification
+  keyId: z.string(), // Unique identifier for the key
+  name: z.string(), // User-friendly name for the key
+  keyPrefix: z.string(), // First 8 characters of the key (for display)
+  hashedKey: z.string(), // Secure hash of the full key
+  
+  // Permissions and scope
+  permissions: z.array(z.enum([
+    'posts:create',
+    'posts:read', 
+    'posts:update',
+    'posts:delete',
+    'accounts:read',
+    'analytics:read',
+    'media:upload'
+  ])),
+  accountGroupIds: z.optional(z.array(z.string())), // Restrict to specific account groups
+  
+  // Status and metadata
+  status: z.enum(['active', 'inactive', 'revoked']),
+  createdAt: z.date(),
+  lastUsedAt: z.optional(z.date()),
+  expiresAt: z.optional(z.date()),
+  
+  // Usage tracking
+  usageCount: z.number().default(0),
+  lastUsedFromIP: z.optional(z.string()),
+  lastUsedUserAgent: z.optional(z.string()),
+  
+  // Rate limiting
+  rateLimitTier: z.enum(['standard', 'premium', 'enterprise']).default('standard'),
+  monthlyUsageCount: z.number().default(0),
+  monthlyUsageResetDate: z.date(),
+  
+  // Security
+  allowedOrigins: z.optional(z.array(z.string())), // CORS origins
+  ipWhitelist: z.optional(z.array(z.string())), // Allowed IP addresses
+  
+  // Notes
+  description: z.optional(z.string()),
+  createdBy: z.optional(z.string()), // For team management
+});
+
+export const APIKeyUsageLog = co.map({
+  keyId: z.string(),
+  timestamp: z.date(),
+  endpoint: z.string(),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
+  statusCode: z.number(),
+  responseTime: z.optional(z.number()), // in milliseconds
+  ipAddress: z.optional(z.string()),
+  userAgent: z.optional(z.string()),
+  requestSize: z.optional(z.number()), // in bytes
+  responseSize: z.optional(z.number()), // in bytes
+  errorMessage: z.optional(z.string()),
+});
+
+// =============================================================================
 // 🎭 PLATFORM ACCOUNT SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
@@ -688,6 +750,20 @@ export const SucculentProfile = co.profile({
   // Collaboration
   collaborationGroups: co.optional(co.list(CollaborationGroup)),
   ownedGroups: co.optional(co.list(CollaborationGroup)),
+  
+  // API Key Management
+  apiKeys: co.list(APIKey),
+  apiKeyUsageLogs: co.list(APIKeyUsageLog),
+  
+  // API settings
+  apiSettings: z.optional(z.object({
+    maxKeysAllowed: z.number().default(5),
+    defaultKeyExpiration: z.enum(['never', '30d', '90d', '1y']).default('1y'),
+    requireKeyExpiration: z.boolean().default(false),
+    allowCORSOrigins: z.boolean().default(true),
+    enableUsageLogging: z.boolean().default(true),
+    rateLimitNotifications: z.boolean().default(true),
+  })),
 });
 
 export type SucculentProfile = co.loaded<typeof SucculentProfile>;

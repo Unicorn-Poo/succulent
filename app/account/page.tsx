@@ -3,26 +3,25 @@
 import { useAccount } from 'jazz-tools/react';
 import { MyAppAccount, MyAppAccountLoaded } from '@/app/schema';
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Flex } from '@radix-ui/themes';
-import { User, CreditCard, Settings, BarChart3, Shield, Bell } from 'lucide-react';
+import { User, CreditCard, Settings, BarChart3, Shield, Bell, Key } from 'lucide-react';
 import { useSubscription } from '@/utils/subscriptionManager';
 import { usePaymentManager } from '@/utils/paymentIntegration';
 import { useState } from 'react';
 import FreeTierDashboard from '@/components/organisms/free-tier-dashboard';
+import APIKeyManagement from '@/components/organisms/api-key-management';
 
 // =============================================================================
-// 🏠 MAIN ACCOUNT DASHBOARD
+// 🏠 MAIN DASHBOARD COMPONENT
 // =============================================================================
 
 export default function AccountDashboard() {
   const { me } = useAccount(MyAppAccount);
-  
+  const [activeTab, setActiveTab] = useState('profile');
+
   if (!me) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in</h1>
-          <p className="text-gray-600">You need to be signed in to access your account.</p>
-        </div>
+      <div className="max-w-6xl mx-auto p-6">
+        <Text>Loading account...</Text>
       </div>
     );
   }
@@ -34,7 +33,7 @@ export default function AccountDashboard() {
         <Text size="4" color="gray">Manage your profile, subscription, and settings</Text>
       </div>
 
-      <Tabs.Root defaultValue="profile" className="w-full">
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full">
         <Tabs.List className="mb-6">
           <Tabs.Trigger value="profile" className="flex items-center gap-2">
             <User size={16} />
@@ -47,6 +46,10 @@ export default function AccountDashboard() {
           <Tabs.Trigger value="usage" className="flex items-center gap-2">
             <BarChart3 size={16} />
             Usage
+          </Tabs.Trigger>
+          <Tabs.Trigger value="api-keys" className="flex items-center gap-2">
+            <Key size={16} />
+            API Keys
           </Tabs.Trigger>
           <Tabs.Trigger value="settings" className="flex items-center gap-2">
             <Settings size={16} />
@@ -66,8 +69,12 @@ export default function AccountDashboard() {
           <UsageTab account={me} />
         </Tabs.Content>
         
+        <Tabs.Content value="api-keys">
+          <APIKeyManagement />
+        </Tabs.Content>
+        
         <Tabs.Content value="settings">
-          <SettingsTab account={me} />
+          <SettingsTab account={me} onViewKeysClick={() => setActiveTab('api-keys')} />
         </Tabs.Content>
       </Tabs.Root>
     </div>
@@ -349,7 +356,10 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
 // ⚙️ SETTINGS TAB
 // =============================================================================
 
-function SettingsTab({ account }: { account: MyAppAccountLoaded }) {
+function SettingsTab({ account, onViewKeysClick }: { 
+  account: MyAppAccountLoaded; 
+  onViewKeysClick: () => void;
+}) {
   return (
     <div className="space-y-6">
       <Card>
@@ -378,7 +388,14 @@ function SettingsTab({ account }: { account: MyAppAccountLoaded }) {
                 <Text weight="medium">API Keys</Text>
                 <Text size="2" color="gray">Manage your API access</Text>
               </div>
-              <Button variant="outline">View Keys</Button>
+              <Button 
+                variant="outline" 
+                onClick={onViewKeysClick}
+                className="flex items-center gap-2"
+              >
+                <Key size={16} />
+                View Keys
+              </Button>
             </div>
             
             <div className="flex items-center justify-between">
