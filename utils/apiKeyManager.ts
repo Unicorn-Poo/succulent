@@ -153,68 +153,140 @@ export async function createAPIKey(
 }
 
 /**
- * Validate an API key and return associated user data
+ * Validate API Key and return detailed error information
+ * @param apiKey - The API key to validate
+ * @param requiredPermission - Required permission for the operation
+ * @param clientIP - Client IP address for rate limiting
+ * @param userAgent - Client user agent
+ * @returns Validation result with detailed error information
  */
 export async function validateAPIKey(
   apiKey: string,
-  requiredPermission?: string,
-  ipAddress?: string,
-  userAgent?: string
-): Promise<APIKeyValidationResult> {
+  requiredPermission: string,
+  clientIP: string,
+  userAgent: string
+): Promise<{
+  isValid: boolean;
+  error?: string;
+  errorCode?: string;
+  statusCode?: number;
+  keyData?: any;
+  accountId?: string;
+}> {
   try {
-    // Basic format validation
-    if (!apiKey || !apiKey.startsWith('sk_')) {
-      return { isValid: false, error: 'Invalid API key format' };
-    }
-
-    // TODO: In production, you would query the Jazz collaborative system
-    // to find the API key across all users. For now, this is a mock implementation
-    // that would need to be replaced with actual Jazz queries.
-    
-    // This is where you'd implement the actual lookup:
-    // 1. Query all users with API keys
-    // 2. Find matching hashed key
-    // 3. Validate permissions and restrictions
-    // 4. Log usage
-    
-    // Mock validation for development
-    const hashedKey = hashAPIKey(apiKey);
-    
-    // For demo purposes, accept any properly formatted key
-    if (apiKey.startsWith('sk_test_') || apiKey.startsWith('sk_live_')) {
-      // Mock key data
-      const mockKeyData = {
-        keyId: 'mock_key_id',
-        name: 'Development Key',
-        permissions: ['posts:create', 'posts:read', 'posts:update', 'posts:delete'],
-        status: 'active',
-        accountGroupIds: undefined, // No restrictions
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-        ipWhitelist: undefined,
-        allowedOrigins: undefined
-      };
-
-      // Mock account data
-      const mockAccount = {
-        id: apiKey.replace('sk_', '').split('_')[1] || 'mock_user',
-        profile: {
-          name: 'API User',
-          email: 'user@example.com'
-        }
-      };
-
+    // Validate API key format
+    if (!apiKey) {
       return {
-        isValid: true,
-        keyData: mockKeyData,
-        account: mockAccount
+        isValid: false,
+        error: 'API key is required. Please provide a valid API key in the X-API-Key header.',
+        errorCode: 'MISSING_API_KEY',
+        statusCode: 401
       };
     }
 
-    return { isValid: false, error: 'API key not found or inactive' };
+    if (!apiKey.startsWith('sk_')) {
+      return {
+        isValid: false,
+        error: 'Invalid API key format. API keys must start with "sk_".',
+        errorCode: 'INVALID_API_KEY_FORMAT',
+        statusCode: 401
+      };
+    }
+
+    // Extract key components
+    const keyComponents = apiKey.split('_');
+    if (keyComponents.length < 3) {
+      return {
+        isValid: false,
+        error: 'Malformed API key. Please check your API key format.',
+        errorCode: 'MALFORMED_API_KEY',
+        statusCode: 401
+      };
+    }
+
+    const [prefix, environment, keyHash] = keyComponents;
     
+    // Validate environment (test/live)
+    if (!['test', 'live'].includes(environment)) {
+      return {
+        isValid: false,
+        error: 'Invalid API key environment. Must be either "test" or "live".',
+        errorCode: 'INVALID_ENVIRONMENT',
+        statusCode: 401
+      };
+    }
+
+    // In production, this would lookup the key in database
+    // For demo purposes, accept any properly formatted key
+    const mockKeyData = {
+      keyId: 'mock_key_id',
+      name: 'Demo API Key',
+      permissions: ['posts:create', 'posts:read', 'posts:update', 'posts:delete'],
+      status: 'active',
+      environment: environment,
+      rateLimits: {
+        tier: environment === 'test' ? 'standard' : 'premium',
+        requestsPerMinute: environment === 'test' ? 100 : 1000,
+        requestsPerHour: environment === 'test' ? 1000 : 10000
+      },
+      // CRITICAL: Define which account groups this key can access
+      // For demo purposes, allow both legacy IDs and Jazz IDs
+      allowedAccountGroups: [
+        'demo', 
+        'test-group', 
+        'user-' + keyHash.substring(0, 8),
+        // Allow any Jazz ID pattern (starts with 'co_')
+        'co_*'  // Wildcard pattern for Jazz IDs
+      ]
+    };
+
+    // Check if key is active
+    if (mockKeyData.status !== 'active') {
+      return {
+        isValid: false,
+        error: 'API key is inactive. Please check your key status or create a new one.',
+        errorCode: 'INACTIVE_API_KEY',
+        statusCode: 401
+      };
+    }
+
+    // Check permissions
+    if (!mockKeyData.permissions.includes(requiredPermission)) {
+      return {
+        isValid: false,
+        error: `Insufficient permissions. This API key does not have "${requiredPermission}" permission.`,
+        errorCode: 'INSUFFICIENT_PERMISSIONS',
+        statusCode: 403
+      };
+    }
+
+    // Check rate limits
+    const rateLimitResult = checkRateLimit(mockKeyData);
+    if (!rateLimitResult.allowed) {
+      return {
+        isValid: false,
+        error: `Rate limit exceeded. You've made too many requests. Please try again in ${Math.ceil(rateLimitResult.resetTime! / 60)} minutes.`,
+        errorCode: 'RATE_LIMIT_EXCEEDED',
+        statusCode: 429,
+        keyData: mockKeyData,
+        accountId: keyHash
+      };
+    }
+
+    return {
+      isValid: true,
+      keyData: mockKeyData,
+      accountId: keyHash
+    };
+
   } catch (error) {
     console.error('❌ Error validating API key:', error);
-    return { isValid: false, error: 'Internal validation error' };
+    return {
+      isValid: false,
+      error: 'Internal server error during API key validation. Please try again later.',
+      errorCode: 'VALIDATION_ERROR',
+      statusCode: 500
+    };
   }
 }
 
@@ -237,51 +309,68 @@ export async function logAPIKeyUsage(
   } = {}
 ): Promise<void> {
   try {
-    if (!account.profile?.apiSettings?.enableUsageLogging) {
-      return; // Usage logging disabled
+    // Skip usage logging if account is not available or logging is disabled
+    if (!account?.profile?.apiSettings?.enableUsageLogging) {
+      // For demo/mock accounts without full profile, we can skip detailed logging
+      // In production, you might want to log to a different system
+      console.log(`📊 API Usage: ${method} ${endpoint} - ${statusCode} (${options.responseTime}ms)`);
+      return;
     }
 
-    const logEntry = APIKeyUsageLog.create({
-      keyId,
-      timestamp: new Date(),
-      endpoint,
-      method: method as any,
-      statusCode,
-      responseTime: options.responseTime,
-      ipAddress: options.ipAddress,
-      userAgent: options.userAgent,
-      requestSize: options.requestSize,
-      responseSize: options.responseSize,
-      errorMessage: options.errorMessage,
-    }, { owner: account });
+    // Only create Jazz collaborative objects if we have a valid account with profile
+    if (account && account.profile) {
+      const logEntry = APIKeyUsageLog.create({
+        keyId,
+        timestamp: new Date(),
+        endpoint,
+        method: method as any,
+        statusCode,
+        responseTime: options.responseTime,
+        ipAddress: options.ipAddress,
+        userAgent: options.userAgent,
+        requestSize: options.requestSize,
+        responseSize: options.responseSize,
+        errorMessage: options.errorMessage,
+      }, { owner: account });
 
-    // Add to usage logs
-    if (!account.profile.apiKeyUsageLogs) {
-      account.profile.apiKeyUsageLogs = co.list(APIKeyUsageLog).create([], { owner: account });
-    }
-    account.profile.apiKeyUsageLogs.push(logEntry);
-
-    // Update key usage count
-    const apiKey = account.profile.apiKeys?.find((key: any) => key.keyId === keyId);
-    if (apiKey) {
-      apiKey.usageCount = (apiKey.usageCount || 0) + 1;
-      apiKey.lastUsedAt = new Date();
-      apiKey.lastUsedFromIP = options.ipAddress;
-      apiKey.lastUsedUserAgent = options.userAgent;
-      
-      // Update monthly usage
-      const now = new Date();
-      const resetDate = new Date(apiKey.monthlyUsageResetDate);
-      if (now > resetDate) {
-        // Reset monthly counter
-        apiKey.monthlyUsageCount = 1;
-        apiKey.monthlyUsageResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      } else {
-        apiKey.monthlyUsageCount = (apiKey.monthlyUsageCount || 0) + 1;
+      // Add to usage logs
+      if (!account.profile.apiKeyUsageLogs) {
+        account.profile.apiKeyUsageLogs = co.list(APIKeyUsageLog).create([], { owner: account });
       }
-    }
+      account.profile.apiKeyUsageLogs.push(logEntry);
 
-    console.log('📊 Logged API usage:', { keyId, endpoint, method, statusCode });
+      // Update key usage count
+      const apiKey = account.profile.apiKeys?.find((key: any) => key.keyId === keyId);
+      if (apiKey) {
+        apiKey.usageCount = (apiKey.usageCount || 0) + 1;
+        apiKey.lastUsedAt = new Date();
+        apiKey.lastUsedFromIP = options.ipAddress;
+        apiKey.lastUsedUserAgent = options.userAgent;
+        
+        // Update monthly usage
+        const now = new Date();
+        const resetDate = new Date(apiKey.monthlyUsageResetDate);
+        if (now > resetDate) {
+          // Reset monthly counter
+          apiKey.monthlyUsageCount = 1;
+          apiKey.monthlyUsageResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        } else {
+          apiKey.monthlyUsageCount = (apiKey.monthlyUsageCount || 0) + 1;
+        }
+      }
+      
+      console.log('📊 Logged API usage to Jazz:', { keyId, endpoint, method, statusCode });
+    } else {
+      // For API-only users without Jazz account, log to console
+      console.log('📊 API Usage:', { 
+        keyId, 
+        endpoint, 
+        method, 
+        statusCode, 
+        responseTime: options.responseTime,
+        ipAddress: options.ipAddress 
+      });
+    }
     
   } catch (error) {
     console.error('❌ Error logging API usage:', error);
@@ -385,6 +474,78 @@ export function checkRateLimit(keyData: any): RateLimitResult {
     resetTime,
     retryAfter
   };
+}
+
+/**
+ * Validate that an API key has access to a specific account group
+ * @param keyData - The validated API key data
+ * @param accountGroupId - The account group ID to check access for
+ * @returns Validation result with specific error information
+ */
+export function validateAccountGroupAccess(
+  keyData: any,
+  accountGroupId: string
+): {
+  hasAccess: boolean;
+  error?: string;
+  errorCode?: string;
+  statusCode?: number;
+} {
+  try {
+    if (!keyData) {
+      return {
+        hasAccess: false,
+        error: 'Invalid API key data for account group validation',
+        errorCode: 'INVALID_KEY_DATA',
+        statusCode: 500
+      };
+    }
+
+    if (!accountGroupId) {
+      return {
+        hasAccess: false,
+        error: 'Account Group ID is required',
+        errorCode: 'MISSING_ACCOUNT_GROUP',
+        statusCode: 400
+      };
+    }
+
+    // Check if the key has access to this account group
+    const allowedGroups = keyData.allowedAccountGroups || [];
+    
+    // Check for exact match or wildcard patterns
+    const hasAccess = allowedGroups.some((allowedGroup: string) => {
+      if (allowedGroup === accountGroupId) return true;
+      // Handle wildcard patterns (e.g., 'co_*' matches any Jazz ID starting with 'co_')
+      if (allowedGroup.endsWith('*')) {
+        const prefix = allowedGroup.slice(0, -1);
+        return accountGroupId.startsWith(prefix);
+      }
+      return false;
+    });
+    
+    if (!hasAccess) {
+      return {
+        hasAccess: false,
+        error: `Access denied. This API key does not have permission to post to account group "${accountGroupId}". Allowed patterns: ${allowedGroups.join(', ')}`,
+        errorCode: 'INSUFFICIENT_ACCOUNT_GROUP_ACCESS',
+        statusCode: 403
+      };
+    }
+
+    return {
+      hasAccess: true
+    };
+
+  } catch (error) {
+    console.error('❌ Error validating account group access:', error);
+    return {
+      hasAccess: false,
+      error: 'Internal error during account group validation',
+      errorCode: 'VALIDATION_ERROR',
+      statusCode: 500
+    };
+  }
 }
 
 // =============================================================================
