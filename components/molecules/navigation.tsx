@@ -39,9 +39,6 @@ export function Navigation() {
           🌱 Succulent
         </Link>
         <div className="hidden md:flex items-center space-x-4">
-          <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-            Dashboard
-          </Link>
           <Link href="/account" className="text-gray-600 hover:text-gray-900">
             Account
           </Link>

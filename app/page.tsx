@@ -172,26 +172,45 @@ export default function HomePage() {
     console.log('Jazz root exists:', !!me?.root);
     console.log('Current account groups before save:', me?.root?.accountGroups?.length || 0);
     
-    // Check if Jazz system is ready
+    // Check if Jazz system is ready with enhanced error handling
     if (!me) {
       console.error('❌ No Jazz account available');
-      alert('Jazz account not available. Please wait for the system to initialize.');
+      alert('Jazz account not available. Please refresh the page and try again. If the issue persists, clear your browser data and reload.');
       setIsCreatingAccountGroup(false);
       return;
     }
     
     if (!me.root) {
       console.error('❌ Jazz account root not initialized');
-      alert('Jazz account root not initialized yet. Please wait for the system to be ready.');
+      console.log('🔍 Account state:', {
+        hasMe: !!me,
+        accountId: me.id,
+        hasRoot: !!me.root
+      });
+      alert('Jazz account root not initialized. This can happen on first login. Please refresh the page and try again.');
       setIsCreatingAccountGroup(false);
       return;
     }
     
     if (!me.root.accountGroups) {
       console.error('❌ Jazz account groups list not ready');
-      alert('Jazz account groups list not ready yet. Please wait for the system to be ready.');
-      setIsCreatingAccountGroup(false);
-      return;
+      console.log('🔍 Root state:', {
+        hasRoot: !!me.root,
+        rootId: me.root?.id,
+        hasAccountGroups: !!me.root?.accountGroups
+      });
+      
+      // Try to initialize account groups if they're missing
+      try {
+        console.log('🔧 Attempting to initialize account groups...');
+        me.root.accountGroups = co.list(AccountGroup).create([], { owner: me });
+        console.log('✅ Account groups initialized successfully');
+      } catch (initError) {
+        console.error('❌ Failed to initialize account groups:', initError);
+        alert('Unable to initialize account groups. Please refresh the page and try again. If the issue persists, try logging out and logging back in.');
+        setIsCreatingAccountGroup(false);
+        return;
+      }
     }
 
     try {
