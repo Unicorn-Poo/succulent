@@ -831,18 +831,29 @@ export const MyAppAccount = co.account({
       console.log('🔧 Creating account root...');
       try {
         // Create the root with the account as the owner
+        const accountGroups = co.list(AccountGroup).create([], { owner: account });
         account.root = AccountRoot.create({
-          accountGroups: co.list(AccountGroup).create([], { owner: account }),
+          accountGroups: accountGroups,
         }, { owner: account });
         console.log('✅ Account root created successfully');
         console.log('✅ Root owner:', account.id);
+        console.log('✅ Account groups list created:', !!accountGroups);
       } catch (error) {
         console.error('❌ Failed to create account root:', error);
-        throw error;
+        console.error('❌ Error details:', error);
+        // Don't throw - let the app continue and retry later
+        console.log('⚠️ Continuing without root - will retry on next load');
       }
-    } else {
-      console.log('ℹ️ Root already exists');
-    }
+          } else {
+        console.log('ℹ️ Root already exists');
+        if (account.root) {
+          console.log('ℹ️ Root details:', {
+            rootId: account.root.id,
+            hasAccountGroups: !!account.root.accountGroups,
+            accountGroupsLength: account.root.accountGroups?.length || 0
+          });
+        }
+      }
 
     // Create profile if it doesn't exist
     if (account.profile === undefined) {
@@ -854,6 +865,8 @@ export const MyAppAccount = co.account({
           name: creationProps?.name ?? "New user",
           collaborationGroups: co.list(CollaborationGroup).create([], profileGroup),
           ownedGroups: co.list(CollaborationGroup).create([], profileGroup),
+          apiKeys: co.list(APIKey).create([], profileGroup),
+          apiKeyUsageLogs: co.list(APIKeyUsageLog).create([], profileGroup),
         }, profileGroup);
         console.log('✅ Account profile created successfully');
       } catch (error) {

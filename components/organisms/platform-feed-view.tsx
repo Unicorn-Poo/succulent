@@ -402,7 +402,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
 
         if (response.ok && result.data.posts) {
           const transformedPosts: HistoricalPost[] = result.data.posts.map((post: any) => ({
-            id: `ayrshare-${post.id}`,
+            ayrshareId: post.id, // Original Ayrshare post ID
             content: post.content,
             created: post.created,
             postIds: post.postIds,
@@ -536,7 +536,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
               const platformPost = post.postIds.find((p: any) => p.platform === account.platform);
               
               return (
-                <div key={post.id} className="relative">
+                <div key={post.ayrshareId || post.id} className="relative">
                   {/* Historical post indicator */}
                   <div className="absolute top-2 right-2 z-10">
                     <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
@@ -580,7 +580,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
               const mediaItems = postVariant?.media || [];
               
               // IMMEDIATE DEBUG: Check what we're getting
-              console.log(`🔍 IMMEDIATE DEBUG for post ${post.id}:`, {
+              console.log(`🔍 IMMEDIATE DEBUG for post ${post.ayrshareId || post.id}:`, {
                 hasPostVariant: !!postVariant,
                 mediaItemsCount: mediaItems.length,
                 firstItemExists: !!mediaItems[0],
@@ -619,7 +619,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
               }).filter(Boolean);
               
               return (
-                <div key={post.id} className="relative">
+                <div key={post.ayrshareId || post.id} className="relative">
                   <PlatformPreview
                     platform={account.platform}
                     content={post.content}
