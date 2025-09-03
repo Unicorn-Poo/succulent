@@ -151,7 +151,7 @@ export const getSocialAccountAnalytics = async (
  * Interface for historical post data
  */
 export interface HistoricalPost {
-  id: string;
+  ayrshareId: string;
   platform: string;
   post: string;
   postUrl?: string;

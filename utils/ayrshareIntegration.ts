@@ -591,7 +591,6 @@ export const createAccountFromAyrshareData = (platform: string, details: any, pr
   const url = details?.profileUrl || `https://${platform}.com/${username}`;
   
   return {
-    id: `ayrshare-${platform}-${Date.now()}`,
     name: username,
     platform: internalPlatform,
     profileKey,
