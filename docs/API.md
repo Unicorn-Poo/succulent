@@ -1,168 +1,106 @@
-# Succulent API Documentation
+# Succulent Social Media API Documentation
 
-## 🔐 API Key Management
+## Overview
 
-Before using the API, you need to create API keys from your account dashboard.
+The Succulent API allows you to create, schedule, and manage social media posts across multiple platforms through a unified interface.
 
-### Getting Your API Keys
-
-1. **Login to Succulent** and navigate to your account page
-2. **Click the "API Keys" tab** in your account dashboard
-3. **Create a new API key** with the permissions you need
-4. **Copy the API key** - you'll only see it once!
-
-### API Key Format
-
-All Succulent API keys follow this format:
-- **Development:** `sk_test_32randomcharacters`
-- **Production:** `sk_live_32randomcharacters`
-
-### API Key Permissions
-
-When creating API keys, you can assign these permissions:
-
-| Permission | Description |
-|------------|-------------|
-| `posts:create` | Create new social media posts |
-| `posts:read` | View existing posts and metadata |
-| `posts:update` | Edit existing posts |
-| `posts:delete` | Delete posts |
-| `accounts:read` | View account group information |
-| `analytics:read` | Access analytics data |
-| `media:upload` | Upload images and videos |
-
-### Rate Limits
-
-API keys have different rate limit tiers:
-
-| Tier | Requests per Hour | Usage |
-|------|------------------|--------|
-| **Standard** | 1,000 | Free and basic plans |
-| **Premium** | 5,000 | Pro plans |
-| **Enterprise** | 25,000 | Enterprise plans |
-
-Rate limit information is included in response headers:
-- `X-RateLimit-Limit`: Total requests allowed per hour
-- `X-RateLimit-Remaining`: Requests remaining in current period
-- `X-RateLimit-Reset`: Unix timestamp when limit resets
+**Base URL**: `https://app.succulent.social/api`
 
 ## Authentication
 
-All API requests require authentication using an API key in the header:
+All API endpoints require authentication via API key in the request header:
 
 ```
-X-API-Key: sk_your_api_key_here
+X-API-Key: your_api_key_here
 ```
 
-API keys must start with `sk_` followed by your unique identifier.
+## Media Handling
 
-## Posts API
+### Images and Videos
 
-### Create Post
+The API supports images and videos through **URL references only**. You must host your media files externally and provide publicly accessible URLs.
 
-Create a new post for publishing to social media platforms.
+**Supported Media Types**:
+- **Images**: JPEG, PNG, GIF, WebP, SVG
+- **Videos**: MP4, MOV, AVI, WebM
 
-**Endpoint:** `POST /api/posts`
+**URL Requirements**:
+- Must be publicly accessible HTTP/HTTPS URLs
+- Should be optimized for social media (recommended sizes vary by platform)
+- Must return proper Content-Type headers
 
-**Headers:**
-- `Content-Type: application/json`
-- `X-API-Key: sk_your_api_key_here`
-
-#### Request Body Schema
-
-```typescript
-{
-  // Required fields
-  accountGroupId: string;     // ID of the account group to post to
-  content: string;           // Post content text
-  platforms: string[];       // Array of platforms: ["instagram", "x", "linkedin", etc.]
-  
-  // Optional fields
-  mediaItems?: Array<{       // Media attachments
-    type: "image" | "video";
-    url: string;
-    altText?: string;
-    caption?: string;
-  }>;
-  
-  scheduledDate?: string;    // ISO 8601 datetime string
-  publishImmediately?: boolean; // Default: false
-  
-  // Thread/multi-post support
-  threadPosts?: Array<{
-    content: string;
-    mediaItems?: MediaItem[];
-  }>;
-  
-  // Reply functionality
-  replyTo?: {
-    platform: string;
-    postId: string;
-    parentId?: string;
-  };
-  
-  // Draft mode
-  isDraft?: boolean;         // Save as draft without publishing
-}
-```
-
-#### Supported Platforms
-
-- `instagram` - Instagram posts and stories
-- `x` - X (Twitter) posts and threads
-- `linkedin` - LinkedIn posts and articles
-- `facebook` - Facebook posts and pages
-- `youtube` - YouTube community posts
-- `tiktok` - TikTok videos
-- `pinterest` - Pinterest pins
-- `reddit` - Reddit posts
-- `telegram` - Telegram channel posts
-- `threads` - Meta Threads posts
-
-#### Response
-
-**Success (201):**
+**Example Media Usage**:
 ```json
 {
-  "success": true,
-  "message": "Post created successfully",
-  "data": {
-    "postId": "post_1234567890_abcdef",
-    "accountGroupId": "group_abc123",
-    "platforms": ["instagram", "x"],
-    "scheduledDate": "2024-01-25T10:00:00.000Z",
-    "publishedImmediately": false
-  }
-}
-```
-
-**Error (400):**
-```json
-{
-  "success": false,
-  "error": "Invalid request data",
-  "code": "VALIDATION_ERROR",
-  "details": [
+  "accountGroupId": "demo",
+  "content": "Check out this image!",
+  "platforms": ["x"],
+  "media": [
     {
-      "field": "content",
-      "message": "Content is required"
+      "type": "image",
+      "url": "https://example.com/my-image.jpg",
+      "alt": "Beautiful sunset photo",
+      "filename": "sunset.jpg"
     }
   ]
 }
 ```
 
-#### Error Codes
+## Posts API
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `AUTHENTICATION_FAILED` | 401 | Invalid or missing API key |
-| `INSUFFICIENT_PERMISSIONS` | 403 | API key lacks required permissions |
-| `ACCOUNT_GROUP_ACCESS_DENIED` | 403 | API key restricted from account group |
-| `VALIDATION_ERROR` | 400 | Request data validation failed |
-| `INVALID_JSON` | 400 | Malformed JSON request |
-| `POST_CREATION_FAILED` | 400 | Post creation failed |
-| `RATE_LIMIT_EXCEEDED` | 429 | Rate limit exceeded |
-| `INTERNAL_SERVER_ERROR` | 500 | Server error |
+### Create Post
+
+Create a new social media post with optional media attachments.
+
+**Endpoint**: `POST /posts`
+
+**Request Body**:
+```json
+{
+  "accountGroupId": "demo",
+  "content": "Your post content here",
+  "platforms": ["x", "instagram", "linkedin"],
+  "title": "Optional post title",
+  "scheduledDate": "2024-01-15T10:30:00Z",
+  "media": [
+    {
+      "type": "image",
+      "url": "https://example.com/images/my-image.jpg",
+      "alt": "Image description",
+      "filename": "my-image.jpg"
+    }
+  ],
+  "publishImmediately": false,
+  "saveAsDraft": true
+}
+```
+
+**Media Schema**:
+```json
+{
+  "type": "image", // or "video"
+  "url": "https://example.com/images/your-image.jpg",
+  "alt": "Optional description for accessibility",
+  "filename": "Optional original filename"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "postId": "post_12345",
+  "status": "scheduled",
+  "scheduledDate": "2024-01-15T10:30:00Z",
+  "platforms": {
+    "x": "pending",
+    "instagram": "pending",
+    "linkedin": "pending"
+  },
+  "hasMedia": true,
+  "publishImmediately": false
+}
+```
 
 ## API Key Management API
 
