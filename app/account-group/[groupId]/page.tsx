@@ -22,7 +22,6 @@ import { PlatformPreview } from "@/components/organisms/platform-previews";
 import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
-import APIPermissionsFix from "@/components/organisms/api-permissions-fix";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -247,11 +246,10 @@ export default function AccountGroupPage() {
 								</p>
 							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							{jazzAccountGroup && (
-								<APIPermissionsFix accountGroup={jazzAccountGroup} />
-							)}
-						</div>
+						<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
+							<Plus className="w-4 h-4 mr-2" />
+							Create Post
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -317,11 +315,6 @@ export default function AccountGroupPage() {
 											})()}
 										</div>
 									</div>
-									
-									<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
-										<Plus className="w-4 h-4 mr-2" />
-										Create Post
-									</Button>
 									
 									{/* Filter Controls */}
 									<div className="flex items-center gap-2">
