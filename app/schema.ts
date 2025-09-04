@@ -193,7 +193,22 @@ export const VideoMedia = co.map({
 	alt: co.optional(co.plainText()),
 });
 
-export const MediaItem = co.discriminatedUnion("type", [ImageMedia, VideoMedia]);
+// URL-based media for API posts
+export const URLImageMedia = co.map({
+	type: z.literal("url-image"),
+	url: z.string(),
+	alt: co.optional(co.plainText()),
+	filename: z.optional(z.string()),
+});
+
+export const URLVideoMedia = co.map({
+	type: z.literal("url-video"),
+	url: z.string(),
+	alt: co.optional(co.plainText()),
+	filename: z.optional(z.string()),
+});
+
+export const MediaItem = co.discriminatedUnion("type", [ImageMedia, VideoMedia, URLImageMedia, URLVideoMedia]);
 
 // Post performance tracking schema
 export const PostPerformance = co.map({
@@ -835,6 +850,27 @@ export const MyAppAccount = co.account({
         account.root = AccountRoot.create({
           accountGroups: accountGroups,
         }, { owner: account });
+        
+        if (process.env.JAZZ_WORKER_ACCOUNT && account.root?._owner instanceof Group) {
+          try {
+            const { Account } = await import('jazz-tools');
+            const serverWorker = await Account.load(process.env.JAZZ_WORKER_ACCOUNT);
+            if (serverWorker) {
+              account.root._owner.addMember(serverWorker, 'writer');
+              
+              if (account.root.accountGroups) {
+                for (const accountGroup of account.root.accountGroups) {
+                  if (accountGroup?._owner instanceof Group) {
+                    accountGroup._owner.addMember(serverWorker, 'writer');
+                  }
+                }
+              }
+            }
+          } catch (workerError) {
+            // Worker permissions will be added during API calls
+          }
+        }
+        
         console.log('✅ Account root created successfully');
         console.log('✅ Root owner:', account.id);
         console.log('✅ Account groups list created:', !!accountGroups);

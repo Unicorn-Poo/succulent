@@ -172,6 +172,7 @@ export async function validateAPIKey(
   statusCode?: number;
   keyData?: any;
   accountId?: string;
+  accountGroupOwner?: Record<string, string>;
 }> {
   try {
     // Validate API key format
@@ -273,10 +274,19 @@ export async function validateAPIKey(
       };
     }
 
+    // For demo purposes, map API keys to account group ownership
+    // In production, this would be stored in a database
+    const accountGroupOwnerMap: Record<string, string> = {
+      'co_zoGYXV8cVVhsid7FewArNZCpqMT': 'user_account_id_for_demo', // Map account group to user
+      'demo': 'user_account_id_for_demo'
+    };
+    
     return {
       isValid: true,
       keyData: mockKeyData,
-      accountId: keyHash
+      accountId: keyHash,
+      // Add the account group owner mapping for post creation
+      accountGroupOwner: accountGroupOwnerMap
     };
 
   } catch (error) {

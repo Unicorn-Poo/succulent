@@ -219,18 +219,39 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 			try {
 				let url = null;
 				
-				if (mediaItem.type === "image" && mediaItem.image) {
-					url = await extractMediaUrl(mediaItem.image);
-				} else if (mediaItem.type === "video" && mediaItem.video) {
-					url = await extractMediaUrl(mediaItem.video);
+				// ✅ Handle different media structures
+				if (mediaItem.type === "image") {
+					if (mediaItem.image) {
+						// Jazz FileStream structure
+						url = await extractMediaUrl(mediaItem.image);
+					} else if (mediaItem.url) {
+						// API post structure with direct URL
+						url = await extractMediaUrl(mediaItem.url);
+					} else if (mediaItem) {
+						// Try the media item itself (might be a URL or FileStream)
+						url = await extractMediaUrl(mediaItem);
+					}
+				} else if (mediaItem.type === "video") {
+					if (mediaItem.video) {
+						// Jazz FileStream structure
+						url = await extractMediaUrl(mediaItem.video);
+					} else if (mediaItem.url) {
+						// API post structure with direct URL
+						url = await extractMediaUrl(mediaItem.url);
+					} else if (mediaItem) {
+						// Try the media item itself (might be a URL or FileStream)
+						url = await extractMediaUrl(mediaItem);
+					}
 				}
 				
 				if (url) {
 					setImageUrl(url);
 				} else {
+					console.warn('⚠️ Could not extract media URL from:', mediaItem);
 					setError(true);
 				}
 			} catch (err) {
+				console.error('❌ Error loading media:', err);
 				setError(true);
 			} finally {
 				setLoading(false);
@@ -348,12 +369,36 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	);
 };
 
-// Helper function to extract media URL from FileStream
-const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
-	if (!fileStream) return null;
+// Helper function to extract media URL from FileStream or direct URL
+const extractMediaUrl = async (media: any): Promise<string | null> => {
+	if (!media) return null;
 
 	try {
-		// Try different methods to get the URL
+		// ✅ FIRST: Check if it's already a direct URL string (for API posts)
+		if (typeof media === 'string') {
+			if (media.startsWith('http') || media.startsWith('https') || media.startsWith('data:') || media.startsWith('blob:')) {
+				return media;
+			}
+		}
+
+		// ✅ SECOND: Check if it's a URL-based media object (for API posts)
+		if (typeof media === 'object' && media.url) {
+			if (typeof media.url === 'string' && (media.url.startsWith('http') || media.url.startsWith('https') || media.url.startsWith('data:') || media.url.startsWith('blob:'))) {
+				return media.url;
+			}
+		}
+
+		// ✅ THIRD: Check if it's a Jazz URL media type (url-image, url-video)
+		if (typeof media === 'object' && (media.type === 'url-image' || media.type === 'url-video')) {
+			if (typeof media.url === 'string') {
+				return media.url;
+			}
+		}
+
+		// ✅ THIRD: Handle Jazz FileStream objects (for UI uploads)
+		const fileStream = media;
+		
+		// Try different methods to get the URL from FileStream
 		if (typeof fileStream.createObjectURL === 'function') {
 			return fileStream.createObjectURL();
 		}
@@ -395,6 +440,7 @@ const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
 		
 		return null;
 	} catch (error) {
+		console.error('❌ Error extracting media URL:', error);
 		return null;
 	}
 }; 

@@ -14,7 +14,7 @@ import {
 import { handleStandardPost, handleReplyPost, handleMultiPosts, PostData } from '@/utils/apiHandlers';
 import { isBusinessPlanMode } from '@/utils/ayrshareIntegration';
 import { validateAPIKey, logAPIKeyUsage, checkRateLimit, validateAccountGroupAccess } from '@/utils/apiKeyManager';
-import { addAPIPost } from '@/utils/apiPostsStorage';
+// Removed workaround storage imports - using proper Jazz integration
 
 // =============================================================================
 // 🔐 AUTHENTICATION & VALIDATION
@@ -142,83 +142,112 @@ type CreatePostRequest = z.infer<typeof CreatePostSchema>;
 // =============================================================================
 
 /**
- * Connect a server-created Jazz post to a user's account group
+ * Add a server-created post to the user's account group
  */
-async function connectPostToAccountGroup(
-  jazzPost: any,
-  accountGroupId: string,
-  serverWorker: any
-): Promise<void> {
-  console.log(`🔗 Attempting to connect post ${jazzPost.id} to account group: ${accountGroupId}`);
+async function addPostToUserAccountGroup(jazzPost: any, accountGroupId: string): Promise<void> {
+  const { jazzServerWorker } = await import('@/utils/jazzServer');
+  const { MyAppAccount, AccountGroup } = await import('@/app/schema');
+  const worker = await jazzServerWorker;
   
-  // For now, create a bridge structure that the UI can access
-  // This is a simplified approach - in production you'd use proper Jazz permissions
+  if (!worker) {
+    throw new Error('Jazz worker not available');
+  }
+
+  const accountGroup = await AccountGroup.load(accountGroupId, { loadAs: worker });
   
-  // Create a mapping object that links the post to the account group
-  const { co, z } = await import('jazz-tools');
+  if (!accountGroup) {
+    throw new Error(`Account group ${accountGroupId} not found`);
+  }
   
-  // Define a simple mapping schema
-  const PostMapping = co.map({
-    jazzPostId: z.string(),
-    accountGroupId: z.string(),
-    createdAt: z.date(),
-    createdViaAPI: z.boolean()
-  });
+  if (!accountGroup.posts) {
+    const { co } = await import('jazz-tools');
+    const { Post } = await import('@/app/schema');
+    accountGroup.posts = co.list(Post).create([], { owner: accountGroup._owner });
+  }
   
-  const postMapping = PostMapping.create({
-    jazzPostId: jazzPost.id,
-    accountGroupId: accountGroupId,
-    createdAt: new Date(),
-    createdViaAPI: true
-  }, { owner: serverWorker });
-  
-  console.log(`🔗 Created post mapping:`, postMapping.id);
-  
-  // TODO: In a full implementation, this would:
-  // 1. Find the user's account group by ID
-  // 2. Add the post to the account group's posts list
-  // 3. Handle permissions properly
-  
-  // For now, the mapping exists and can be queried later
+  accountGroup.posts.push(jazzPost);
 }
 
 /**
- * Store API post in Jazz collaborative system
- * Creates real Jazz Post objects and stores them in account groups
+ * Create Jazz post directly in user's account group using server worker credentials
  */
-async function storeInJazzIfPossible(
+async function createJazzPostInAccountGroup(
   postData: any,
-  request: CreatePostRequest
-): Promise<void> {
-  console.log('🎷 Creating Jazz Post for:', postData.id);
-  
+  request: CreatePostRequest,
+  user: AuthenticatedUser
+): Promise<any | null> {
   try {
-    // Import Jazz server worker
     const { jazzServerWorker } = await import('@/utils/jazzServer');
     const worker = await jazzServerWorker;
     
     if (!worker) {
-      throw new Error('Jazz worker not available');
+      throw new Error('Jazz server worker not available - check credentials in .env.local');
     }
     
-    // Import Jazz schemas  
-    const { Post, PostVariant, MediaItem, ReplyTo } = await import('@/app/schema');
-    const { co, z } = await import('jazz-tools');
+    const { AccountGroup, Post, PostVariant, MediaItem, ReplyTo } = await import('@/app/schema');
+    const { co, z, Group } = await import('jazz-tools');
     
-    console.log('🎷 Jazz worker ready, creating post objects...');
+    const accountGroup = await AccountGroup.load(request.accountGroupId, { loadAs: worker });
+    if (!accountGroup) {
+      throw new Error(`Account group ${request.accountGroupId} not found`);
+    }
+
+    // Ensure server worker has proper permissions on account group
+    if (accountGroup._owner instanceof Group) {
+      try {
+        accountGroup._owner.addMember(worker, 'writer');
+      } catch (permError) {
+        // Worker might already be a member, continue
+      }
+    }
     
-    // Create collaborative text objects
+    // Create all objects owned by the account group (not server worker)
+    const groupOwner = accountGroup._owner;
+    
     const titleText = co.plainText().create(
-      postData.title || `API Post ${new Date().toISOString()}`, 
-      { owner: worker }
+      postData.title || `API Post ${new Date().toISOString()}`,
+      { owner: groupOwner }
     );
     
-    const baseText = co.plainText().create(request.content, { owner: worker });
+    const baseText = co.plainText().create(request.content, { owner: groupOwner });
+    const mediaList = co.list(MediaItem).create([], { owner: groupOwner });
     
-    // Create media list (empty for now, can be enhanced later)
-    const mediaList = co.list(MediaItem).create([], { owner: worker });
+    // Handle URL-based media for API posts
+    if (request.media && request.media.length > 0) {
+      const { URLImageMedia, URLVideoMedia } = await import('@/app/schema');
+      
+      for (const mediaItem of request.media) {
+        try {
+          if (mediaItem.type === 'image') {
+            const altText = co.plainText().create(mediaItem.alt || '', { owner: groupOwner });
+            
+            const urlImageMedia = URLImageMedia.create({
+              type: 'url-image',
+              url: mediaItem.url,
+              alt: altText,
+              filename: mediaItem.filename
+            }, { owner: groupOwner });
+            
+            mediaList.push(urlImageMedia);
+            
+          } else if (mediaItem.type === 'video') {
+            const altText = co.plainText().create(mediaItem.alt || '', { owner: groupOwner });
+            
+            const urlVideoMedia = URLVideoMedia.create({
+              type: 'url-video',
+              url: mediaItem.url,
+              alt: altText,
+              filename: mediaItem.filename
+            }, { owner: groupOwner });
+             
+             mediaList.push(urlVideoMedia);
+           }
+        } catch (mediaError) {
+          console.error('❌ Failed to create URL media item:', mediaError);
+        }
+      }
+    }
     
-    // Create reply-to object
     const replyToObj = ReplyTo.create({
       url: request.replyTo?.url,
       platform: request.replyTo?.platform,
@@ -227,9 +256,8 @@ async function storeInJazzIfPossible(
       authorPostContent: undefined,
       authorAvatar: undefined,
       likesCount: undefined,
-    }, { owner: worker });
+    }, { owner: groupOwner });
     
-    // Create base variant
     const baseVariant = PostVariant.create({
       text: baseText,
       postDate: new Date(),
@@ -243,157 +271,60 @@ async function storeInJazzIfPossible(
       performance: undefined,
       ayrsharePostId: undefined,
       socialPostUrl: undefined,
-    }, { owner: worker });
+    }, { owner: groupOwner });
     
-    // Create variants record for each platform
-    const variants = co.record(z.string(), PostVariant).create({ base: baseVariant }, { owner: worker });
+    const variants = co.record(z.string(), PostVariant).create({ base: baseVariant }, { owner: groupOwner });
     
     for (const platform of request.platforms) {
-      const platformVariant = PostVariant.create(baseVariant, { owner: worker });
+      const platformVariant = PostVariant.create(baseVariant, { owner: groupOwner });
       variants[platform] = platformVariant;
     }
     
-    // Create the Jazz Post
     const jazzPost = Post.create({
       title: titleText,
       variants: variants,
-    }, { owner: worker });
+    }, { owner: groupOwner });
     
-    console.log('🎷 Created Jazz Post:', {
-      postId: jazzPost.id,
-      title: titleText.toString(),
-      platforms: request.platforms,
-      status: baseVariant.status
-    });
-    
-    // 🎯 IMPLEMENTATION: Connect to user account group
-    try {
-      await connectPostToAccountGroup(jazzPost, request.accountGroupId, worker);
-      console.log('🎷 Successfully connected post to account group:', request.accountGroupId);
-    } catch (connectionError) {
-      console.log('⚠️ Failed to connect to account group (non-critical):', connectionError);
-      // Don't fail the API call if connection fails - post still exists in server worker
+    // Ensure posts list exists and add the post
+    if (!accountGroup.posts) {
+      accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
     }
+    accountGroup.posts.push(jazzPost);
     
-    console.log('🎷 Jazz Post created successfully');
+    return jazzPost;
     
-  } catch (jazzError) {
-    console.error('🎷 Jazz storage failed:', jazzError);
-    // Don't fail the API call if Jazz storage fails
-    throw jazzError;
+  } catch (error) {
+    console.error('❌ Failed to create Jazz post in account group:', error);
+    throw error;
   }
 }
+
+// Removed old storeInJazzIfPossible function - using proper Jazz integration
 
 async function createPostInJazz(
   request: CreatePostRequest, 
   user: AuthenticatedUser
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   try {
-    // Create title
     const now = new Date();
-    const titleText = request.title || `API Post ${now.toISOString()}`;
-    
-    // Create base variant content
-    const baseText = request.content;
-    
-    // Handle media attachments - URL-based only
-    const mediaItems = request.media?.map((mediaItem) => {
-      if (mediaItem.type === 'image') {
-        return {
-          type: 'image' as const,
-          url: mediaItem.url,
-          alt: mediaItem.alt || '',
-          filename: mediaItem.filename
-        };
-      } else {
-        return {
-          type: 'video' as const,
-          url: mediaItem.url,
-          alt: mediaItem.alt || '',
-          filename: mediaItem.filename
-        };
-      }
-    }) || [];
-    
-    // Create reply-to object if provided
-    const replyTo = request.replyTo ? {
-      url: request.replyTo.url,
-      platform: request.replyTo.platform,
-      author: undefined,
-      authorUsername: undefined,
-      authorPostContent: undefined,
-      authorAvatar: undefined,
-      likesCount: undefined,
-    } : undefined;
-    
-    // Create post variant
-    const baseVariant = {
-      text: baseText,
-      postDate: now,
-      media: mediaItems,
-      replyTo: replyTo || {},
-      status: request.publishImmediately ? 'published' as const : (request.scheduledDate ? 'scheduled' as const : 'draft' as const),
-      scheduledFor: request.scheduledDate ? new Date(request.scheduledDate) : undefined,
-      publishedAt: request.publishImmediately ? now : undefined,
-      edited: false,
-      lastModified: undefined,
-      performance: undefined,
-      ayrsharePostId: undefined,
-      socialPostUrl: undefined,
-    };
-    
-    // Generate a post ID
-    const postId = `api_post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Create the full post object in Jazz-compatible format
     const postData = {
-      id: postId,
-      title: titleText,
+      title: request.title || `API Post ${now.toISOString()}`,
+      content: request.content,
+      platforms: request.platforms,
       createdAt: now,
       accountGroupId: request.accountGroupId,
-      platforms: request.platforms,
-      variants: {
-        base: baseVariant,
-        ...Object.fromEntries(request.platforms.map((platform: string) => [
-          platform,
-          { ...baseVariant, platform }
-        ]))
-      },
-      // API-specific metadata
       createdViaAPI: true,
       apiKeyId: user.keyData.keyId,
       userId: user.accountId
     };
     
-    // Store the post for retrieval (backwards compatibility)
-    addAPIPost(postData);
+    const jazzPost = await createJazzPostInAccountGroup(postData, request, user);
     
-    // Debug: Immediately verify storage worked
-    const { getAllAPIPosts } = await import('@/utils/apiPostsStorage');
-    const allPosts = getAllAPIPosts();
-    console.log(`✅ Post stored successfully. Total posts in storage: ${allPosts.length}`);
-    console.log(`✅ Latest post:`, allPosts[allPosts.length - 1]?.id);
-    
-    // 🎷 ALSO TRY TO STORE IN JAZZ (when possible)
-    try {
-      await storeInJazzIfPossible(postData, request);
-      console.log('🎷 Also stored in Jazz successfully');
-    } catch (jazzError) {
-      console.log('⚠️ Jazz storage failed (non-critical):', jazzError);
-      // Don't fail the API call if Jazz storage fails
+    if (jazzPost) {
+      return { success: true, postId: jazzPost.id };
+    } else {
+      throw new Error('Jazz post creation failed');
     }
-    
-    console.log('📝 Created and stored post:', {
-      postId,
-      title: titleText,
-      platforms: request.platforms,
-      hasMedia: mediaItems.length > 0,
-      scheduledDate: request.scheduledDate,
-      publishImmediately: request.publishImmediately,
-      status: baseVariant.status
-    });
-    
-    return { success: true, postId };
     
   } catch (error) {
     console.error('❌ Error creating post:', error);
@@ -710,7 +641,6 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate request
     const authResult = await authenticateAPIKey(request);
     if (!authResult.isValid) {
       return NextResponse.json(
@@ -725,8 +655,6 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url);
     const accountGroupId = searchParams.get('accountGroupId');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
     
     if (!accountGroupId) {
       return NextResponse.json(
@@ -739,24 +667,13 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // TODO: In production, implement actual post retrieval from Jazz
-    // This would query the collaborative account group and return posts
+    const redirectUrl = new URL('/api/posts/list', request.url);
+    redirectUrl.searchParams.set('accountGroupId', accountGroupId);
     
-    return NextResponse.json({
-      success: true,
-      data: {
-        posts: [], // Would contain actual posts from database
-        pagination: {
-          limit,
-          offset,
-          total: 0,
-          hasMore: false
-        }
-      }
-    });
+    return NextResponse.redirect(redirectUrl, 301);
     
   } catch (error) {
-    console.error('❌ Error retrieving posts:', error);
+    console.error('❌ Error redirecting to posts list:', error);
     
     return NextResponse.json(
       { 

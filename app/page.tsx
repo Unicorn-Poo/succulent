@@ -217,6 +217,19 @@ export default function HomePage() {
       // Create a new group to manage permissions for the account group itself
       const accountGroupGroup = Group.create();
       
+      // Add server worker permissions to account group for API integration
+      if (process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT) {
+        try {
+          const { Account } = await import('jazz-tools');
+          const serverWorker = await Account.load(process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
+          if (serverWorker) {
+            accountGroupGroup.addMember(serverWorker, 'writer');
+          }
+        } catch (workerError) {
+          // Worker permissions will be added server-side during API calls
+        }
+      }
+      
       // Create Jazz AccountGroup with properly initialized empty co-lists
       const jazzAccountGroup = AccountGroup.create({
         name: groupData.name,
