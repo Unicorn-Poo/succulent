@@ -18,9 +18,54 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	const [touchStart, setTouchStart] = useState<number | null>(null);
 	const [touchEnd, setTouchEnd] = useState<number | null>(null);
 	
-	// Get media from the Jazz post object - check both active tab and base variant
-	const media = post.variants[activeTab]?.media || post.variants.base?.media || [];
-	const mediaArray = Array.from(media);
+	// Get media from any variant that has it - prioritize active tab, then base, then any other variant
+	let media = null;
+	
+	// Log the full post structure
+	console.log('📋 Full post structure:', {
+		postId: post.id,
+		variants: Object.keys(post.variants || {}),
+		activeTab,
+		postVariants: Object.fromEntries(
+			Object.entries(post.variants || {}).map(([key, variant]) => [
+				key, 
+				{
+					hasMedia: !!(variant as any)?.media,
+					mediaLength: (variant as any)?.media ? Array.from((variant as any).media).length : 0,
+					mediaItems: (variant as any)?.media ? Array.from((variant as any).media).map((item: any) => ({
+						type: item?.type,
+						hasUrl: !!item?.url,
+						url: item?.url,
+						id: item?.id
+					})) : []
+				}
+			])
+		)
+	});
+	
+	if (post.variants[activeTab]?.media && Array.from(post.variants[activeTab].media).length > 0) {
+		media = post.variants[activeTab].media;
+		console.log('📷 Using media from active tab:', activeTab);
+	} else if (post.variants.base?.media && Array.from(post.variants.base.media).length > 0) {
+		media = post.variants.base.media;
+		console.log('📷 Using media from base variant');
+	} else {
+		// Check all other variants for media
+		for (const variantKey of Object.keys(post.variants || {})) {
+			if (post.variants[variantKey]?.media && Array.from(post.variants[variantKey].media).length > 0) {
+				media = post.variants[variantKey].media;
+				console.log('📷 Using media from variant:', variantKey);
+				break;
+			}
+		}
+	}
+	
+	const mediaArray = media ? Array.from(media) : [];
+	console.log('📷 Final media array:', mediaArray.map((item: any) => ({
+		type: item?.type,
+		url: item?.url,
+		id: item?.id
+	})));
 
 	const handleDeleteClick = (index: number, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -96,59 +141,46 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	return (
 		<>
 			<div className="relative group max-w-2xl mx-auto">
-				{/* Simple carousel container with overlay controls */}
 				<div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
 					<div
 						className="flex transition-transform duration-300 ease-out"
 						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-						onTouchStart={handleTouchStart}
-						onTouchMove={handleTouchMove}
-						onTouchEnd={handleTouchEnd}
 					>
-						{mediaArray.map((mediaItem: any, index) => (
-							<div key={index} className="flex-shrink-0 w-full">
-								{/* Create a positioning wrapper that contains both media and controls */}
-								<div className="relative w-full h-[400px]">
-									<MediaComponent mediaItem={mediaItem} />
-									
-									{/* Controls positioned absolutely within this wrapper */}
-									{index === currentIndex && (
+						{mediaArray.map((mediaItem, index) => (
+							<div key={index} className="w-full flex-shrink-0">
+								<div className="aspect-video relative bg-gray-200 dark:bg-gray-700">
+									{(mediaItem as any)?.type === 'url-image' && (mediaItem as any)?.url ? (
 										<>
-											{/* Red danger delete button - top right corner */}
-											<button
-												onClick={(e) => handleDeleteClick(currentIndex, e)}
-												className="absolute top-2 right-2 rounded-full w-8 h-8 bg-red-600 hover:bg-red-700 text-white opacity-100 transition-all duration-200 z-50 flex items-center justify-center"
-												aria-label={`Delete current media`}
-												style={{ zIndex: 1000 }}
-											>
-												<Trash2 className="w-4 h-4" />
-											</button>
-
-											{/* Simple dots indicator - bottom center */}
-											{mediaArray.length > 1 && (
-												<div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50" style={{ zIndex: 1000 }}>
-													{mediaArray.map((_, dotIndex) => (
-														<button
-															key={dotIndex}
-															onClick={() => setCurrentIndex(dotIndex)}
-															className={`w-3 h-3 rounded-full transition-all duration-200 ${
-																currentIndex === dotIndex 
-																	? 'bg-white shadow-lg scale-110' 
-																	: 'bg-white/60 hover:bg-white/80 hover:scale-105'
-															}`}
-															aria-label={`Go to media ${dotIndex + 1}`}
-														/>
-													))}
-												</div>
-											)}
+											<img
+												src={(mediaItem as any).url}
+												alt={(mediaItem as any).alt?.toString?.() || (mediaItem as any).alt || "API image"}
+												className="w-full h-full object-cover"
+												onLoad={() => console.log('✅ Image loaded:', (mediaItem as any).url)}
+												onError={(e) => {
+													console.error('❌ Image failed to load:', (mediaItem as any).url);
+													(e.target as HTMLImageElement).style.display = 'none';
+												}}
+											/>
+											<div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-1 rounded">
+												URL: {(mediaItem as any).url}
+											</div>
 										</>
+									) : (mediaItem as any)?.type === 'url-video' && (mediaItem as any)?.url ? (
+										<video
+											src={(mediaItem as any).url}
+											className="w-full h-full object-cover"
+											controls
+											muted
+										/>
+									) : (
+										<div className="w-full h-full flex items-center justify-center text-gray-500">
+											Unsupported media type: {(mediaItem as any)?.type || 'unknown'}
+										</div>
 									)}
 								</div>
 							</div>
 						))}
 					</div>
-
-
 				</div>
 
 				{/* Simple add more button */}
