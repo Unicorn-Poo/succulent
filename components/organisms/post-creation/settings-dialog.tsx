@@ -1,6 +1,7 @@
 import { Dialog, Button } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import { Input } from "@/components/atoms";
+import { EnhancedTimePicker } from "./enhanced-time-picker";
 
 interface SettingsDialogProps {
     open: boolean;
@@ -25,27 +26,22 @@ export const SettingsDialog = ({
 }: SettingsDialogProps) => {
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Content style={{ maxWidth: 500 }}>
+            <Dialog.Content style={{ maxWidth: 600 }}>
                 <Dialog.Title>Post Settings</Dialog.Title>
                 <Dialog.Description>
                     Configure scheduling and advanced options for your post.
                 </Dialog.Description>
 
-                <div className="space-y-4 mt-4">
+                <div className="space-y-6 mt-4">
                     <div>
-                        <Label.Root htmlFor="schedule">Schedule Post</Label.Root>
-                        {scheduledDate && (
-                            <div className="text-sm text-gray-600 mb-2">
-                                Currently scheduled for: {scheduledDate.toLocaleString()}
-                            </div>
-                        )}
-                        <Input
-                            id="schedule"
-                            type="datetime-local"
-                            value={scheduledDate ? scheduledDate.toISOString().slice(0, 16) : ""}
-                            onChange={(e) => setScheduledDate(new Date(e.target.value))}
-                            className="mt-1"
-                        />
+                        <Label.Root className="text-base font-medium">Schedule Post</Label.Root>
+                        <div className="mt-2">
+                            <EnhancedTimePicker
+                                value={scheduledDate}
+                                onChange={setScheduledDate}
+                                onClear={handleClearSchedule}
+                            />
+                        </div>
                     </div>
 
                     {isThread && (
@@ -69,26 +65,13 @@ export const SettingsDialog = ({
                     )}
                 </div>
 
-                <div className="flex justify-between gap-2 mt-6">
-                    <div>
-                        {scheduledDate && (
-                            <Button
-                                variant="outline"
-                                onClick={handleClearSchedule}
-                                className="text-red-600 border-red-300 hover:bg-red-50"
-                            >
-                                Clear Schedule
-                            </Button>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="soft" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={() => onOpenChange(false)}>
-                            Save Settings
-                        </Button>
-                    </div>
+                <div className="flex justify-end gap-2 mt-6">
+                    <Button variant="soft" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={() => onOpenChange(false)}>
+                        Save Settings
+                    </Button>
                 </div>
             </Dialog.Content>
         </Dialog.Root>

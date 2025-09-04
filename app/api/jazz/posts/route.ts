@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
     if (!worker) {
       return NextResponse.json({
         success: false,
-        error: 'Jazz worker not available'
-      }, { status: 500 });
+        error: 'Jazz server worker not configured. Set JAZZ_WORKER_ACCOUNT and JAZZ_WORKER_SECRET environment variables.'
+      }, { status: 503 });
     }
     
     console.log('🎷 Worker account ID:', worker.id);

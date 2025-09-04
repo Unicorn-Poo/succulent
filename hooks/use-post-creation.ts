@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Post, PostFullyLoaded, ImageMedia, VideoMedia, PostVariant, MediaItem, ReplyTo } from "../app/schema";
+import { Post, PostFullyLoaded, ImageMedia, VideoMedia, PostVariant, MediaItem, ReplyTo, PlatformNames } from "../app/schema";
 import { co, FileStream } from "jazz-tools";
 // Note: createImage might be imported differently in your Jazz version
 import { 
@@ -21,7 +21,7 @@ import {
 } from "../utils/apiHandlers";
 import { isBusinessPlanMode } from "../utils/ayrshareIntegration";
 
-type SeriesType = "reply" | "multi";
+type SeriesType = "reply" | "thread" | null;
 
 interface PostCreationProps {
 	post: PostFullyLoaded;
@@ -60,7 +60,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}
 
 	const [activeTab, setActiveTab] = useState("base");
-	const [seriesType, setSeriesType] = useState<"reply" | null>(null);
+	const [seriesType, setSeriesType] = useState<SeriesType>(null);
 	const [title, setTitle] = useState(post.title?.toString() || "");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 
@@ -94,11 +94,24 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	const [fetchReplyError, setFetchReplyError] = useState<string | null>(null);
 	const [isQuoteTweet, setIsQuoteTweet] = useState(false);
 	const [currentPost, setPost] = useState(post);
+	const [platformAuthErrors, setPlatformAuthErrors] = useState<any[]>([]);
+	const [showAuthErrorDialog, setShowAuthErrorDialog] = useState(false);
 
 	// Sync currentPost with post prop changes
 	useEffect(() => {
 		setPost(post);
 	}, [post]);
+
+	// Initialize form state from existing post data
+	useEffect(() => {
+		if (post?.variants?.base?.scheduledFor) {
+			const existingDate = new Date(post.variants.base.scheduledFor);
+			// Only update if the date is actually different to prevent loops
+			if (!scheduledDate || existingDate.getTime() !== scheduledDate.getTime()) {
+				setScheduledDate(existingDate);
+			}
+		}
+	}, [post?.id]); // Only depend on post ID, not the full post object
 
 	// Clean up corrupted variants immediately to prevent Jazz loading errors
 	useEffect(() => {
@@ -164,7 +177,16 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		// Safely access variant text with fallback to empty string for broken references
 		const variant = currentPost.variants[activeTab];
 		const content = contextText ?? (variant?.text && typeof variant.text.toString === 'function' ? variant.text.toString() : "") ?? "";
-		const platform = accountGroup.accounts[activeTab]?.platform || 'default';
+		
+		// Safe platform access with proper type handling
+		let platform = 'default';
+		if (Array.isArray(accountGroup.accounts)) {
+			const account = accountGroup.accounts.find((acc: any) => acc.id === activeTab || acc.platform === activeTab);
+			platform = account?.platform || 'default';
+		} else if (accountGroup.accounts && typeof accountGroup.accounts === 'object') {
+			platform = accountGroup.accounts[activeTab]?.platform || 'default';
+		}
+		
 		const limit = PLATFORM_CHARACTER_LIMITS[platform as keyof typeof PLATFORM_CHARACTER_LIMITS] || PLATFORM_CHARACTER_LIMITS.default;
 		return content.length > limit;
 	}, [contextText, currentPost.variants, activeTab, accountGroup.accounts]);
@@ -187,10 +209,11 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		[replyUrl]
 	);
 
-	const detectedPlatform = useMemo(() => 
-		replyUrl ? detectPlatformFromUrl(replyUrl) : null, 
-		[replyUrl]
-	);
+	const detectedPlatform = useMemo(() => {
+		const detected = replyUrl ? detectPlatformFromUrl(replyUrl) : null;
+		// Type cast to ensure it matches the PlatformNames enum
+		return detected && PlatformNames.includes(detected as any) ? detected as typeof PlatformNames[number] : null;
+	}, [replyUrl]);
 
 	const availableAccounts = useMemo(() => {
 		// Handle both legacy account groups (object) and Jazz account groups (array)
@@ -258,18 +281,44 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, []);
 
 	useEffect(() => {
-			// Only include known safe variants to avoid corrupted ones
+		// Only include known safe variants to avoid corrupted ones
 		const platforms = ['base']; // Start with just base variant to avoid corruption
+		
+		// Get list of actually connected platforms from accountGroup
+		const connectedPlatforms = new Set<string>();
+		if (accountGroup?.accounts) {
+			if (Array.isArray(accountGroup.accounts)) {
+				// Jazz CoList
+				(accountGroup.accounts as any[]).forEach(acc => {
+					if (acc?.platform && acc?.isLinked !== false) {
+						connectedPlatforms.add(acc.platform);
+					}
+				});
+			} else {
+				// Legacy object
+				Object.entries(accountGroup.accounts).forEach(([key, acc]: [string, any]) => {
+					if (acc?.platform && acc?.isLinked !== false) {
+						connectedPlatforms.add(acc.platform);
+					}
+				});
+			}
+		}
 		
 		// Safely check for additional variants without triggering Jazz loading errors
 		try {
 			Object.keys(currentPost.variants || {}).forEach(key => {
 				if (key !== "title" && key !== "base" && key !== 'co_zerhbvzPjo6yVD4HZ7URSzung3k') {
-					// Only add if it's a valid platform key and not corrupted
+					// Only add if it's a valid platform key, not corrupted, AND actually connected
 					try {
 						const variant = currentPost.variants[key];
 						if (variant && variant.text !== null && variant.text !== undefined) {
-							platforms.push(key);
+							// Only include if this platform is actually connected
+							if (connectedPlatforms.has(key)) {
+								platforms.push(key);
+							} else {
+								// Remove the variant for unconnected platforms
+								delete currentPost.variants[key];
+							}
 						}
 					} catch (e) {
 						console.warn(`Skipping corrupted variant: ${key}`);
@@ -279,8 +328,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		} catch (error) {
 			console.warn('Error accessing variants, using base only:', error);
 		}
+		
 		setSelectedPlatforms(platforms);
-	}, [currentPost.variants]);
+	}, [currentPost.variants, accountGroup.accounts]);
 
 	useEffect(() => {
 		setShowSaveButton(hasUnsavedChanges);
@@ -332,16 +382,15 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					
 					// Update the Jazz object directly
 					const variant = post.variants[activeTab];
-					if (variant) {
-						variant.replyTo = {
-							url: replyUrl,
-							platform: detectedPlatform || undefined,
-							author: postContent.author,
-							authorUsername: postContent.authorUsername,
-							authorPostContent: postContent.authorPostContent,
-							authorAvatar: postContent.authorAvatar,
-							likesCount: postContent.likesCount,
-						};
+					if (variant && variant.replyTo) {
+						// Update existing ReplyTo object properties
+						variant.replyTo.url = replyUrl;
+						variant.replyTo.platform = detectedPlatform || undefined;
+						variant.replyTo.author = postContent.author;
+						variant.replyTo.authorUsername = postContent.authorUsername;
+						variant.replyTo.authorPostContent = postContent.authorPostContent;
+						variant.replyTo.authorAvatar = postContent.authorAvatar;
+						variant.replyTo.likesCount = postContent.likesCount;
 					}
 
 				} catch (error) {
@@ -359,7 +408,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// Clear reply data in Jazz object
 			const variant = post.variants[activeTab];
 			if (variant && variant.replyTo) {
-				variant.replyTo = {};
+				// Clear the ReplyTo object properties instead of replacing it
+				variant.replyTo.url = undefined;
+				variant.replyTo.platform = undefined;
+				variant.replyTo.author = undefined;
+				variant.replyTo.authorUsername = undefined;
+				variant.replyTo.authorPostContent = undefined;
+				variant.replyTo.authorAvatar = undefined;
+				variant.replyTo.likesCount = undefined;
 			}
 		}
 	}, [replyUrl, isValidReplyUrl, seriesType, activeTab, post.variants, detectedPlatform]);
@@ -410,6 +466,8 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		setIsScheduling(true);
 		setErrors([]);
 		setSuccess("");
+		setPlatformAuthErrors([]);
+		setShowAuthErrorDialog(false);
 
 		try {
 			const platforms = selectedPlatforms.filter(p => p !== "base");
@@ -423,23 +481,78 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// 🆓 FREE ACCOUNT MODE (ACTIVE FOR DEVELOPMENT)
 			// =============================================================================
 			if (!isBusinessPlanMode()) {
+				// Debug media extraction
+				console.log('🖼️ DEBUG: Media extraction');
+				console.log('📷 Active tab:', activeTab);
+				console.log('📷 Post variants:', Object.keys(post.variants));
+				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
+				
 				// Free account mode - no profile keys needed
-				const mediaUrls = post.variants[activeTab]?.media?.map(item => 
-					item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
-				).filter(Boolean) as string[] || [];
+				const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
+					console.log(`📷 Processing media item ${index}:`, {
+						type: item?.type,
+						hasUrl: !!(item as any)?.url,
+						hasImage: !!(item as any)?.image,
+						hasVideo: !!(item as any)?.video,
+						item: item
+					});
+					
+					// Handle URL-based media from API posts
+					if (item?.type === "url-image" || item?.type === "url-video") {
+						console.log(`📷 Found URL media: ${(item as any).url}`);
+						return (item as any).url;
+					}
+					// Handle FileStream media from UI uploads - use proper Jazz FileStream methods
+					if (item?.type === "image" && (item as any).image) {
+						// FileStream doesn't have publicUrl, use proper Jazz method
+						const url = (item as any).image.toString();
+						console.log(`📷 Found image FileStream: ${url}`);
+						return url;
+					}
+					if (item?.type === "video" && (item as any).video) {
+						// FileStream doesn't have publicUrl, use proper Jazz method
+						const url = (item as any).video.toString();
+						console.log(`📷 Found video FileStream: ${url}`);
+						return url;
+					}
+					console.log(`📷 No media URL found for item ${index}`);
+					return undefined;
+				}).filter(Boolean) as string[] || [];
+
+				// Filter out localhost URLs that Ayrshare cannot access
+				const publicMediaUrls = mediaUrls.filter(url => {
+					const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
+					if (isLocalhost) {
+						console.warn(`⚠️ Skipping localhost media URL (Ayrshare cannot access): ${url}`);
+					}
+					return !isLocalhost;
+				});
+
+				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
 
 				const basePostData: PostData = {
 					post: postText,
 					platforms,
-					mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+					mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
 					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
 				};
+
+				// Warn user if media was filtered out
+				if (mediaUrls.length > 0 && publicMediaUrls.length === 0) {
+					setErrors(["⚠️ Media URLs removed: Ayrshare cannot access localhost URLs. Deploy your media to a public URL or use external media sources."]);
+					return;
+				}
+
+				console.log('📷 Final PostData being sent:', {
+					...basePostData,
+					mediaUrls: basePostData.mediaUrls
+				});
 
 				let results;
 
 				if (seriesType === "reply" && replyUrl) {
 					results = await handleReplyPost(basePostData, replyUrl);
-				} else if (seriesType === "multi" && contextText.trim()) {
+				} else if (seriesType === "thread" && contextText?.trim()) {
 					const threadPosts = generateThreadPreview(contextText);
 					results = await handleMultiPosts(basePostData, threadPosts);
 				} else {
@@ -462,9 +575,20 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("No Ayrshare profile found for this account group. Please check the account group settings.");
 			}
 
-			const mediaUrls = post.variants[activeTab]?.media?.map(item => 
-				item?.type === "image" ? item.image?.publicUrl : item?.type === "video" ? item.video?.publicUrl : undefined
-			).filter(Boolean) as string[] || [];
+			const mediaUrls = post.variants[activeTab]?.media?.map(item => {
+				// Handle URL-based media from API posts
+				if (item?.type === "url-image" || item?.type === "url-video") {
+					return item.url;
+				}
+				// Handle FileStream media from UI uploads - use toString() or other methods
+				if (item?.type === "image" && item.image) {
+					return item.image.toString?.() || null;
+				}
+				if (item?.type === "video" && item.video) {
+					return item.video.toString?.() || null;
+				}
+				return null;
+			}).filter(Boolean) as string[] || [];
 
 			const basePostData: PostData = {
 				post: postText,
@@ -478,7 +602,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 			if (seriesType === "reply" && replyUrl) {
 				results = await handleReplyPost(basePostData, replyUrl);
-			} else if (seriesType === "multi" && contextText.trim()) {
+			} else if (seriesType === "thread" && contextText?.trim()) {
 				const threadPosts = generateThreadPreview(contextText);
 				results = await handleMultiPosts(basePostData, threadPosts);
 			} else {
@@ -489,9 +613,27 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// setResults(results); // Uncomment when you add results state if needed
 
 		} catch (error) {
-			const errorMessage = handleApiError(error);
-			setErrors([errorMessage]);
-			console.error("Failed to publish post:", error);
+			// Check if this is a platform authorization error
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			
+			// Parse platform-specific errors from the enhanced error message
+			if (errorMessage.includes(':') && errorMessage.includes('authorization')) {
+				const platformErrors = errorMessage.split('\n').map(line => {
+					const [platform, message] = line.split(':').map(s => s.trim());
+					return {
+						platform: platform.toLowerCase(),
+						code: message.includes('authorization expired') ? 272 : 156,
+						message: message,
+						resolution: { relink: true, platform: platform.toLowerCase() }
+					};
+				});
+				
+				setPlatformAuthErrors(platformErrors);
+				setShowAuthErrorDialog(true);
+			} else {
+				const errorMessageText = handleApiError(error);
+				setErrors([errorMessageText]);
+			}
 		} finally {
 			setIsScheduling(false);
 		}
@@ -517,13 +659,17 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 		// Update the Jazz object directly
 		const variant = post.variants[activeTab];
-		if (variant) {
-			if (!variant.replyTo) {
-				variant.replyTo = {};
-			}
+		if (variant && variant.replyTo) {
 			variant.replyTo.url = newUrl;
 			if (!newUrl) {
-				variant.replyTo = {};
+				// Clear all ReplyTo properties instead of replacing the object
+				variant.replyTo.url = undefined;
+				variant.replyTo.platform = undefined;
+				variant.replyTo.author = undefined;
+				variant.replyTo.authorUsername = undefined;
+				variant.replyTo.authorPostContent = undefined;
+				variant.replyTo.authorAvatar = undefined;
+				variant.replyTo.likesCount = undefined;
 			} else {
 				variant.replyTo.authorPostContent = undefined;
 			}
@@ -544,8 +690,46 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 	const handleClearSchedule = useCallback(() => {
 		setScheduledDate(null);
+		// Update the post object to unschedule it
+		if (post?.variants?.base) {
+			try {
+				post.variants.base.scheduledFor = undefined;
+				if (post.variants.base.status === 'scheduled') {
+					post.variants.base.status = 'draft';
+				}
+			} catch (error) {
+				console.error('Failed to unschedule post:', error);
+			}
+		}
 		setShowSettings(false);
-	}, []);
+	}, [post]);
+
+	const handleScheduleDateChange = useCallback((date: Date | null) => {
+		setScheduledDate(date);
+		// Save to post object immediately
+		if (post?.variants?.base) {
+			try {
+				if (date) {
+					// Ensure the base variant has the required properties
+					if (post.variants.base.scheduledFor !== undefined || 'scheduledFor' in post.variants.base) {
+						post.variants.base.scheduledFor = date;
+					}
+					if (post.variants.base.status !== undefined || 'status' in post.variants.base) {
+						post.variants.base.status = 'scheduled';
+					}
+				} else {
+					if (post.variants.base.scheduledFor !== undefined || 'scheduledFor' in post.variants.base) {
+						post.variants.base.scheduledFor = undefined;
+					}
+					if (post.variants.base.status === 'scheduled') {
+						post.variants.base.status = 'draft';
+					}
+				}
+			} catch (error) {
+				console.error('Failed to save schedule change:', error);
+			}
+		}
+	}, [post]);
 
 	const handleAddAccount = useCallback((platform: string) => {
 		if (!selectedPlatforms.includes(platform)) {
@@ -559,12 +743,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				const mediaList = co.list(MediaItem).create([], { owner: post._owner });
 				const replyToObj = ReplyTo.create({}, { owner: post._owner });
 				
-				// Create the platform variant
+				// Create the platform variant with all required fields
 				const platformVariant = PostVariant.create({
 					text: platformText,
 					postDate: new Date(),
 					media: mediaList,
 					replyTo: replyToObj,
+					status: 'draft', // Add required status field
 					edited: false,
 					lastModified: undefined,
 				}, { owner: post._owner });
@@ -742,6 +927,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         handleReplyUrlChange,
         handleTitleSave,
         handleClearSchedule,
+        handleScheduleDateChange,
         handleAddAccount,
         handleRemoveAccount,
         getReplyDescription,
@@ -749,6 +935,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         handlePreview,
         handleImageUpload,
 		isExplicitThread,
-		isImplicitThread
+		isImplicitThread,
+		platformAuthErrors,
+		showAuthErrorDialog,
+		setShowAuthErrorDialog
     };
 } 

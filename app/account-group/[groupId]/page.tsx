@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, Grid, List, Calendar, Copy, Check } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { Home } from "lucide-react";
@@ -26,7 +26,6 @@ import { getPostStatus } from "@/utils/postValidation";
 export default function AccountGroupPage() {
 	const params = useParams();
 	const router = useRouter();
-	// Tab state with hash routing
 	const [activeTab, setActiveTab] = useState(() => {
 		if (typeof window !== 'undefined') {
 			const hash = window.location.hash.replace('#', '');
@@ -38,13 +37,11 @@ export default function AccountGroupPage() {
 		return 'posts';
 	});
 
-	// Handle tab changes with hash update
 	const handleTabChange = (newTab: string) => {
 		setActiveTab(newTab);
 		window.location.hash = newTab;
 	};
 
-	// Listen for hash changes (back/forward navigation)
 	useEffect(() => {
 		const handleHashChange = () => {
 			const hash = window.location.hash.replace('#', '');
@@ -57,71 +54,45 @@ export default function AccountGroupPage() {
 		window.addEventListener('hashchange', handleHashChange);
 		return () => window.removeEventListener('hashchange', handleHashChange);
 	}, []);
-	const [showCollaborationSettings, setShowCollaborationSettings] = useState(false);
 	
-	// Create post dialog state
+	const [showCollaborationSettings, setShowCollaborationSettings] = useState(false);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [newPostTitle, setNewPostTitle] = useState("");
 	const [newPostText, setNewPostText] = useState("");
-	
-	// Preview state
 	const [showPreview, setShowPreview] = useState(false);
 	const [previewAccount, setPreviewAccount] = useState<any>(null);
 	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
-	
-	// Posts filter state
 	const [postsFilter, setPostsFilter] = useState<'all' | 'draft' | 'scheduled' | 'published'>('all');
-	
-	// State for API posts - moved to top to fix React Hooks order
-	const [apiPosts, setApiPosts] = useState<any[]>([]);
-	const [loadingApiPosts, setLoadingApiPosts] = useState(false);
-	
-	// State for copy-to-click functionality
 	const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
 	
-	// Get account group ID from params
 	const accountGroupId = params.groupId as string;
 	
-	// Get Jazz account to access collaborative account groups
 	const { me } = useAccount(MyAppAccount, {
 		resolve: {
 			root: {
 				accountGroups: { $each: {
 					accounts: { $each: true },
-					posts: { $each: {
-						variants: { $each: {
-							text: true,
-							media: { $each: true },
-							replyTo: true
-						}}
-					}}
+					posts: true // Load posts list but not deep details to avoid permission errors
 				}}
 			}
 		}
 	});
 	
-	// Try to find the account group in legacy groups first, then in Jazz groups
 	const legacyAccountGroup = Object.values(accountGroups).find(
 		(group) => group.id === accountGroupId
 	);
 	
-	// ✅ CORRECT: Map URL params to Jazz objects safely
 	const jazzAccountGroup = me?.root?.accountGroups?.find((group: any, index: number) => {
 		if (!group) return false;
 		
-		// 1. Direct Jazz ID match (for newly created groups)
 		if (group.id === accountGroupId) return true;
-		
-		// 2. Legacy "demo" mapping
 		if (accountGroupId === 'demo') return index === 0;
 		
-		// 3. Index-based routing (group-0, group-1, etc.)
 		if (accountGroupId.startsWith('group-')) {
 			const groupIndex = parseInt(accountGroupId.replace('group-', ''));
 			return index === groupIndex;
 		}
 		
-		// 4. Name-based routing (convert Jazz name to URL-safe format)
 		if (group?.name) {
 			const safeName = group.name.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 			return safeName === accountGroupId;
@@ -130,54 +101,7 @@ export default function AccountGroupPage() {
 		return false;
 	});
 	
-	// Use whichever one we found
 	const accountGroup = legacyAccountGroup || jazzAccountGroup;
-	
-	// Fetch API posts for this account group - must be before early return to fix hook order
-	useEffect(() => {
-		const fetchApiPosts = async () => {
-			if (!accountGroup) return;
-			
-			setLoadingApiPosts(true);
-			try {
-				// Fetch from both in-memory storage and Jazz database
-				const [memoryResponse, jazzResponse] = await Promise.allSettled([
-					fetch(`/api/posts/list?accountGroupId=${encodeURIComponent(accountGroupId)}`),
-					fetch(`/api/posts/jazz-list?accountGroupId=${encodeURIComponent(accountGroupId)}`)
-				]);
-				
-				let allApiPosts: any[] = [];
-				
-				// Process memory storage posts
-				if (memoryResponse.status === 'fulfilled' && memoryResponse.value.ok) {
-					const memoryData = await memoryResponse.value.json();
-					if (memoryData.success) {
-						console.log('📋 Loaded in-memory API posts:', memoryData.data.posts.length);
-						allApiPosts = [...memoryData.data.posts];
-					}
-				}
-				
-				// Process Jazz posts
-				if (jazzResponse.status === 'fulfilled' && jazzResponse.value.ok) {
-					const jazzData = await jazzResponse.value.json();
-					if (jazzData.success) {
-						console.log('🎷 Loaded Jazz API posts:', jazzData.data.posts.length);
-						allApiPosts = [...allApiPosts, ...jazzData.data.posts];
-					}
-				}
-				
-				console.log('📋 Total API posts loaded:', allApiPosts.length);
-				setApiPosts(allApiPosts);
-				
-			} catch (error) {
-				console.error('❌ Error loading API posts:', error);
-			} finally {
-				setLoadingApiPosts(false);
-			}
-		};
-
-		fetchApiPosts();
-	}, [accountGroupId, accountGroup]); // ✅ Depend on URL-friendly ID, not Jazz internal ID
 	
 	if (!accountGroup) {
 		return (
@@ -197,19 +121,16 @@ export default function AccountGroupPage() {
 		);
 	}
 
-	// Helper function to safely access potentially corrupted Jazz collaborative arrays
 	const safeArrayAccess = (collaborativeArray: any): any[] => {
 		try {
 			if (!collaborativeArray) {
 				return [];
 			}
 			
-			// Handle null references in collaborative lists
 			if (Array.isArray(collaborativeArray)) {
 				return collaborativeArray.filter(item => item != null);
 			}
 			
-			// Try to convert Jazz collaborative list to regular array
 			const array = Array.from(collaborativeArray || []);
 			return array.filter(item => item != null);
 		} catch (error) {
@@ -218,7 +139,6 @@ export default function AccountGroupPage() {
 		}
 	};
 
-	// Helper function to get accounts array from either format
 	const getAccountsArray = () => {
 		if (legacyAccountGroup) {
 			return Object.values(legacyAccountGroup.accounts || {});
@@ -228,23 +148,17 @@ export default function AccountGroupPage() {
 		return [];
 	};
 
-	// Helper function to get posts array from either format
 	const getPostsArray = () => {
-		const jazzPosts = jazzAccountGroup ? safeArrayAccess(jazzAccountGroup.posts) : [];
-		const legacyPosts = legacyAccountGroup ? legacyAccountGroup.posts || [] : [];
-		return [...jazzPosts, ...legacyPosts];
-	};
-
-
-
-	// Get all posts (Jazz + API)
-	const getAllPosts = () => {
-		const jazzPosts = getPostsArray();
-		return [...jazzPosts, ...apiPosts];
+		if (legacyAccountGroup) {
+			return legacyAccountGroup.posts || [];
+		} else if (jazzAccountGroup) {
+			return safeArrayAccess(jazzAccountGroup.posts);
+		}
+		return [];
 	};
 
 	const accounts = getAccountsArray();
-	const posts = getAllPosts(); // Use combined posts instead of just getPostsArray()
+	const posts = getPostsArray();
 
 	// Transform accounts to the format expected by analytics components
 	const transformedAccounts = accounts.map((account: any) => ({
@@ -340,6 +254,7 @@ export default function AccountGroupPage() {
 				</div>
 			</div>
 
+			{/* Main Content */}
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<Tabs.Root value={activeTab} onValueChange={handleTabChange}>
 					<Tabs.List>

@@ -193,7 +193,22 @@ export const VideoMedia = co.map({
 	alt: co.optional(co.plainText()),
 });
 
-export const MediaItem = co.discriminatedUnion("type", [ImageMedia, VideoMedia]);
+// URL-based media for API posts
+export const URLImageMedia = co.map({
+	type: z.literal("url-image"),
+	url: z.string(),
+	alt: co.optional(co.plainText()),
+	filename: z.optional(z.string()),
+});
+
+export const URLVideoMedia = co.map({
+	type: z.literal("url-video"),
+	url: z.string(),
+	alt: co.optional(co.plainText()),
+	filename: z.optional(z.string()),
+});
+
+export const MediaItem = co.discriminatedUnion("type", [ImageMedia, VideoMedia, URLImageMedia, URLVideoMedia]);
 
 // Post performance tracking schema
 export const PostPerformance = co.map({
@@ -819,45 +834,39 @@ export const MyAppAccount = co.account({
   profile: SucculentProfile,
 }).withMigration(async (account, creationProps?: { name: string }) => {
   try {
-    console.log('🎵 Jazz account migration starting...', {
-      accountId: account.id,
-      hasRoot: !!account.root,
-      hasProfile: !!account.profile,
-      creationProps
-    });
-
-    // Create root if it doesn't exist
     if (account.root === undefined) {
-      console.log('🔧 Creating account root...');
       try {
-        // Create the root with the account as the owner
         const accountGroups = co.list(AccountGroup).create([], { owner: account });
         account.root = AccountRoot.create({
           accountGroups: accountGroups,
         }, { owner: account });
-        console.log('✅ Account root created successfully');
-        console.log('✅ Root owner:', account.id);
-        console.log('✅ Account groups list created:', !!accountGroups);
+        
+        if (process.env.JAZZ_WORKER_ACCOUNT && account.root?._owner instanceof Group) {
+          try {
+            const { Account } = await import('jazz-tools');
+            const serverWorker = await Account.load(process.env.JAZZ_WORKER_ACCOUNT);
+            if (serverWorker) {
+              account.root._owner.addMember(serverWorker, 'writer');
+              
+              if (account.root.accountGroups) {
+                for (const accountGroup of account.root.accountGroups) {
+                  if (accountGroup?._owner instanceof Group) {
+                    accountGroup._owner.addMember(serverWorker, 'writer');
+                  }
+                }
+              }
+            }
+          } catch (workerError) {
+            // Worker permissions will be added during API calls
+          }
+        }
+        
       } catch (error) {
         console.error('❌ Failed to create account root:', error);
-        console.error('❌ Error details:', error);
-        // Don't throw - let the app continue and retry later
-        console.log('⚠️ Continuing without root - will retry on next load');
       }
-          } else {
-        console.log('ℹ️ Root already exists');
-        if (account.root) {
-          console.log('ℹ️ Root details:', {
-            rootId: account.root.id,
-            hasAccountGroups: !!account.root.accountGroups,
-            accountGroupsLength: account.root.accountGroups?.length || 0
-          });
-        }
-      }
+    }
 
-    // Create profile if it doesn't exist
     if (account.profile === undefined) {
-      console.log('🔧 Creating account profile...');
       try {
         const profileGroup = Group.create();
         profileGroup.makePublic();
@@ -868,22 +877,11 @@ export const MyAppAccount = co.account({
           apiKeys: co.list(APIKey).create([], profileGroup),
           apiKeyUsageLogs: co.list(APIKeyUsageLog).create([], profileGroup),
         }, profileGroup);
-        console.log('✅ Account profile created successfully');
       } catch (error) {
         console.error('❌ Failed to create account profile:', error);
         throw error;
       }
-    } else {
-      console.log('ℹ️ Profile already exists');
     }
-
-    console.log('🔍 Migration completed. Final state:', {
-      hasRoot: !!account.root,
-      hasProfile: !!account.profile,
-      hasAccountGroups: account.root ? !!account.root.accountGroups : false,
-      accountGroupsLength: account.root?.accountGroups?.length || 0,
-      rootOwner: account.root?._owner?.id
-    });
   } catch (error) {
     console.error('❌ Migration failed:', error);
     throw error;

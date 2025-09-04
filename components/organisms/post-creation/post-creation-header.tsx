@@ -31,7 +31,7 @@ interface PostCreationHeaderProps {
             url?: string;
         }> | any[]; // Allow array for Jazz CoList
     };
-    seriesType: "reply" | null;
+    seriesType: "reply" | "thread" | null;
     detectedPlatform: string | null;
     activeTab: string;
     setActiveTab: (tab: string) => void;
@@ -102,20 +102,20 @@ export const PostCreationHeader = ({
             {/* Platform Tabs */}
             <div className="flex items-center gap-2 flex-wrap">
                 {selectedPlatforms.map((platform) => {
-                    // Helper function to find account by ID in both legacy and Jazz formats
-                    const findAccount = (accountId: string) => {
+                    // Helper function to find account by platform name
+                    const findAccountByPlatform = (platformName: string) => {
                         if (!accountGroup?.accounts) return null;
                         
                         if (Array.isArray(accountGroup.accounts)) {
-                            // Jazz CoList - find by ID
-                            return (accountGroup.accounts as any[]).find(acc => acc.id === accountId);
+                            // Jazz CoList - find by platform
+                            return (accountGroup.accounts as any[]).find(acc => acc?.platform === platformName);
                         } else {
-                            // Legacy object - direct lookup
-                            return (accountGroup.accounts as any)[accountId];
+                            // Legacy object - find by platform
+                            return Object.values(accountGroup.accounts as any).find((acc: any) => acc?.platform === platformName);
                         }
                     };
                     
-                    const account = platform === "base" ? null : findAccount(platform);
+                    const account = platform === "base" ? null : findAccountByPlatform(platform);
                     const platformIcon = platform === "base"
                         ? platformIcons.base
                         : platformIcons[account?.platform as keyof typeof platformIcons] || platformIcons.base;
@@ -130,47 +130,47 @@ export const PostCreationHeader = ({
                         <TooltipProvider key={platform}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <div className="flex items-center">
-                                                                <Button variant={activeTab === platform ? "solid" : "outline"}
-                            size="2"
-                            onClick={() => !isDisabled && setActiveTab(platform)}
-                            className="flex items-center gap-2"
-                            disabled={isDisabled || false}
-                        >
-                            {platform === "base" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sprout-icon lucide-sprout">
-                                    <path d="M7 20h10"/>
-                                    <path d="M10 20c5.5-2.5.8-6.4 3-10"/>
-                                    <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/>
-                                    <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>
-                                </svg>
-                            ) : (
-                                <Image
-                                    src={platformIcon}
-                                    alt={platform}
-                                    width={16}
-                                    height={16}
-                                />
-                            )}
-                            {displayName}
-                                            {/* Hide edited badge in reply mode */}
-                                            {seriesType !== 'reply' && platform !== "base" && post.variants[platform]?.edited && (
-                                                <Badge variant="soft" color="orange" className="ml-1">
-                                                    •
-                                                </Badge>
-                                            )}
-                                            {platform !== "base" && (
-                                                <span
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent tab switch
-                                                        handleRemoveAccount(platform);
-                                                    }}
-                                                    className="ml-1 p-0.5 rounded-full hover:bg-gray-500/20"
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </span>
-                                            )}
-                                        </Button>                                      </div>
+                                    <Button 
+                                        variant={activeTab === platform ? "solid" : "outline"}
+                                        size="2"
+                                        onClick={() => !isDisabled && setActiveTab(platform)}
+                                        className="flex items-center gap-2"
+                                        disabled={isDisabled || false}
+                                    >
+                                        {platform === "base" ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sprout-icon lucide-sprout">
+                                                <path d="M7 20h10"/>
+                                                <path d="M10 20c5.5-2.5.8-6.4 3-10"/>
+                                                <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/>
+                                                <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>
+                                            </svg>
+                                        ) : (
+                                            <Image
+                                                src={platformIcon}
+                                                alt={platform}
+                                                width={16}
+                                                height={16}
+                                            />
+                                        )}
+                                        {displayName}
+                                        {/* Hide edited badge in reply mode */}
+                                        {seriesType !== 'reply' && platform !== "base" && post.variants[platform]?.edited && (
+                                            <Badge variant="soft" color="orange" className="ml-1">
+                                                •
+                                            </Badge>
+                                        )}
+                                        {platform !== "base" && (
+                                            <span
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent tab switch
+                                                    handleRemoveAccount(platform);
+                                                }}
+                                                className="ml-1 p-0.5 rounded-full hover:bg-gray-500/20"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </span>
+                                        )}
+                                    </Button>
                                 </TooltipTrigger>
                                 {isDisabled && (
                                     <TooltipContent>
@@ -186,7 +186,8 @@ export const PostCreationHeader = ({
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="outline"
+                                <Button 
+                                    variant="outline"
                                     size="2"
                                     onClick={() => setShowAddAccountDialog(true)}
                                     className="flex items-center gap-2"
@@ -195,7 +196,7 @@ export const PostCreationHeader = ({
                                     <Plus className="w-4 h-4" />
                                     Add Account
                                 </Button>                            
-                              </TooltipTrigger>
+                            </TooltipTrigger>
                             {seriesType === 'reply' && (
                                 <TooltipContent>
                                     <p>You cannot add accounts while in reply mode.</p>

@@ -961,11 +961,18 @@ export interface HashtagSuggestions {
  * @param profileKey - Profile key (Business Plan only)
  * @returns Hashtag suggestions
  */
-export const getHashtagSuggestions = async (
+export async function getHashtagSuggestions(
   content: string, 
-  platform: string, 
+  platform?: string,
   profileKey?: string
-): Promise<HashtagSuggestions> => {
+): Promise<string[]> {
+  // Hashtag suggestions API endpoint doesn't exist in Ayrshare documentation
+  // Returning empty array to prevent 404 errors
+  return [];
+  
+  // Note: The /hashtags/suggest endpoint is not available in the current Ayrshare API
+  // If this feature becomes available in the future, uncomment and update the code below:
+  /*
   if (!isBusinessPlanMode()) {
     throw new Error('Hashtag suggestions require Business Plan');
   }
@@ -989,14 +996,15 @@ export const getHashtagSuggestions = async (
     })
   });
 
-  const result = await response.json();
-  
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to get hashtag suggestions');
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get hashtag suggestions');
   }
 
-  return result;
-};
+  const result = await response.json();
+  return result.hashtags || [];
+  */
+}
 
 /**
  * Get optimal posting times for a platform

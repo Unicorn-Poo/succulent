@@ -26,5 +26,6 @@ export const PLATFORM_CHARACTER_LIMITS = {
 	default: 2200,
 };
 
-export const AYRSHARE_API_URL = "https://api.ayrshare.com/api";
+// Use the correct Ayrshare API URL from their official documentation
+export const AYRSHARE_API_URL = process.env.NEXT_PUBLIC_AYRSHARE_API_URL || "https://api.ayrshare.com/api";
 export const AYRSHARE_API_KEY = process.env.NEXT_PUBLIC_AYRSHARE_API_KEY; 

@@ -23,6 +23,7 @@ import { ThreadPreview } from "./post-creation/thread-preview";
 import { AddAccountDialog } from "./post-creation/add-account-dialog";
 import { SettingsDialog } from "./post-creation/settings-dialog";
 import HashtagSuggestions from "./hashtag-suggestions";
+import { PlatformAuthorizationError } from "./platform-authorization-error";
 import { getOptimalPostTimes, isFeatureAvailable } from "@/utils/ayrshareAnalytics";
 import { useState, useEffect, useMemo, useCallback } from "react";
 
@@ -603,7 +604,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		showPublishButton,
 		contextText,
 		showAddAccountDialog, setShowAddAccountDialog,
-		scheduledDate, setScheduledDate,
+		scheduledDate, setScheduledDate, handleScheduleDateChange,
 		isScheduling,
 		isSaving,
 		errors,
@@ -635,7 +636,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		handlePreview,
 		handleImageUpload,
 		isExplicitThread,
-		isImplicitThread
+		isImplicitThread,
+		platformAuthErrors,
+		showAuthErrorDialog,
+		setShowAuthErrorDialog
 	} = usePostCreation({ post, accountGroup });
 
 	// =============================================================================
@@ -1911,7 +1915,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				open={showSettings}
 				onOpenChange={setShowSettings}
 				scheduledDate={scheduledDate}
-				setScheduledDate={setScheduledDate}
+				setScheduledDate={handleScheduleDateChange}
 				isThread={isThread}
 				postingInterval={postingInterval}
 				setPostingInterval={setPostingInterval}
@@ -1934,6 +1938,15 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				threadPosts={threadPosts}
 				replyUrl={replyUrl}
 			/>
+
+			{/* Platform Authorization Error Dialog */}
+			{showAuthErrorDialog && platformAuthErrors.length > 0 && (
+				<PlatformAuthorizationError
+					errors={platformAuthErrors}
+					onClose={() => setShowAuthErrorDialog(false)}
+					onRetry={handlePublishPost}
+				/>
+			)}
 		</div>
 	);
 }

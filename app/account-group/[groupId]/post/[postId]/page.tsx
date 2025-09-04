@@ -13,15 +13,9 @@ export default function PostPage() {
   const params = useParams();
   const router = useRouter();
   
-  // State for API posts - must be at top for React Hooks order
-  const [apiPosts, setApiPosts] = useState<any[]>([]);
-  const [loadingApiPosts, setLoadingApiPosts] = useState(false);
-  
-  // Get account group ID and post ID from params
   const accountGroupId = params.groupId as string;
   const postId = params.postId as string;
   
-  // Get Jazz account to access collaborative account groups
   const { me } = useAccount(MyAppAccount, {
     resolve: {
       root: {
@@ -39,7 +33,6 @@ export default function PostPage() {
     }
   });
   
-  // Try to find the account group in legacy groups first, then in Jazz groups
   const legacyAccountGroup = Object.values(accountGroups).find(
     (group) => group.id === params.groupId
   );
@@ -49,19 +42,14 @@ export default function PostPage() {
     
     const groupId = params.groupId as string;
     
-    // 1. Direct Jazz ID match (for newly created groups)
     if (group.id === groupId) return true;
-    
-    // 2. Legacy "demo" mapping  
     if (groupId === 'demo') return index === 0;
     
-    // 3. Index-based routing (group-0, group-1, etc.)
     if (groupId.startsWith('group-')) {
       const groupIndex = parseInt(groupId.replace('group-', ''));
       return index === groupIndex;
     }
     
-    // 4. Name-based routing (convert Jazz name to URL-safe format)
     if (group?.name) {
       const safeName = group.name.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       return safeName === groupId;
@@ -70,48 +58,18 @@ export default function PostPage() {
     return false;
   });
   
-  // Prioritize Jazz account group (which has real accounts) over legacy account group
   const accountGroup = jazzAccountGroup || legacyAccountGroup;
   
-  // Fetch API posts for this account group - must be before early returns
-  useEffect(() => {
-    const fetchApiPosts = async () => {
-      if (!accountGroup) return;
-      
-      setLoadingApiPosts(true);
-      try {
-        // Use URL-friendly accountGroupId for API calls
-        const response = await fetch(`/api/posts/list?accountGroupId=${encodeURIComponent(accountGroupId)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            console.log('📋 Loaded API posts for post detail:', data.data.posts);
-            setApiPosts(data.data.posts || []);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error loading API posts for post detail:', error);
-      } finally {
-        setLoadingApiPosts(false);
-      }
-    };
-
-    fetchApiPosts();
-  }, [accountGroupId, accountGroup]);
-  
-  // Helper function to safely access potentially corrupted Jazz collaborative arrays
   const safeArrayAccess = (collaborativeArray: any): any[] => {
     try {
       if (!collaborativeArray) {
         return [];
       }
       
-      // Handle null references in collaborative lists
       if (Array.isArray(collaborativeArray)) {
         return collaborativeArray.filter(item => item != null);
       }
       
-      // Try to convert Jazz collaborative list to regular array
       const array = Array.from(collaborativeArray || []);
       return array.filter(item => item != null);
     } catch (error) {
@@ -120,7 +78,6 @@ export default function PostPage() {
     }
   };
 
-  // Helper function to get posts array from either format
   const getPostsArray = () => {
     if (legacyAccountGroup) {
       return legacyAccountGroup.posts || [];
@@ -130,16 +87,8 @@ export default function PostPage() {
     return [];
   };
   
-  // Get all posts (Jazz + API)
-  const getAllPosts = () => {
-    const jazzPosts = getPostsArray();
-    return [...jazzPosts, ...apiPosts];
-  };
-  
-  // Find the specific post in both Jazz and API posts
-  const posts = getAllPosts();
+  const posts = getPostsArray();
   const post = posts.find((post: any) => {
-    // Handle different post ID formats
     const currentPostId = post.id || post.postId || post.variants?.base?.id || post.variants?.base?.postId;
     return currentPostId === postId;
   });

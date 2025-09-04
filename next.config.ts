@@ -43,10 +43,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.fbcdn.net",
       },
-            {
+       {
         protocol: "https",
         hostname: "*.cdninstagram.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.lunary.app",
+      }
     ],
   },
 };

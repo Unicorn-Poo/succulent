@@ -219,18 +219,53 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 			try {
 				let url = null;
 				
-				if (mediaItem.type === "image" && mediaItem.image) {
-					url = await extractMediaUrl(mediaItem.image);
-				} else if (mediaItem.type === "video" && mediaItem.video) {
-					url = await extractMediaUrl(mediaItem.video);
+				// ✅ Handle different media structures
+				if (mediaItem.type === "image" || mediaItem.type === "url-image") {
+					if (mediaItem.type === "url-image" && mediaItem.url) {
+						// API post with direct URL - validate URL first
+						if (typeof mediaItem.url === 'string' && mediaItem.url.startsWith('http')) {
+							url = mediaItem.url;
+						} else {
+							console.error('❌ Invalid URL for url-image:', mediaItem.url);
+						}
+					} else if (mediaItem.image) {
+						// Jazz FileStream structure
+						url = await extractMediaUrl(mediaItem.image);
+					} else if (mediaItem.url) {
+						// Fallback for other URL structures
+						url = await extractMediaUrl(mediaItem.url);
+					} else if (mediaItem) {
+						// Try the media item itself
+						url = await extractMediaUrl(mediaItem);
+					}
+				} else if (mediaItem.type === "video" || mediaItem.type === "url-video") {
+					if (mediaItem.type === "url-video" && mediaItem.url) {
+						// API post with direct URL - validate URL first
+						if (typeof mediaItem.url === 'string' && mediaItem.url.startsWith('http')) {
+							url = mediaItem.url;
+						} else {
+							console.error('❌ Invalid URL for url-video:', mediaItem.url);
+						}
+					} else if (mediaItem.video) {
+						// Jazz FileStream structure
+						url = await extractMediaUrl(mediaItem.video);
+					} else if (mediaItem.url) {
+						// Fallback for other URL structures
+						url = await extractMediaUrl(mediaItem.url);
+					} else if (mediaItem) {
+						// Try the media item itself
+						url = await extractMediaUrl(mediaItem);
+					}
 				}
 				
 				if (url) {
 					setImageUrl(url);
 				} else {
+					console.warn('⚠️ Could not extract media URL from:', mediaItem);
 					setError(true);
 				}
 			} catch (err) {
+				console.error('❌ Error loading media:', err);
 				setError(true);
 			} finally {
 				setLoading(false);
@@ -279,30 +314,29 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 								</div>
 								<p className="text-gray-600 dark:text-gray-400 font-medium">Failed to load media</p>
 								<p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-									{mediaItem?.type === 'image' ? 'Image' : 'Video'} unavailable
+									{(mediaItem?.type === 'image' || mediaItem?.type === 'url-image') ? 'Image' : 'Video'} unavailable
 								</p>
+
 							</div>
 						</div>
 					);
 				}
 
-				if (mediaItem.type === "image") {
+				if (mediaItem.type === "image" || mediaItem.type === "url-image") {
 					return (
 						<div className="relative w-full h-full">
 							<Image
 								src={imageUrl}
-								alt={mediaItem.alt?.toString() || "uploaded image"}
+								alt={mediaItem.alt?.toString?.() || mediaItem.alt || "uploaded image"}
 								fill
 								sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 								className="object-cover transition-transform duration-300 hover:scale-105"
 								onError={() => setError(true)}
 								priority
 							/>
-							{/* Image overlay gradient */}
-							<div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 						</div>
 					);
-				} else if (mediaItem.type === "video") {
+				} else if (mediaItem.type === "video" || mediaItem.type === "url-video") {
 					return (
 						<div className="relative w-full h-full">
 							<video
@@ -348,12 +382,36 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	);
 };
 
-// Helper function to extract media URL from FileStream
-const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
-	if (!fileStream) return null;
+// Helper function to extract media URL from FileStream or direct URL
+const extractMediaUrl = async (media: any): Promise<string | null> => {
+	if (!media) return null;
 
 	try {
-		// Try different methods to get the URL
+		// ✅ FIRST: Check if it's already a direct URL string (for API posts)
+		if (typeof media === 'string') {
+			if (media.startsWith('http') || media.startsWith('https') || media.startsWith('data:') || media.startsWith('blob:')) {
+				return media;
+			}
+		}
+
+		// ✅ SECOND: Check if it's a URL-based media object (for API posts)
+		if (typeof media === 'object' && media.url) {
+			if (typeof media.url === 'string' && (media.url.startsWith('http') || media.url.startsWith('https') || media.url.startsWith('data:') || media.url.startsWith('blob:'))) {
+				return media.url;
+			}
+		}
+
+		// ✅ THIRD: Check if it's a Jazz URL media type (url-image, url-video)
+		if (typeof media === 'object' && (media.type === 'url-image' || media.type === 'url-video')) {
+			if (typeof media.url === 'string') {
+				return media.url;
+			}
+		}
+
+		// ✅ THIRD: Handle Jazz FileStream objects (for UI uploads)
+		const fileStream = media;
+		
+		// Try different methods to get the URL from FileStream
 		if (typeof fileStream.createObjectURL === 'function') {
 			return fileStream.createObjectURL();
 		}
@@ -395,6 +453,7 @@ const extractMediaUrl = async (fileStream: any): Promise<string | null> => {
 		
 		return null;
 	} catch (error) {
+		console.error('❌ Error extracting media URL:', error);
 		return null;
 	}
 }; 
