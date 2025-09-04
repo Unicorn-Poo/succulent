@@ -5,7 +5,7 @@ import { MessageSquare, Eye, CalendarDays, Calendar, Loader2, Globe } from "luci
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms/tooltip";
 
 interface PostActionsProps {
-    seriesType: "reply" | null;
+    	seriesType: "reply" | "thread" | null;
     handleToggleReplyMode: () => void;
     hasMultipleAccounts: boolean;
     detectedPlatform: string | null;

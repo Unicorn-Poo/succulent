@@ -49,22 +49,58 @@ export const handleStandardPost = async (postData: PostData) => {
 		headers['Profile-Key'] = postData.profileKey;
 	}
 
+	const requestBody = {
+		...postData,
+		platforms: mappedPlatforms,
+		// Remove profileKey from the body as it's only used in headers
+		profileKey: undefined
+	};
+
+	// Clean up undefined fields that might cause issues with Ayrshare
+	const cleanedBody = Object.fromEntries(
+		Object.entries(requestBody).filter(([_, value]) => value !== undefined)
+	);
+
+	// Debug media URLs specifically
+	console.log('🖼️ Media Debug:');
+	console.log('📷 Original mediaUrls:', postData.mediaUrls);
+	console.log('📷 Media in cleaned body:', cleanedBody.mediaUrls);
+	console.log('📷 Media array length:', cleanedBody.mediaUrls?.length || 0);
+
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify({
-			...postData,
-			platforms: mappedPlatforms,
-			// Remove profileKey from the body as it's only used in headers
-			profileKey: undefined
-		})
+		body: JSON.stringify(cleanedBody)
 	});
 
 	const result = await response.json();
 	
 	if (!response.ok) {
+		// Enhanced error handling for specific platform issues
+		if (result.errors && Array.isArray(result.errors)) {
+			const platformErrors = result.errors.map((error: any) => {
+				if (error.platform && error.message) {
+					if (error.code === 272) {
+						return `${error.platform.toUpperCase()}: Account authorization expired. Please go to https://app.ayrshare.com/social-accounts and reconnect your ${error.platform} account.`;
+					}
+					if (error.code === 156) {
+						return `${error.platform.toUpperCase()}: Account not linked. Please connect your ${error.platform} account at https://app.ayrshare.com/social-accounts`;
+					}
+					if (error.code === 139 && error.platform === 'instagram') {
+						return `INSTAGRAM: Media processing error. Instagram posts require images or videos. Please add media to your post or remove Instagram from selected platforms.`;
+					}
+					return `${error.platform.toUpperCase()}: ${error.message}`;
+				}
+				return error.message || 'Unknown platform error';
+			});
+			
+			if (platformErrors.length > 0) {
+				throw new Error(platformErrors.join('\n'));
+			}
+		}
+		
 		console.error('❌ Ayrshare API Error:', response.status, result.message || result.error || 'Unknown error');
-		throw new Error(result.message || 'Failed to publish post');
+		throw new Error(result.message || result.error || 'Failed to publish post');
 	}
 
 	return result;

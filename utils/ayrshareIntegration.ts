@@ -630,7 +630,8 @@ export const AYRSHARE_PLATFORM_MAP: Record<string, string> = {
 export const INTERNAL_TO_AYRSHARE_PLATFORM: Record<string, string> = {
   'instagram': 'instagram',
   'facebook': 'facebook',
-  'x': 'twitter', // We use 'x' internally, but Ayrshare uses 'twitter'
+  'x': 'twitter', // Ayrshare API expects 'twitter' not 'x'
+  'twitter': 'twitter', // Map legacy 'twitter' to 'twitter'
   'linkedin': 'linkedin',
   'youtube': 'youtube',
 };

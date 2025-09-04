@@ -5,7 +5,7 @@ import { UploadedMediaPreview } from "./uploaded-media-preview";
 import { PostFullyLoaded } from "@/app/schema";
 
 interface PostContentProps {
-	seriesType: "reply" | null;
+	seriesType: "reply" | "thread" | null;
 	post: PostFullyLoaded;
 	activeTab: string;
 	handleImageUpload: () => void;
