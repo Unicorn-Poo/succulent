@@ -603,7 +603,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		showPublishButton,
 		contextText,
 		showAddAccountDialog, setShowAddAccountDialog,
-		scheduledDate, setScheduledDate,
+		scheduledDate, setScheduledDate, handleScheduleDateChange,
 		isScheduling,
 		isSaving,
 		errors,
@@ -1911,7 +1911,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				open={showSettings}
 				onOpenChange={setShowSettings}
 				scheduledDate={scheduledDate}
-				setScheduledDate={setScheduledDate}
+				setScheduledDate={handleScheduleDateChange}
 				isThread={isThread}
 				postingInterval={postingInterval}
 				setPostingInterval={setPostingInterval}

@@ -63,6 +63,7 @@ export const handleStandardPost = async (postData: PostData) => {
 	const result = await response.json();
 	
 	if (!response.ok) {
+		console.error('❌ Ayrshare API Error:', response.status, result.message || result.error || 'Unknown error');
 		throw new Error(result.message || 'Failed to publish post');
 	}
 

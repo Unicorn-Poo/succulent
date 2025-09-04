@@ -491,38 +491,7 @@ export async function POST(request: NextRequest) {
     let requestData: CreatePostRequest;
     try {
       const body = await request.json();
-      
-      // Log the incoming API request
-      console.log('📨 Incoming API POST request:', {
-        url: request.url,
-        method: request.method,
-        headers: {
-          'Content-Type': request.headers.get('Content-Type'),
-          'X-API-Key': request.headers.get('X-API-Key')?.substring(0, 10) + '...',
-        },
-        body: JSON.stringify(body, null, 2)
-      });
-      
       requestData = CreatePostSchema.parse(body);
-      
-      // Log the parsed and validated data
-      console.log('✅ Parsed API request data:', {
-        accountGroupId: requestData.accountGroupId,
-        title: requestData.title,
-        content: requestData.content?.substring(0, 100) + '...',
-        platforms: requestData.platforms,
-        hasMedia: !!(requestData.media && requestData.media.length > 0),
-        mediaCount: requestData.media?.length || 0,
-        media: requestData.media?.map(m => ({
-          type: m.type,
-          url: m.url,
-          alt: m.alt,
-          filename: m.filename
-        })) || [],
-        scheduledDate: requestData.scheduledDate,
-        publishImmediately: requestData.publishImmediately
-      });
-      
     } catch (error) {
       await logAPIKeyUsage(
         user.account,

@@ -21,51 +21,21 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	// Get media from any variant that has it - prioritize active tab, then base, then any other variant
 	let media = null;
 	
-	// Log the full post structure
-	console.log('📋 Full post structure:', {
-		postId: post.id,
-		variants: Object.keys(post.variants || {}),
-		activeTab,
-		postVariants: Object.fromEntries(
-			Object.entries(post.variants || {}).map(([key, variant]) => [
-				key, 
-				{
-					hasMedia: !!(variant as any)?.media,
-					mediaLength: (variant as any)?.media ? Array.from((variant as any).media).length : 0,
-					mediaItems: (variant as any)?.media ? Array.from((variant as any).media).map((item: any) => ({
-						type: item?.type,
-						hasUrl: !!item?.url,
-						url: item?.url,
-						id: item?.id
-					})) : []
-				}
-			])
-		)
-	});
-	
 	if (post.variants[activeTab]?.media && Array.from(post.variants[activeTab].media).length > 0) {
 		media = post.variants[activeTab].media;
-		console.log('📷 Using media from active tab:', activeTab);
 	} else if (post.variants.base?.media && Array.from(post.variants.base.media).length > 0) {
 		media = post.variants.base.media;
-		console.log('📷 Using media from base variant');
 	} else {
 		// Check all other variants for media
 		for (const variantKey of Object.keys(post.variants || {})) {
 			if (post.variants[variantKey]?.media && Array.from(post.variants[variantKey].media).length > 0) {
 				media = post.variants[variantKey].media;
-				console.log('📷 Using media from variant:', variantKey);
 				break;
 			}
 		}
 	}
 	
 	const mediaArray = media ? Array.from(media) : [];
-	console.log('📷 Final media array:', mediaArray.map((item: any) => ({
-		type: item?.type,
-		url: item?.url,
-		id: item?.id
-	})));
 
 	const handleDeleteClick = (index: number, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -155,7 +125,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 												src={(mediaItem as any).url}
 												alt={(mediaItem as any).alt?.toString?.() || (mediaItem as any).alt || "API image"}
 												className="w-full h-full object-cover"
-												onLoad={() => console.log('✅ Image loaded:', (mediaItem as any).url)}
+												onLoad={() => {}}
 												onError={(e) => {
 													console.error('❌ Image failed to load:', (mediaItem as any).url);
 													(e.target as HTMLImageElement).style.display = 'none';
