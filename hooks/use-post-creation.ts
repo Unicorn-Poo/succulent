@@ -100,6 +100,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		setPost(post);
 	}, [post]);
 
+	// Initialize form state from existing post data
+	useEffect(() => {
+		if (post?.variants?.base?.scheduledFor) {
+			setScheduledDate(new Date(post.variants.base.scheduledFor));
+		}
+	}, [post]);
+
 	// Clean up corrupted variants immediately to prevent Jazz loading errors
 	useEffect(() => {
 		try {

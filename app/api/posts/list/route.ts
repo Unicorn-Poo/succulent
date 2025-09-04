@@ -43,11 +43,18 @@ async function getAccountGroupPosts(accountGroupId?: string | null): Promise<any
         content: post.variants?.base?.text?.toString() || '',
         platforms: Object.keys(post.variants || {}).filter(key => key !== 'base'),
         createdAt: post.variants?.base?.postDate || new Date(),
+        postDate: post.variants?.base?.postDate,
         status: post.variants?.base?.status || 'draft',
         scheduledFor: post.variants?.base?.scheduledFor,
         publishedAt: post.variants?.base?.publishedAt,
         hasMedia: post.variants?.base?.media && Array.from(post.variants.base.media).length > 0,
         mediaCount: post.variants?.base?.media ? Array.from(post.variants.base.media).length : 0,
+        media: post.variants?.base?.media ? Array.from(post.variants.base.media).map((item: any) => ({
+          type: item.type,
+          url: item.url,
+          alt: item.alt?.toString() || '',
+          filename: item.filename
+        })) : [],
         accountGroupId: accountGroupId,
         source: 'jazz-account-group'
       }));

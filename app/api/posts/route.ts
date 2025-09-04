@@ -187,7 +187,12 @@ async function createJazzPostInAccountGroup(
     const { AccountGroup, Post, PostVariant, MediaItem, ReplyTo } = await import('@/app/schema');
     const { co, z, Group } = await import('jazz-tools');
     
-    const accountGroup = await AccountGroup.load(request.accountGroupId, { loadAs: worker });
+    const accountGroup = await AccountGroup.load(request.accountGroupId, { 
+      loadAs: worker,
+      resolve: {
+        posts: true // Load existing posts list
+      }
+    });
     if (!accountGroup) {
       throw new Error(`Account group ${request.accountGroupId} not found`);
     }
@@ -287,6 +292,7 @@ async function createJazzPostInAccountGroup(
     
     // Ensure posts list exists and add the post
     if (!accountGroup.posts) {
+      const { co } = await import('jazz-tools');
       accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
     }
     accountGroup.posts.push(jazzPost);

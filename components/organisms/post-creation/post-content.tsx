@@ -67,7 +67,8 @@ export const PostContent = ({
 		}
 	};
 
-	const hasMedia = post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0;
+	const hasMedia = (post.variants[activeTab]?.media && post.variants[activeTab]!.media!.length > 0) ||
+	                 (post.variants.base?.media && post.variants.base!.media!.length > 0);
 
 	return (
 		<div className="space-y-6">

@@ -18,8 +18,8 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	const [touchStart, setTouchStart] = useState<number | null>(null);
 	const [touchEnd, setTouchEnd] = useState<number | null>(null);
 	
-	// Get media from the Jazz post object
-	const media = post.variants[activeTab]?.media || [];
+	// Get media from the Jazz post object - check both active tab and base variant
+	const media = post.variants[activeTab]?.media || post.variants.base?.media || [];
 	const mediaArray = Array.from(media);
 
 	const handleDeleteClick = (index: number, e: React.MouseEvent) => {
