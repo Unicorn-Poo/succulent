@@ -222,11 +222,13 @@ export default function HomePage() {
         try {
           const { Account } = await import('jazz-tools');
           const serverWorker = await Account.load(process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
+          console.log('✅ Server worker added to account group:', serverWorker);
           if (serverWorker) {
             accountGroupGroup.addMember(serverWorker, 'writer');
           }
         } catch (workerError) {
           // Worker permissions will be added server-side during API calls
+          console.error('❌ Failed to add server worker to account group:', workerError);
         }
       }
       

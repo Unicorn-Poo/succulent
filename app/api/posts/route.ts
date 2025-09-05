@@ -203,6 +203,7 @@ async function createJazzPostInAccountGroup(
         accountGroup._owner.addMember(worker, 'writer');
       } catch (permError) {
         // Worker might already be a member, continue
+        console.error('❌ Failed to add worker to account group:', permError);
       }
     }
     
