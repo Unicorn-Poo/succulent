@@ -35,13 +35,13 @@ export const APIKey = co.map({
   expiresAt: z.optional(z.date()),
   
   // Usage tracking
-  usageCount: z.number().default(0),
+  usageCount: z.number(),
   lastUsedFromIP: z.optional(z.string()),
   lastUsedUserAgent: z.optional(z.string()),
   
   // Rate limiting
-  rateLimitTier: z.enum(['standard', 'premium', 'enterprise']).default('standard'),
-  monthlyUsageCount: z.number().default(0),
+  rateLimitTier: z.enum(['standard', 'premium', 'enterprise']),
+  monthlyUsageCount: z.number(),
   monthlyUsageResetDate: z.date(),
   
   // Security
@@ -766,9 +766,10 @@ export const SucculentProfile = co.profile({
   collaborationGroups: co.optional(co.list(CollaborationGroup)),
   ownedGroups: co.optional(co.list(CollaborationGroup)),
   
-  // API Key Management
-  apiKeys: co.list(APIKey),
-  apiKeyUsageLogs: co.list(APIKeyUsageLog),
+  // API Key Management - using simple storage for persistence
+  apiKeys: co.optional(co.list(APIKey)), // Keep for compatibility
+  apiKeysJson: z.optional(z.string()), // Simple JSON storage that actually persists
+  apiKeyUsageLogs: co.optional(co.list(APIKeyUsageLog)),
   
   // API settings
   apiSettings: z.optional(z.object({
@@ -837,17 +838,22 @@ export const MyAppAccount = co.account({
     if (account.root === undefined) {
       try {
         const accountGroups = co.list(AccountGroup).create([], { owner: account });
+        // Create root with a group owner for proper Jazz functionality
+        const rootGroup = Group.create();
         account.root = AccountRoot.create({
           accountGroups: accountGroups,
-        }, { owner: account });
+        }, { owner: rootGroup });
         
-        if (process.env.JAZZ_WORKER_ACCOUNT && account.root?._owner instanceof Group) {
+        // Add server worker permissions to root and account groups
+        if (process.env.JAZZ_WORKER_ACCOUNT) {
           try {
             const { Account } = await import('jazz-tools');
             const serverWorker = await Account.load(process.env.JAZZ_WORKER_ACCOUNT);
             if (serverWorker) {
-              account.root._owner.addMember(serverWorker, 'writer');
+              // Add to root group
+              rootGroup.addMember(serverWorker, 'writer');
               
+              // Add to each account group
               if (account.root.accountGroups) {
                 for (const accountGroup of account.root.accountGroups) {
                   if (accountGroup?._owner instanceof Group) {
@@ -868,6 +874,7 @@ export const MyAppAccount = co.account({
 
     if (account.profile === undefined) {
       try {
+        // Create profile owned by a Group (required by Jazz)
         const profileGroup = Group.create();
         profileGroup.makePublic();
         account.profile = SucculentProfile.create({
@@ -880,6 +887,67 @@ export const MyAppAccount = co.account({
       } catch (error) {
         console.error('❌ Failed to create account profile:', error);
         throw error;
+      }
+    } else {
+      // Migrate existing profiles to fix ownership and add missing fields
+      if (account.profile) {
+        try {
+          console.log('🔧 Migrating existing profile...');
+          
+          // Always clean up the profile name first
+          const originalName = account.profile.name;
+          let cleanedName = originalName.replace(/-test-\d+/g, '');
+          if (!cleanedName || cleanedName.trim() === '') {
+            cleanedName = 'My Account';
+          }
+          
+          const needsNameCleanup = originalName !== cleanedName;
+          console.log('🧹 Profile name cleanup:', {
+            original: originalName,
+            cleaned: cleanedName,
+            needsCleanup: needsNameCleanup
+          });
+          
+          if (needsNameCleanup) {
+            account.profile.name = cleanedName;
+            console.log('✅ Profile name cleaned up');
+          }
+          
+          // Check if profile is owned by the account (incorrect) or by a Group (correct)
+          const currentOwner = account.profile._owner;
+          const needsOwnershipFix = currentOwner?.id === account.id; // Account ownership is WRONG, Group ownership is CORRECT
+          
+          console.log('🔍 Profile ownership check:', {
+            accountId: account.id,
+            profileOwnerId: currentOwner?.id,
+            needsOwnershipFix
+          });
+          
+          if (needsOwnershipFix) {
+            console.log('⚠️ Profile ownership needs fixing but SKIPPING recreation to preserve data');
+            console.log('🔧 Just adding missing fields without destroying existing data...');
+          }
+          
+          // Always just add missing fields without destroying the profile
+          {
+            // Profile ownership is correct, just add missing fields
+            if (!account.profile.apiKeys) {
+              const profileOwner = account.profile._owner;
+              account.profile.apiKeys = co.list(APIKey).create([], profileOwner);
+            }
+            
+            if (!account.profile.apiKeyUsageLogs) {
+              const profileOwner = account.profile._owner;
+              account.profile.apiKeyUsageLogs = co.list(APIKeyUsageLog).create([], profileOwner);
+            }
+            
+            console.log('✅ Profile updated with missing fields');
+          }
+          
+        } catch (migrationError) {
+          console.error('❌ Failed to migrate profile:', migrationError);
+          // Continue without throwing - this is not critical for basic functionality
+        }
       }
     }
   } catch (error) {

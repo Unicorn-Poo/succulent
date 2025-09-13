@@ -56,9 +56,7 @@ interface CreateKeyForm {
 export default function APIKeyManagement() {
   const { me } = useAccount(MyAppAccount, {
     resolve: {
-      profile: {
-        apiKeys: { $each: true }
-      }
+      profile: true
     }
   });
   
@@ -114,8 +112,30 @@ export default function APIKeyManagement() {
         return;
       }
 
+      if (!me.profile) {
+        setError('User profile not available');
+        return;
+      }
+
+      // Initialize apiKeys if it doesn't exist
+      if (!me.profile.apiKeys) {
+        try {
+          console.log('🔧 Initializing API keys list for user profile');
+          const { co } = await import('jazz-tools');
+          const { APIKey } = await import('@/app/schema');
+          
+          // Create the API keys list with the profile as owner
+          me.profile.apiKeys = co.list(APIKey).create([], { owner: me.profile._owner });
+          console.log('✅ API keys list initialized successfully');
+        } catch (initError) {
+          console.error('❌ Failed to initialize API keys list:', initError);
+          setError('Failed to initialize API keys. Please refresh the page.');
+          return;
+        }
+      }
+
       // Load API keys from user's Jazz profile
-      if (me.profile?.apiKeys) {
+      if (me.profile.apiKeys && me.profile.apiKeys.length > 0) {
         const jazzApiKeys = me.profile.apiKeys.map((key: any) => ({
           keyId: key.keyId,
           name: key.name,
@@ -132,6 +152,7 @@ export default function APIKeyManagement() {
         }));
         setApiKeys(jazzApiKeys);
       } else {
+        // Empty array - no API keys yet
         setApiKeys([]);
       }
     } catch (err) {
@@ -160,22 +181,29 @@ export default function APIKeyManagement() {
         return;
       }
 
-      const response = await fetch('/api/api-keys', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Account-ID': me.id
-        },
-        body: JSON.stringify(createForm)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create API key');
+      if (!me.profile) {
+        setError('User profile not available');
+        return;
       }
 
-      const data = await response.json();
-      setNewApiKey(data.data.apiKey);
+      // Create API key directly on the client side using Jazz
+      const { createAPIKey } = await import('@/utils/apiKeyManager');
+      
+      console.log('🔐 Creating API key on client side...');
+      const { apiKey, keyData } = await createAPIKey(me, {
+        name: createForm.name,
+        description: createForm.description,
+        permissions: createForm.permissions || ['posts:create', 'posts:read'],
+        rateLimitTier: createForm.rateLimitTier || 'standard',
+        accountGroupIds: createForm.accountGroupIds,
+        allowedOrigins: createForm.allowedOrigins,
+        ipWhitelist: createForm.ipWhitelist,
+        expiresAt: createForm.expiresAt ? new Date(createForm.expiresAt) : undefined
+      });
+
+      console.log('✅ API key created successfully on client side:', keyData.keyId);
+      
+      setNewApiKey(apiKey);
       setShowCreateDialog(false);
       setShowKeyDialog(true);
       setCreateForm({
@@ -190,6 +218,7 @@ export default function APIKeyManagement() {
       setSuccess('API key created successfully');
       
     } catch (err) {
+      console.error('❌ Failed to create API key on client side:', err);
       setError(err instanceof Error ? err.message : 'Failed to create API key');
     }
   };

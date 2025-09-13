@@ -132,10 +132,17 @@ export async function createAPIKey(
       createdBy: account.id
     }, { owner: account });
 
-    // Add to user's API keys
-    if (!account.profile.apiKeys) {
-      account.profile.apiKeys = co.list(APIKey).create([], { owner: account });
+    // Add to user's API keys - initialize if needed
+    if (!account.profile) {
+      throw new Error('User profile not found. Cannot create API key.');
     }
+    
+    if (!account.profile.apiKeys) {
+      console.log('🔧 Initializing API keys list for user profile during key creation');
+      const profileOwner = account.profile._owner;
+      account.profile.apiKeys = co.list(APIKey).create([], profileOwner);
+    }
+    
     account.profile.apiKeys.push(keyData);
     
     console.log('🔐 Created new API key:', {

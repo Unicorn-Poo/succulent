@@ -13,25 +13,24 @@ import {
 // 🔐 AUTHENTICATION FOR API KEY MANAGEMENT
 // =============================================================================
 
-// For API key management, we need to authenticate using the web session
-// This is different from the posts API which uses API key authentication
+// For API key management, we use the account ID from headers since we have Jazz account on client
 async function authenticateWebSession(request: NextRequest) {
-  // TODO: Implement proper session authentication
-  // For now, we'll use a simple header check
-  // In production, you'd verify the user's session/JWT token
+  const accountId = request.headers.get('X-Account-ID');
   
-  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '');
-  if (!sessionToken) {
-    return { success: false, error: 'Missing authentication token' };
+  if (!accountId) {
+    return { success: false, error: 'Missing account ID. Please provide X-Account-ID header.' };
   }
 
-  // Mock user authentication - replace with actual implementation
+  // Validate that the account ID looks like a valid Jazz ID
+  if (!accountId.startsWith('co_')) {
+    return { success: false, error: 'Invalid account ID format.' };
+  }
+
   return {
     success: true,
     user: {
-      id: 'mock_user_id',
-      // This would be the actual MyAppAccount instance from Jazz
-      account: null
+      id: accountId,
+      account: null // Will be loaded by the server worker
     }
   };
 }
@@ -77,37 +76,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Load actual user account from Jazz
-    // const { me } = useAccount(MyAppAccount);
-    // For now, we'll mock the response
+    // API keys are loaded on the client side where the user has access to their own account
+    // The server cannot access user accounts directly - only account groups
     
-    const mockAPIKeys = [
-      {
-        keyId: 'key_1703123456789_abc123def',
-        name: 'Development Key',
-        keyPrefix: 'sk_test_a1b2c3d4...',
-        permissions: ['posts:create', 'posts:read'],
-        status: 'active',
-        createdAt: '2024-01-15T10:30:00.000Z',
-        lastUsedAt: '2024-01-20T14:22:00.000Z',
-        usageCount: 145,
-        monthlyUsageCount: 45,
-        rateLimitTier: 'standard',
-        description: 'API key for development and testing'
-      }
-    ];
-
     return NextResponse.json({
-      success: true,
-      data: {
-        apiKeys: mockAPIKeys,
-        summary: {
-          totalKeys: mockAPIKeys.length,
-          activeKeys: mockAPIKeys.filter(k => k.status === 'active').length,
-          totalUsage: mockAPIKeys.reduce((sum, k) => sum + k.usageCount, 0)
-        }
-      }
-    });
+      success: false,
+      error: 'API key listing must be done on the client side. Server cannot access user accounts directly.',
+      code: 'SERVER_CANNOT_LIST_KEYS',
+      details: 'Use the client-side API key management interface to view keys. The server can only validate existing keys.'
+    }, { status: 400 });
 
   } catch (error) {
     console.error('❌ Error listing API keys:', error);
@@ -167,71 +144,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get account ID from request headers (should be passed from authenticated session)
-    const accountId = request.headers.get('X-Account-ID');
+    // Get account ID from authenticated user
+    const accountId = authResult.user!.id;
+
+    // API keys should be created on the client side where the user has access to their own account
+    // The server worker doesn't have direct access to user accounts - only to account groups
+    // This endpoint should not try to load user accounts directly
     
-    if (!accountId) {
-      return NextResponse.json(
-        { success: false, error: 'Account ID is required. Please provide X-Account-ID header.', code: 'MISSING_ACCOUNT_ID' },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'API key creation must be done on the client side. Server cannot access user accounts directly.',
+        code: 'SERVER_CANNOT_CREATE_KEYS',
+        details: 'Use the client-side API key management interface to create keys. The server can only validate existing keys.'
+      },
+      { status: 400 }
+    );
 
-    // Load the user's account
-    const { MyAppAccount } = await import('@/app/schema');
-    const userAccount = await MyAppAccount.load(accountId, { 
-      loadAs: worker,
-      resolve: {
-        profile: {
-          apiKeys: true
-        }
-      }
-    });
-    
-    if (!userAccount) {
-      return NextResponse.json(
-        { success: false, error: 'User account not found', code: 'ACCOUNT_NOT_FOUND' },
-        { status: 404 }
-      );
-    }
-
-    // Create the API key using the utility function
-    const { apiKey, keyData } = await createAPIKey(userAccount, {
-      name: requestData.name,
-      description: requestData.description,
-      permissions: requestData.permissions || ['posts:create', 'posts:read'],
-      rateLimitTier: requestData.rateLimitTier || 'standard',
-      accountGroupIds: requestData.accountGroupIds,
-      allowedOrigins: requestData.allowedOrigins,
-      ipWhitelist: requestData.ipWhitelist,
-      expiresAt: requestData.expiresAt ? new Date(requestData.expiresAt) : undefined
-    });
-
-    console.log('🔐 Created new API key:', {
-      keyId: keyData.keyId,
-      name: requestData.name,
-      permissions: requestData.permissions,
-      accountId: userAccount.id
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'API key created successfully',
-      data: {
-        apiKey: apiKey, // Full API key - only shown once
-        keyData: {
-          keyId: keyData.keyId,
-          name: keyData.name,
-          keyPrefix: keyData.keyPrefix,
-          permissions: keyData.permissions,
-          status: keyData.status,
-          createdAt: keyData.createdAt.toISOString(),
-          rateLimitTier: keyData.rateLimitTier,
-          description: keyData.description,
-          expiresAt: keyData.expiresAt?.toISOString()
-        }
-      }
-    }, { status: 201 });
+    // This code is unreachable due to the early return above
+    // API key creation is now handled client-side
 
   } catch (error) {
     console.error('❌ Error creating API key:', error);

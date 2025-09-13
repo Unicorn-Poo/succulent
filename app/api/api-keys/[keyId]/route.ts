@@ -11,16 +11,22 @@ import {
 // =============================================================================
 
 async function authenticateWebSession(request: NextRequest) {
-  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '');
-  if (!sessionToken) {
-    return { success: false, error: 'Missing authentication token' };
+  const accountId = request.headers.get('X-Account-ID');
+  
+  if (!accountId) {
+    return { success: false, error: 'Missing account ID. Please provide X-Account-ID header.' };
+  }
+
+  // Validate that the account ID looks like a valid Jazz ID
+  if (!accountId.startsWith('co_')) {
+    return { success: false, error: 'Invalid account ID format.' };
   }
 
   return {
     success: true,
     user: {
-      id: 'mock_user_id',
-      account: null
+      id: accountId,
+      account: null // Will be loaded by the server worker
     }
   };
 }
