@@ -222,14 +222,19 @@ export default function HomePage() {
         try {
           const { Account } = await import('jazz-tools');
           const serverWorker = await Account.load(process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
-          console.log('✅ Server worker added to account group:', serverWorker);
+          console.log('🔧 Adding server worker to account group:', process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
           if (serverWorker) {
             accountGroupGroup.addMember(serverWorker, 'writer');
+            console.log('✅ Server worker added to account group with writer permissions');
+          } else {
+            console.error('❌ Server worker account could not be loaded');
           }
         } catch (workerError) {
-          // Worker permissions will be added server-side during API calls
           console.error('❌ Failed to add server worker to account group:', workerError);
+          // Continue with account group creation - server worker permissions will be added server-side during API calls
         }
+      } else {
+        console.warn('⚠️ NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT not configured - server worker permissions will be added server-side during API calls');
       }
       
       // Create Jazz AccountGroup with properly initialized empty co-lists

@@ -200,11 +200,25 @@ async function createJazzPostInAccountGroup(
     // Ensure server worker has proper permissions on account group
     if (accountGroup._owner instanceof Group) {
       try {
+        // Try to add worker - Jazz will handle if already a member
+        console.log('🔧 Adding server worker to account group permissions:', worker.id);
         accountGroup._owner.addMember(worker, 'writer');
+        console.log('✅ Server worker added to account group with writer permissions');
       } catch (permError) {
-        // Worker might already be a member, continue
         console.error('❌ Failed to add worker to account group:', permError);
+        console.log('🔍 Permission error details:', {
+          workerID: worker.id,
+          accountGroupID: request.accountGroupId,
+          accountGroupOwner: accountGroup._owner?.id,
+          errorMessage: permError instanceof Error ? permError.message : 'Unknown error'
+        });
+        
+        // This is a critical error - without permissions, we can't create posts
+        throw new Error(`Server worker does not have permissions to access account group ${request.accountGroupId}. Please ensure the account group was created with proper server worker permissions.`);
       }
+    } else {
+      console.error('❌ Account group owner is not a Group - cannot add server worker permissions');
+      throw new Error(`Account group ${request.accountGroupId} has invalid ownership structure. Account groups must be owned by a Group to allow server worker access.`);
     }
     
     // Create all objects owned by the account group (not server worker)
