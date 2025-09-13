@@ -44,9 +44,12 @@ interface APIKey {
 interface CreateKeyForm {
   name: string;
   description: string;
-  permissions: string[];
+  permissions: ('posts:create' | 'posts:read' | 'posts:update' | 'posts:delete' | 'accounts:read' | 'analytics:read' | 'media:upload')[];
   rateLimitTier: 'standard' | 'premium' | 'enterprise';
   expiresAt?: string;
+  accountGroupIds?: string[];
+  allowedOrigins?: string[];
+  ipWhitelist?: string[];
 }
 
 // =============================================================================
@@ -56,7 +59,10 @@ interface CreateKeyForm {
 export default function APIKeyManagement() {
   const { me } = useAccount(MyAppAccount, {
     resolve: {
-      profile: true
+      profile: {
+        apiKeys: { $each: true },
+        apiKeyUsageLogs: { $each: true }
+      }
     }
   });
   
@@ -107,6 +113,24 @@ export default function APIKeyManagement() {
       setLoading(true);
       setError(null);
 
+      console.log('🔍 Loading API keys - Account state:', {
+        hasMe: !!me,
+        accountId: me?.id,
+        hasProfile: !!me?.profile,
+        profileId: me?.profile?.id,
+        profileName: me?.profile?.name,
+        hasApiKeysJson: !!me?.profile?.apiKeysJson,
+        apiKeysJsonLength: me?.profile?.apiKeysJson?.length || 0,
+        apiKeysJsonPreview: me?.profile?.apiKeysJson?.substring(0, 100) + '...',
+        hasApiKeys: !!me?.profile?.apiKeys,
+        apiKeysLength: me?.profile?.apiKeys?.length || 0,
+        apiKeysListId: me?.profile?.apiKeys?.id,
+        apiKeysListOwner: me?.profile?.apiKeys?._owner?.id,
+        profileOwner: me?.profile?._owner?.id,
+        // Debug: show ALL profile fields
+        profileKeys: me?.profile ? Object.keys(me.profile) : []
+      });
+
       if (!me?.id) {
         setError('User account not available');
         return;
@@ -124,9 +148,10 @@ export default function APIKeyManagement() {
           const { co } = await import('jazz-tools');
           const { APIKey } = await import('@/app/schema');
           
-          // Create the API keys list with the profile as owner
-          me.profile.apiKeys = co.list(APIKey).create([], { owner: me.profile._owner });
-          console.log('✅ API keys list initialized successfully');
+          // Create the API keys list with the profile owner (Group)
+          const profileOwner = me.profile._owner;
+          me.profile.apiKeys = co.list(APIKey).create([], profileOwner);
+          console.log('✅ API keys list initialized successfully with Group ownership');
         } catch (initError) {
           console.error('❌ Failed to initialize API keys list:', initError);
           setError('Failed to initialize API keys. Please refresh the page.');
@@ -134,25 +159,91 @@ export default function APIKeyManagement() {
         }
       }
 
-      // Load API keys from user's Jazz profile
-      if (me.profile.apiKeys && me.profile.apiKeys.length > 0) {
-        const jazzApiKeys = me.profile.apiKeys.map((key: any) => ({
+      // Load API keys from JSON storage (persistent) and sync to list (for UI)
+      console.log('📋 Checking JSON storage for API keys...');
+      
+      let keysFromJson = [];
+      if (me.profile.apiKeysJson) {
+        try {
+          keysFromJson = JSON.parse(me.profile.apiKeysJson);
+          console.log('💾 Found API keys in JSON storage:', keysFromJson.length);
+        } catch (parseError) {
+          console.error('❌ Failed to parse API keys JSON:', parseError);
+          keysFromJson = [];
+        }
+      } else {
+        console.log('📝 No JSON storage found');
+      }
+      
+      // Also check the collaborative list
+      const keysFromList = me.profile.apiKeys?.length || 0;
+      console.log('📋 API keys in collaborative list:', keysFromList);
+      
+      if (keysFromJson.length > 0) {
+        console.log('🔑 Loading API keys from JSON storage...');
+        
+        // Sync JSON storage to collaborative list if needed
+        if (!me.profile.apiKeys || me.profile.apiKeys.length === 0) {
+          console.log('🔄 Syncing JSON storage to collaborative list...');
+          try {
+            if (!me.profile.apiKeys) {
+              const { co } = await import('jazz-tools');
+              const { APIKey } = await import('@/app/schema');
+              const profileOwner = me.profile._owner;
+              me.profile.apiKeys = co.list(APIKey).create([], profileOwner);
+            }
+            
+            // Recreate API key objects from JSON and add to list
+            for (const keyJson of keysFromJson) {
+              const { APIKey } = await import('@/app/schema');
+              const apiKeysOwner = me.profile._owner;
+              
+              const recreatedKey = APIKey.create({
+                keyId: keyJson.keyId,
+                name: keyJson.name,
+                keyPrefix: keyJson.keyPrefix,
+                hashedKey: keyJson.hashedKey,
+                permissions: keyJson.permissions,
+                status: keyJson.status,
+                createdAt: new Date(keyJson.createdAt),
+                expiresAt: keyJson.expiresAt ? new Date(keyJson.expiresAt) : undefined,
+                usageCount: keyJson.usageCount,
+                rateLimitTier: keyJson.rateLimitTier,
+                monthlyUsageCount: keyJson.monthlyUsageCount,
+                monthlyUsageResetDate: new Date(keyJson.monthlyUsageResetDate),
+                description: keyJson.description,
+                createdBy: keyJson.createdBy
+              }, { owner: apiKeysOwner });
+              
+              me.profile.apiKeys.push(recreatedKey);
+            }
+            
+            console.log('✅ Synced JSON storage to collaborative list');
+          } catch (syncError) {
+            console.error('❌ Failed to sync to collaborative list:', syncError);
+          }
+        }
+        
+        // Map JSON keys to UI format
+        const uiApiKeys = keysFromJson.map((key: any) => ({
           keyId: key.keyId,
           name: key.name,
           keyPrefix: key.keyPrefix,
-          permissions: key.permissions,
+          permissions: key.permissions as ('posts:create' | 'posts:read' | 'posts:update' | 'posts:delete' | 'accounts:read' | 'analytics:read' | 'media:upload')[],
           status: key.status,
-          createdAt: key.createdAt.toISOString(),
-          lastUsedAt: key.lastUsedAt?.toISOString(),
+          createdAt: key.createdAt,
+          lastUsedAt: key.lastUsedAt,
           usageCount: key.usageCount || 0,
           monthlyUsageCount: key.monthlyUsageCount || 0,
           rateLimitTier: key.rateLimitTier,
           description: key.description,
-          expiresAt: key.expiresAt?.toISOString()
+          expiresAt: key.expiresAt
         }));
-        setApiKeys(jazzApiKeys);
+        
+        console.log('✅ Loaded API keys from JSON storage:', uiApiKeys.length);
+        setApiKeys(uiApiKeys);
       } else {
-        // Empty array - no API keys yet
+        console.log('📝 No API keys found in any storage, setting empty array');
         setApiKeys([]);
       }
     } catch (err) {
@@ -203,6 +294,42 @@ export default function APIKeyManagement() {
 
       console.log('✅ API key created successfully on client side:', keyData.keyId);
       
+      // Wait a moment for Jazz to sync the changes
+      console.log('⏳ Waiting for Jazz sync...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check if the key was actually added to the profile
+      console.log('🔍 Post-creation check:', {
+        profileHasApiKeys: !!me.profile?.apiKeys,
+        apiKeysCount: me.profile?.apiKeys?.length || 0,
+        lastKeyId: me.profile?.apiKeys?.[me.profile.apiKeys.length - 1]?.keyId,
+        profileId: me.profile?.id,
+        profileOwner: me.profile?._owner?.id,
+        apiKeysListId: me.profile?.apiKeys?.id,
+        apiKeysListOwner: me.profile?.apiKeys?._owner?.id
+      });
+      
+      // Test if we can manually trigger a save/sync
+      try {
+        console.log('🔄 Attempting to check Jazz sync status...');
+        const profileRef = me.profile;
+        if (profileRef && profileRef.apiKeys) {
+          console.log('📤 Profile and apiKeys exist, checking internal state...');
+          // Try to access internal Jazz state for debugging
+          const profileInternal = (profileRef as any)._raw;
+          const apiKeysInternal = (profileRef.apiKeys as any)._raw;
+          
+          console.log('🔍 Jazz internal state:', {
+            profileRawId: profileInternal?.id,
+            apiKeysRawId: apiKeysInternal?.id,
+            profileHasTransactions: !!profileInternal?.transactions,
+            apiKeysHasTransactions: !!apiKeysInternal?.transactions
+          });
+        }
+      } catch (syncError) {
+        console.error('❌ Sync check failed:', syncError);
+      }
+      
       setNewApiKey(apiKey);
       setShowCreateDialog(false);
       setShowKeyDialog(true);
@@ -212,6 +339,26 @@ export default function APIKeyManagement() {
         permissions: ['posts:create', 'posts:read'],
         rateLimitTier: 'standard'
       });
+      
+      // Check if we're getting a different profile each time (which would explain the persistence issue)
+      const currentProfileId = me.profile?.id;
+      const storedProfileId = localStorage.getItem('lastProfileId');
+      
+      if (storedProfileId && storedProfileId !== currentProfileId) {
+        console.log('🚨 PROFILE ID CHANGED!', {
+          previousId: storedProfileId,
+          currentId: currentProfileId,
+          explanation: 'This would explain why API keys dont persist - we get a new profile each time!'
+        });
+      } else if (!storedProfileId) {
+        console.log('📝 First time seeing profile ID:', currentProfileId);
+      } else {
+        console.log('✅ Profile ID consistent:', currentProfileId);
+      }
+      
+      if (currentProfileId) {
+        localStorage.setItem('lastProfileId', currentProfileId);
+      }
       
       // Reload keys from Jazz
       loadAPIKeys();
@@ -500,12 +647,12 @@ export default function APIKeyManagement() {
                 {availablePermissions.map((permission) => (
                   <label key={permission.id} className="flex items-start gap-3 cursor-pointer">
                     <Checkbox
-                      checked={createForm.permissions.includes(permission.id)}
+                      checked={createForm.permissions.includes(permission.id as any)}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setCreateForm({
                             ...createForm,
-                            permissions: [...createForm.permissions, permission.id]
+                            permissions: [...createForm.permissions, permission.id as any]
                           });
                         } else {
                           setCreateForm({

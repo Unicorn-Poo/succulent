@@ -111,27 +111,6 @@ export async function createAPIKey(
       }
     }
 
-    // Create API key object
-    const keyData = APIKey.create({
-      keyId,
-      name: options.name,
-      keyPrefix,
-      hashedKey,
-      permissions: options.permissions || ['posts:create', 'posts:read'],
-      accountGroupIds: options.accountGroupIds,
-      status: 'active',
-      createdAt: new Date(),
-      expiresAt,
-      usageCount: 0,
-      rateLimitTier: options.rateLimitTier || 'standard',
-      monthlyUsageCount: 0,
-      monthlyUsageResetDate: new Date(),
-      allowedOrigins: options.allowedOrigins,
-      ipWhitelist: options.ipWhitelist,
-      description: options.description,
-      createdBy: account.id
-    }, { owner: account });
-
     // Add to user's API keys - initialize if needed
     if (!account.profile) {
       throw new Error('User profile not found. Cannot create API key.');
@@ -142,14 +121,101 @@ export async function createAPIKey(
       const profileOwner = account.profile._owner;
       account.profile.apiKeys = co.list(APIKey).create([], profileOwner);
     }
+
+    // Use the profile owner (Group) for proper Jazz compliance
+    const apiKeysOwner = account.profile._owner;
     
+    console.log('🔍 API Key ownership details:', {
+      profileOwner: account.profile._owner?.id,
+      apiKeysOwner: apiKeysOwner?.id,
+      accountId: account.id,
+      ownersMatch: account.profile._owner?.id === apiKeysOwner?.id
+    });
+
+    // Create API key object with the correct owner
+    const keyData = APIKey.create({
+      keyId,
+      name: options.name,
+      keyPrefix,
+      hashedKey,
+      permissions: options.permissions || ['posts:create', 'posts:read'],
+      accountGroupIds: options.accountGroupIds,
+      status: 'active' as const,
+      createdAt: new Date(),
+      expiresAt,
+      usageCount: 0,
+      rateLimitTier: options.rateLimitTier || 'standard',
+      monthlyUsageCount: 0,
+      monthlyUsageResetDate: new Date(),
+      allowedOrigins: options.allowedOrigins,
+      ipWhitelist: options.ipWhitelist,
+      description: options.description,
+      createdBy: account.id
+    }, { owner: apiKeysOwner });
+
+    // Add the API key to the list (for UI)
     account.profile.apiKeys.push(keyData);
+    
+    // ALSO store in JSON field for persistence (since we know simple fields persist)
+    try {
+      console.log('💾 Storing API key in JSON field for persistence...');
+      
+      // Get existing keys from JSON
+      let existingKeys = [];
+      if (account.profile.apiKeysJson) {
+        try {
+          existingKeys = JSON.parse(account.profile.apiKeysJson);
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse existing API keys JSON, starting fresh');
+          existingKeys = [];
+        }
+      }
+      
+      // Add new key to JSON storage
+      const keyForStorage = {
+        keyId: keyData.keyId,
+        name: keyData.name,
+        keyPrefix: keyData.keyPrefix,
+        hashedKey: keyData.hashedKey,
+        permissions: keyData.permissions,
+        status: keyData.status,
+        createdAt: keyData.createdAt.toISOString(),
+        expiresAt: keyData.expiresAt?.toISOString(),
+        usageCount: keyData.usageCount,
+        rateLimitTier: keyData.rateLimitTier,
+        monthlyUsageCount: keyData.monthlyUsageCount,
+        monthlyUsageResetDate: keyData.monthlyUsageResetDate.toISOString(),
+        description: keyData.description,
+        createdBy: keyData.createdBy
+      };
+      
+      existingKeys.push(keyForStorage);
+      account.profile.apiKeysJson = JSON.stringify(existingKeys);
+      
+      console.log('✅ API key stored in JSON field');
+      console.log('📊 Total keys in JSON storage:', existingKeys.length);
+      
+      // Immediate verification - can we read it back right away?
+      console.log('🔍 Immediate verification:', {
+        canReadBack: !!account.profile.apiKeysJson,
+        jsonLength: account.profile.apiKeysJson?.length || 0,
+        jsonPreview: account.profile.apiKeysJson?.substring(0, 100) + '...',
+        profileId: account.profile.id,
+        profileOwner: account.profile._owner?.id
+      });
+      
+    } catch (jsonError) {
+      console.error('❌ Failed to store in JSON field:', jsonError);
+    }
     
     console.log('🔐 Created new API key:', {
       keyId,
       name: options.name,
       permissions: options.permissions,
-      expiresAt: expiresAt?.toISOString()
+      expiresAt: expiresAt?.toISOString(),
+      keyOwner: keyData._owner?.id,
+      profileOwner: account.profile._owner?.id,
+      apiKeysListLength: account.profile.apiKeys.length
     });
 
     return { apiKey, keyData };
