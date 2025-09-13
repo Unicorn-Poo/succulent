@@ -54,7 +54,13 @@ interface CreateKeyForm {
 // =============================================================================
 
 export default function APIKeyManagement() {
-  const { me } = useAccount(MyAppAccount);
+  const { me } = useAccount(MyAppAccount, {
+    resolve: {
+      profile: {
+        apiKeys: { $each: true }
+      }
+    }
+  });
   
   // State management
   const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
@@ -102,22 +108,34 @@ export default function APIKeyManagement() {
     try {
       setLoading(true);
       setError(null);
-      
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/api-keys', {
-        headers: {
-          'Authorization': `Bearer mock_session_token`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to load API keys');
+
+      if (!me?.id) {
+        setError('User account not available');
+        return;
       }
-      
-      const data = await response.json();
-      setApiKeys(data.data.apiKeys);
-      
+
+      // Load API keys from user's Jazz profile
+      if (me.profile?.apiKeys) {
+        const jazzApiKeys = me.profile.apiKeys.map((key: any) => ({
+          keyId: key.keyId,
+          name: key.name,
+          keyPrefix: key.keyPrefix,
+          permissions: key.permissions,
+          status: key.status,
+          createdAt: key.createdAt.toISOString(),
+          lastUsedAt: key.lastUsedAt?.toISOString(),
+          usageCount: key.usageCount || 0,
+          monthlyUsageCount: key.monthlyUsageCount || 0,
+          rateLimitTier: key.rateLimitTier,
+          description: key.description,
+          expiresAt: key.expiresAt?.toISOString()
+        }));
+        setApiKeys(jazzApiKeys);
+      } else {
+        setApiKeys([]);
+      }
     } catch (err) {
+      console.error('❌ Error loading API keys:', err);
       setError(err instanceof Error ? err.message : 'Failed to load API keys');
     } finally {
       setLoading(false);
@@ -137,11 +155,16 @@ export default function APIKeyManagement() {
         return;
       }
 
+      if (!me?.id) {
+        setError('User account not available');
+        return;
+      }
+
       const response = await fetch('/api/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer mock_session_token`
+          'X-Account-ID': me.id
         },
         body: JSON.stringify(createForm)
       });
@@ -162,7 +185,7 @@ export default function APIKeyManagement() {
         rateLimitTier: 'standard'
       });
       
-      // Reload keys
+      // Reload keys from Jazz
       loadAPIKeys();
       setSuccess('API key created successfully');
       

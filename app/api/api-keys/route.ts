@@ -156,33 +156,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Create actual API key using user's account
-    // const { apiKey, keyData } = await createAPIKey(me, requestData);
+    // Get the Jazz server worker to create API keys
+    const { jazzServerWorker } = await import('@/utils/jazzServer');
+    const worker = await jazzServerWorker;
     
-    // Mock API key creation
-    const mockAPIKey = 'sk_test_' + Array(32).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-    const mockKeyData = {
-      keyId: `key_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    if (!worker) {
+      return NextResponse.json(
+        { success: false, error: 'Jazz server worker not available', code: 'WORKER_UNAVAILABLE' },
+        { status: 500 }
+      );
+    }
+
+    // Get account ID from request headers (should be passed from authenticated session)
+    const accountId = request.headers.get('X-Account-ID');
+    
+    if (!accountId) {
+      return NextResponse.json(
+        { success: false, error: 'Account ID is required. Please provide X-Account-ID header.', code: 'MISSING_ACCOUNT_ID' },
+        { status: 400 }
+      );
+    }
+
+    // Load the user's account
+    const { MyAppAccount } = await import('@/app/schema');
+    const userAccount = await MyAppAccount.load(accountId, { 
+      loadAs: worker,
+      resolve: {
+        profile: {
+          apiKeys: true
+        }
+      }
+    });
+    
+    if (!userAccount) {
+      return NextResponse.json(
+        { success: false, error: 'User account not found', code: 'ACCOUNT_NOT_FOUND' },
+        { status: 404 }
+      );
+    }
+
+    // Create the API key using the utility function
+    const { apiKey, keyData } = await createAPIKey(userAccount, {
       name: requestData.name,
-      keyPrefix: mockAPIKey.substring(0, 12) + '...',
+      description: requestData.description,
       permissions: requestData.permissions || ['posts:create', 'posts:read'],
-      status: 'active',
-      createdAt: new Date().toISOString(),
       rateLimitTier: requestData.rateLimitTier || 'standard',
-      description: requestData.description
-    };
+      accountGroupIds: requestData.accountGroupIds,
+      allowedOrigins: requestData.allowedOrigins,
+      ipWhitelist: requestData.ipWhitelist,
+      expiresAt: requestData.expiresAt ? new Date(requestData.expiresAt) : undefined
+    });
 
     console.log('🔐 Created new API key:', {
+      keyId: keyData.keyId,
       name: requestData.name,
-      permissions: requestData.permissions
+      permissions: requestData.permissions,
+      accountId: userAccount.id
     });
 
     return NextResponse.json({
       success: true,
       message: 'API key created successfully',
       data: {
-        apiKey: mockAPIKey, // Only returned once during creation
-        keyData: mockKeyData
+        apiKey: apiKey, // Full API key - only shown once
+        keyData: {
+          keyId: keyData.keyId,
+          name: keyData.name,
+          keyPrefix: keyData.keyPrefix,
+          permissions: keyData.permissions,
+          status: keyData.status,
+          createdAt: keyData.createdAt.toISOString(),
+          rateLimitTier: keyData.rateLimitTier,
+          description: keyData.description,
+          expiresAt: keyData.expiresAt?.toISOString()
+        }
       }
     }, { status: 201 });
 
