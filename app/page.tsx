@@ -106,6 +106,48 @@ export default function HomePage() {
     }
   };
 
+  // Function to fix server worker permissions on existing account groups
+  const fixAccountGroupPermissions = async () => {
+    if (!me?.root?.accountGroups) {
+      alert('No account groups found to fix');
+      return;
+    }
+
+    console.log('🔧 Fixing server worker permissions on existing account groups...');
+    
+    try {
+      if (process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT) {
+        const { Account } = await import('jazz-tools');
+        const serverWorker = await Account.load(process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
+        
+        if (serverWorker) {
+          let fixedCount = 0;
+          
+          for (const accountGroup of me.root.accountGroups) {
+            if (accountGroup?._owner instanceof Group) {
+              try {
+                accountGroup._owner.addMember(serverWorker, 'writer');
+                console.log('✅ Added server worker to account group:', accountGroup.id);
+                fixedCount++;
+              } catch (permError) {
+                console.error('❌ Failed to add server worker to account group:', accountGroup.id, permError);
+              }
+            }
+          }
+          
+          alert(`Fixed server worker permissions on ${fixedCount} account groups. You can now use the API!`);
+        } else {
+          alert('Failed to load server worker account');
+        }
+      } else {
+        alert('NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT not configured. Please set this environment variable and restart the server.');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fix account group permissions:', error);
+      alert(`Failed to fix permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   // Function to attempt to fix ownership issues
   const fixRootOwnership = async () => {
     if (!me) {
@@ -218,19 +260,38 @@ export default function HomePage() {
       const accountGroupGroup = Group.create();
       
       // Add server worker permissions to account group for API integration
+      console.log('🔍 Server worker environment check:', {
+        hasEnvVar: !!process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT,
+        workerAccountId: process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT
+      });
+      
       if (process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT) {
         try {
+          console.log('📥 Loading server worker account on client side...');
           const { Account } = await import('jazz-tools');
           const serverWorker = await Account.load(process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
-          console.log('🔧 Adding server worker to account group:', process.env.NEXT_PUBLIC_JAZZ_WORKER_ACCOUNT);
+          
+          console.log('🔍 Server worker load result:', {
+            workerExists: !!serverWorker,
+            workerId: serverWorker?.id,
+            workerProfile: serverWorker?.profile?.name
+          });
+          
           if (serverWorker) {
+            console.log('🔧 Adding server worker to account group:', serverWorker.id);
             accountGroupGroup.addMember(serverWorker, 'writer');
             console.log('✅ Server worker added to account group with writer permissions');
+            
+            // Verify the addition worked
+            console.log('🔍 Verification - account group members after adding worker');
           } else {
-            console.error('❌ Server worker account could not be loaded');
+            console.error('❌ Server worker account could not be loaded - this will prevent API access');
+            console.error('💡 The account group will be created but API calls will fail');
           }
         } catch (workerError) {
           console.error('❌ Failed to add server worker to account group:', workerError);
+          console.error('💡 This error means API calls to this account group will fail');
+          console.error('🔧 You can fix this later using the "Fix API Access" button');
           // Continue with account group creation - server worker permissions will be added server-side during API calls
         }
       } else {
@@ -445,6 +506,14 @@ export default function HomePage() {
                     onClick={() => setAccountGroupsUpdateTrigger(prev => prev + 1)}
                   >
                     🔄 Refresh
+                  </Button>
+                  <Button 
+                    variant="soft" 
+                    color="orange"
+                    size="1"
+                    onClick={fixAccountGroupPermissions}
+                  >
+                    🔧 Fix API Access
                   </Button>
                 </div>
               </div>
