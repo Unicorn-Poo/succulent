@@ -216,6 +216,15 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 			setLoading(true);
 			setError(false);
 			
+			// Debug the media item structure
+			console.log('🔍 Media item debug:', {
+				type: mediaItem.type,
+				hasImage: !!mediaItem.image,
+				hasVideo: !!mediaItem.video,
+				hasUrl: !!mediaItem.url,
+				fullItem: mediaItem
+			});
+			
 			try {
 				let url = null;
 				
@@ -323,6 +332,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 				}
 
 				if (mediaItem.type === "image" || mediaItem.type === "url-image") {
+					console.log('✅ Rendering image with type:', mediaItem.type);
 					return (
 						<div className="relative w-full h-full">
 							<Image
@@ -337,6 +347,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 						</div>
 					);
 				} else if (mediaItem.type === "video" || mediaItem.type === "url-video") {
+					console.log('✅ Rendering video with type:', mediaItem.type);
 					return (
 						<div className="relative w-full h-full">
 							<video
@@ -366,6 +377,12 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 					);
 				}
 
+				console.error('❌ Unsupported media type detected:', {
+					type: mediaItem?.type,
+					expectedTypes: ['image', 'url-image', 'video', 'url-video'],
+					mediaItem: mediaItem
+				});
+				
 				return (
 					<div className="w-full h-full flex items-center justify-center">
 						<div className="text-center p-8">
@@ -374,6 +391,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 							</div>
 							<p className="text-gray-600 dark:text-gray-400 font-medium">Unsupported media type</p>
 							<p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
+							<p className="text-xs text-red-500 mt-1">Check console for debug info</p>
 						</div>
 					</div>
 				);
