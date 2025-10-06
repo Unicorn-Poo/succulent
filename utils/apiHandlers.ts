@@ -87,7 +87,13 @@ export const handleStandardPost = async (postData: PostData) => {
 			requestBody: cleanedBody
 		});
 		
+		// Additional debugging for the specific error structure
+		if (result.posts && Array.isArray(result.posts) && result.posts[0]?.errors) {
+			console.error('🔍 Detailed post errors:', JSON.stringify(result.posts[0].errors, null, 2));
+		}
+		
 		// Enhanced error handling for specific platform issues
+		// Check for errors in the main result.errors array
 		if (result.errors && Array.isArray(result.errors)) {
 			const platformErrors = result.errors.map((error: any) => {
 				if (error.platform && error.message) {
@@ -107,6 +113,34 @@ export const handleStandardPost = async (postData: PostData) => {
 			
 			if (platformErrors.length > 0) {
 				throw new Error(platformErrors.join('\n'));
+			}
+		}
+		
+		// Check for errors in the result.posts array structure
+		if (result.posts && Array.isArray(result.posts)) {
+			const postErrors: string[] = [];
+			result.posts.forEach((post: any, index: number) => {
+				if (post.errors && Array.isArray(post.errors)) {
+					post.errors.forEach((error: any) => {
+						if (error.platform && error.message) {
+							if (error.code === 272) {
+								postErrors.push(`${error.platform.toUpperCase()}: Account authorization expired. Please go to https://app.ayrshare.com/social-accounts and reconnect your ${error.platform} account.`);
+							} else if (error.code === 156) {
+								postErrors.push(`${error.platform.toUpperCase()}: Account not linked. Please connect your ${error.platform} account at https://app.ayrshare.com/social-accounts`);
+							} else if (error.code === 139 && error.platform === 'instagram') {
+								postErrors.push(`INSTAGRAM: Media processing error. Instagram posts require images or videos. Please add media to your post or remove Instagram from selected platforms.`);
+							} else {
+								postErrors.push(`${error.platform.toUpperCase()}: ${error.message} (Code: ${error.code || 'N/A'})`);
+							}
+						} else {
+							postErrors.push(`Post ${index + 1}: ${error.message || 'Unknown error'} (Code: ${error.code || 'N/A'})`);
+						}
+					});
+				}
+			});
+			
+			if (postErrors.length > 0) {
+				throw new Error(postErrors.join('\n'));
 			}
 		}
 		
