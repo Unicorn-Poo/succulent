@@ -512,28 +512,50 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 							// Handle uploaded images/videos (convert to proxy URLs)
 							if (item?.type === "image" && (item as any).image) {
 								const fileStream = (item as any).image;
-								const fileStreamId = fileStream.id;
+								console.log(`🔧 [DEBUG] FileStream object:`, fileStream);
+								console.log(`🔧 [DEBUG] FileStream id:`, fileStream?.id);
+								console.log(`🔧 [DEBUG] FileStream id type:`, typeof fileStream?.id);
+								
+								const fileStreamId = fileStream?.id;
 								
 								if (fileStreamId && typeof fileStreamId === 'string') {
 									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
 									console.log(`✅ [MEDIA] Image proxy URL: ${proxyUrl}`);
-									mediaUrls.push(proxyUrl);
+									console.log(`✅ [MEDIA] URL type check:`, typeof proxyUrl);
+									
+									// EMERGENCY: Ensure we're adding a string
+									if (typeof proxyUrl === 'string') {
+										mediaUrls.push(proxyUrl);
+									} else {
+										console.error(`🚨 [EMERGENCY] proxyUrl is not string:`, proxyUrl, typeof proxyUrl);
+									}
 								} else {
-									console.warn(`⚠️ [MEDIA] No FileStream ID for image:`, fileStream);
+									console.warn(`⚠️ [MEDIA] Invalid FileStream ID:`, fileStreamId, typeof fileStreamId);
 								}
 								continue;
 							}
 							
 							if (item?.type === "video" && (item as any).video) {
 								const fileStream = (item as any).video;
-								const fileStreamId = fileStream.id;
+								console.log(`🔧 [DEBUG] Video FileStream object:`, fileStream);
+								console.log(`🔧 [DEBUG] Video FileStream id:`, fileStream?.id);
+								console.log(`🔧 [DEBUG] Video FileStream id type:`, typeof fileStream?.id);
+								
+								const fileStreamId = fileStream?.id;
 								
 								if (fileStreamId && typeof fileStreamId === 'string') {
 									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
 									console.log(`✅ [MEDIA] Video proxy URL: ${proxyUrl}`);
-									mediaUrls.push(proxyUrl);
+									console.log(`✅ [MEDIA] Video URL type check:`, typeof proxyUrl);
+									
+									// EMERGENCY: Ensure we're adding a string
+									if (typeof proxyUrl === 'string') {
+										mediaUrls.push(proxyUrl);
+									} else {
+										console.error(`🚨 [EMERGENCY] Video proxyUrl is not string:`, proxyUrl, typeof proxyUrl);
+									}
 								} else {
-									console.warn(`⚠️ [MEDIA] No FileStream ID for video:`, fileStream);
+									console.warn(`⚠️ [MEDIA] Invalid Video FileStream ID:`, fileStreamId, typeof fileStreamId);
 								}
 								continue;
 							}
