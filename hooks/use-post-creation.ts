@@ -612,26 +612,69 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				throw new Error("No Ayrshare profile found for this account group. Please check the account group settings.");
 			}
 
-			const mediaUrls = post.variants[activeTab]?.media?.map(item => {
+			const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
+				console.log(`📷 Processing media item ${index}:`, {
+					type: item?.type,
+					hasUrl: !!(item as any)?.url,
+					hasImage: !!(item as any)?.image,
+					hasVideo: !!(item as any)?.video
+				});
+				
 				// Handle URL-based media from API posts
 				if (item?.type === "url-image" || item?.type === "url-video") {
-					return item.url;
+					const url = (item as any).url;
+					console.log(`📷 Found URL media: ${url}`);
+					return typeof url === 'string' ? url : null;
 				}
-				// Handle FileStream media from UI uploads - use toString() or other methods
-				if (item?.type === "image" && item.image) {
-					return item.image.toString?.() || null;
+				
+				// Handle uploaded images - convert FileStream to proxy URL
+				if (item?.type === "image" && (item as any).image) {
+					const fileStream = (item as any).image;
+					const fileStreamId = fileStream?.id;
+					
+					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+						console.log(`📷 Created proxy URL for image: ${proxyUrl}`);
+						return proxyUrl;
+					} else {
+						console.warn(`⚠️ Invalid FileStream ID for image:`, fileStreamId);
+						return null;
+					}
 				}
-				if (item?.type === "video" && item.video) {
-					return item.video.toString?.() || null;
+				
+				// Handle uploaded videos - convert FileStream to proxy URL
+				if (item?.type === "video" && (item as any).video) {
+					const fileStream = (item as any).video;
+					const fileStreamId = fileStream?.id;
+					
+					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+						console.log(`📷 Created proxy URL for video: ${proxyUrl}`);
+						return proxyUrl;
+					} else {
+						console.warn(`⚠️ Invalid FileStream ID for video:`, fileStreamId);
+						return null;
+					}
 				}
+				
+				console.log(`📷 No valid media URL for item ${index}`);
 				return null;
-			}).filter(Boolean) as string[] || [];
+			}).filter((url): url is string => typeof url === 'string') || [];
+
+			// Final validation: ensure all URLs are valid
+			const publicMediaUrls = mediaUrls.filter(url => 
+				url.startsWith('http://') || url.startsWith('https://')
+			);
+
+			console.log('📷 Original mediaUrls:', mediaUrls);
+			console.log('📷 Media in cleaned body:', publicMediaUrls);
+			console.log('📷 Media array length:', publicMediaUrls.length);
 
 			const basePostData: PostData = {
 				post: postText,
 				platforms,
 				profileKey,
-				mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+				mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
 				scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
 			};
 
