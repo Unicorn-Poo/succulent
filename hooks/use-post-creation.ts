@@ -520,13 +520,34 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				}).filter(Boolean) as string[] || [];
 
 				// Filter out localhost URLs that Ayrshare cannot access
-				const publicMediaUrls = mediaUrls.filter(url => {
+				const filteredMediaUrls = mediaUrls.filter(url => {
 					const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
 					if (isLocalhost) {
 						console.warn(`⚠️ Skipping localhost media URL (Ayrshare cannot access): ${url}`);
 					}
 					return !isLocalhost;
 				});
+
+				// Convert problematic URLs (like Lunary OG images) to Ayrshare-compatible format
+				const publicMediaUrls = await Promise.all(
+					filteredMediaUrls.map(async (url) => {
+						// Check if this is a problematic URL that needs conversion
+						if (url.includes('lunary.app/api/og/')) {
+							console.log(`🔄 Converting Lunary OG image URL: ${url}`);
+							try {
+								// Get the current domain for absolute URL
+								const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social';
+								const convertedUrl = `${currentDomain}/api/convert-media-url?url=${encodeURIComponent(url)}`;
+								console.log(`✅ Converted URL: ${convertedUrl}`);
+								return convertedUrl;
+							} catch (error) {
+								console.warn(`⚠️ Failed to convert URL ${url}, using original:`, error);
+								return url;
+							}
+						}
+						return url;
+					})
+				);
 
 				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
 

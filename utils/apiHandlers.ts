@@ -66,6 +66,9 @@ export const handleStandardPost = async (postData: PostData) => {
 	console.log('📷 Original mediaUrls:', postData.mediaUrls);
 	console.log('📷 Media in cleaned body:', cleanedBody.mediaUrls);
 	console.log('📷 Media array length:', cleanedBody.mediaUrls?.length || 0);
+	
+	// Additional debug for request body
+	console.log('📝 Request body:', JSON.stringify(cleanedBody, null, 2));
 
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',
@@ -76,6 +79,14 @@ export const handleStandardPost = async (postData: PostData) => {
 	const result = await response.json();
 	
 	if (!response.ok) {
+		// Log the full error response for debugging
+		console.error('❌ Ayrshare API Error Response:', {
+			status: response.status,
+			statusText: response.statusText,
+			result: result,
+			requestBody: cleanedBody
+		});
+		
 		// Enhanced error handling for specific platform issues
 		if (result.errors && Array.isArray(result.errors)) {
 			const platformErrors = result.errors.map((error: any) => {
@@ -99,8 +110,15 @@ export const handleStandardPost = async (postData: PostData) => {
 			}
 		}
 		
+		// Handle specific 400 errors related to media
+		if (response.status === 400) {
+			if (result.message && result.message.includes('media')) {
+				throw new Error(`Media Error: ${result.message}. Please check that your media URLs are publicly accessible and in a supported format.`);
+			}
+		}
+		
 		console.error('❌ Ayrshare API Error:', response.status, result.message || result.error || 'Unknown error');
-		throw new Error(result.message || result.error || 'Failed to publish post');
+		throw new Error(result.message || result.error || `Failed to publish post (${response.status})`);
 	}
 
 	return result;
