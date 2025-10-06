@@ -529,8 +529,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				});
 
 				// Convert problematic URLs (like Lunary OG images) to Ayrshare-compatible format
-				const publicMediaUrls = await Promise.all(
-					filteredMediaUrls.map(async (url) => {
+				console.log('🔍 Starting URL conversion process...');
+				console.log('🔍 Filtered media URLs to process:', filteredMediaUrls);
+				
+				const processedUrls = await Promise.all(
+					filteredMediaUrls.map(async (url, index) => {
+						console.log(`🔍 Processing URL ${index + 1}/${filteredMediaUrls.length}: ${url}`);
+						console.log(`🔍 URL contains 'lunary.app/api/og/': ${url.includes('lunary.app/api/og/')}`);
+						
 						// Check if this is a problematic URL that needs conversion
 						if (url.includes('lunary.app/api/og/')) {
 							console.log(`🔄 Converting Lunary OG image URL: ${url}`);
@@ -541,13 +547,24 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 								console.log(`✅ Converted URL: ${convertedUrl}`);
 								return convertedUrl;
 							} catch (error) {
-								console.warn(`⚠️ Failed to convert URL ${url}, using original:`, error);
-								return url;
+								console.warn(`⚠️ Failed to convert URL ${url}, skipping this media to prevent API error:`, error);
+								// Return null to filter out this URL and prevent 400 error
+								return null;
 							}
 						}
+						console.log(`🔍 URL ${url} doesn't need conversion, returning as-is`);
 						return url;
 					})
 				);
+				
+				// Filter out null values (failed conversions)
+				const publicMediaUrls = processedUrls.filter((url): url is string => url !== null);
+				
+				// Warn if any URLs were filtered out due to conversion issues
+				const filteredOutCount = processedUrls.length - publicMediaUrls.length;
+				if (filteredOutCount > 0) {
+					console.warn(`⚠️ ${filteredOutCount} media URL(s) were filtered out due to conversion issues`);
+				}
 
 				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
 
@@ -557,11 +574,20 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
 					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
 				};
+				
+				// Debug the final post data being sent to Ayrshare
+				console.log('🚀 Final basePostData being sent to Ayrshare:', JSON.stringify(basePostData, null, 2));
 
 				// Warn user if media was filtered out
 				if (mediaUrls.length > 0 && publicMediaUrls.length === 0) {
-					setErrors(["⚠️ Media URLs removed: Ayrshare cannot access localhost URLs. Deploy your media to a public URL or use external media sources."]);
-					return;
+					const hasLunaryUrls = mediaUrls.some(url => url.includes('lunary.app'));
+					if (hasLunaryUrls) {
+						setErrors(["⚠️ Media URLs removed: The Lunary OG image URLs cannot be accessed by Ayrshare. The post will be published without media. Consider uploading the image directly or using a different image source."]);
+						// Continue with posting but without media
+					} else {
+						setErrors(["⚠️ Media URLs removed: Ayrshare cannot access localhost URLs. Deploy your media to a public URL or use external media sources."]);
+						return;
+					}
 				}
 
 				console.log('📷 Final PostData being sent:', {

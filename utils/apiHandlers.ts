@@ -115,6 +115,11 @@ export const handleStandardPost = async (postData: PostData) => {
 			if (result.message && result.message.includes('media')) {
 				throw new Error(`Media Error: ${result.message}. Please check that your media URLs are publicly accessible and in a supported format.`);
 			}
+			
+			// Check if the error is related to problematic URLs (like Lunary OG images)
+			if (cleanedBody.mediaUrls && cleanedBody.mediaUrls.some((url: string) => url.includes('lunary.app'))) {
+				throw new Error(`Media URL Error: Ayrshare cannot access the provided media URL. This often happens with dynamic image URLs. Please try uploading the image directly or using a different image source.`);
+			}
 		}
 		
 		console.error('❌ Ayrshare API Error:', response.status, result.message || result.error || 'Unknown error');
