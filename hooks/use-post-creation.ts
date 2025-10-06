@@ -489,84 +489,40 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				console.log('📷 Post variants:', Object.keys(post.variants));
 				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
 				
-				// PRODUCTION-READY Media Processing
+				// EMERGENCY DEBUG: Find the source of [object Object]
+				console.log(`🚨 [EMERGENCY] Media debugging - activeTab: ${activeTab}`);
+				console.log(`🚨 [EMERGENCY] Post variants:`, Object.keys(post.variants));
+				console.log(`🚨 [EMERGENCY] Current variant:`, post.variants[activeTab]);
+				console.log(`🚨 [EMERGENCY] Media array:`, post.variants[activeTab]?.media);
+				
+				// SIMPLE APPROACH: Just skip ALL uploaded media for now
 				const mediaUrls: string[] = [];
 				
 				if (post.variants[activeTab]?.media) {
 					for (const [index, item] of post.variants[activeTab].media.entries()) {
-						console.log(`📡 [MEDIA] Processing item ${index}:`, item?.type);
+						console.log(`🚨 [EMERGENCY] Item ${index}:`, item);
+						console.log(`🚨 [EMERGENCY] Item type:`, item?.type);
+						console.log(`🚨 [EMERGENCY] Item typeof:`, typeof item);
 						
-						try {
-							// Handle external URLs (already accessible)
-							if (item?.type === "url-image" || item?.type === "url-video") {
-								const url = (item as any).url;
-								if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
-									console.log(`✅ [MEDIA] External URL: ${url}`);
-									mediaUrls.push(url);
-								} else {
-									console.warn(`⚠️ [MEDIA] Invalid external URL:`, url);
-								}
-								continue;
+						// ONLY handle external URLs - skip ALL uploaded content
+						if (item?.type === "url-image" || item?.type === "url-video") {
+							const url = (item as any).url;
+							console.log(`🚨 [EMERGENCY] External URL:`, url, typeof url);
+							
+							if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+								console.log(`✅ [EMERGENCY] Adding valid URL: ${url}`);
+								mediaUrls.push(url);
+							} else {
+								console.error(`❌ [EMERGENCY] Invalid URL:`, url, typeof url);
 							}
-							
-							// Handle uploaded images/videos (convert to proxy URLs)
-							if (item?.type === "image" && (item as any).image) {
-								const fileStream = (item as any).image;
-								console.log(`🔧 [DEBUG] FileStream object:`, fileStream);
-								console.log(`🔧 [DEBUG] FileStream id:`, fileStream?.id);
-								console.log(`🔧 [DEBUG] FileStream id type:`, typeof fileStream?.id);
-								
-								const fileStreamId = fileStream?.id;
-								
-								if (fileStreamId && typeof fileStreamId === 'string') {
-									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
-									console.log(`✅ [MEDIA] Image proxy URL: ${proxyUrl}`);
-									console.log(`✅ [MEDIA] URL type check:`, typeof proxyUrl);
-									
-									// EMERGENCY: Ensure we're adding a string
-									if (typeof proxyUrl === 'string') {
-										mediaUrls.push(proxyUrl);
-									} else {
-										console.error(`🚨 [EMERGENCY] proxyUrl is not string:`, proxyUrl, typeof proxyUrl);
-									}
-								} else {
-									console.warn(`⚠️ [MEDIA] Invalid FileStream ID:`, fileStreamId, typeof fileStreamId);
-								}
-								continue;
-							}
-							
-							if (item?.type === "video" && (item as any).video) {
-								const fileStream = (item as any).video;
-								console.log(`🔧 [DEBUG] Video FileStream object:`, fileStream);
-								console.log(`🔧 [DEBUG] Video FileStream id:`, fileStream?.id);
-								console.log(`🔧 [DEBUG] Video FileStream id type:`, typeof fileStream?.id);
-								
-								const fileStreamId = fileStream?.id;
-								
-								if (fileStreamId && typeof fileStreamId === 'string') {
-									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
-									console.log(`✅ [MEDIA] Video proxy URL: ${proxyUrl}`);
-									console.log(`✅ [MEDIA] Video URL type check:`, typeof proxyUrl);
-									
-									// EMERGENCY: Ensure we're adding a string
-									if (typeof proxyUrl === 'string') {
-										mediaUrls.push(proxyUrl);
-									} else {
-										console.error(`🚨 [EMERGENCY] Video proxyUrl is not string:`, proxyUrl, typeof proxyUrl);
-									}
-								} else {
-									console.warn(`⚠️ [MEDIA] Invalid Video FileStream ID:`, fileStreamId, typeof fileStreamId);
-								}
-								continue;
-							}
-							
-							console.log(`⚠️ [MEDIA] Unsupported media type: ${item?.type}`);
-							
-						} catch (itemError) {
-							console.error(`❌ [MEDIA] Error processing item ${index}:`, itemError);
+						} else {
+							console.log(`🚨 [EMERGENCY] Skipping uploaded media type: ${item?.type}`);
 						}
 					}
 				}
+				
+				console.log(`🚨 [EMERGENCY] Final mediaUrls array:`, mediaUrls);
+				console.log(`🚨 [EMERGENCY] All URLs are strings:`, mediaUrls.every(url => typeof url === 'string'));
 				
 				console.log(`📡 [MEDIA] Extracted ${mediaUrls.length} media URLs:`, mediaUrls);
 				console.log(`🔍 [MEDIA] URL types:`, mediaUrls.map(url => typeof url));
