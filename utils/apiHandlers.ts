@@ -49,16 +49,38 @@ export const handleStandardPost = async (postData: PostData) => {
 		headers['Profile-Key'] = postData.profileKey;
 	}
 
+	// Check if we need to add Twitter options for long posts
+	const hasTwitter = mappedPlatforms.includes('twitter') || mappedPlatforms.includes('x');
+	const needsTwitterOptions = hasTwitter && !postData.twitterOptions;
+	
+	console.log('🔍 API Handler - Mapped platforms:', mappedPlatforms);
+	console.log('🔍 API Handler - Has Twitter:', hasTwitter);
+	console.log('🔍 API Handler - Needs Twitter options:', needsTwitterOptions);
+	console.log('🔍 API Handler - Existing twitterOptions:', postData.twitterOptions);
+
 	const requestBody = {
 		...postData,
 		platforms: mappedPlatforms,
 		// Remove profileKey from the body as it's only used in headers
-		profileKey: undefined
+		profileKey: undefined,
+		// Add Twitter options if needed (for auto-threading long posts)
+		twitterOptions: needsTwitterOptions ? {
+			thread: true,
+			threadNumber: true
+		} : postData.twitterOptions
 	};
 
 	// Clean up undefined fields that might cause issues with Ayrshare
+	// But preserve twitterOptions even if they exist as an object
 	const cleanedBody = Object.fromEntries(
-		Object.entries(requestBody).filter(([_, value]) => value !== undefined)
+		Object.entries(requestBody).filter(([key, value]) => {
+			// Always keep twitterOptions if it exists as an object
+			if (key === 'twitterOptions' && value && typeof value === 'object') {
+				return true;
+			}
+			// Filter out other undefined values
+			return value !== undefined;
+		})
 	);
 
 	// Debug media URLs specifically
