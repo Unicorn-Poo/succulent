@@ -796,11 +796,25 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, [post]);
 
 	const handleAddAccount = useCallback((platform: string) => {
+		console.log('🔍 Adding account for platform:', platform);
+		console.log('🔍 Current selectedPlatforms:', selectedPlatforms);
+		console.log('🔍 Existing variants:', Object.keys(post.variants || {}));
+		
 		if (!selectedPlatforms.includes(platform)) {
 			try {
+				// Check if variant already exists to prevent duplicate key error
+				if (post.variants[platform]) {
+					console.log(`⚠️ Platform variant ${platform} already exists, just adding to selectedPlatforms`);
+					setSelectedPlatforms(prev => [...prev, platform]);
+					setShowAddAccountDialog(false);
+					return;
+				}
+				
 				// Create a new PostVariant for this platform
 				const baseVariant = post.variants.base;
 				const baseText = baseVariant?.text?.toString() || "";
+				
+				console.log(`🔧 Creating new variant for platform: ${platform}`);
 				
 				// Create the collaborative objects
 				const platformText = co.plainText().create(baseText, { owner: post._owner });
@@ -821,13 +835,16 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				// Add to post variants
 				post.variants[platform] = platformVariant;
 				
+				console.log(`✅ Successfully created variant for platform: ${platform}`);
 				setSelectedPlatforms(prev => [...prev, platform]);
 
 			} catch (error) {
-				console.error('Error creating Jazz variant for platform:', platform, error);
-				// Fallback to just state update
+				console.error('❌ Error creating Jazz variant for platform:', platform, error);
+				// Fallback to just state update if Jazz creation fails
 				setSelectedPlatforms(prev => [...prev, platform]);
 			}
+		} else {
+			console.log(`ℹ️ Platform ${platform} already selected`);
 		}
 		setShowAddAccountDialog(false);
 	}, [selectedPlatforms, post]);
