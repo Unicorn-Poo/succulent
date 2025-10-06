@@ -489,33 +489,38 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				console.log('📷 Post variants:', Object.keys(post.variants));
 				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
 				
-				// Free account mode - no profile keys needed - SIMPLIFIED VERSION
-				const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
-					console.log(`📷 Processing media item ${index}:`, {
-						type: item?.type,
-						hasUrl: !!(item as any)?.url,
-						hasImage: !!(item as any)?.image,
-						hasVideo: !!(item as any)?.video,
-						item: item
-					});
-					
-					// Handle URL-based media from API posts
-					if (item?.type === "url-image" || item?.type === "url-video") {
-						console.log(`📷 Found URL media: ${(item as any).url}`);
-						return (item as any).url;
+				// EMERGENCY DEBUG - TRACK EVERY STEP
+				console.log('🚨 EMERGENCY DEBUG: Starting media extraction');
+				console.log('🚨 Post variants keys:', Object.keys(post.variants));
+				console.log('🚨 Active tab:', activeTab);
+				console.log('🚨 Media array:', post.variants[activeTab]?.media);
+				console.log('🚨 Media array length:', post.variants[activeTab]?.media?.length);
+				
+				const mediaUrls: any[] = [];
+				
+				if (post.variants[activeTab]?.media) {
+					for (let index = 0; index < post.variants[activeTab].media.length; index++) {
+						const item = post.variants[activeTab].media[index];
+						console.log(`🚨 Processing item ${index}:`, item);
+						console.log(`🚨 Item type:`, item?.type);
+						console.log(`🚨 Item typeof:`, typeof item);
+						
+						if (item?.type === "url-image" || item?.type === "url-video") {
+							const url = (item as any).url;
+							console.log(`🚨 URL media found:`, url, typeof url);
+							if (typeof url === 'string') {
+								mediaUrls.push(url);
+							} else {
+								console.error(`🚨 URL is not string:`, url);
+							}
+						} else {
+							console.log(`🚨 Skipping non-URL media type: ${item?.type}`);
+						}
 					}
-					// Handle FileStream media from UI uploads - SKIP FOR NOW TO FIX PRODUCTION
-					if (item?.type === "image" && (item as any).image) {
-						console.warn(`⚠️ Skipping uploaded image (not accessible to Ayrshare)`);
-						return undefined;
-					}
-					if (item?.type === "video" && (item as any).video) {
-						console.warn(`⚠️ Skipping uploaded video (not accessible to Ayrshare)`);
-						return undefined;
-					}
-					console.log(`📷 No media URL found for item ${index}`);
-					return undefined;
-				}).filter(Boolean) as string[] || [];
+				}
+				
+				console.log('🚨 Final mediaUrls array:', mediaUrls);
+				console.log('🚨 MediaUrls types:', mediaUrls.map(url => typeof url));
 
 				// Filter out localhost URLs that Ayrshare cannot access
 				const filteredMediaUrls = mediaUrls.filter(url => {
@@ -526,44 +531,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					return !isLocalhost;
 				});
 
-				// Simple filtering - remove problematic URLs that Ayrshare can't access
-				const publicMediaUrls = filteredMediaUrls.filter(url => {
-					console.log(`🔍 Checking URL: ${url} (type: ${typeof url})`);
-					
-					// Make sure it's a string
-					if (typeof url !== 'string') {
-						console.warn(`⚠️ URL is not a string: ${url}`);
-						return false;
-					}
-					
-					// Skip blob URLs (not accessible to Ayrshare)
-					if (url.startsWith('blob:')) {
-						console.warn(`⚠️ Skipping blob URL (not accessible to Ayrshare): ${url}`);
-						return false;
-					}
-					
-					// Skip data URLs (not accessible to Ayrshare)
-					if (url.startsWith('data:')) {
-						console.warn(`⚠️ Skipping data URL (not accessible to Ayrshare): ${url}`);
-						return false;
-					}
-					
-					// Only allow proper HTTP/HTTPS URLs
-					if (!url.startsWith('http://') && !url.startsWith('https://')) {
-						console.warn(`⚠️ Skipping non-HTTP URL: ${url}`);
-						return false;
-					}
-					
-					console.log(`✅ URL is valid for Ayrshare: ${url}`);
-					return true;
+				// EMERGENCY: Only use valid HTTP/HTTPS string URLs
+				const publicMediaUrls = filteredMediaUrls.filter((url: any) => {
+					console.log(`🚨 Final filter - URL: ${url} (type: ${typeof url})`);
+					return typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
 				});
 
-				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
-				
-				// Warn user if media was filtered out
-				if (mediaUrls.length > 0 && publicMediaUrls.length === 0) {
-					setErrors(["⚠️ Uploaded images cannot be posted to social media directly. The post will be published without media. For images, please use external hosting services like Imgur, Cloudinary, or upload to your website first."]);
-				}
+				console.log('🚨 FINAL mediaUrls being sent to API:', publicMediaUrls);
+				console.log('🚨 FINAL mediaUrls types:', publicMediaUrls.map((url: any) => typeof url));
 
 				// Debug platform detection
 				console.log('🔍 Platforms being sent:', platforms);
