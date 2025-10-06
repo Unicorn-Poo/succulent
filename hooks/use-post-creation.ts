@@ -547,11 +547,21 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				}
 				
 				console.log(`📡 [MEDIA] Extracted ${mediaUrls.length} media URLs:`, mediaUrls);
+				console.log(`🔍 [MEDIA] URL types:`, mediaUrls.map(url => typeof url));
+				console.log(`🔍 [MEDIA] URL values:`, mediaUrls.map(url => String(url).substring(0, 100)));
+
+				// Emergency check - detect any objects that got through
+				const hasObjects = mediaUrls.some(url => typeof url !== 'string');
+				if (hasObjects) {
+					console.error(`🚨 [EMERGENCY] Objects detected in mediaUrls array!`);
+					console.error(`🚨 [EMERGENCY] Full array:`, mediaUrls);
+					console.error(`🚨 [EMERGENCY] Types:`, mediaUrls.map(url => typeof url));
+				}
 
 				// Final validation - ensure all URLs are strings and accessible
 				const publicMediaUrls = mediaUrls.filter(url => {
 					if (typeof url !== 'string') {
-						console.error(`❌ [MEDIA] Non-string URL detected:`, url);
+						console.error(`❌ [MEDIA] Non-string URL detected:`, url, typeof url);
 						return false;
 					}
 					if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -562,6 +572,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				});
 
 				console.log(`🎯 [MEDIA] Final URLs for Ayrshare (${publicMediaUrls.length}):`, publicMediaUrls);
+				console.log(`🎯 [MEDIA] Final URL types:`, publicMediaUrls.map(url => typeof url));
 
 				// Debug platform detection
 				console.log('🔍 Platforms being sent:', platforms);
