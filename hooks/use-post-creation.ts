@@ -879,10 +879,11 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, [selectedPlatforms]);
 
 	const handleImageUpload = useCallback(async () => {
-		// Create a file input element
+		// Create a file input element with enhanced Apple Photos support
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
-		fileInput.accept = 'image/*,video/*';
+		// Explicitly include Apple formats and common extensions
+		fileInput.accept = 'image/*,video/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.m4v';
 		fileInput.multiple = true;
 		
 		fileInput.onchange = async (event) => {
@@ -895,12 +896,54 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			try {
 				// Process each selected file
 				for (const file of Array.from(files)) {
-					// Check if it's an image or video
-					const isImage = file.type.startsWith('image/');
-					const isVideo = file.type.startsWith('video/');
+					console.log('📱 Processing file:', {
+						name: file.name,
+						type: file.type,
+						size: file.size,
+						lastModified: file.lastModified
+					});
+					
+					// Enhanced file type detection for Apple Photos
+					let isImage = file.type.startsWith('image/');
+					let isVideo = file.type.startsWith('video/');
+					
+					// Handle Apple Photos edge cases
+					if (!isImage && !isVideo) {
+						// Check file extension as fallback (Apple Photos sometimes has missing/wrong MIME types)
+						const fileName = file.name.toLowerCase();
+						const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'];
+						const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.m4v'];
+						
+						isImage = imageExtensions.some(ext => fileName.endsWith(ext));
+						isVideo = videoExtensions.some(ext => fileName.endsWith(ext));
+						
+						if (isImage) {
+							console.log('📱 Detected image by extension:', fileName);
+						} else if (isVideo) {
+							console.log('📱 Detected video by extension:', fileName);
+						}
+					}
+					
+					// Handle HEIC/HEIF files specifically (Apple's format)
+					if (file.type === 'image/heic' || file.type === 'image/heif' || 
+						file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+						console.log('📱 HEIC/HEIF file detected - treating as image');
+						isImage = true;
+					}
+					
+					// Handle missing MIME type (common with Apple Photos)
+					if (!file.type || file.type === '') {
+						console.log('📱 Missing MIME type - detecting by extension');
+						const fileName = file.name.toLowerCase();
+						if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+							isImage = true;
+						} else if (fileName.endsWith('.mp4') || fileName.endsWith('.mov')) {
+							isVideo = true;
+						}
+					}
 					
 					if (!isImage && !isVideo) {
-						setErrors(prev => [...prev, `Unsupported file type: ${file.type}`]);
+						setErrors(prev => [...prev, `Unsupported file type: ${file.type || 'unknown'} (${file.name})`]);
 						continue;
 					}
 					
@@ -915,6 +958,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					
 					let mediaItem;
 					if (isImage) {
+						console.log('📱 Creating image media for:', file.name);
 						// Use the proper async FileStream creation method
 						const fileStream = await FileStream.createFromBlob(file, { owner });
 						
@@ -922,17 +966,22 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 						mediaItem = ImageMedia.create({
 							type: 'image' as const,
 							image: fileStream,
-							alt: undefined,
+							alt: `Image from ${file.name}`,
 						}, { owner });
+						
+						console.log('✅ Image media created:', mediaItem);
 					} else {
+						console.log('📱 Creating video media for:', file.name);
 						// Use the proper async FileStream creation method for video
 						const fileStream = await FileStream.createFromBlob(file, { owner });
 						
 						mediaItem = VideoMedia.create({
 							type: 'video' as const,
 							video: fileStream,
-							alt: undefined,
+							alt: `Video from ${file.name}`,
 						}, { owner });
+						
+						console.log('✅ Video media created:', mediaItem);
 					}
 					
 					// Add to the current post variant's media array directly
