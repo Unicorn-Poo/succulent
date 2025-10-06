@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Text, Tabs } from "@radix-ui/themes";
+import { Card, Text, Tabs, Button } from "@radix-ui/themes";
 import {
 	AlertCircle,
 	Check,
@@ -10,6 +10,8 @@ import {
 	Clock,
 	TrendingUp,
 	BarChart3,
+	Trash2,
+	AlertTriangle,
 } from "lucide-react";
 import { PostFullyLoaded, GelatoProduct, ProdigiProduct } from "@/app/schema";
 import { co } from "jazz-tools";
@@ -189,6 +191,10 @@ const TemplateSelector = ({
 };
 
 export default function PostCreationComponent({ post, accountGroup }: PostCreationProps) {
+	// State for post deletion
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	
 	// Get account group's secure Gelato credentials
 	const accountGroupGelatoCredentials = accountGroup?.gelatoCredentials;
 	const isGelatoConfigured = accountGroupGelatoCredentials?.isConfigured || false;
@@ -963,6 +969,37 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		createRealProdigiProduct
 	]);
 
+	// Handle post deletion
+	const handleDeletePost = useCallback(async () => {
+		if (!post || !accountGroup) return;
+		
+		setIsDeleting(true);
+		try {
+			// Find and remove the post from the account group's posts array
+			if (accountGroup.posts) {
+				const postIndex = accountGroup.posts.findIndex((p: any) => p?.id === post.id);
+				if (postIndex >= 0) {
+					// Remove from Jazz collaborative array
+					accountGroup.posts.splice(postIndex, 1);
+					console.log(`✅ Post ${post.id} deleted successfully`);
+					
+					// Navigate back to account group
+					window.location.href = `/account-group/${accountGroup.id || 'demo'}`;
+				} else {
+					throw new Error('Post not found in account group');
+				}
+			} else {
+				throw new Error('No posts array found in account group');
+			}
+		} catch (error) {
+			console.error('❌ Failed to delete post:', error);
+			alert('Failed to delete post. Please try again.');
+		} finally {
+			setIsDeleting(false);
+			setShowDeleteDialog(false);
+		}
+	}, [post, accountGroup]);
+
 	return (
 		<div className="space-y-6">
 			<PostCreationHeader
@@ -981,6 +1018,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				availableAccounts={availableAccounts}
 				setShowAddAccountDialog={setShowAddAccountDialog}
 				post={currentPost}
+				onDeletePost={() => setShowDeleteDialog(true)}
 			/>
 
 			<PostActions
@@ -1946,6 +1984,58 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					onClose={() => setShowAuthErrorDialog(false)}
 					onRetry={handlePublishPost}
 				/>
+			)}
+
+			{/* Delete Confirmation Dialog */}
+			{showDeleteDialog && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+						<div className="flex items-center gap-3 mb-4">
+							<div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+								<AlertTriangle className="w-5 h-5 text-red-600" />
+							</div>
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+									Delete Post
+								</h3>
+								<p className="text-sm text-gray-600 dark:text-gray-400">
+									This action cannot be undone
+								</p>
+							</div>
+						</div>
+						
+						<p className="text-gray-700 dark:text-gray-300 mb-6">
+							Are you sure you want to delete "{title || 'Untitled Post'}"? This will permanently remove the post and all its content.
+						</p>
+						
+						<div className="flex gap-3 justify-end">
+							<Button
+								variant="soft"
+								onClick={() => setShowDeleteDialog(false)}
+								disabled={isDeleting}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleDeletePost}
+								disabled={isDeleting}
+								className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+							>
+								{isDeleting ? (
+									<>
+										<Loader2 className="w-4 h-4 animate-spin" />
+										Deleting...
+									</>
+								) : (
+									<>
+										<Trash2 className="w-4 h-4" />
+										Delete Post
+									</>
+								)}
+							</Button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);

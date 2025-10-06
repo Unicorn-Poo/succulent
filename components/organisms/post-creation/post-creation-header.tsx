@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { TextField, Badge } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Edit3, Check, X, Plus } from "lucide-react";
+import { Edit3, Check, X, Plus, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/atoms";
 import { platformIcons } from "@/utils/postConstants";
 import { PostFullyLoaded } from "@/app/schema";
@@ -39,6 +39,7 @@ interface PostCreationHeaderProps {
     availableAccounts: [string, any][];
     setShowAddAccountDialog: (show: boolean) => void;
     post: PostFullyLoaded;
+    onDeletePost?: () => void;
 }
 
 export const PostCreationHeader = ({
@@ -56,7 +57,8 @@ export const PostCreationHeader = ({
     handleRemoveAccount,
     availableAccounts,
     setShowAddAccountDialog,
-    post
+    post,
+    onDeletePost
 }: PostCreationHeaderProps) => {
     return (
         <div className="space-y-4">
@@ -95,6 +97,25 @@ export const PostCreationHeader = ({
                         <Button size="1" variant="ghost" onClick={() => setIsEditingTitle(true)}>
                             <Edit3 className="w-4 h-4" />
                         </Button>
+                        {onDeletePost && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                            size="1" 
+                                            variant="ghost" 
+                                            onClick={onDeletePost}
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Delete post
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                     </div>
                 )}
             </div>
