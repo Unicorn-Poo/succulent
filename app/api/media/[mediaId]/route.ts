@@ -115,6 +115,39 @@ export async function GET(
   }
 }
 
+export async function HEAD(
+  request: NextRequest,
+  { params }: { params: { mediaId: string } }
+) {
+  // For HEAD requests, just return headers without body
+  try {
+    const { mediaId } = params;
+    
+    if (!mediaId) {
+      return new NextResponse(null, { status: 400 });
+    }
+
+    // Quick validation that the media ID looks like a Jazz ID
+    if (!mediaId.startsWith('co_')) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    // Return success headers without loading the actual content
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/jpeg', // Default assumption
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
+  } catch (error) {
+    return new NextResponse(null, { status: 500 });
+  }
+}
+
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,

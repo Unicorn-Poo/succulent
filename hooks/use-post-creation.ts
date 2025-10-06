@@ -567,6 +567,20 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 									const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social';
 									const publicUrl = `${currentDomain}/api/media/${fileStreamId}`;
 									console.log(`✅ Converted blob URL to public URL: ${publicUrl}`);
+									
+									// Test the URL accessibility
+									try {
+										const testResponse = await fetch(publicUrl, { method: 'HEAD' });
+										console.log(`🔍 URL test result: ${testResponse.status} ${testResponse.statusText}`);
+										if (!testResponse.ok) {
+											console.warn(`⚠️ Generated URL is not accessible: ${publicUrl}`);
+											return null;
+										}
+									} catch (testError) {
+										console.warn(`⚠️ URL accessibility test failed: ${publicUrl}`, testError);
+										return null;
+									}
+									
 									return publicUrl;
 								} else {
 									console.warn(`⚠️ Could not find FileStream ID for blob URL: ${url}`);
