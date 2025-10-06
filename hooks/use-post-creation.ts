@@ -223,18 +223,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			if (Array.isArray(accountGroup.accounts)) {
 				// Jazz CoList - treat as array
 				allAccounts = (accountGroup.accounts as any[]).map((account, index) => {
-					// Extract the key and ensure proper account structure
-					const accountKey = account.id || account.platform || `account-${index}`;
+					// Use platform as the key (this is what handleAddAccount expects)
+					const platform = account.platform || 'unknown';
 					const accountData = {
 						id: account.id,
 						name: account.name || account.displayName || account.username || 'Unknown Account',
-						platform: account.platform || 'unknown',
+						platform: platform,
 						profileKey: account.profileKey,
 						isLinked: account.isLinked || true,
 						status: account.status || 'linked'
 					};
 					
-					return [accountKey, accountData];
+					console.log(`🔍 Available account: platform=${platform}, data=`, accountData);
+					return [platform, accountData];
 				});
 			} else {
 				// Legacy object - use Object.entries
@@ -246,8 +247,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			([key]) => !selectedPlatforms.includes(key)
 		);
 		
-		// Minimal logging for monitoring
-
+		console.log('🔍 All accounts:', allAccounts.map(([key, account]) => `${key}:${account.platform}`));
+		console.log('🔍 Selected platforms:', selectedPlatforms);
+		console.log('🔍 Available accounts after filtering:', filtered.map(([key, account]) => `${key}:${account.platform}`));
 		
 		return filtered;
 	}, [accountGroup.accounts, selectedPlatforms]);
