@@ -484,73 +484,62 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 			// =============================================================================
 			if (!isBusinessPlanMode()) {
 				// Debug media extraction
-				console.log('🖼️ DEBUG: Media extraction');
-				console.log('📷 Active tab:', activeTab);
-				console.log('📷 Post variants:', Object.keys(post.variants));
-				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
-				
-				// EMERGENCY DEBUG: Find the source of [object Object]
-				console.log(`🚨 [EMERGENCY] Media debugging - activeTab: ${activeTab}`);
-				console.log(`🚨 [EMERGENCY] Post variants:`, Object.keys(post.variants));
-				console.log(`🚨 [EMERGENCY] Current variant:`, post.variants[activeTab]);
-				console.log(`🚨 [EMERGENCY] Media array:`, post.variants[activeTab]?.media);
-				
-				// SIMPLE APPROACH: Just skip ALL uploaded media for now
-				const mediaUrls: string[] = [];
-				
-				if (post.variants[activeTab]?.media) {
-					for (const [index, item] of post.variants[activeTab].media.entries()) {
-						console.log(`🚨 [EMERGENCY] Item ${index}:`, item);
-						console.log(`🚨 [EMERGENCY] Item type:`, item?.type);
-						console.log(`🚨 [EMERGENCY] Item typeof:`, typeof item);
+				// FIXED: Clean media URL extraction
+				const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
+					console.log(`📷 Processing media item ${index}:`, {
+						type: item?.type,
+						hasUrl: !!(item as any)?.url,
+						hasImage: !!(item as any)?.image,
+						hasVideo: !!(item as any)?.video
+					});
+					
+					// Handle URL-based media from API posts
+					if (item?.type === "url-image" || item?.type === "url-video") {
+						const url = (item as any).url;
+						console.log(`📷 Found URL media: ${url}`);
+						return typeof url === 'string' ? url : null;
+					}
+					
+					// Handle uploaded images - convert FileStream to proxy URL
+					if (item?.type === "image" && (item as any).image) {
+						const fileStream = (item as any).image;
+						const fileStreamId = fileStream?.id;
 						
-						// ONLY handle external URLs - skip ALL uploaded content
-						if (item?.type === "url-image" || item?.type === "url-video") {
-							const url = (item as any).url;
-							console.log(`🚨 [EMERGENCY] External URL:`, url, typeof url);
-							
-							if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
-								console.log(`✅ [EMERGENCY] Adding valid URL: ${url}`);
-								mediaUrls.push(url);
-							} else {
-								console.error(`❌ [EMERGENCY] Invalid URL:`, url, typeof url);
-							}
+						if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+							const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+							console.log(`📷 Created proxy URL for image: ${proxyUrl}`);
+							return proxyUrl;
 						} else {
-							console.log(`🚨 [EMERGENCY] Skipping uploaded media type: ${item?.type}`);
+							console.warn(`⚠️ Invalid FileStream ID for image:`, fileStreamId);
+							return null;
 						}
 					}
-				}
-				
-				console.log(`🚨 [EMERGENCY] Final mediaUrls array:`, mediaUrls);
-				console.log(`🚨 [EMERGENCY] All URLs are strings:`, mediaUrls.every(url => typeof url === 'string'));
-				
-				console.log(`📡 [MEDIA] Extracted ${mediaUrls.length} media URLs:`, mediaUrls);
-				console.log(`🔍 [MEDIA] URL types:`, mediaUrls.map(url => typeof url));
-				console.log(`🔍 [MEDIA] URL values:`, mediaUrls.map(url => String(url).substring(0, 100)));
-
-				// Emergency check - detect any objects that got through
-				const hasObjects = mediaUrls.some(url => typeof url !== 'string');
-				if (hasObjects) {
-					console.error(`🚨 [EMERGENCY] Objects detected in mediaUrls array!`);
-					console.error(`🚨 [EMERGENCY] Full array:`, mediaUrls);
-					console.error(`🚨 [EMERGENCY] Types:`, mediaUrls.map(url => typeof url));
-				}
-
-				// Final validation - ensure all URLs are strings and accessible
-				const publicMediaUrls = mediaUrls.filter(url => {
-					if (typeof url !== 'string') {
-						console.error(`❌ [MEDIA] Non-string URL detected:`, url, typeof url);
-						return false;
+					
+					// Handle uploaded videos - convert FileStream to proxy URL
+					if (item?.type === "video" && (item as any).video) {
+						const fileStream = (item as any).video;
+						const fileStreamId = fileStream?.id;
+						
+						if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+							const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+							console.log(`📷 Created proxy URL for video: ${proxyUrl}`);
+							return proxyUrl;
+						} else {
+							console.warn(`⚠️ Invalid FileStream ID for video:`, fileStreamId);
+							return null;
+						}
 					}
-					if (!url.startsWith('http://') && !url.startsWith('https://')) {
-						console.warn(`⚠️ [MEDIA] Non-HTTP URL filtered: ${url}`);
-						return false;
-					}
-					return true;
-				});
+					
+					console.log(`📷 No valid media URL for item ${index}`);
+					return null;
+				}).filter((url): url is string => typeof url === 'string') || [];
 
-				console.log(`🎯 [MEDIA] Final URLs for Ayrshare (${publicMediaUrls.length}):`, publicMediaUrls);
-				console.log(`🎯 [MEDIA] Final URL types:`, publicMediaUrls.map(url => typeof url));
+				// Final validation: ensure all URLs are valid
+				const publicMediaUrls = mediaUrls.filter(url => 
+					url.startsWith('http://') || url.startsWith('https://')
+				);
+				
+				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
 
 				// Debug platform detection
 				console.log('🔍 Platforms being sent:', platforms);

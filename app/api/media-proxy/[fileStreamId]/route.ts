@@ -178,3 +178,41 @@ export async function GET(
     }, { status: 500 });
   }
 }
+
+export async function HEAD(
+  request: NextRequest,
+  { params }: { params: { fileStreamId: string } }
+) {
+  try {
+    const { fileStreamId } = params;
+    
+    if (!fileStreamId || !fileStreamId.startsWith('co_')) {
+      return new NextResponse(null, { status: 400 });
+    }
+
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'Cache-Control': 'public, max-age=86400, immutable',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Accept, User-Agent',
+      }
+    });
+  } catch (error) {
+    return new NextResponse(null, { status: 500 });
+  }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Accept, User-Agent',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
