@@ -129,6 +129,8 @@ export const handleStandardPost = async (postData: PostData) => {
 								postErrors.push(`${error.platform.toUpperCase()}: Account not linked. Please connect your ${error.platform} account at https://app.ayrshare.com/social-accounts`);
 							} else if (error.code === 139 && error.platform === 'instagram') {
 								postErrors.push(`INSTAGRAM: Media processing error. Instagram posts require images or videos. Please add media to your post or remove Instagram from selected platforms.`);
+							} else if (error.code === 132 && (error.platform === 'twitter' || error.platform === 'x')) {
+								postErrors.push(`TWITTER: ${error.message} Auto-threading should have been enabled - this may indicate a configuration issue.`);
 							} else {
 								postErrors.push(`${error.platform.toUpperCase()}: ${error.message} (Code: ${error.code || 'N/A'})`);
 							}

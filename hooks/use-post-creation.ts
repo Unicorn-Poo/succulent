@@ -572,7 +572,12 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					post: postText,
 					platforms,
 					mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
-					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
+					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined,
+					// Enable auto-threading for Twitter when post is too long
+					twitterOptions: platforms.includes('twitter') || platforms.includes('x') ? {
+						thread: true,
+						threadNumber: true
+					} : undefined
 				};
 				
 				// Debug the final post data being sent to Ayrshare
