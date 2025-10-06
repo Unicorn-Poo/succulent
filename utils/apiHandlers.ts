@@ -68,7 +68,9 @@ export const handleStandardPost = async (postData: PostData) => {
 	console.log('📷 Media array length:', cleanedBody.mediaUrls?.length || 0);
 	
 	// Additional debug for request body
-	console.log('📝 Request body:', JSON.stringify(cleanedBody, null, 2));
+	console.log('📝 Original postData:', JSON.stringify(postData, null, 2));
+	console.log('📝 Request body after spread:', JSON.stringify(requestBody, null, 2));
+	console.log('📝 Cleaned request body:', JSON.stringify(cleanedBody, null, 2));
 
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',

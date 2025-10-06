@@ -568,16 +568,28 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
 
+				// Debug platform detection
+				console.log('🔍 Platforms being sent:', platforms);
+				console.log('🔍 Contains twitter:', platforms.includes('twitter'));
+				console.log('🔍 Contains x:', platforms.includes('x'));
+				
+				const hasTwitter = platforms.includes('twitter') || platforms.includes('x');
+				console.log('🔍 Should enable Twitter options:', hasTwitter);
+				
+				const twitterOptions = hasTwitter ? {
+					thread: true,
+					threadNumber: true
+				} : undefined;
+				
+				console.log('🔍 Twitter options created:', twitterOptions);
+
 				const basePostData: PostData = {
 					post: postText,
 					platforms,
 					mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
 					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined,
 					// Enable auto-threading for Twitter when post is too long
-					twitterOptions: platforms.includes('twitter') || platforms.includes('x') ? {
-						thread: true,
-						threadNumber: true
-					} : undefined
+					twitterOptions
 				};
 				
 				// Debug the final post data being sent to Ayrshare
