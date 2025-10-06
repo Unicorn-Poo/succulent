@@ -119,18 +119,12 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 				>
 					{allMedia.map((mediaItem, index) => (
 						<div key={index} className="flex-shrink-0 w-full relative">
-							<MediaComponent mediaItem={mediaItem} />
-							{showDeleteButton && (
-								<Button
-									variant="soft"
-									size="1"
-									onClick={() => handleRemove(index)}
-									className="absolute top-3 right-3 !rounded-full !w-9 !h-9 bg-red-500/90 hover:bg-red-600 text-white shadow-lg backdrop-blur-sm border border-red-400 transition-all duration-200 hover:scale-110"
-									aria-label={`Remove media ${index + 1}`}
-								>
-									<X className="w-4 h-4" />
-								</Button>
-							)}
+							<MediaComponent 
+								mediaItem={mediaItem} 
+								onRemove={onRemove} 
+								showDeleteButton={showDeleteButton} 
+								index={index} 
+							/>
 						</div>
 					))}
 				</div>
@@ -202,7 +196,12 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 	);
 };
 
-const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
+const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }: { 
+	mediaItem: any; 
+	onRemove?: (index: number) => void; 
+	showDeleteButton?: boolean;
+	index?: number;
+}) => {
 	const [imageUrl, setImageUrl] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
@@ -334,7 +333,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 				if (mediaItem.type === "image" || mediaItem.type === "url-image") {
 					console.log('✅ Rendering image with type:', mediaItem.type);
 					return (
-						<div className="relative w-full h-full">
+						<div className="relative w-full h-full group">
 							<Image
 								src={imageUrl}
 								alt={mediaItem.alt?.toString?.() || mediaItem.alt || "uploaded image"}
@@ -344,12 +343,22 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 								onError={() => setError(true)}
 								priority
 							/>
+							{/* Delete button */}
+							{showDeleteButton && onRemove && typeof index === 'number' && (
+								<button
+									onClick={() => onRemove(index)}
+									className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center shadow-lg"
+									aria-label="Remove image"
+								>
+									<X className="w-4 h-4" />
+								</button>
+							)}
 						</div>
 					);
 				} else if (mediaItem.type === "video" || mediaItem.type === "url-video") {
 					console.log('✅ Rendering video with type:', mediaItem.type);
 					return (
-						<div className="relative w-full h-full">
+						<div className="relative w-full h-full group">
 							<video
 								ref={videoRef}
 								src={imageUrl}
@@ -371,6 +380,16 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 									{isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
 								</Button>
 							</div>
+							{/* Delete button */}
+							{showDeleteButton && onRemove && typeof index === 'number' && (
+								<button
+									onClick={() => onRemove(index)}
+									className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center shadow-lg z-10"
+									aria-label="Remove video"
+								>
+									<X className="w-4 h-4" />
+								</button>
+							)}
 							{/* Video overlay gradient */}
 							<div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
 						</div>

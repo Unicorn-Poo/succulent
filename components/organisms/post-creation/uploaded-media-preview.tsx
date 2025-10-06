@@ -12,6 +12,22 @@ interface UploadedMediaPreviewProps {
 
 export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: UploadedMediaPreviewProps) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
+	
+	// Handle media removal
+	const handleRemoveMedia = (indexToRemove: number) => {
+		const variant = post.variants[activeTab];
+		if (variant?.media && indexToRemove >= 0 && indexToRemove < variant.media.length) {
+			// Remove the item from the Jazz collaborative list
+			variant.media.splice(indexToRemove, 1);
+			
+			// Adjust current index if needed
+			if (currentIndex >= variant.media.length && variant.media.length > 0) {
+				setCurrentIndex(variant.media.length - 1);
+			} else if (variant.media.length === 0) {
+				setCurrentIndex(0);
+			}
+		}
+	};
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -117,9 +133,19 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
 					>
 						{mediaArray.map((mediaItem, index) => (
-							<div key={index} className="w-full flex-shrink-0">
+							<div key={index} className="w-full flex-shrink-0 relative group">
 								<div className="aspect-video relative bg-gray-200 dark:bg-gray-700">
-									{(mediaItem as any)?.type === 'url-image' && (mediaItem as any)?.url ? (
+									{/* Remove button */}
+									<button
+										onClick={() => handleRemoveMedia(index)}
+										className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center shadow-lg z-10"
+										aria-label="Remove media"
+									>
+										<X className="w-4 h-4" />
+									</button>
+									
+									{/* Handle different media types - both uploaded and URL-based */}
+									{((mediaItem as any)?.type === 'url-image' && (mediaItem as any)?.url) ? (
 										<>
 											<img
 												src={(mediaItem as any).url}
@@ -135,16 +161,22 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 												URL: {(mediaItem as any).url}
 											</div>
 										</>
-									) : (mediaItem as any)?.type === 'url-video' && (mediaItem as any)?.url ? (
+									) : ((mediaItem as any)?.type === 'url-video' && (mediaItem as any)?.url) ? (
 										<video
 											src={(mediaItem as any).url}
 											className="w-full h-full object-cover"
 											controls
 											muted
 										/>
+									) : ((mediaItem as any)?.type === 'image' || (mediaItem as any)?.type === 'video') ? (
+										<MediaComponent mediaItem={mediaItem} />
 									) : (
 										<div className="w-full h-full flex items-center justify-center text-gray-500">
-											Unsupported media type: {(mediaItem as any)?.type || 'unknown'}
+											<div className="text-center">
+												<X className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+												<p>Unsupported media type: {(mediaItem as any)?.type || 'unknown'}</p>
+												<p className="text-xs mt-1">Expected: image, video, url-image, or url-video</p>
+											</div>
 										</div>
 									)}
 								</div>
