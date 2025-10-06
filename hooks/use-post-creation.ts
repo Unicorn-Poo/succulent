@@ -490,7 +490,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
 				
 				// Free account mode - no profile keys needed
-				const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
+				const mediaWithUrls = post.variants[activeTab]?.media?.map((item, index) => {
 					console.log(`📷 Processing media item ${index}:`, {
 						type: item?.type,
 						hasUrl: !!(item as any)?.url,
@@ -499,27 +499,34 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 						item: item
 					});
 					
+					let url = undefined;
+					
 					// Handle URL-based media from API posts
 					if (item?.type === "url-image" || item?.type === "url-video") {
 						console.log(`📷 Found URL media: ${(item as any).url}`);
-						return (item as any).url;
+						url = (item as any).url;
 					}
 					// Handle FileStream media from UI uploads - use proper Jazz FileStream methods
-					if (item?.type === "image" && (item as any).image) {
+					else if (item?.type === "image" && (item as any).image) {
 						// FileStream doesn't have publicUrl, use proper Jazz method
-						const url = (item as any).image.toString();
+						url = (item as any).image.toString();
 						console.log(`📷 Found image FileStream: ${url}`);
-						return url;
 					}
-					if (item?.type === "video" && (item as any).video) {
+					else if (item?.type === "video" && (item as any).video) {
 						// FileStream doesn't have publicUrl, use proper Jazz method
-						const url = (item as any).video.toString();
+						url = (item as any).video.toString();
 						console.log(`📷 Found video FileStream: ${url}`);
-						return url;
 					}
-					console.log(`📷 No media URL found for item ${index}`);
-					return undefined;
-				}).filter(Boolean) as string[] || [];
+					
+					if (!url) {
+						console.log(`📷 No media URL found for item ${index}`);
+						return null;
+					}
+					
+					return { item, url };
+				}).filter(Boolean) || [];
+				
+				const mediaUrls = mediaWithUrls.map((mediaWithUrl) => mediaWithUrl?.url).filter(Boolean) as string[];
 
 				// Filter out localhost URLs that Ayrshare cannot access
 				const filteredMediaUrls = mediaUrls.filter(url => {
@@ -530,42 +537,69 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 					return !isLocalhost;
 				});
 
-				// Convert problematic URLs (like Lunary OG images) to Ayrshare-compatible format
+				// Convert problematic URLs to Ayrshare-compatible format
 				console.log('🔍 Starting URL conversion process...');
 				console.log('🔍 Filtered media URLs to process:', filteredMediaUrls);
 				
 				const processedUrls = await Promise.all(
-					filteredMediaUrls.map(async (url, index) => {
-						console.log(`🔍 Processing URL ${index + 1}/${filteredMediaUrls.length}: ${url}`);
-						console.log(`🔍 URL contains 'lunary.app/api/og/': ${url.includes('lunary.app/api/og/')}`);
+					mediaWithUrls.map(async (mediaWithUrl, index) => {
+						if (!mediaWithUrl) return null;
+						const { item, url } = mediaWithUrl;
+						console.log(`🔍 Processing URL ${index + 1}/${mediaWithUrls.length}: ${url}`);
 						
-						// Check if this is a problematic URL that needs conversion
-						if (url.includes('lunary.app/api/og/')) {
-							console.log(`🔄 Converting Lunary OG image URL: ${url}`);
+						// Check if URL is accessible to Ayrshare
+						console.log(`🔍 Checking URL accessibility: ${url}`);
+						
+						// Check for URLs that Ayrshare typically can't access
+						if (url.includes('localhost') || url.includes('127.0.0.1')) {
+							console.warn(`⚠️ Skipping localhost URL: ${url}`);
+							return null;
+						}
+						
+						// Handle Jazz FileStream blob URLs by converting to publicly accessible URLs
+						if (url.startsWith('blob:')) {
+							console.log(`🔄 Converting blob URL to publicly accessible URL: ${url}`);
 							try {
-								// Get the current domain for absolute URL
-								const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social';
-								const convertedUrl = `${currentDomain}/api/convert-media-url?url=${encodeURIComponent(url)}`;
-								console.log(`✅ Converted URL: ${convertedUrl}`);
-								return convertedUrl;
+								// Get the Jazz FileStream ID from the media item
+								const fileStreamId = (item as any)?.image?.id || (item as any)?.video?.id;
+								
+								if (fileStreamId) {
+									const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social';
+									const publicUrl = `${currentDomain}/api/media/${fileStreamId}`;
+									console.log(`✅ Converted blob URL to public URL: ${publicUrl}`);
+									return publicUrl;
+								} else {
+									console.warn(`⚠️ Could not find FileStream ID for blob URL: ${url}`);
+									console.warn(`⚠️ Media item structure:`, item);
+									return null;
+								}
 							} catch (error) {
-								console.warn(`⚠️ Failed to convert URL ${url}, skipping this media to prevent API error:`, error);
-								// Return null to filter out this URL and prevent 400 error
+								console.warn(`⚠️ Failed to convert blob URL ${url}:`, error);
 								return null;
 							}
 						}
+						
+						// Check for other Jazz URLs that might not be publicly accessible
+						if (url.includes('jazz-') || url.startsWith('data:') || !url.startsWith('http')) {
+							console.warn(`⚠️ Potentially inaccessible URL for Ayrshare: ${url}`);
+							console.warn(`⚠️ URL type: ${url.startsWith('data:') ? 'data' : 'other'}`);
+							return null;
+						}
+						
 						console.log(`🔍 URL ${url} doesn't need conversion, returning as-is`);
 						return url;
 					})
 				);
 				
 				// Filter out null values (failed conversions)
-				const publicMediaUrls = processedUrls.filter((url): url is string => url !== null);
+				const publicMediaUrls = processedUrls.filter((url: any): url is string => url !== null);
 				
-				// Warn if any URLs were filtered out due to conversion issues
+				// Warn if any URLs were filtered out due to accessibility issues
 				const filteredOutCount = processedUrls.length - publicMediaUrls.length;
 				if (filteredOutCount > 0) {
-					console.warn(`⚠️ ${filteredOutCount} media URL(s) were filtered out due to conversion issues`);
+					console.warn(`⚠️ ${filteredOutCount} media URL(s) were filtered out due to accessibility issues`);
+					// Don't show error for now - let's see if conversion works
+					console.log(`ℹ️ ${filteredOutCount} media URLs were converted or filtered for Ayrshare compatibility`);
 				}
 
 				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
