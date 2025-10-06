@@ -526,8 +526,8 @@ export const ProdigiCredentials = co.map({
 	sandboxMode: z.boolean(),
 	isConfigured: z.boolean(),
 	connectedAt: z.optional(z.date()),
-	// Products as templates (like Gelato templates)
-	templates: co.list(co.map({
+	// Products as templates (like Gelato templates) - optional until first fetch
+	templates: co.optional(co.list(co.map({
 		id: z.string(),
 		name: z.string(),
 		displayName: z.optional(z.string()),
@@ -557,10 +557,10 @@ export const ProdigiCredentials = co.map({
 			minDpi: z.optional(z.number()),
 			maxDpi: z.optional(z.number()),
 		})),
-	})),
+	}))),
 	templatesLastFetched: z.optional(z.date()),
-	// Created product designs (before posting to store)
-	createdProducts: co.list(ProdigiProduct),
+	// Created product designs (before posting to store) - optional until first creation
+	createdProducts: co.optional(co.list(ProdigiProduct)),
 	// Auto-creation settings
 	autoCreateOnPublish: z.optional(z.boolean()),
 });

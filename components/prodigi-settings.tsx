@@ -71,13 +71,14 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			accountGroup.prodigiCredentials.apiKey = formData.apiKey.trim();
 			accountGroup.prodigiCredentials.sandboxMode = formData.sandboxMode;
 		} else {
-			// Create new credentials object
-			(accountGroup as any).prodigiCredentials = {
+			// Create new credentials object - following the same pattern as Gelato
+			const { ProdigiCredentials, ProdigiProduct } = await import('../app/schema');
+			accountGroup.prodigiCredentials = ProdigiCredentials.create({
 				apiKey: formData.apiKey.trim(),
 				sandboxMode: formData.sandboxMode,
-				templates: [],
+				isConfigured: true,
 				connectedAt: new Date(),
-			};
+			}, { owner: accountGroup._owner });
 		}
 
 		setIsEditing(false);
