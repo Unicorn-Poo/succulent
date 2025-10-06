@@ -489,56 +489,79 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 				console.log('📷 Post variants:', Object.keys(post.variants));
 				console.log('📷 Current variant media:', post.variants[activeTab]?.media);
 				
-				// EMERGENCY DEBUG - TRACK EVERY STEP
-				console.log('🚨 EMERGENCY DEBUG: Starting media extraction');
-				console.log('🚨 Post variants keys:', Object.keys(post.variants));
-				console.log('🚨 Active tab:', activeTab);
-				console.log('🚨 Media array:', post.variants[activeTab]?.media);
-				console.log('🚨 Media array length:', post.variants[activeTab]?.media?.length);
-				
-				const mediaUrls: any[] = [];
+				// PRODUCTION-READY Media Processing
+				const mediaUrls: string[] = [];
 				
 				if (post.variants[activeTab]?.media) {
-					for (let index = 0; index < post.variants[activeTab].media.length; index++) {
-						const item = post.variants[activeTab].media[index];
-						console.log(`🚨 Processing item ${index}:`, item);
-						console.log(`🚨 Item type:`, item?.type);
-						console.log(`🚨 Item typeof:`, typeof item);
+					for (const [index, item] of post.variants[activeTab].media.entries()) {
+						console.log(`📡 [MEDIA] Processing item ${index}:`, item?.type);
 						
-						if (item?.type === "url-image" || item?.type === "url-video") {
-							const url = (item as any).url;
-							console.log(`🚨 URL media found:`, url, typeof url);
-							if (typeof url === 'string') {
-								mediaUrls.push(url);
-							} else {
-								console.error(`🚨 URL is not string:`, url);
+						try {
+							// Handle external URLs (already accessible)
+							if (item?.type === "url-image" || item?.type === "url-video") {
+								const url = (item as any).url;
+								if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+									console.log(`✅ [MEDIA] External URL: ${url}`);
+									mediaUrls.push(url);
+								} else {
+									console.warn(`⚠️ [MEDIA] Invalid external URL:`, url);
+								}
+								continue;
 							}
-						} else {
-							console.log(`🚨 Skipping non-URL media type: ${item?.type}`);
+							
+							// Handle uploaded images/videos (convert to proxy URLs)
+							if (item?.type === "image" && (item as any).image) {
+								const fileStream = (item as any).image;
+								const fileStreamId = fileStream.id;
+								
+								if (fileStreamId && typeof fileStreamId === 'string') {
+									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
+									console.log(`✅ [MEDIA] Image proxy URL: ${proxyUrl}`);
+									mediaUrls.push(proxyUrl);
+								} else {
+									console.warn(`⚠️ [MEDIA] No FileStream ID for image:`, fileStream);
+								}
+								continue;
+							}
+							
+							if (item?.type === "video" && (item as any).video) {
+								const fileStream = (item as any).video;
+								const fileStreamId = fileStream.id;
+								
+								if (fileStreamId && typeof fileStreamId === 'string') {
+									const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://app.succulent.social'}/api/media-proxy/${fileStreamId}`;
+									console.log(`✅ [MEDIA] Video proxy URL: ${proxyUrl}`);
+									mediaUrls.push(proxyUrl);
+								} else {
+									console.warn(`⚠️ [MEDIA] No FileStream ID for video:`, fileStream);
+								}
+								continue;
+							}
+							
+							console.log(`⚠️ [MEDIA] Unsupported media type: ${item?.type}`);
+							
+						} catch (itemError) {
+							console.error(`❌ [MEDIA] Error processing item ${index}:`, itemError);
 						}
 					}
 				}
 				
-				console.log('🚨 Final mediaUrls array:', mediaUrls);
-				console.log('🚨 MediaUrls types:', mediaUrls.map(url => typeof url));
+				console.log(`📡 [MEDIA] Extracted ${mediaUrls.length} media URLs:`, mediaUrls);
 
-				// Filter out localhost URLs that Ayrshare cannot access
-				const filteredMediaUrls = mediaUrls.filter(url => {
-					const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
-					if (isLocalhost) {
-						console.warn(`⚠️ Skipping localhost media URL (Ayrshare cannot access): ${url}`);
+				// Final validation - ensure all URLs are strings and accessible
+				const publicMediaUrls = mediaUrls.filter(url => {
+					if (typeof url !== 'string') {
+						console.error(`❌ [MEDIA] Non-string URL detected:`, url);
+						return false;
 					}
-					return !isLocalhost;
+					if (!url.startsWith('http://') && !url.startsWith('https://')) {
+						console.warn(`⚠️ [MEDIA] Non-HTTP URL filtered: ${url}`);
+						return false;
+					}
+					return true;
 				});
 
-				// EMERGENCY: Only use valid HTTP/HTTPS string URLs
-				const publicMediaUrls = filteredMediaUrls.filter((url: any) => {
-					console.log(`🚨 Final filter - URL: ${url} (type: ${typeof url})`);
-					return typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
-				});
-
-				console.log('🚨 FINAL mediaUrls being sent to API:', publicMediaUrls);
-				console.log('🚨 FINAL mediaUrls types:', publicMediaUrls.map((url: any) => typeof url));
+				console.log(`🎯 [MEDIA] Final URLs for Ayrshare (${publicMediaUrls.length}):`, publicMediaUrls);
 
 				// Debug platform detection
 				console.log('🔍 Platforms being sent:', platforms);
