@@ -547,11 +547,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			];
 
 			const productData = {
-				title: title || 'Untitled Product',
+				title: customProductName || title || `${selectedTemplate?.displayName || selectedTemplate?.name} - ${new Date().toLocaleDateString()}`,
 				description: `Custom ${selectedTemplate?.productType || 'product'} created from social media post: "${title || 'Untitled'}"`,
 				tags: productTags,
 				vendor: selectedTemplate?.vendor || 'Print Studio',
-				productType: selectedTemplate?.productType || 'Custom',
+				productType: customProductType || selectedTemplate?.productType || 'Custom',
 				shopifyData: {
 					publishingChannels: selectedPublishingChannels,
 				}
@@ -898,6 +898,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	// Initialize with saved default channels from Jazz object
 	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(defaultChannels);
 	const [productTags, setProductTags] = useState<string[]>([]);
+	const [customProductName, setCustomProductName] = useState('');
 	const [customProductType, setCustomProductType] = useState('');
 	
 	// Auto-create product on publish toggle
@@ -1458,6 +1459,24 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											Using: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
 										</Text>
 									</div>
+
+									{/* Product Name Field - Always Visible */}
+									{selectedTemplate && (
+										<div>
+											<Text size="2" weight="medium" className="block mb-2">
+												Product Name:
+											</Text>
+											<input
+												value={customProductName}
+												onChange={(e) => setCustomProductName(e.target.value)}
+												placeholder={`${selectedTemplate.displayName || selectedTemplate.name} - ${new Date().toLocaleDateString()}`}
+												className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+											/>
+											<Text size="1" color="gray" className="mt-1 block">
+												Leave empty to use default name based on template and date
+											</Text>
+										</div>
+									)}
 
 									{/* Shopify Integration Options */}
 									{isShopifyConfigured && selectedTemplate && (
