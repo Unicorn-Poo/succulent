@@ -201,9 +201,9 @@ export async function POST(request: NextRequest) {
 					name: productDesign.name,
 					description: productDesign.description,
 					price: retailPrice,
-					images: uploadedImages.map(img => ({
-						url: img.url,
-						alt: productDesign.name
+					images: (imageUrls || []).map((url: string, index: number) => ({
+						url: url,
+						alt: `${productDesign.name} - Image ${index + 1}`
 					})),
 					tags: ['print-on-demand', 'social-media', productData.platform].filter(Boolean),
 					prodigiProductId: productId,

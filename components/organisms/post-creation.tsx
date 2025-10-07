@@ -750,10 +750,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 					const customName = customProductNames[template.id];
 					const productData = {
-						title: customName || title || `${template?.displayName || template?.name} - ${new Date().toLocaleDateString()}`,
-						description: `Custom ${template?.productType || 'product'} created from social media post: "${title || 'Untitled'}"`,
+						title: customName || `${title} Print` || `${template?.displayName || template?.name} - ${new Date().toLocaleDateString()}`,
+						description: template.description,
 						tags: productTags,
-						vendor: template?.vendor || 'Print Studio',
+						vendor: 'scape squared',
 						productType: customProductType || template?.productType || 'Custom',
 						shopifyData: {
 							publishingChannels: selectedPublishingChannels,
@@ -1832,7 +1832,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										title: title || 'Demo Product',
 										description: `Demo: Custom product created from social media post`,
 										tags: productTags,
-										vendor: 'Print Studio',
+										vendor: 'scape squared',
 										productType: 'Custom',
 										status: 'demo',
 										createdAt: new Date(), // Use Date object, not ISO string
