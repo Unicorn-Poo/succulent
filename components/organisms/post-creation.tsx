@@ -69,10 +69,10 @@ const GelatoButton = ({
 	);
 };
 
-// Simple template selector
-const TemplateSelector = ({ 
+// Multi-select template selector for Gelato
+const GelatoTemplateSelector = ({ 
 	templates, 
-	selectedTemplate, 
+	selectedTemplates, 
 	onSelect, 
 	className,
 	loading,
@@ -80,8 +80,8 @@ const TemplateSelector = ({
 	onRetry
 }: { 
 	templates: any[]; 
-	selectedTemplate: any; 
-	onSelect: (template: any) => void; 
+	selectedTemplates: any[]; 
+	onSelect: (templates: any[]) => void; 
 	className: string;
 	loading?: boolean;
 	error?: string | null;
@@ -171,22 +171,150 @@ const TemplateSelector = ({
 		return formattedTitle;
 	};
 
+	const handleTemplateToggle = (template: any) => {
+		const isSelected = selectedTemplates.some(t => t.id === template.id);
+		if (isSelected) {
+			onSelect(selectedTemplates.filter(t => t.id !== template.id));
+		} else {
+			onSelect([...selectedTemplates, template]);
+		}
+	};
+
 	return (
-		<select
-			value={selectedTemplate?.id || ''}
-			onChange={(e) => {
-				const template = templates.find((t: any) => t.id === e.target.value);
-				if (template) onSelect(template);
-			}}
-							className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lime-500 focus:border-lime-500 ${className}`}
-		>
-			<option value="">Select a template...</option>
-			{templates.map((template: any) => (
-				<option key={template.id} value={template.id}>
-					{formatTemplateTitle(template)}
-				</option>
-			))}
-		</select>
+		<div className={`space-y-2 ${className}`}>
+			<Text size="2" color="gray" className="block mb-2">
+				Select one or more templates ({selectedTemplates.length} selected):
+			</Text>
+			<div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white">
+				{templates.map((template: any) => {
+					const isSelected = selectedTemplates.some(t => t.id === template.id);
+					return (
+						<label
+							key={template.id}
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+								isSelected ? 'bg-lime-50' : ''
+							}`}
+						>
+							<input
+								type="checkbox"
+								checked={isSelected}
+								onChange={() => handleTemplateToggle(template)}
+								className="w-4 h-4 text-lime-600 border-gray-300 rounded focus:ring-lime-500"
+							/>
+							<div className="flex-1">
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800" : ""}>
+									{formatTemplateTitle(template)}
+								</Text>
+								{template.productType && (
+									<Text size="1" color="gray" className="block">
+										{template.productType}
+									</Text>
+								)}
+							</div>
+						</label>
+					);
+				})}
+			</div>
+		</div>
+	);
+};
+
+// Multi-select template selector for Prodigi
+const ProdigiTemplateSelector = ({ 
+	templates, 
+	selectedTemplates, 
+	onSelect, 
+	className,
+	loading,
+	error,
+	onRetry
+}: { 
+	templates: any[]; 
+	selectedTemplates: any[]; 
+	onSelect: (templates: any[]) => void; 
+	className: string;
+	loading?: boolean;
+	error?: string | null;
+	onRetry?: () => void;
+}) => {
+	if (loading) {
+		return (
+			<div className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg ${className}`}>
+				<Loader2 className="w-4 h-4 animate-spin" />
+				<Text size="2" color="gray">Loading templates from your Prodigi account...</Text>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className={`p-3 bg-red-50 border border-red-200 rounded-lg ${className}`}>
+				<Text size="2" color="red">{error}</Text>
+				{onRetry && (
+					<button
+						onClick={onRetry}
+						className="mt-2 text-sm text-lime-600 hover:text-lime-800 underline"
+					>
+						Try Again
+					</button>
+				)}
+			</div>
+		);
+	}
+
+	if (templates.length === 0) {
+		return (
+			<div className={`p-3 bg-yellow-50 border border-yellow-200 rounded-lg ${className}`}>
+				<Text size="2" color="orange">No templates found in your Prodigi account</Text>
+			</div>
+		);
+	}
+
+	const handleTemplateToggle = (template: any) => {
+		const isSelected = selectedTemplates.some(t => t.id === template.id);
+		if (isSelected) {
+			onSelect(selectedTemplates.filter(t => t.id !== template.id));
+		} else {
+			onSelect([...selectedTemplates, template]);
+		}
+	};
+
+	return (
+		<div className={`space-y-2 ${className}`}>
+			<Text size="2" color="gray" className="block mb-2">
+				Select one or more templates ({selectedTemplates.length} selected):
+			</Text>
+			<div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white">
+				{templates.map((template: any) => {
+					const isSelected = selectedTemplates.some(t => t.id === template.id);
+					return (
+						<label
+							key={template.id}
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+								isSelected ? 'bg-blue-50' : ''
+							}`}
+						>
+							<input
+								type="checkbox"
+								checked={isSelected}
+								onChange={() => handleTemplateToggle(template)}
+								className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+							/>
+							<div className="flex-1">
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-blue-800" : ""}>
+									{template.displayName || template.name}
+								</Text>
+								{template.productType && (
+									<Text size="1" color="gray" className="block">
+										{template.productType}
+									</Text>
+								)}
+							</div>
+						</label>
+					);
+				})}
+			</div>
+		</div>
 	);
 };
 
@@ -200,7 +328,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const isGelatoConfigured = accountGroupGelatoCredentials?.isConfigured || false;
 	
 	// Gelato state
-	const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+	const [selectedTemplates, setSelectedTemplates] = useState<any[]>([]);
 	const [showGelatoSection, setShowGelatoSection] = useState(false);
 	
 	// Get created products from Jazz object instead of local state
@@ -245,10 +373,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Set first template as default when templates are available
 	useEffect(() => {
-		if (gelatoTemplates.length > 0 && !selectedTemplate) {
-			setSelectedTemplate(gelatoTemplates[0]);
+		if (gelatoTemplates.length > 0 && selectedTemplates.length === 0) {
+			setSelectedTemplates([gelatoTemplates[0]]);
 		}
-	}, [gelatoTemplates.length, selectedTemplate?.id]);
+	}, [gelatoTemplates.length, selectedTemplates.length]);
 
 	// =============================================================================
 	// 🎨 PRODIGI INTEGRATION
@@ -259,7 +387,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	const isProdigiConfigured = accountGroupProdigiCredentials?.isConfigured || false;
 	
 	// Prodigi state
-	const [selectedProdigiTemplate, setSelectedProdigiTemplate] = useState<any | null>(null);
+	const [selectedProdigiTemplates, setSelectedProdigiTemplates] = useState<any[]>([]);
 	const [showProdigiSection, setShowProdigiSection] = useState(false);
 	
 	// Get created products from Jazz object instead of local state
@@ -303,68 +431,134 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Set first template as default when templates are available
 	useEffect(() => {
-		if (prodigiTemplates.length > 0 && !selectedProdigiTemplate) {
-			setSelectedProdigiTemplate(prodigiTemplates[0]);
+		if (prodigiTemplates.length > 0 && selectedProdigiTemplates.length === 0) {
+			setSelectedProdigiTemplates([prodigiTemplates[0]]);
 		}
-	}, [prodigiTemplates.length, selectedProdigiTemplate?.id]);
+	}, [prodigiTemplates.length, selectedProdigiTemplates.length]);
 
 	// Auto-create settings for Prodigi
 	const [autoCreateProdigiOnPublish, setAutoCreateProdigiOnPublish] = useState(
 		accountGroupProdigiCredentials?.autoCreateOnPublish ?? false
 	);
 
-	// Create real Prodigi product
-	const createRealProdigiProduct = async () => {
-		if (!isProdigiConfigured || !selectedProdigiTemplate || !accountGroupProdigiCredentials) {
+	// Create real Prodigi products (multiple)
+	const createRealProdigiProducts = async () => {
+		if (!isProdigiConfigured || selectedProdigiTemplates.length === 0 || !accountGroupProdigiCredentials) {
 			handleProdigiError('Missing Prodigi configuration or template selection');
 			return;
 		}
 
 		try {
-			// Convert Jazz images to data URLs for Prodigi API
+			// Extract media URLs using the same logic as post publishing
 			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
-			const imageUrls = await convertImagesToDataUrls(mediaArray);
+			const imageUrls = mediaArray?.map((item, index) => {
+				console.log(`📷 Processing Prodigi media item ${index}:`, {
+					type: item?.type,
+					hasUrl: !!(item as any)?.url,
+					hasImage: !!(item as any)?.image,
+					hasVideo: !!(item as any)?.video
+				});
+				
+				// Handle URL-based media from API posts
+				if (item?.type === "url-image" || item?.type === "url-video") {
+					const url = (item as any).url;
+					console.log(`📷 Found URL media for Prodigi: ${url}`);
+					return typeof url === 'string' ? url : null;
+				}
+				
+				// Handle uploaded images - convert FileStream to proxy URL
+				if (item?.type === "image" && (item as any).image) {
+					const fileStream = (item as any).image;
+					const fileStreamId = fileStream?.id;
+					
+					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+						console.log(`📷 Created proxy URL for Prodigi image: ${proxyUrl}`);
+						return proxyUrl;
+					} else {
+						console.warn(`⚠️ Invalid FileStream ID for Prodigi image:`, fileStreamId);
+						return null;
+					}
+				}
+				
+				console.log(`📷 No valid media URL for Prodigi item ${index}`);
+				return null;
+			}).filter((url): url is string => typeof url === 'string') || [];
 			
 			if (imageUrls.length === 0) {
 				handleProdigiError('No images found in this post to create a product');
 				return;
 			}
 
-			// Prepare product data for Prodigi API
-			const productData = {
-				apiKey: accountGroupProdigiCredentials.apiKey,
-				sandboxMode: accountGroupProdigiCredentials.sandboxMode,
-				template: selectedProdigiTemplate,
-				images: imageUrls,
-				post: {
-					id: post.id,
-					title: (currentPost.variants[activeTab]?.text?.toString() || '').substring(0, 100) || 'Untitled Post',
-					content: currentPost.variants[activeTab]?.text?.toString() || '',
-					createdAt: post._createdAt,
-				},
-			};
+			console.log(`📷 Final Prodigi image URLs (${imageUrls.length}):`, imageUrls);
 
-			const response = await fetch('/api/create-prodigi-product', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(productData),
-			});
+			const results = [];
+			const errors = [];
 
-			if (response.ok) {
-				const result = await response.json();
-				if (result.success) {
-					handleProdigiProductCreated({
-						...result,
-						template: selectedProdigiTemplate,
+			// Create products for each selected template
+			for (const template of selectedProdigiTemplates) {
+				try {
+					const customName = customProdigiProductNames[template.id];
+					const productData = {
+						apiKey: accountGroupProdigiCredentials.apiKey,
+						sandboxMode: accountGroupProdigiCredentials.sandboxMode,
+						productId: template.prodigiTemplateId || template.id,
+						template: template,
+						images: imageUrls,
+						post: {
+							id: post.id,
+							title: customName || (currentPost.variants[activeTab]?.text?.toString() || '').substring(0, 100) || `${template.displayName || template.name} Product`,
+							content: currentPost.variants[activeTab]?.text?.toString() || '',
+							createdAt: post._createdAt,
+						},
+					};
+
+					const response = await fetch('/api/create-prodigi-product', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(productData),
 					});
+
+					if (response.ok) {
+						const result = await response.json();
+						if (result.success) {
+							results.push({
+								...result,
+								template: template,
+							});
+						} else {
+							errors.push(`${template.displayName || template.name}: ${result.error || 'Failed to create product'}`);
+						}
+					} else {
+						const errorData = await response.json();
+						errors.push(`${template.displayName || template.name}: ${errorData.error || 'Failed to create product'}`);
+					}
+				} catch (templateError) {
+					console.error(`Error creating Prodigi product for template ${template.id}:`, templateError);
+					errors.push(`${template.displayName || template.name}: ${templateError instanceof Error ? templateError.message : 'Unknown error'}`);
+				}
+			}
+
+			// Handle results
+			if (results.length > 0) {
+				// Process successful results
+				results.forEach(result => {
+					handleProdigiProductCreated(result);
+				});
+				
+				if (errors.length === 0) {
+					// All products created successfully
+					console.log(`✅ Successfully created ${results.length} Prodigi products`);
 				} else {
-					handleProdigiError(result.error || 'Failed to create product');
+					// Some products failed
+					console.warn(`⚠️ Created ${results.length} products, but ${errors.length} failed`);
+					handleProdigiError(`Some products failed to create:\n${errors.join('\n')}`);
 				}
 			} else {
-				const errorData = await response.json();
-				handleProdigiError(errorData.error || 'Failed to create product');
+				// All products failed
+				handleProdigiError(`Failed to create any products:\n${errors.join('\n')}`);
 			}
 		} catch (error) {
 			console.error('Error creating Prodigi product:', error);
@@ -487,110 +681,144 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	}, [autoCreateProdigiOnPublish, accountGroupProdigiCredentials]);
 
 	// =============================================================================
-	// 🖼️ IMAGE CONVERSION UTILITIES
+	// 🖼️ IMAGE UTILITIES
 	// =============================================================================
+	
+	// Note: We now use media proxy URLs directly instead of converting to data URLs
+	// This is more reliable and avoids size limitations of data URLs
 
-	// Convert Jazz images to data URLs for direct use in Gelato API
-	const convertImagesToDataUrls = async (media: any[]): Promise<string[]> => {
-		const imageUrls: string[] = [];
-		
-		for (const mediaItem of media) {
-			if (mediaItem?.type === 'image' && mediaItem.image) {
-				try {
-					// Get blob from Jazz FileStream
-					let blob = null;
-					
-					if (typeof mediaItem.image.getBlob === 'function') {
-						blob = await mediaItem.image.getBlob();
-					} else if (typeof mediaItem.image.toBlob === 'function') {
-						blob = await mediaItem.image.toBlob();
-					}
-					
-					if (blob) {
-						// Convert blob to data URL for direct use
-						const dataUrl = await new Promise<string>((resolve) => {
-							const reader = new FileReader();
-							reader.onload = (e) => resolve(e.target?.result as string);
-							reader.readAsDataURL(blob);
-						});
-						
-						imageUrls.push(dataUrl);
-					}
-				} catch (error) {
-					console.error('Error converting image:', error);
-				}
-			}
-		}
-		
-		return imageUrls;
-	};
-
-	// Create real Gelato product
-	const createRealGelatoProduct = async () => {
-		if (!isGelatoConfigured || !selectedTemplate || !accountGroupGelatoCredentials) {
+	// Create real Gelato products (multiple)
+	const createRealGelatoProducts = async () => {
+		if (!isGelatoConfigured || selectedTemplates.length === 0 || !accountGroupGelatoCredentials) {
 			handleGelatoError('Missing Gelato configuration or template selection');
 			return;
 		}
 
 		try {
-			// Convert Jazz images to data URLs for Gelato API
+			// Extract media URLs using the same logic as post publishing
 			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
-			const imageUrls = await convertImagesToDataUrls(mediaArray);
+			const imageUrls = mediaArray?.map((item, index) => {
+				console.log(`📷 Processing Gelato media item ${index}:`, {
+					type: item?.type,
+					hasUrl: !!(item as any)?.url,
+					hasImage: !!(item as any)?.image,
+					hasVideo: !!(item as any)?.video
+				});
+				
+				// Handle URL-based media from API posts
+				if (item?.type === "url-image" || item?.type === "url-video") {
+					const url = (item as any).url;
+					console.log(`📷 Found URL media for Gelato: ${url}`);
+					return typeof url === 'string' ? url : null;
+				}
+				
+				// Handle uploaded images - convert FileStream to proxy URL
+				if (item?.type === "image" && (item as any).image) {
+					const fileStream = (item as any).image;
+					const fileStreamId = fileStream?.id;
+					
+					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+						console.log(`📷 Created proxy URL for Gelato image: ${proxyUrl}`);
+						return proxyUrl;
+					} else {
+						console.warn(`⚠️ Invalid FileStream ID for Gelato image:`, fileStreamId);
+						return null;
+					}
+				}
+				
+				console.log(`📷 No valid media URL for Gelato item ${index}`);
+				return null;
+			}).filter((url): url is string => typeof url === 'string') || [];
 
 			if (imageUrls.length === 0) {
-				handleGelatoError('No images found in this post to create a product');
+				handleGelatoError('No images found in this post to create products');
 				return;
 			}
 
-			const productTags = [
-				...(selectedTemplate?.tags || []),
-			];
+			console.log(`📷 Final Gelato image URLs (${imageUrls.length}):`, imageUrls);
 
-			const productData = {
-				title: customProductName || title || `${selectedTemplate?.displayName || selectedTemplate?.name} - ${new Date().toLocaleDateString()}`,
-				description: `Custom ${selectedTemplate?.productType || 'product'} created from social media post: "${title || 'Untitled'}"`,
-				tags: productTags,
-				vendor: selectedTemplate?.vendor || 'Print Studio',
-				productType: customProductType || selectedTemplate?.productType || 'Custom',
-				shopifyData: {
-					publishingChannels: selectedPublishingChannels,
-				}
-			};
+			const results = [];
+			const errors = [];
 
-			const response = await fetch('/api/create-gelato-product', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					apiKey: accountGroupGelatoCredentials.apiKey,
-					storeId: accountGroupGelatoCredentials.storeId,
-					templateId: selectedTemplate.gelatoTemplateId || selectedTemplate.id, // Use the real Gelato template ID
-					productData: productData,
-					imageUrls: imageUrls,
-				}),
-			});
+			// Create products for each selected template
+			for (const template of selectedTemplates) {
+				try {
+					const productTags = [
+						...(template?.tags || []),
+					];
 
-			if (response.ok) {
-				const result = await response.json();
-				if (result.success) {
-					handleGelatoProductCreated({
-						productId: result.productId,
-						product: result.product,
-						template: selectedTemplate,
-						sourcePost: {
-							title: title || 'Untitled Post',
-							variant: activeTab
-						},
+					const customName = customProductNames[template.id];
+					const productData = {
+						title: customName || title || `${template?.displayName || template?.name} - ${new Date().toLocaleDateString()}`,
+						description: `Custom ${template?.productType || 'product'} created from social media post: "${title || 'Untitled'}"`,
+						tags: productTags,
+						vendor: template?.vendor || 'Print Studio',
+						productType: customProductType || template?.productType || 'Custom',
 						shopifyData: {
 							publishingChannels: selectedPublishingChannels,
-							needsShopifyManagement: isShopifyConfigured
 						}
+					};
+
+					const response = await fetch('/api/create-gelato-product', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							apiKey: accountGroupGelatoCredentials.apiKey,
+							storeId: accountGroupGelatoCredentials.storeId,
+							templateId: template.gelatoTemplateId || template.id, // Use the real Gelato template ID
+							productData: productData,
+							imageUrls: imageUrls,
+						}),
 					});
+
+					if (response.ok) {
+						const result = await response.json();
+						if (result.success) {
+							results.push({
+								productId: result.productId,
+								product: result.product,
+								template: template,
+								sourcePost: {
+									title: title || 'Untitled Post',
+									variant: activeTab
+								},
+								shopifyData: {
+									publishingChannels: selectedPublishingChannels,
+									needsShopifyManagement: isShopifyConfigured
+								}
+							});
+						} else {
+							errors.push(`${template.displayName || template.name}: ${result.error || 'Failed to create product'}`);
+						}
+					} else {
+						const errorData = await response.json();
+						errors.push(`${template.displayName || template.name}: ${errorData.error || 'Failed to create product'}`);
+					}
+				} catch (templateError) {
+					console.error(`Error creating product for template ${template.id}:`, templateError);
+					errors.push(`${template.displayName || template.name}: ${templateError instanceof Error ? templateError.message : 'Unknown error'}`);
+				}
+			}
+
+			// Handle results
+			if (results.length > 0) {
+				// Process successful results
+				results.forEach(result => {
+					handleGelatoProductCreated(result);
+				});
+				
+				if (errors.length === 0) {
+					// All products created successfully
+					console.log(`✅ Successfully created ${results.length} Gelato products`);
 				} else {
-					handleGelatoError(result.error || 'Failed to create product');
+					// Some products failed
+					console.warn(`⚠️ Created ${results.length} products, but ${errors.length} failed`);
+					handleGelatoError(`Some products failed to create:\n${errors.join('\n')}`);
 				}
 			} else {
-				const errorData = await response.json();
-				handleGelatoError(errorData.error || 'Failed to create product');
+				// All products failed
+				handleGelatoError(`Failed to create any products:\n${errors.join('\n')}`);
 			}
 		} catch (error) {
 			console.error('Error creating Gelato product:', error);
@@ -898,7 +1126,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	// Initialize with saved default channels from Jazz object
 	const [selectedPublishingChannels, setSelectedPublishingChannels] = useState<string[]>(defaultChannels);
 	const [productTags, setProductTags] = useState<string[]>([]);
-	const [customProductName, setCustomProductName] = useState('');
+	const [customProductNames, setCustomProductNames] = useState<{[templateId: string]: string}>({});
+	const [customProdigiProductNames, setCustomProdigiProductNames] = useState<{[templateId: string]: string}>({});
 	const [customProductType, setCustomProductType] = useState('');
 	
 	// Auto-create product on publish toggle
@@ -917,14 +1146,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 	}, [autoCreateOnPublish, accountGroupGelatoCredentials]);
 
-	// Update product tags when template changes
+	// Update product tags when templates change
 	useEffect(() => {
-		if (selectedTemplate?.tags) {
-			setProductTags(selectedTemplate.tags);
+		if (selectedTemplates.length > 0) {
+			// Combine tags from all selected templates
+			const allTags = selectedTemplates.flatMap(template => template?.tags || []);
+			const uniqueTags = [...new Set(allTags)]; // Remove duplicates
+			setProductTags(uniqueTags);
 		} else {
-			setProductTags([]); // Clear tags if template has no tags
+			setProductTags([]); // Clear tags if no templates selected
 		}
-	}, [selectedTemplate?.id, selectedTemplate?.tags]);
+	}, [selectedTemplates]);
 
 	// Update selected channels when default channels change
 	useEffect(() => {
@@ -936,11 +1168,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		// First, publish the post using the original handler
 		await handlePublishPost();
 		
-		// Then, if auto-create is enabled and conditions are met, create the Gelato product
-		if (autoCreateOnPublish && hasImages && isGelatoConfigured && selectedTemplate) {
+		// Then, if auto-create is enabled and conditions are met, create the Gelato products
+		if (autoCreateOnPublish && hasImages && isGelatoConfigured && selectedTemplates.length > 0) {
 			try {
 				console.log('Auto-creating Gelato product after publish...');
-				await createRealGelatoProduct();
+				await createRealGelatoProducts();
 			} catch (error) {
 				console.error('Auto-creation failed:', error);
 				// Don't fail the entire publish if auto-creation fails
@@ -948,10 +1180,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 
 		// Also check for Prodigi auto-creation
-		if (autoCreateProdigiOnPublish && hasImages && isProdigiConfigured && selectedProdigiTemplate) {
+		if (autoCreateProdigiOnPublish && hasImages && isProdigiConfigured && selectedProdigiTemplates.length > 0) {
 			try {
 				console.log('Auto-creating Prodigi product after publish...');
-				await createRealProdigiProduct();
+				await createRealProdigiProducts();
 			} catch (error) {
 				console.error('Prodigi auto-creation failed:', error);
 				// Don't fail the entire publish if auto-creation fails
@@ -962,12 +1194,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		autoCreateOnPublish,
 		hasImages,
 		isGelatoConfigured,
-		selectedTemplate,
-		createRealGelatoProduct,
+		selectedTemplates,
+		createRealGelatoProducts,
 		autoCreateProdigiOnPublish,
 		isProdigiConfigured,
-		selectedProdigiTemplate,
-		createRealProdigiProduct
+		selectedProdigiTemplates,
+		createRealProdigiProducts
 	]);
 
 	// Handle post deletion
@@ -1278,9 +1510,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									<div className="text-xs text-gray-600">
 										Products will be created automatically when you publish this post
 									</div>
-									{hasImages && isGelatoConfigured && selectedTemplate && (
+									{hasImages && isGelatoConfigured && selectedTemplates.length > 0 && (
 										<div className="text-xs text-green-600 mt-1">
-											✓ Ready - will auto-create using "{selectedTemplate.name}"
+											✓ Ready - will auto-create {selectedTemplates.length} product{selectedTemplates.length > 1 ? 's' : ''}
 										</div>
 									)}
 								</div>
@@ -1318,10 +1550,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</div>
 						</div>
 						
-						{selectedTemplate && (
+						{selectedTemplates.length > 0 && (
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-gray-600">Template:</span>
-								<span className="font-medium text-gray-900">{selectedTemplate.name}</span>
+								<span className="text-gray-600">Templates:</span>
+								<span className="font-medium text-gray-900">{selectedTemplates.length} selected</span>
 							</div>
 						)}
 						
@@ -1404,47 +1636,36 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										<Text size="2" weight="medium" className="block mb-2">
 											Choose Product Template:
 										</Text>
-										<TemplateSelector
+										<GelatoTemplateSelector
 											templates={gelatoTemplates}
-											selectedTemplate={selectedTemplate}
-											onSelect={setSelectedTemplate}
+											selectedTemplates={selectedTemplates}
+											onSelect={setSelectedTemplates}
 											className="w-full"
 											error={templateError}
 										/>
 
 										{/* Enhanced Template Information */}
-										{selectedTemplate && (
+										{selectedTemplates.length > 0 && (
 											<div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
-													Template Details:
+													Selected Templates ({selectedTemplates.length}):
 												</Text>
-												<div className="grid grid-cols-2 gap-2 text-sm">
-													<div>
-														<strong>Product Type:</strong> {selectedTemplate.productType}
-													</div>
-													<div>
-														<strong>Template ID:</strong> {selectedTemplate.gelatoTemplateId?.substring(0, 12) || 'N/A'}...
-													</div>
-													{selectedTemplate.availableSizes && selectedTemplate.availableSizes.length > 0 && (
-														<div>
-															<strong>Sizes:</strong> {selectedTemplate.availableSizes.slice(0, 3).join(', ')}{selectedTemplate.availableSizes.length > 3 ? '...' : ''}
+												<div className="space-y-3">
+													{selectedTemplates.map((template, index) => (
+														<div key={template.id} className="p-2 bg-white rounded border">
+															<Text size="2" weight="medium" className="block mb-1">
+																{template.displayName || template.name}
+															</Text>
+															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+																<div>
+																	<strong>Type:</strong> {template.productType}
+																</div>
+																<div>
+																	<strong>ID:</strong> {template.gelatoTemplateId?.substring(0, 8) || 'N/A'}...
+																</div>
+															</div>
 														</div>
-													)}
-													{selectedTemplate.availableColors && selectedTemplate.availableColors.length > 0 && (
-														<div>
-															<strong>Colors:</strong> {selectedTemplate.availableColors.slice(0, 3).join(', ')}{selectedTemplate.availableColors.length > 3 ? '...' : ''}
-														</div>
-													)}
-													{selectedTemplate.tags && selectedTemplate.tags.length > 0 && (
-														<div className="col-span-2">
-															<strong>Tags:</strong> {selectedTemplate.tags.slice(0, 5).join(', ')}{selectedTemplate.tags.length > 5 ? '...' : ''}
-														</div>
-													)}
-													{selectedTemplate.description && (
-														<div className="col-span-2">
-															<strong>Description:</strong> {selectedTemplate.description.substring(0, 100)}...
-														</div>
-													)}
+													))}
 												</div>
 											</div>
 										)}
@@ -1460,26 +1681,38 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										</Text>
 									</div>
 
-									{/* Product Name Field - Always Visible */}
-									{selectedTemplate && (
+									{/* Product Names - Individual for Each Template */}
+									{selectedTemplates.length > 0 && (
 										<div>
-											<Text size="2" weight="medium" className="block mb-2">
-												Product Name:
+											<Text size="2" weight="medium" className="block mb-3">
+												Product Names:
 											</Text>
-											<input
-												value={customProductName}
-												onChange={(e) => setCustomProductName(e.target.value)}
-												placeholder={`${selectedTemplate.displayName || selectedTemplate.name} - ${new Date().toLocaleDateString()}`}
-												className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
-											/>
-											<Text size="1" color="gray" className="mt-1 block">
-												Leave empty to use default name based on template and date
+											<div className="space-y-3">
+												{selectedTemplates.map((template) => (
+													<div key={template.id} className="p-3 bg-gray-50 rounded-lg">
+														<Text size="1" weight="medium" className="block mb-2">
+															{template.displayName || template.name}:
+														</Text>
+														<input
+															value={customProductNames[template.id] || ''}
+															onChange={(e) => setCustomProductNames(prev => ({
+																...prev,
+																[template.id]: e.target.value
+															}))}
+															placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
+															className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+														/>
+													</div>
+												))}
+											</div>
+											<Text size="1" color="gray" className="mt-2 block">
+												Leave empty to use default names based on template and date
 											</Text>
 										</div>
 									)}
 
 									{/* Shopify Integration Options */}
-									{isShopifyConfigured && selectedTemplate && (
+									{isShopifyConfigured && selectedTemplates.length > 0 && (
 										<div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
 											<div className="flex items-center justify-between mb-3">
 												<Text size="2" weight="medium" className="text-lime-800">
@@ -1529,7 +1762,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														<input
 															value={customProductType}
 															onChange={(e) => setCustomProductType(e.target.value)}
-															placeholder={selectedTemplate.productType || 'Custom Product'}
+															placeholder="Custom Product"
 															className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
 														/>
 													</div>
@@ -1557,14 +1790,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														).join(', ') || 'Online Store'}
 													</Text>
 													<Text size="1" className="text-lime-700">
-														🏷️ Using template tags: {selectedTemplate.tags?.slice(0, 3).join(', ') || 'Print on Demand, Custom'}
+														🏷️ Using combined tags from selected templates
 													</Text>
 												</div>
 											)}
 										</div>
 									)}
 
-									{!isShopifyConfigured && selectedTemplate && (
+									{!isShopifyConfigured && selectedTemplates.length > 0 && (
 										<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
 											<Text size="2" className="text-yellow-800 block mb-2">
 												🔗 Shopify Integration Available
@@ -1575,14 +1808,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										</div>
 									)}
 
-									{/* Create Product Button */}
+									{/* Create Products Button */}
 									<GelatoButton
-										disabled={!selectedTemplate || !hasImages}
-										onClick={createRealGelatoProduct}
+										disabled={selectedTemplates.length === 0 || !hasImages}
+										onClick={createRealGelatoProducts}
 										className="w-full bg-lime-600 hover:bg-lime-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 									>
 										<Package className="w-4 h-4" />
-										Create {selectedTemplate?.displayName || selectedTemplate?.name || 'Product'}
+										Create {selectedTemplates.length === 1 ? selectedTemplates[0]?.displayName || selectedTemplates[0]?.name || 'Product' : `${selectedTemplates.length} Products`}
 									</GelatoButton>
 
 
@@ -1597,10 +1830,10 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																			const demoProduct = {
 										id: `demo-${Date.now()}`,
 										title: title || 'Demo Product',
-										description: `Demo: Custom ${selectedTemplate?.productType || 'product'} created from social media post`,
+										description: `Demo: Custom product created from social media post`,
 										tags: productTags,
-										vendor: selectedTemplate?.vendor || 'Print Studio',
-										productType: selectedTemplate?.productType || 'Custom',
+										vendor: 'Print Studio',
+										productType: 'Custom',
 										status: 'demo',
 										createdAt: new Date(), // Use Date object, not ISO string
 										shopifyStatus: 'demo',
@@ -1715,12 +1948,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									<>
 										<div>
 											<Text size="2" weight="medium" className="block mb-2">
-												Select Template:
+												Choose Product Templates:
 											</Text>
-											<TemplateSelector
+											<ProdigiTemplateSelector
 												templates={prodigiTemplates}
-												selectedTemplate={selectedProdigiTemplate}
-												onSelect={setSelectedProdigiTemplate}
+												selectedTemplates={selectedProdigiTemplates}
+												onSelect={setSelectedProdigiTemplates}
 												className="w-full"
 												loading={false}
 												error={prodigiTemplateError}
@@ -1731,34 +1964,58 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										</div>
 
 										{/* Template Details */}
-										{selectedProdigiTemplate && (
+										{selectedProdigiTemplates.length > 0 && (
 											<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
-													Template Details:
+													Selected Templates ({selectedProdigiTemplates.length}):
 												</Text>
-												<div className="grid grid-cols-2 gap-2 text-sm">
-													<div>
-														<strong>Product Type:</strong> {selectedProdigiTemplate.productType}
-													</div>
-													<div>
-														<strong>Template ID:</strong> {selectedProdigiTemplate.prodigiTemplateId?.substring(0, 12) || 'N/A'}...
-													</div>
-													{selectedProdigiTemplate.variants && selectedProdigiTemplate.variants.length > 0 && (
-														<div>
-															<strong>Variants:</strong> {selectedProdigiTemplate.variants.length}
+												<div className="space-y-3">
+													{selectedProdigiTemplates.map((template) => (
+														<div key={template.id} className="p-2 bg-white rounded border">
+															<Text size="2" weight="medium" className="block mb-1">
+																{template.displayName || template.name}
+															</Text>
+															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+																<div>
+																	<strong>Type:</strong> {template.productType}
+																</div>
+																<div>
+																	<strong>ID:</strong> {template.prodigiTemplateId?.substring(0, 8) || 'N/A'}...
+																</div>
+															</div>
 														</div>
-													)}
-													{selectedProdigiTemplate.printAreas && selectedProdigiTemplate.printAreas.length > 0 && (
-														<div>
-															<strong>Print Areas:</strong> {selectedProdigiTemplate.printAreas.length}
-														</div>
-													)}
-													{selectedProdigiTemplate.description && (
-														<div className="col-span-2">
-															<strong>Description:</strong> {selectedProdigiTemplate.description.substring(0, 100)}...
-														</div>
-													)}
+													))}
 												</div>
+											</div>
+										)}
+
+										{/* Product Names - Individual for Each Prodigi Template */}
+										{selectedProdigiTemplates.length > 0 && (
+											<div className="mt-3">
+												<Text size="2" weight="medium" className="block mb-3">
+													Product Names:
+												</Text>
+												<div className="space-y-3">
+													{selectedProdigiTemplates.map((template) => (
+														<div key={template.id} className="p-3 bg-blue-50 rounded-lg">
+															<Text size="1" weight="medium" className="block mb-2">
+																{template.displayName || template.name}:
+															</Text>
+															<input
+																value={customProdigiProductNames[template.id] || ''}
+																onChange={(e) => setCustomProdigiProductNames(prev => ({
+																	...prev,
+																	[template.id]: e.target.value
+																}))}
+																placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
+																className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+															/>
+														</div>
+													))}
+												</div>
+												<Text size="1" color="gray" className="mt-2 block">
+													Leave empty to use default names based on template and date
+												</Text>
 											</div>
 										)}
 
@@ -1773,7 +2030,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										</div>
 
 										{/* External Store Integration Options */}
-										{accountGroup?.externalStore?.isConfigured && selectedProdigiTemplate && (
+										{accountGroup?.externalStore?.isConfigured && selectedProdigiTemplates.length > 0 && (
 											<div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
 												<Text size="2" weight="medium" className="text-purple-800">
 													🛒 External Store Publishing
@@ -1786,12 +2043,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Create Product Button */}
 										<button
-											disabled={!selectedProdigiTemplate || !hasImages}
-											onClick={createRealProdigiProduct}
+											disabled={selectedProdigiTemplates.length === 0 || !hasImages}
+											onClick={createRealProdigiProducts}
 											className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 										>
 											<Package className="w-4 h-4" />
-											Create {selectedProdigiTemplate?.displayName || selectedProdigiTemplate?.name || 'Product'}
+											Create {selectedProdigiTemplates.length === 1 ? selectedProdigiTemplates[0]?.displayName || selectedProdigiTemplates[0]?.name || 'Product' : `${selectedProdigiTemplates.length} Products`}
 										</button>
 									</>
 								)}
