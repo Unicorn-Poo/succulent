@@ -72,7 +72,10 @@ export default function AccountGroupPage() {
 			root: {
 				accountGroups: { $each: {
 					accounts: { $each: true },
-					posts: true // Load posts list but not deep details to avoid permission errors
+					posts: { $each: {
+						title: true,
+						variants: true // Load variants to see post content
+					}}
 				}}
 			}
 		}
