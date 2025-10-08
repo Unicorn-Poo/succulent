@@ -93,6 +93,18 @@ export const handleStandardPost = async (postData: PostData) => {
 	console.log('📝 Original postData:', JSON.stringify(postData, null, 2));
 	console.log('📝 Request body after spread:', JSON.stringify(requestBody, null, 2));
 	console.log('📝 Cleaned request body:', JSON.stringify(cleanedBody, null, 2));
+	
+	// Validate schedule date if present
+	if (cleanedBody.scheduleDate) {
+		const scheduleDate = new Date(cleanedBody.scheduleDate);
+		const now = new Date();
+		console.log('📅 Schedule validation:');
+		console.log('📅 Schedule date:', cleanedBody.scheduleDate);
+		console.log('📅 Parsed date:', scheduleDate.toISOString());
+		console.log('📅 Current time:', now.toISOString());
+		console.log('📅 Is future date:', scheduleDate > now);
+		console.log('📅 Minutes from now:', Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60)));
+	}
 
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',
@@ -101,6 +113,46 @@ export const handleStandardPost = async (postData: PostData) => {
 	});
 
 	const result = await response.json();
+	
+	// Log successful responses too
+	if (response.ok) {
+		console.log('✅ Ayrshare API Success Response:', {
+			status: response.status,
+			result: result
+		});
+		
+		// Check for platform-specific issues in successful responses
+		if (result.posts && Array.isArray(result.posts)) {
+			result.posts.forEach((post: any, index: number) => {
+				console.log(`📋 Post ${index + 1} details:`, {
+					id: post.id,
+					status: post.status,
+					platforms: post.platforms || 'N/A',
+					errors: post.errors || 'None'
+				});
+				
+				// Check for platform-specific errors even in "successful" responses
+				if (post.errors && Array.isArray(post.errors)) {
+					post.errors.forEach((error: any) => {
+						console.error(`❌ Platform Error in Post ${index + 1}:`, {
+							platform: error.platform,
+							code: error.code,
+							message: error.message,
+							status: error.status
+						});
+					});
+				}
+			});
+		}
+		
+		// Check for postIds to see which platforms succeeded
+		if (result.postIds) {
+			console.log('📍 Platform Post IDs:', result.postIds);
+			Object.entries(result.postIds).forEach(([platform, postId]) => {
+				console.log(`✅ ${platform.toUpperCase()}: ${postId}`);
+			});
+		}
+	}
 	
 	if (!response.ok) {
 		// Log the full error response for debugging
@@ -112,8 +164,15 @@ export const handleStandardPost = async (postData: PostData) => {
 		});
 		
 		// Additional debugging for the specific error structure
-		if (result.posts && Array.isArray(result.posts) && result.posts[0]?.errors) {
-			console.error('🔍 Detailed post errors:', JSON.stringify(result.posts[0].errors, null, 2));
+		console.error('🔍 Full result object:', JSON.stringify(result, null, 2));
+		if (result.posts && Array.isArray(result.posts)) {
+			console.error('🔍 Posts array length:', result.posts.length);
+			result.posts.forEach((post: any, index: number) => {
+				console.error(`🔍 Post ${index + 1}:`, JSON.stringify(post, null, 2));
+				if (post.errors) {
+					console.error(`🔍 Post ${index + 1} errors:`, JSON.stringify(post.errors, null, 2));
+				}
+			});
 		}
 		
 		// Enhanced error handling for specific platform issues
