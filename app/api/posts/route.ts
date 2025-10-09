@@ -402,12 +402,23 @@ async function publishPost(
     
     // Prepare post data for publishing - filter out any invalid platforms
     const validPlatforms = request.platforms.filter((p: string) => PlatformNames.includes(p as any));
+    
+    console.log('🚀 Publishing Post - Full Debug Info:');
+    console.log('📝 Original platforms:', request.platforms);
+    console.log('✅ Valid platforms:', validPlatforms);
+    console.log('📅 Scheduled date:', request.scheduledDate);
+    console.log('🔄 Publish immediately:', request.publishImmediately);
+    console.log('📄 Content length:', request.content.length);
+    console.log('🖼️ Media count:', request.media?.length || 0);
+    
     const publishData: PostData = {
       post: request.content,
       platforms: validPlatforms,
       mediaUrls: request.media?.map((m) => m.url).filter(Boolean) as string[],
       scheduleDate: request.scheduledDate,
     };
+    
+    console.log('📦 Final publish data being sent to Ayrshare:', JSON.stringify(publishData, null, 2));
     
     let results;
     
@@ -429,7 +440,15 @@ async function publishPost(
       results = await handleStandardPost(publishData);
     }
     
-    console.log('🚀 Post publishing results:', results);
+    console.log('🚀 Post publishing results:', JSON.stringify(results, null, 2));
+    
+    // Log final success summary
+    console.log('✅ POST PUBLISHING COMPLETED');
+    console.log('📊 Summary:');
+    console.log('  - Platforms requested:', request.platforms);
+    console.log('  - Valid platforms sent:', validPlatforms);
+    console.log('  - Scheduled:', !!request.scheduledDate);
+    console.log('  - Immediate:', !!request.publishImmediately);
     
     return { success: true, results };
     

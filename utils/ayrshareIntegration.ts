@@ -634,6 +634,12 @@ export const INTERNAL_TO_AYRSHARE_PLATFORM: Record<string, string> = {
   'twitter': 'twitter', // Map legacy 'twitter' to 'twitter'
   'linkedin': 'linkedin',
   'youtube': 'youtube',
+  'tiktok': 'tiktok',
+  'pinterest': 'pinterest',
+  'reddit': 'reddit',
+  'telegram': 'telegram',
+  'threads': 'threads',
+  'google': 'gmb', // Google My Business
 };
 
 /**

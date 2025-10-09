@@ -39,6 +39,13 @@ export const handleStandardPost = async (postData: PostData) => {
 	// Map platform names for Ayrshare compatibility
 	const mappedPlatforms = mapPlatformsForAyrshare(postData.platforms);
 	
+	console.log('🔄 Platform Mapping Debug:');
+	console.log('📝 Original platforms:', postData.platforms);
+	console.log('🗺️ Mapped platforms:', mappedPlatforms);
+	console.log('🐦 Twitter/X in original?', postData.platforms.includes('x') || postData.platforms.includes('twitter'));
+	console.log('🐦 Twitter in mapped?', mappedPlatforms.includes('twitter'));
+	console.log('🗺️ Platform mapping details:', postData.platforms.map(p => `${p} -> ${INTERNAL_TO_AYRSHARE_PLATFORM[p] || p}`));
+	
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
 		'Authorization': `Bearer ${AYRSHARE_API_KEY}`
@@ -54,11 +61,14 @@ export const handleStandardPost = async (postData: PostData) => {
 	const postLength = postData.post?.length || 0;
 	const needsTwitterOptions = hasTwitter && !postData.twitterOptions && postLength > 280;
 	
-	console.log('🔍 API Handler - Mapped platforms:', mappedPlatforms);
-	console.log('🔍 API Handler - Has Twitter:', hasTwitter);
-	console.log('🔍 API Handler - Post length:', postLength);
-	console.log('🔍 API Handler - Needs Twitter options:', needsTwitterOptions);
-	console.log('🔍 API Handler - Existing twitterOptions:', postData.twitterOptions);
+	console.log('🐦 TWITTER DEBUG - Full Analysis:');
+	console.log('🔍 Mapped platforms:', mappedPlatforms);
+	console.log('🐦 Has Twitter:', hasTwitter);
+	console.log('📏 Post length:', postLength);
+	console.log('🧵 Needs Twitter threading options:', needsTwitterOptions);
+	console.log('⚙️ Existing twitterOptions:', postData.twitterOptions);
+	console.log('📅 Has schedule date:', !!postData.scheduleDate);
+	console.log('📅 Schedule date value:', postData.scheduleDate);
 
 	const requestBody = {
 		...postData,
@@ -108,11 +118,19 @@ export const handleStandardPost = async (postData: PostData) => {
 		console.log('📅 Minutes from now:', Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60)));
 	}
 
+	console.log('🌐 About to make Ayrshare API request...');
+	console.log('🔗 API URL:', `${AYRSHARE_API_URL}/post`);
+	console.log('📋 Request Headers:', JSON.stringify(headers, null, 2));
+	console.log('📦 Final Request Body:', JSON.stringify(cleanedBody, null, 2));
+
 	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
 		method: 'POST',
 		headers,
 		body: JSON.stringify(cleanedBody)
 	});
+
+	console.log('📡 Ayrshare Response Status:', response.status);
+	console.log('📡 Ayrshare Response Status Text:', response.statusText);
 
 	const result = await response.json();
 	
@@ -133,6 +151,16 @@ export const handleStandardPost = async (postData: PostData) => {
 					errors: post.errors || 'None'
 				});
 				
+				// Specific Twitter debugging
+				if (post.platforms && (post.platforms.twitter || post.platforms.x)) {
+					console.log(`🐦 TWITTER RESULT for Post ${index + 1}:`, {
+						twitterResult: post.platforms.twitter || post.platforms.x,
+						twitterStatus: post.platforms.twitter?.status || post.platforms.x?.status,
+						twitterId: post.platforms.twitter?.postId || post.platforms.x?.postId,
+						twitterUrl: post.platforms.twitter?.postUrl || post.platforms.x?.postUrl
+					});
+				}
+				
 				// Check for platform-specific errors even in "successful" responses
 				if (post.errors && Array.isArray(post.errors)) {
 					post.errors.forEach((error: any) => {
@@ -142,6 +170,16 @@ export const handleStandardPost = async (postData: PostData) => {
 							message: error.message,
 							status: error.status
 						});
+						
+						// Extra Twitter error details
+						if (error.platform === 'twitter' || error.platform === 'x') {
+							console.error(`🐦 TWITTER ERROR DETAILS:`, {
+								errorCode: error.code,
+								errorMessage: error.message,
+								errorStatus: error.status,
+								fullError: error
+							});
+						}
 					});
 				}
 			});
@@ -153,7 +191,21 @@ export const handleStandardPost = async (postData: PostData) => {
 			Object.entries(result.postIds).forEach(([platform, postId]) => {
 				console.log(`✅ ${platform.toUpperCase()}: ${postId}`);
 			});
+			
+			// Specific Twitter success check
+			if (result.postIds.twitter) {
+				console.log('🐦 ✅ TWITTER SUCCESS - Post ID:', result.postIds.twitter);
+			} else {
+				console.log('🐦 ❌ TWITTER NOT IN SUCCESS LIST');
+				console.log('🐦 Available platforms in postIds:', Object.keys(result.postIds));
+			}
 		}
+		
+		// Final platform summary
+		console.log('📊 FINAL PLATFORM SUMMARY:');
+		console.log('  - Original platforms:', postData.platforms);
+		console.log('  - Mapped platforms:', mappedPlatforms);
+		console.log('  - Success platforms:', result.postIds ? Object.keys(result.postIds) : 'None');
 	}
 	
 	if (!response.ok) {
@@ -216,6 +268,8 @@ export const handleStandardPost = async (postData: PostData) => {
 								postErrors.push(`INSTAGRAM: Media processing error. Instagram posts require images or videos. Please add media to your post or remove Instagram from selected platforms.`);
 							} else if (error.code === 132 && (error.platform === 'twitter' || error.platform === 'x')) {
 								postErrors.push(`TWITTER: ${error.message} Auto-threading should have been enabled - this may indicate a configuration issue.`);
+							} else if (error.platform === 'tiktok') {
+								postErrors.push(`TIKTOK: ${error.message} (Code: ${error.code || 'N/A'}) - Check if TikTok account is properly connected at https://app.ayrshare.com/social-accounts`);
 							} else {
 								postErrors.push(`${error.platform.toUpperCase()}: ${error.message} (Code: ${error.code || 'N/A'})`);
 							}
