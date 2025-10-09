@@ -375,8 +375,29 @@ async function publishPost(
   user: AuthenticatedUser
 ): Promise<{ success: boolean; results?: any; error?: string }> {
   try {
-    if (!request.publishImmediately) {
+    // Only skip publishing if it's truly a draft (no immediate publish AND no schedule date)
+    if (!request.publishImmediately && !request.scheduledDate) {
       return { success: true, results: { message: 'Post saved as draft' } };
+    }
+    
+    // Auto-fix scheduled date if present and too soon
+    if (request.scheduledDate) {
+      const originalDate = new Date(request.scheduledDate);
+      const now = new Date();
+      const minutesFromNow = Math.round((originalDate.getTime() - now.getTime()) / (1000 * 60));
+      
+      let finalScheduledDate = originalDate;
+      
+      // Auto-fix if less than 10 minutes in the future
+      if (minutesFromNow < 10) {
+        finalScheduledDate = new Date(now.getTime() + 10 * 60 * 1000); // Add 10 minutes
+        console.log(`📅 Auto-fixed scheduled time from ${originalDate.toISOString()} to ${finalScheduledDate.toISOString()}`);
+        
+        // Update the request object for downstream processing
+        request.scheduledDate = finalScheduledDate.toISOString();
+      }
+      
+      console.log(`📅 Scheduling post for ${finalScheduledDate.toISOString()} (${Math.round((finalScheduledDate.getTime() - now.getTime()) / (1000 * 60))} minutes from now)`);
     }
     
     // Prepare post data for publishing - filter out any invalid platforms
