@@ -51,10 +51,12 @@ export const handleStandardPost = async (postData: PostData) => {
 
 	// Check if we need to add Twitter options for long posts
 	const hasTwitter = mappedPlatforms.includes('twitter') || mappedPlatforms.includes('x');
-	const needsTwitterOptions = hasTwitter && !postData.twitterOptions;
+	const postLength = postData.post?.length || 0;
+	const needsTwitterOptions = hasTwitter && !postData.twitterOptions && postLength > 280;
 	
 	console.log('🔍 API Handler - Mapped platforms:', mappedPlatforms);
 	console.log('🔍 API Handler - Has Twitter:', hasTwitter);
+	console.log('🔍 API Handler - Post length:', postLength);
 	console.log('🔍 API Handler - Needs Twitter options:', needsTwitterOptions);
 	console.log('🔍 API Handler - Existing twitterOptions:', postData.twitterOptions);
 
@@ -63,7 +65,7 @@ export const handleStandardPost = async (postData: PostData) => {
 		platforms: mappedPlatforms,
 		// Remove profileKey from the body as it's only used in headers
 		profileKey: undefined,
-		// Add Twitter options if needed (for auto-threading long posts)
+		// Add Twitter options only if post is long enough to need threading
 		twitterOptions: needsTwitterOptions ? {
 			thread: true,
 			threadNumber: true

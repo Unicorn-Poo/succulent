@@ -40,9 +40,19 @@ export function EnhancedTimePicker({
     if (dateInput && timeInput) {
       const combined = new Date(`${dateInput}T${timeInput}`);
       if (!isNaN(combined.getTime())) {
+        const now = new Date();
+        const minutesFromNow = Math.round((combined.getTime() - now.getTime()) / (1000 * 60));
+        
+        // Auto-adjust if less than 10 minutes in the future
+        let finalDate = combined;
+        if (minutesFromNow < 10 && minutesFromNow >= 0) {
+          finalDate = new Date(now.getTime() + 10 * 60 * 1000); // Add 10 minutes
+          console.log(`⏰ Auto-adjusted scheduled time to maintain 10-minute buffer`);
+        }
+        
         // Only call onChange if the date is actually different
-        if (!value || combined.getTime() !== value.getTime()) {
-          onChange(combined);
+        if (!value || finalDate.getTime() !== value.getTime()) {
+          onChange(finalDate);
         }
       }
     } else if (!dateInput && !timeInput && value) {
