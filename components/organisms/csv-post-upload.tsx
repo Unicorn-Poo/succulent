@@ -59,20 +59,44 @@ export default function CSVPostUpload({
     const lines = text.trim().split('\n');
     console.log('🔍 Split into lines:', lines.length);
     
-    // Use a proper CSV parser approach - split on commas but respect quotes
+    // Proper CSV parser that handles JSON arrays within quoted fields
     const parseCSVLine = (line: string): string[] => {
       console.log('🔍 Parsing line:', line);
       
-      // Use regex to match CSV fields (handles quoted fields with commas inside)
-      const csvRegex = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
-      const fields = line.split(csvRegex);
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      let bracketDepth = 0;
       
-      console.log('🔍 Split fields:', fields);
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+          current += char;
+        } else if (char === '[' && inQuotes) {
+          bracketDepth++;
+          current += char;
+        } else if (char === ']' && inQuotes) {
+          bracketDepth--;
+          current += char;
+        } else if (char === ',' && !inQuotes) {
+          // Only split on comma if we're not inside quotes
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
       
-      // Clean each field
-      const cleanedFields = fields.map(field => {
+      // Add the last field
+      result.push(current.trim());
+      
+      console.log('🔍 Split fields:', result);
+      
+      // Clean each field - remove outer quotes
+      const cleanedFields = result.map(field => {
         let cleaned = field.trim();
-        // Remove outer quotes if they exist
         if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
           cleaned = cleaned.slice(1, -1);
         }
