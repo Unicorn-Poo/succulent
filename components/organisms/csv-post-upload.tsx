@@ -56,41 +56,43 @@ export default function CSVPostUpload({
   const parseCSV = (text: string): ParsedPost[] => {
     const lines = text.trim().split('\n');
     
-    // More robust CSV parsing that handles quoted fields properly
+    // Enhanced CSV parsing that handles JSON arrays within quoted fields
     const parseCSVLine = (line: string): string[] => {
       const result: string[] = [];
       let current = '';
       let inQuotes = false;
-      let i = 0;
+      let quoteCount = 0;
       
-      while (i < line.length) {
+      for (let i = 0; i < line.length; i++) {
         const char = line[i];
         
         if (char === '"') {
-          if (inQuotes && line[i + 1] === '"') {
-            // Escaped quote
-            current += '"';
-            i += 2;
-          } else {
-            // Toggle quote state
-            inQuotes = !inQuotes;
-            i++;
-          }
+          quoteCount++;
+          inQuotes = quoteCount % 2 === 1;
+          // Don't add the quote to the current value - we'll clean it later
         } else if (char === ',' && !inQuotes) {
+          // End of field
           result.push(current.trim());
           current = '';
-          i++;
         } else {
           current += char;
-          i++;
         }
       }
       
+      // Add the last field
       result.push(current.trim());
-      return result;
+      
+      // Clean up values - remove surrounding quotes
+      return result.map(val => {
+        let cleaned = val.trim();
+        if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+          cleaned = cleaned.slice(1, -1);
+        }
+        return cleaned;
+      });
     };
 
-    const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, '').trim());
+    const headers = parseCSVLine(lines[0]);
     const posts: ParsedPost[] = [];
     const errors: string[] = [];
 
@@ -121,6 +123,8 @@ export default function CSVPostUpload({
         headers.forEach((header, index) => {
           const value = values[index] || '';
           
+          console.log(`Parsing ${header}:`, value);
+          
           switch (header) {
             case 'title':
               post.title = value;
@@ -129,15 +133,23 @@ export default function CSVPostUpload({
               post.content = value;
               break;
             case 'platforms':
-              // Handle both array format ["x","threads"] and simple format x,threads
-              let platformsValue = value;
-              
-              // Remove array brackets and quotes if present
-              if (platformsValue.startsWith('[') && platformsValue.includes(']')) {
-                platformsValue = platformsValue.replace(/[\[\]]/g, '').replace(/"/g, '');
+              // Handle JSON array format like ["x","threads"]
+              try {
+                if (value.startsWith('[') && value.endsWith(']')) {
+                  // Parse as JSON array
+                  const parsed = JSON.parse(value);
+                  if (Array.isArray(parsed)) {
+                    post.platforms = parsed.map(p => p.toString().trim()).filter(Boolean);
+                  } else {
+                    post.errors!.push(`Invalid platforms format: ${value}`);
+                  }
+                } else {
+                  // Handle simple comma-separated format
+                  post.platforms = value.split(',').map(p => p.trim()).filter(Boolean);
+                }
+              } catch (error) {
+                post.errors!.push(`Invalid platforms format: ${value} (${error})`);
               }
-              
-              post.platforms = platformsValue.split(',').map(p => p.trim()).filter(Boolean);
               break;
             case 'scheduledDate':
               if (value && value !== '') {
@@ -154,27 +166,39 @@ export default function CSVPostUpload({
               }
               break;
             case 'mediaUrls':
-              // Handle mediaUrls column (pipe-separated or array format)
-              if (value && value !== '' && value !== '[]') {
-                let mediaValue = value;
-                
-                // Remove array brackets if present
-                if (mediaValue.startsWith('[') && mediaValue.includes(']')) {
-                  mediaValue = mediaValue.replace(/[\[\]]/g, '').replace(/"/g, '');
-                }
-                
-                // Split by pipe or comma
-                const urls = mediaValue.split(/[|,]/).map(url => url.trim()).filter(Boolean);
-                
-                post.mediaUrls = [];
-                for (const url of urls) {
-                  try {
-                    new URL(url); // Validate URL
-                    post.mediaUrls.push(url);
-                  } catch {
-                    post.errors!.push(`Invalid media URL: ${url}`);
+              // Handle JSON array format like [] or ["url1","url2"]
+              try {
+                if (value.startsWith('[') && value.endsWith(']')) {
+                  // Parse as JSON array
+                  const parsed = JSON.parse(value);
+                  if (Array.isArray(parsed)) {
+                    post.mediaUrls = [];
+                    for (const url of parsed) {
+                      if (url && url.trim()) {
+                        try {
+                          new URL(url); // Validate URL
+                          post.mediaUrls.push(url);
+                        } catch {
+                          post.errors!.push(`Invalid media URL: ${url}`);
+                        }
+                      }
+                    }
+                  }
+                } else if (value && value !== '') {
+                  // Handle pipe or comma separated URLs
+                  const urls = value.split(/[|,]/).map(url => url.trim()).filter(Boolean);
+                  post.mediaUrls = [];
+                  for (const url of urls) {
+                    try {
+                      new URL(url); // Validate URL
+                      post.mediaUrls.push(url);
+                    } catch {
+                      post.errors!.push(`Invalid media URL: ${url}`);
+                    }
                   }
                 }
+              } catch (error) {
+                post.errors!.push(`Invalid mediaUrls format: ${value} (${error})`);
               }
               break;
             default:
