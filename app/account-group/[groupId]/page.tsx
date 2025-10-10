@@ -22,6 +22,7 @@ import { PlatformPreview } from "@/components/organisms/platform-previews";
 import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
+import CSVPostUpload from "@/components/organisms/csv-post-upload";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -64,6 +65,7 @@ export default function AccountGroupPage() {
 	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
 	const [postsFilter, setPostsFilter] = useState<'all' | 'draft' | 'scheduled' | 'published'>('all');
 	const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
+	const [showCSVUpload, setShowCSVUpload] = useState(false);
 	
 	const accountGroupId = params.groupId as string;
 	
@@ -249,10 +251,24 @@ export default function AccountGroupPage() {
 								</p>
 							</div>
 						</div>
-						<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
-							<Plus className="w-4 h-4 mr-2" />
-							Create Post
-						</Button>
+						<div className="flex gap-2">
+							<Button 
+								onClick={() => {
+									console.log('📁 CSV Upload button clicked');
+									setShowCSVUpload(true);
+								}} 
+								intent="secondary" 
+								variant="outline"
+								className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+							>
+								<Upload className="w-4 h-4 mr-2" />
+								Bulk Upload
+							</Button>
+							<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
+								<Plus className="w-4 h-4 mr-2" />
+								Create Post
+							</Button>
+						</div>
 					</div>
 				</div>
 			</div>
