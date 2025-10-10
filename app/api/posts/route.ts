@@ -610,6 +610,20 @@ export async function POST(request: NextRequest) {
     // 🚀 Create the post
     const result = await createPostInJazz(requestData, user);
     
+    // 🚀 Publish the post (if immediate or scheduled)
+    let publishResult = null;
+    if (result.success) {
+      console.log('📝 Post created successfully, now attempting to publish...');
+      publishResult = await publishPost(null, requestData, user);
+      
+      if (!publishResult.success) {
+        console.error('❌ Post created but publishing failed:', publishResult.error);
+        // Note: We still return success for the post creation, but log the publishing failure
+      } else {
+        console.log('✅ Post created and published successfully');
+      }
+    }
+    
     // Get rate limit info for headers
     const rateLimit = checkRateLimit(user.keyData);
     
@@ -641,7 +655,12 @@ export async function POST(request: NextRequest) {
             accountGroupId: requestData.accountGroupId,
             platforms: requestData.platforms,
             scheduledDate: requestData.scheduledDate,
-            publishedImmediately: requestData.publishImmediately
+            publishedImmediately: requestData.publishImmediately,
+            publishingResult: publishResult ? {
+              success: publishResult.success,
+              error: publishResult.error,
+              results: publishResult.results
+            } : null
           }
         },
         { 
