@@ -9,6 +9,7 @@ interface CSVPostUploadProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   accountGroupId: string;
+  accountGroup: any; // Jazz account group for direct post creation
   onUploadComplete: (results: any) => void;
 }
 
@@ -24,7 +25,8 @@ interface ParsedPost {
 export default function CSVPostUpload({ 
   isOpen, 
   onOpenChange, 
-  accountGroupId, 
+  accountGroupId,
+  accountGroup, 
   onUploadComplete 
 }: CSVPostUploadProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -343,31 +345,131 @@ export default function CSVPostUpload({
       // Filter out posts with errors
       const validPosts = parsedPosts.filter(post => !post.errors || post.errors.length === 0);
       
+      console.log('📊 Upload Summary:');
+      console.log('  - Total parsed posts:', parsedPosts.length);
+      console.log('  - Valid posts:', validPosts.length);
+      console.log('  - Posts with errors:', parsedPosts.length - validPosts.length);
+      console.log('📦 Valid posts being sent:', validPosts);
+      
       if (validPosts.length === 0) {
         throw new Error('No valid posts found in CSV');
       }
 
-      const response = await fetch('/api/posts/bulk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accountGroupId,
-          posts: validPosts
-        }),
-      });
+      const requestBody = {
+        accountGroupId,
+        posts: validPosts
+      };
+      
+      // Create posts directly using Jazz (no API needed for UI)
+      const results = {
+        success: true,
+        created: 0,
+        scheduled: 0,
+        failed: 0,
+        errors: [] as string[]
+      };
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+      if (!accountGroup || !accountGroup.posts) {
+        throw new Error('Account group not available for post creation');
       }
 
-      const results = await response.json();
+      const { co, z } = await import('jazz-tools');
+      const { Post, PostVariant, MediaItem, URLImageMedia, ReplyTo } = await import('@/app/schema');
+
+      console.log(`🎯 Creating ${validPosts.length} Jazz posts directly...`);
+
+      // Create each post
+      for (let i = 0; i < validPosts.length; i++) {
+        const post = validPosts[i];
+        
+        try {
+          console.log(`🎯 Creating Jazz post ${i + 1}: ${post.title}`);
+          
+          // Create the collaborative objects
+          const titleText = co.plainText().create(post.title, { owner: accountGroup._owner });
+          const baseText = co.plainText().create(post.content, { owner: accountGroup._owner });
+          const mediaList = co.list(MediaItem).create([], { owner: accountGroup._owner });
+          
+          // Add media if provided
+          if (post.mediaUrls && post.mediaUrls.length > 0) {
+            for (const mediaUrl of post.mediaUrls) {
+              const altText = co.plainText().create(`Image for ${post.title}`, { owner: accountGroup._owner });
+              const urlImageMedia = URLImageMedia.create({
+                type: 'url-image',
+                url: mediaUrl,
+                alt: altText,
+                filename: `bulk-upload-${Date.now()}.jpg`
+              }, { owner: accountGroup._owner });
+              mediaList.push(urlImageMedia);
+            }
+          }
+          
+          const replyToObj = ReplyTo.create({}, { owner: accountGroup._owner });
+          
+          // Create the base post variant
+          const baseVariant = PostVariant.create({
+            text: baseText,
+            postDate: new Date(),
+            media: mediaList,
+            replyTo: replyToObj,
+            status: post.scheduledDate ? "scheduled" : "draft",
+            scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
+            publishedAt: undefined,
+            edited: false,
+            lastModified: undefined,
+          }, { owner: accountGroup._owner });
+
+          // Create the variants record
+          const variantsRecord = co.record(z.string(), PostVariant).create({
+            base: baseVariant
+          }, { owner: accountGroup._owner });
+
+          // Create platform variants
+          for (const platform of post.platforms) {
+            const platformVariant = PostVariant.create({
+              text: baseText,
+              postDate: new Date(),
+              media: mediaList,
+              replyTo: replyToObj,
+              status: post.scheduledDate ? "scheduled" : "draft",
+              scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
+              publishedAt: undefined,
+              edited: false,
+              lastModified: undefined,
+            }, { owner: accountGroup._owner });
+            variantsRecord[platform] = platformVariant;
+          }
+
+          // Create the post
+          const newPost = Post.create({
+            title: titleText,
+            variants: variantsRecord,
+          }, { owner: accountGroup._owner });
+
+          // Add the post to the account group
+          accountGroup.posts.push(newPost);
+          
+          results.created++;
+          if (post.scheduledDate) {
+            results.scheduled++;
+          }
+          
+          console.log(`✅ Post ${i + 1} created successfully: ${newPost.id}`);
+          
+        } catch (postError) {
+          console.error(`❌ Failed to create post ${i + 1}:`, postError);
+          results.failed++;
+          results.errors.push(`Post "${post.title}": ${postError instanceof Error ? postError.message : 'Creation failed'}`);
+        }
+      }
+
+      console.log('📊 Final bulk upload results:', results);
+      
       setUploadResults(results);
       onUploadComplete(results);
       
     } catch (error) {
-      console.error('CSV upload error:', error);
+      console.error('❌ CSV upload error:', error);
       setUploadResults({
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed'
