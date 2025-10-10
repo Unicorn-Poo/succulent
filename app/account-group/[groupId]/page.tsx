@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check, Trash2, Square, CheckSquare, Upload } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { Home } from "lucide-react";
@@ -23,6 +23,7 @@ import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
+import SmartTitleInput from "@/components/organisms/smart-title-input";
 
 export default function AccountGroupPage() {
 	const params = useParams();
@@ -65,6 +66,9 @@ export default function AccountGroupPage() {
 	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
 	const [postsFilter, setPostsFilter] = useState<'all' | 'draft' | 'scheduled' | 'published'>('all');
 	const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
+	const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
+	const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const [showCSVUpload, setShowCSVUpload] = useState(false);
 	
 	const accountGroupId = params.groupId as string;
@@ -232,6 +236,76 @@ export default function AccountGroupPage() {
 		// You can add specific handling for different tools here
 	};
 
+	// Handle post selection
+	const handlePostSelect = (postId: string, selected: boolean) => {
+		const newSelection = new Set(selectedPosts);
+		if (selected) {
+			newSelection.add(postId);
+		} else {
+			newSelection.delete(postId);
+		}
+		setSelectedPosts(newSelection);
+	};
+
+	// Select all filtered posts
+	const handleSelectAll = () => {
+		const filteredPosts = posts.filter(post => {
+			if (postsFilter === 'all') return true;
+			const postStatus = getPostStatus(post);
+			return postStatus === postsFilter;
+		});
+		const allIds = new Set(filteredPosts.map((post: any) => post.id || post.variants?.base?.id || 'unknown'));
+		setSelectedPosts(allIds);
+	};
+
+	// Clear all selections
+	const handleClearSelection = () => {
+		setSelectedPosts(new Set());
+	};
+
+	// Handle bulk deletion
+	const handleBulkDelete = async () => {
+		if (!jazzAccountGroup || selectedPosts.size === 0) return;
+		
+		setIsBulkDeleting(true);
+		try {
+			// Remove selected posts from the account group's posts array
+			const postsArray = jazzAccountGroup.posts;
+			if (postsArray) {
+				// Get posts to delete by their IDs
+				const postsToDelete = Array.from(selectedPosts);
+				
+				// Remove posts in reverse order to avoid index shifting issues
+				for (let i = postsArray.length - 1; i >= 0; i--) {
+					const post = postsArray[i];
+					if (post && postsToDelete.includes(post.id)) {
+						postsArray.splice(i, 1);
+					}
+				}
+				
+				console.log(`✅ Successfully deleted ${selectedPosts.size} posts`);
+				
+				// Clear selection
+				setSelectedPosts(new Set());
+				setShowBulkDeleteDialog(false);
+			}
+		} catch (error) {
+			console.error('❌ Failed to delete posts:', error);
+			alert('Failed to delete posts. Please try again.');
+		} finally {
+			setIsBulkDeleting(false);
+		}
+	};
+
+	// Handle CSV upload completion
+	const handleCSVUploadComplete = (results: any) => {
+		if (results.success) {
+			console.log(`✅ CSV upload completed: ${results.created} posts created`);
+			// The posts will automatically appear due to Jazz reactivity
+			setShowCSVUpload(false);
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50">
 			{/* Header */}
@@ -357,6 +431,48 @@ export default function AccountGroupPage() {
 									</div>
 								</div>
 
+								{/* Bulk Selection Controls */}
+								{selectedPosts.size > 0 && (
+									<div className="flex items-center justify-between bg-lime-50 border border-lime-200 rounded-lg p-4">
+										<div className="flex items-center gap-3">
+											<div className="flex items-center gap-2">
+												<CheckSquare className="w-4 h-4 text-lime-600" />
+												<span className="text-sm font-medium text-lime-800">
+													{selectedPosts.size} post{selectedPosts.size !== 1 ? 's' : ''} selected
+												</span>
+											</div>
+											<Button
+												size="1"
+												variant="soft"
+												intent="secondary"
+												onClick={handleClearSelection}
+											>
+												Clear Selection
+											</Button>
+										</div>
+										
+										<div className="flex items-center gap-2">
+											<Button
+												size="1"
+												variant="soft"
+												intent="secondary"
+												onClick={handleSelectAll}
+											>
+												Select All Visible
+											</Button>
+											<Button
+												size="1"
+												variant="solid"
+												intent="danger"
+												onClick={() => setShowBulkDeleteDialog(true)}
+											>
+												<Trash2 className="w-3 h-3 mr-1" />
+												Delete Selected
+											</Button>
+										</div>
+									</div>
+								)}
+
 								{/* Posts Grid */}
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 									{posts
@@ -397,49 +513,74 @@ export default function AccountGroupPage() {
 												}
 											};
 											
+											const isSelected = selectedPosts.has(postId);
+											
 											return (
-												<Link
+												<div
 													key={postId}
-													href={`/account-group/${accountGroup.id}/post/${postId}`}
-													className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-lime-300 group"
+													className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
+														isSelected ? 'border-lime-400 bg-lime-50' : 'border-gray-200 hover:border-lime-300'
+													}`}
 												>
-													{/* Header with status and date */}
-													<div className="flex items-center justify-between mb-3">
-														<div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(postStatus)}`}>
-															{getStatusIcon(postStatus)} {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-														</div>
-														<div className="text-xs text-gray-500">
-															{new Date(postDate).toLocaleDateString()}
-														</div>
+													{/* Selection Checkbox */}
+													<div
+														className="absolute top-3 right-3 z-10 cursor-pointer"
+														onClick={(e) => {
+															e.preventDefault();
+															e.stopPropagation();
+															handlePostSelect(postId, !isSelected);
+														}}
+													>
+														{isSelected ? (
+															<CheckSquare className="w-5 h-5 text-lime-600" />
+														) : (
+															<Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+														)}
 													</div>
-													
-													{/* Title */}
-													<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-lime-600 transition-colors">
-														{postTitle}
-													</h3>
-													
-													{/* Content Preview */}
-													<p className="text-sm text-gray-600 mb-3 line-clamp-3">
-														{postContent || "No content"}
-													</p>
-													
-													{/* Footer with media indicator and platforms */}
-													<div className="flex items-center justify-between pt-3 border-t border-gray-100">
-														<div className="flex items-center gap-2">
-															{hasMedia && (
-																<div className="flex items-center gap-1 text-xs text-gray-500">
-																	<span>📎</span>
-																	<span>{post.variants.base.media.length} media</span>
-																</div>
-															)}
+
+													{/* Clickable content area */}
+													<Link
+														href={`/account-group/${accountGroup.id}/post/${postId}`}
+														className="block"
+													>
+														{/* Header with status and date */}
+														<div className="flex items-center justify-between mb-3 pr-8">
+															<div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(postStatus)}`}>
+																{getStatusIcon(postStatus)} {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+															</div>
+															<div className="text-xs text-gray-500">
+																{new Date(postDate).toLocaleDateString()}
+															</div>
 														</div>
 														
-														<div className="flex items-center gap-1">
-															<MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
-															<span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
+														{/* Title */}
+														<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-lime-600 transition-colors">
+															{postTitle}
+														</h3>
+														
+														{/* Content Preview */}
+														<p className="text-sm text-gray-600 mb-3 line-clamp-3">
+															{postContent || "No content"}
+														</p>
+														
+														{/* Footer with media indicator and platforms */}
+														<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+															<div className="flex items-center gap-2">
+																{hasMedia && (
+																	<div className="flex items-center gap-1 text-xs text-gray-500">
+																		<span>📎</span>
+																		<span>{post.variants.base.media.length} media</span>
+																	</div>
+																)}
+															</div>
+															
+															<div className="flex items-center gap-1">
+																<MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
+																<span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
+															</div>
 														</div>
-													</div>
-												</Link>
+													</Link>
+												</div>
 											);
 										})}
 								</div>
@@ -800,14 +941,15 @@ export default function AccountGroupPage() {
 					</Dialog.Description>
 
 					<div className="space-y-4 mt-4">
-						<div>
-							<label className="block text-sm font-medium mb-2">Post Title</label>
-							<TextField.Root
-								value={newPostTitle}
-								onChange={(e) => setNewPostTitle(e.target.value)}
-								placeholder="Enter post title..."
-							/>
-						</div>
+							<div>
+								<label className="block text-sm font-medium mb-2">Post Title</label>
+								<SmartTitleInput
+									value={newPostTitle}
+									onChange={setNewPostTitle}
+									posts={posts}
+									placeholder="Enter post title..."
+								/>
+							</div>
 						
 						<div>
 							<label className="block text-sm font-medium mb-2">Content</label>
@@ -889,6 +1031,51 @@ export default function AccountGroupPage() {
 					</div>
 				</Dialog.Content>
 			</Dialog.Root>
+
+			{/* Bulk Delete Confirmation Dialog */}
+			<Dialog.Root open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+				<Dialog.Content style={{ maxWidth: 500 }}>
+					<Dialog.Title>Delete Selected Posts</Dialog.Title>
+					<Dialog.Description>
+						Are you sure you want to delete {selectedPosts.size} post{selectedPosts.size !== 1 ? 's' : ''}? This action cannot be undone.
+					</Dialog.Description>
+
+					<div className="flex justify-end gap-2 mt-6">
+						<Button 
+							variant="soft" 
+							onClick={() => setShowBulkDeleteDialog(false)}
+							disabled={isBulkDeleting}
+						>
+							Cancel
+						</Button>
+						<Button 
+							onClick={handleBulkDelete}
+							className="bg-red-600 hover:bg-red-700 text-white"
+							disabled={isBulkDeleting}
+						>
+							{isBulkDeleting ? (
+								<>
+									<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+									Deleting...
+								</>
+							) : (
+								<>
+									<Trash2 className="w-4 h-4 mr-2" />
+									Delete {selectedPosts.size} Post{selectedPosts.size !== 1 ? 's' : ''}
+								</>
+							)}
+						</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Root>
+
+			{/* CSV Upload Dialog */}
+			<CSVPostUpload
+				isOpen={showCSVUpload}
+				onOpenChange={setShowCSVUpload}
+				accountGroupId={accountGroup.id}
+				onUploadComplete={handleCSVUploadComplete}
+			/>
 
 			{/* Collaboration Settings Dialog */}
 			{showCollaborationSettings && jazzAccountGroup && (
