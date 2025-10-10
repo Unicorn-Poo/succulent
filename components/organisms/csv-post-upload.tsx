@@ -36,10 +36,10 @@ export default function CSVPostUpload({
   const [inputMethod, setInputMethod] = useState<'paste' | 'file'>('paste');
 
   // CSV template for download
-  const csvTemplate = `title,content,platforms,scheduledDate,mediaUrl1,mediaUrl2,mediaUrl3
-"My First Post","This is the content of my first post","instagram,x","2024-01-15T14:30:00Z","https://example.com/image1.jpg","",""
-"Scheduled Post","Another post with multiple platforms","instagram,x,linkedin","2024-01-16T10:00:00Z","https://example.com/image2.jpg","https://example.com/image3.jpg",""
-"Simple Post","Just text, no media","x","","","",""`;
+  const csvTemplate = `title,content,platforms,scheduledDate,mediaUrls
+"My First Post","This is the content of my first post","instagram,x","2024-01-15T14:30:00Z","https://example.com/image1.jpg"
+"Scheduled Post","Another post with multiple platforms","instagram,x,linkedin","2024-01-16T10:00:00Z","https://example.com/image2.jpg|https://example.com/image3.jpg"
+"Simple Post","Just text, no media","x","",""`;
 
   const downloadTemplate = () => {
     const blob = new Blob([csvTemplate], { type: 'text/csv' });
@@ -55,7 +55,42 @@ export default function CSVPostUpload({
 
   const parseCSV = (text: string): ParsedPost[] => {
     const lines = text.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+    
+    // More robust CSV parsing that handles quoted fields properly
+    const parseCSVLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      let i = 0;
+      
+      while (i < line.length) {
+        const char = line[i];
+        
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            // Escaped quote
+            current += '"';
+            i += 2;
+          } else {
+            // Toggle quote state
+            inQuotes = !inQuotes;
+            i++;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+          i++;
+        } else {
+          current += char;
+          i++;
+        }
+      }
+      
+      result.push(current.trim());
+      return result;
+    };
+
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, '').trim());
     const posts: ParsedPost[] = [];
     const errors: string[] = [];
 
@@ -73,23 +108,7 @@ export default function CSVPostUpload({
         const line = lines[i];
         if (!line.trim()) continue;
 
-        // Simple CSV parsing (handles quoted fields)
-        const values: string[] = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            values.push(current.trim());
-            current = '';
-          } else {
-            current += char;
-          }
-        }
-        values.push(current.trim());
+        const values = parseCSVLine(line);
 
         const post: ParsedPost = {
           title: '',
@@ -110,7 +129,15 @@ export default function CSVPostUpload({
               post.content = value;
               break;
             case 'platforms':
-              post.platforms = value.split(',').map(p => p.trim()).filter(Boolean);
+              // Handle both array format ["x","threads"] and simple format x,threads
+              let platformsValue = value;
+              
+              // Remove array brackets and quotes if present
+              if (platformsValue.startsWith('[') && platformsValue.includes(']')) {
+                platformsValue = platformsValue.replace(/[\[\]]/g, '').replace(/"/g, '');
+              }
+              
+              post.platforms = platformsValue.split(',').map(p => p.trim()).filter(Boolean);
               break;
             case 'scheduledDate':
               if (value && value !== '') {
@@ -126,8 +153,32 @@ export default function CSVPostUpload({
                 }
               }
               break;
+            case 'mediaUrls':
+              // Handle mediaUrls column (pipe-separated or array format)
+              if (value && value !== '' && value !== '[]') {
+                let mediaValue = value;
+                
+                // Remove array brackets if present
+                if (mediaValue.startsWith('[') && mediaValue.includes(']')) {
+                  mediaValue = mediaValue.replace(/[\[\]]/g, '').replace(/"/g, '');
+                }
+                
+                // Split by pipe or comma
+                const urls = mediaValue.split(/[|,]/).map(url => url.trim()).filter(Boolean);
+                
+                post.mediaUrls = [];
+                for (const url of urls) {
+                  try {
+                    new URL(url); // Validate URL
+                    post.mediaUrls.push(url);
+                  } catch {
+                    post.errors!.push(`Invalid media URL: ${url}`);
+                  }
+                }
+              }
+              break;
             default:
-              // Handle media URLs (mediaUrl1, mediaUrl2, etc.)
+              // Handle legacy media URLs (mediaUrl1, mediaUrl2, etc.)
               if (header.startsWith('mediaUrl') && value && value !== '') {
                 if (!post.mediaUrls) post.mediaUrls = [];
                 try {
@@ -347,7 +398,7 @@ export default function CSVPostUpload({
                 <textarea
                   value={csvText}
                   onChange={(e) => handleTextChange(e.target.value)}
-                  placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;"
+                  placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate,mediaUrls&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;,&quot;&quot;"
                   className="w-full h-48 p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
                 />
                 <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
