@@ -56,7 +56,17 @@ export default function CSVPostUpload({
   const parseCSV = (text: string): ParsedPost[] => {
     console.log('🔍 Raw CSV text:', text);
     
-    const lines = text.trim().split('\n');
+    // Pre-process the CSV to fix ChatGPT's unquoted JSON arrays
+    let fixedText = text;
+    
+    // Fix unquoted JSON arrays in the middle of lines
+    fixedText = fixedText.replace(/,(\[.*?\]),/g, ',"$1",');
+    // Fix unquoted JSON arrays at the end of lines  
+    fixedText = fixedText.replace(/,(\[.*?\])$/gm, ',"$1"');
+    
+    console.log('🔍 Fixed CSV text:', fixedText);
+    
+    const lines = fixedText.trim().split('\n');
     console.log('🔍 Split into lines:', lines.length);
     
     // Proper CSV parser that handles JSON arrays within quoted fields
