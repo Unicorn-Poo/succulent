@@ -23,7 +23,7 @@ import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
-import SmartTitleInput from "@/components/organisms/smart-title-input";
+// import SmartTitleInput from "@/components/organisms/smart-title-input";
 
 export default function AccountGroupPage() {
 	const params = useParams();
