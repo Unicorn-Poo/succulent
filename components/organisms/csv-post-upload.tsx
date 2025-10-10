@@ -28,10 +28,12 @@ export default function CSVPostUpload({
   onUploadComplete 
 }: CSVPostUploadProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [csvText, setCsvText] = useState('');
   const [parsedPosts, setParsedPosts] = useState<ParsedPost[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<any>(null);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
+  const [inputMethod, setInputMethod] = useState<'paste' | 'file'>('paste');
 
   // CSV template for download
   const csvTemplate = `title,content,platforms,scheduledDate,mediaUrl1,mediaUrl2,mediaUrl3
@@ -176,6 +178,7 @@ export default function CSVPostUpload({
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
+        setCsvText(text);
         const parsed = parseCSV(text);
         setParsedPosts(parsed);
       };
@@ -183,8 +186,31 @@ export default function CSVPostUpload({
     }
   };
 
+  const handleTextChange = (text: string) => {
+    setCsvText(text);
+    if (text.trim()) {
+      const parsed = parseCSV(text);
+      setParsedPosts(parsed);
+    } else {
+      setParsedPosts([]);
+      setParseErrors([]);
+    }
+  };
+
+  const copyTemplate = async () => {
+    try {
+      await navigator.clipboard.writeText(csvTemplate);
+      // Could add a toast notification here
+      console.log('✅ Template copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy template:', error);
+      // Fallback - still allow download
+      downloadTemplate();
+    }
+  };
+
   const handleUpload = async () => {
-    if (!file || parsedPosts.length === 0) return;
+    if ((!file && !csvText.trim()) || parsedPosts.length === 0) return;
 
     setIsUploading(true);
     setUploadResults(null);
@@ -239,7 +265,7 @@ export default function CSVPostUpload({
         </Dialog.Description>
 
         <div className="space-y-6 mt-4">
-          {/* Template Download */}
+          {/* Template Section */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -247,59 +273,128 @@ export default function CSVPostUpload({
                   CSV Template
                 </Text>
                 <Text size="2" color="gray">
-                  Download the template to see the required format
+                  Copy the template or download it to get started
                 </Text>
               </div>
-              <Button
-                size="2"
-                variant="soft"
-                onClick={downloadTemplate}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Template
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="2"
+                  variant="soft"
+                  onClick={copyTemplate}
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Template
+                </Button>
+                <Button
+                  size="2"
+                  variant="soft"
+                  onClick={downloadTemplate}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* File Upload */}
+          {/* Input Method Tabs */}
           <div>
-            <Text size="3" weight="medium" className="block mb-2">
-              Upload CSV File
-            </Text>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-                id="csv-upload"
-              />
-              <label htmlFor="csv-upload" className="cursor-pointer">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <Text size="3" className="block mb-2">
-                  Click to upload CSV file
-                </Text>
-                <Text size="2" color="gray">
-                  Supports .csv files with posts data
-                </Text>
-              </label>
+            <div className="flex gap-2 mb-4">
+              <Button
+                size="2"
+                variant={inputMethod === 'paste' ? 'solid' : 'outline'}
+                onClick={() => setInputMethod('paste')}
+              >
+                <Clipboard className="w-4 h-4 mr-2" />
+                Paste CSV
+              </Button>
+              <Button
+                size="2"
+                variant={inputMethod === 'file' ? 'solid' : 'outline'}
+                onClick={() => setInputMethod('file')}
+              >
+                <FileUp className="w-4 h-4 mr-2" />
+                Upload File
+              </Button>
             </div>
-            
-            {file && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
-                <FileText className="w-4 h-4" />
-                <span>{file.name}</span>
-                <Button
-                  size="1"
-                  variant="ghost"
-                  onClick={() => {
-                    setFile(null);
-                    setParsedPosts([]);
-                    setParseErrors([]);
-                  }}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
+
+            {inputMethod === 'paste' ? (
+              /* Copy-Paste Interface */
+              <div>
+                <Text size="3" weight="medium" className="block mb-2">
+                  Paste CSV Data
+                </Text>
+                <textarea
+                  value={csvText}
+                  onChange={(e) => handleTextChange(e.target.value)}
+                  placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;"
+                  className="w-full h-48 p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
+                />
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-4">
+                    <span>{csvText.length} characters</span>
+                    <span>{csvText.split('\n').length} lines</span>
+                  </div>
+                  {csvText.trim() && (
+                    <Button
+                      size="1"
+                      variant="ghost"
+                      onClick={() => {
+                        setCsvText('');
+                        setParsedPosts([]);
+                        setParseErrors([]);
+                      }}
+                      className="text-xs"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* File Upload Interface */
+              <div>
+                <Text size="3" weight="medium" className="block mb-2">
+                  Upload CSV File
+                </Text>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="csv-upload"
+                  />
+                  <label htmlFor="csv-upload" className="cursor-pointer">
+                    <FileUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Text size="3" className="block mb-2">
+                      Click to upload CSV file
+                    </Text>
+                    <Text size="2" color="gray">
+                      Supports .csv files with posts data
+                    </Text>
+                  </label>
+                </div>
+                
+                {file && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                    <FileText className="w-4 h-4" />
+                    <span>{file.name}</span>
+                    <Button
+                      size="1"
+                      variant="ghost"
+                      onClick={() => {
+                        setFile(null);
+                        setCsvText('');
+                        setParsedPosts([]);
+                        setParseErrors([]);
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

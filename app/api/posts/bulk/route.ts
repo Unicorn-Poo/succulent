@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { z } from 'jazz-tools';
 import { PlatformNames } from '@/app/schema';
 
 // Schema for bulk post creation
@@ -28,12 +28,12 @@ export async function POST(request: NextRequest) {
     // Validate request data
     const validation = BulkPostSchema.safeParse(body);
     if (!validation.success) {
-      console.error('❌ Bulk post validation failed:', validation.error.errors);
+      console.error('❌ Bulk post validation failed:', validation.error);
       return NextResponse.json(
         {
           success: false,
           error: 'Invalid request data',
-          details: validation.error.errors
+          details: validation.error.issues || validation.error
         },
         { status: 400 }
       );
@@ -59,13 +59,13 @@ export async function POST(request: NextRequest) {
       
       try {
         // Create individual post using existing API
-        const postData = {
+        let postData = {
           accountGroupId,
           content: post.content,
           title: post.title,
           platforms: post.platforms,
           scheduledDate: post.scheduledDate,
-          media: post.mediaUrls?.map(url => ({
+          media: post.mediaUrls?.map((url: string) => ({
             type: 'image' as const,
             url,
             alt: `Image for ${post.title}`
@@ -73,6 +73,12 @@ export async function POST(request: NextRequest) {
           publishImmediately: !post.scheduledDate, // Publish immediately if not scheduled
           saveAsDraft: false
         };
+
+        console.log(`📸 CSV Post ${i + 1} media check:`, {
+          title: post.title,
+          platforms: post.platforms,
+          mediaCount: postData.media?.length || 0
+        });
 
         // Call the main posts API internally
         const createResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/posts`, {
