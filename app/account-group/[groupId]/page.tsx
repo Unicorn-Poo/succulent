@@ -941,7 +941,15 @@ export default function AccountGroupPage() {
 					</Dialog.Description>
 
 					<div className="space-y-4 mt-4">
-							<div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Post Title</label>
+              <TextField.Root
+                value={newPostTitle}
+                onChange={(e) => setNewPostTitle(e.target.value)}
+                placeholder="Enter post title..."
+              />
+            </div>
+							{/* <div>
 								<label className="block text-sm font-medium mb-2">Post Title</label>
 								<SmartTitleInput
 									value={newPostTitle}
@@ -949,7 +957,7 @@ export default function AccountGroupPage() {
 									posts={posts}
 									placeholder="Enter post title..."
 								/>
-							</div>
+							</div> */}
 						
 						<div>
 							<label className="block text-sm font-medium mb-2">Content</label>
