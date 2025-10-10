@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Dialog, Text, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Upload, Download, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { FileUp, Download, FileText, AlertCircle, CheckCircle, X, Clipboard } from 'lucide-react';
 
 interface CSVPostUploadProps {
   isOpen: boolean;
@@ -141,9 +141,29 @@ export default function CSVPostUpload({
           }
         });
 
-        // Validate required fields
+        // Validate and enhance title
         if (!post.title.trim()) {
           post.errors!.push('Title is required');
+        } else {
+          // Check if this looks like it should be auto-incremented
+          const existingPosts = posts.slice(0, i); // Only check posts processed so far
+          if (existingPosts.length > 0) {
+            // Simple auto-increment for CSV uploads
+            const pattern = post.title.match(/^(.+?)(\d+)$/);
+            if (pattern) {
+              const baseName = pattern[1].trim();
+              const number = parseInt(pattern[2], 10);
+              
+              // Check if there are other posts with similar names
+              const similarPosts = existingPosts.filter(p => 
+                p.title.toLowerCase().includes(baseName.toLowerCase())
+              );
+              
+              if (similarPosts.length > 0) {
+                console.log(`📝 Auto-incrementing title pattern detected: ${post.title}`);
+              }
+            }
+          }
         }
         if (!post.content.trim()) {
           post.errors!.push('Content is required');
@@ -282,7 +302,7 @@ export default function CSVPostUpload({
                   variant="soft"
                   onClick={copyTemplate}
                 >
-                  <Copy className="w-4 h-4 mr-2" />
+                  <Clipboard className="w-4 h-4 mr-2" />
                   Copy Template
                 </Button>
                 <Button
@@ -546,7 +566,7 @@ export default function CSVPostUpload({
             
             <Button
               onClick={handleUpload}
-              disabled={!file || validPosts.length === 0 || isUploading}
+              disabled={(!file && !csvText.trim()) || validPosts.length === 0 || isUploading}
               className="bg-lime-600 hover:bg-lime-700 text-white"
             >
               {isUploading ? (
@@ -556,7 +576,7 @@ export default function CSVPostUpload({
                 </>
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
+                  <FileUp className="w-4 h-4 mr-2" />
                   Upload {validPosts.length} Posts
                 </>
               )}
