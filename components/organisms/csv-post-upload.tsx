@@ -54,51 +54,46 @@ export default function CSVPostUpload({
   };
 
   const parseCSV = (text: string): ParsedPost[] => {
-    const lines = text.trim().split('\n');
+    console.log('🔍 Raw CSV text:', text);
     
-    // Enhanced CSV parsing that handles JSON arrays within quoted fields
+    const lines = text.trim().split('\n');
+    console.log('🔍 Split into lines:', lines.length);
+    
+    // Use a proper CSV parser approach - split on commas but respect quotes
     const parseCSVLine = (line: string): string[] => {
-      const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      let quoteCount = 0;
+      console.log('🔍 Parsing line:', line);
       
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-          quoteCount++;
-          inQuotes = quoteCount % 2 === 1;
-          // Don't add the quote to the current value - we'll clean it later
-        } else if (char === ',' && !inQuotes) {
-          // End of field
-          result.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
+      // Use regex to match CSV fields (handles quoted fields with commas inside)
+      const csvRegex = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
+      const fields = line.split(csvRegex);
       
-      // Add the last field
-      result.push(current.trim());
+      console.log('🔍 Split fields:', fields);
       
-      // Clean up values - remove surrounding quotes
-      return result.map(val => {
-        let cleaned = val.trim();
+      // Clean each field
+      const cleanedFields = fields.map(field => {
+        let cleaned = field.trim();
+        // Remove outer quotes if they exist
         if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
           cleaned = cleaned.slice(1, -1);
         }
         return cleaned;
       });
+      
+      console.log('🔍 Cleaned fields:', cleanedFields);
+      return cleanedFields;
     };
 
     const headers = parseCSVLine(lines[0]);
+    console.log('🔍 Parsed headers:', headers);
+    
     const posts: ParsedPost[] = [];
     const errors: string[] = [];
 
     // Validate headers
     const requiredHeaders = ['title', 'content', 'platforms'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    console.log('🔍 Required headers:', requiredHeaders);
+    console.log('🔍 Missing headers:', missingHeaders);
     if (missingHeaders.length > 0) {
       errors.push(`Missing required headers: ${missingHeaders.join(', ')}`);
       setParseErrors(errors);
@@ -123,7 +118,7 @@ export default function CSVPostUpload({
         headers.forEach((header, index) => {
           const value = values[index] || '';
           
-          console.log(`Parsing ${header}:`, value);
+          console.log(`🔍 Field mapping - ${header} (index ${index}):`, `"${value}"`);
           
           switch (header) {
             case 'title':
