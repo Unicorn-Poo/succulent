@@ -495,12 +495,23 @@ async function publishPost(
     // Use request profileKey as fallback, but prioritize account group's profile key
     const finalProfileKey = profileKey || request.profileKey;
 
+    // Add Twitter-specific options ONLY if posting to X/Twitter AND post is too long
+    const hasTwitter = validPlatforms.includes('x');
+    const postLength = request.content.length;
+    const needsTwitterOptions = hasTwitter && postLength > 280;
+    
+    const twitterOptions = needsTwitterOptions ? {
+      thread: true,
+      threadNumber: true
+    } : undefined;
+
     const publishData: PostData = {
       post: request.content,
       platforms: validPlatforms,
       mediaUrls: request.media?.map((m) => m.url).filter(Boolean) as string[],
       scheduleDate: request.scheduledDate,
       profileKey: finalProfileKey, // FIXED: Now using the correct profile key
+      twitterOptions: twitterOptions // FIXED: Added Twitter options for X/Twitter posts
     };
 
     console.log('🔑 Profile Key Debug:', {
@@ -509,6 +520,15 @@ async function publishPost(
       requestProfileKey: request.profileKey ? `${request.profileKey.substring(0, 8)}...` : 'none',
       finalProfileKey: finalProfileKey ? `${finalProfileKey.substring(0, 8)}...` : 'none',
       willUseBusinessPlan: !!(finalProfileKey && isBusinessPlanMode())
+    });
+
+    console.log('🐦 Twitter Debug:', {
+      platforms: validPlatforms,
+      hasTwitter,
+      postLength,
+      needsTwitterOptions,
+      twitterOptions,
+      willAddTwitterOptions: !!twitterOptions
     });
     
     console.log('📦 Final publish data being sent to Ayrshare:', JSON.stringify(publishData, null, 2));
