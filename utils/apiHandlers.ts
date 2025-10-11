@@ -92,11 +92,11 @@ export const handleStandardPost = async (postData: PostData) => {
 		platforms: mappedPlatforms,
 		// Remove profileKey from the body as it's only used in headers
 		profileKey: undefined,
-		// Add Twitter options only if post is long enough to need threading
-		twitterOptions: needsTwitterOptions ? {
+		// Use provided twitterOptions, or add default ones for long posts
+		twitterOptions: postData.twitterOptions || (needsTwitterOptions ? {
 			thread: true,
 			threadNumber: true
-		} : postData.twitterOptions
+		} : undefined)
 	};
 
 	// Clean up undefined fields that might cause issues with Ayrshare

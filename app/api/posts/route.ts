@@ -430,149 +430,7 @@ async function updateJazzPostWithAyrshareIds(
   }
 }
 
-async function publishPost(
-  postData: any,
-  request: CreatePostRequest,
-  user: AuthenticatedUser
-): Promise<{ success: boolean; results?: any; error?: string }> {
-  try {
-    // Only skip publishing if it's truly a draft (no immediate publish AND no schedule date)
-    if (!request.publishImmediately && !request.scheduledDate) {
-      return { success: true, results: { message: 'Post saved as draft' } };
-    }
-    
-    // Auto-fix scheduled date if present and too soon
-    if (request.scheduledDate) {
-      const originalDate = new Date(request.scheduledDate);
-      const now = new Date();
-      const minutesFromNow = Math.round((originalDate.getTime() - now.getTime()) / (1000 * 60));
-      
-      let finalScheduledDate = originalDate;
-      
-      // Auto-fix if less than 10 minutes in the future
-      if (minutesFromNow < 10) {
-        finalScheduledDate = new Date(now.getTime() + 10 * 60 * 1000); // Add 10 minutes
-        console.log(`📅 Auto-fixed scheduled time from ${originalDate.toISOString()} to ${finalScheduledDate.toISOString()}`);
-        
-        // Update the request object for downstream processing
-        request.scheduledDate = finalScheduledDate.toISOString();
-      }
-      
-      console.log(`📅 Scheduling post for ${finalScheduledDate.toISOString()} (${Math.round((finalScheduledDate.getTime() - now.getTime()) / (1000 * 60))} minutes from now)`);
-    }
-    
-    // Prepare post data for publishing - filter out any invalid platforms
-    const validPlatforms = request.platforms.filter((p: string) => PlatformNames.includes(p as any));
-    
-    console.log('🚀 Publishing Post - Full Debug Info:');
-    console.log('📝 Original platforms:', request.platforms);
-    console.log('✅ Valid platforms:', validPlatforms);
-    console.log('📅 Scheduled date:', request.scheduledDate);
-    console.log('🔄 Publish immediately:', request.publishImmediately);
-    console.log('📄 Content length:', request.content.length);
-    console.log('🖼️ Media count:', request.media?.length || 0);
-    
-    // CRITICAL: Get the account group's profile key to ensure posts go to the right account
-    let profileKey: string | undefined;
-    try {
-      const { jazzServerWorker } = await import('@/utils/jazzServer');
-      const { AccountGroup } = await import('@/app/schema');
-      const worker = await jazzServerWorker;
-      
-      if (worker) {
-        const accountGroup = await AccountGroup.load(request.accountGroupId, { loadAs: worker });
-        if (accountGroup?.ayrshareProfileKey) {
-          profileKey = accountGroup.ayrshareProfileKey;
-          console.log(`🔑 Using account group profile key: ${profileKey?.substring(0, 8)}...`);
-        } else {
-          console.warn(`⚠️ No Ayrshare profile key found for account group: ${request.accountGroupId}`);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Failed to get account group profile key:', error);
-    }
-
-    // Use request profileKey as fallback, but prioritize account group's profile key
-    const finalProfileKey = profileKey || request.profileKey;
-
-    // Add Twitter-specific options ONLY if posting to X/Twitter AND post is too long
-    const hasTwitter = validPlatforms.includes('x');
-    const postLength = request.content.length;
-    const needsTwitterOptions = hasTwitter && postLength > 280;
-    
-    const twitterOptions = needsTwitterOptions ? {
-      thread: true,
-      threadNumber: true
-    } : undefined;
-
-    const publishData: PostData = {
-      post: request.content,
-      platforms: validPlatforms,
-      mediaUrls: request.media?.map((m) => m.url).filter(Boolean) as string[],
-      scheduleDate: request.scheduledDate,
-      profileKey: finalProfileKey, // FIXED: Now using the correct profile key
-      twitterOptions: twitterOptions // FIXED: Added Twitter options for X/Twitter posts
-    };
-
-    console.log('🔑 Profile Key Debug:', {
-      accountGroupId: request.accountGroupId,
-      accountGroupProfileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
-      requestProfileKey: request.profileKey ? `${request.profileKey.substring(0, 8)}...` : 'none',
-      finalProfileKey: finalProfileKey ? `${finalProfileKey.substring(0, 8)}...` : 'none',
-      willUseBusinessPlan: !!(finalProfileKey && isBusinessPlanMode())
-    });
-
-    console.log('🐦 Twitter Debug:', {
-      platforms: validPlatforms,
-      hasTwitter,
-      postLength,
-      needsTwitterOptions,
-      twitterOptions,
-      willAddTwitterOptions: !!twitterOptions
-    });
-    
-    console.log('📦 Final publish data being sent to Ayrshare:', JSON.stringify(publishData, null, 2));
-    
-    let results;
-    
-    if (request.replyTo?.url) {
-      // Handle reply post
-      results = await handleReplyPost(publishData, request.replyTo.url);
-    } else if (request.isThread && request.threadPosts) {
-      // Handle thread/multi-post - convert to expected ThreadPost format
-      const threadPosts = request.threadPosts.map((tp: { content: string; media?: any[] }, index: number) => ({
-        content: tp.content,
-        media: tp.media || [],
-        characterCount: tp.content.length,
-        index,
-        total: request.threadPosts!.length
-      }));
-      results = await handleMultiPosts(publishData, threadPosts);
-    } else {
-      // Handle standard post
-      results = await handleStandardPost(publishData);
-    }
-    
-    console.log('🚀 Post publishing results:', JSON.stringify(results, null, 2));
-    
-    // Log final success summary
-    console.log('✅ POST PUBLISHING COMPLETED');
-    console.log('📊 Summary:');
-    console.log('  - Platforms requested:', request.platforms);
-    console.log('  - Valid platforms sent:', validPlatforms);
-    console.log('  - Scheduled:', !!request.scheduledDate);
-    console.log('  - Immediate:', !!request.publishImmediately);
-    
-    return { success: true, results };
-    
-  } catch (error) {
-    console.error('❌ Error publishing post:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to publish post' 
-    };
-  }
-}
+// Removed old publishPost function - logic moved inline for better control
 
 // =============================================================================
 // 🌐 API ENDPOINTS
@@ -725,21 +583,107 @@ export async function POST(request: NextRequest) {
     
     // 🚀 Publish the post (if immediate or scheduled)
     let publishResult = null;
-    if (result.success) {
+    if (result.success && (requestData.publishImmediately || requestData.scheduledDate)) {
       console.log('📝 Post created successfully, now attempting to publish...');
-      publishResult = await publishPost(result.jazzPost, requestData, user);
       
-      if (!publishResult.success) {
-        console.error('❌ Post created but publishing failed:', publishResult.error);
-        // Note: We still return success for the post creation, but log the publishing failure
-      } else {
-        console.log('✅ Post created and published successfully');
+      // CRITICAL: Get the account group's profile key to ensure posts go to the right account
+      let profileKey: string | undefined;
+      try {
+        const { jazzServerWorker } = await import('@/utils/jazzServer');
+        const { AccountGroup } = await import('@/app/schema');
+        const worker = await jazzServerWorker;
+        
+        if (worker) {
+          const accountGroup = await AccountGroup.load(requestData.accountGroupId, { loadAs: worker });
+          if (accountGroup?.ayrshareProfileKey) {
+            profileKey = accountGroup.ayrshareProfileKey;
+            console.log(`🔑 Using account group profile key: ${profileKey?.substring(0, 8)}...`);
+          } else {
+            console.warn(`⚠️ No Ayrshare profile key found for account group: ${requestData.accountGroupId}`);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to get account group profile key:', error);
+      }
+
+      // Use request profileKey as fallback, but prioritize account group's profile key
+      const finalProfileKey = profileKey || requestData.profileKey;
+
+      // Add Twitter-specific options for ALL X/Twitter posts (matches UI behavior)
+      const validPlatforms = requestData.platforms.filter((p: string) => PlatformNames.includes(p as any));
+      const hasTwitter = validPlatforms.includes('x');
+      
+      const twitterOptions = hasTwitter ? {
+        thread: true,
+        threadNumber: true
+      } : undefined;
+
+      const publishData: PostData = {
+        post: requestData.content,
+        platforms: validPlatforms,
+        mediaUrls: requestData.media?.map((m) => m.url).filter(Boolean) as string[],
+        scheduleDate: requestData.scheduledDate,
+        profileKey: finalProfileKey, // FIXED: Now using the correct profile key
+        twitterOptions: twitterOptions // FIXED: Added Twitter options for X/Twitter posts
+      };
+
+      console.log('🔑 Profile Key Debug:', {
+        accountGroupId: requestData.accountGroupId,
+        accountGroupProfileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
+        requestProfileKey: requestData.profileKey ? `${requestData.profileKey.substring(0, 8)}...` : 'none',
+        finalProfileKey: finalProfileKey ? `${finalProfileKey.substring(0, 8)}...` : 'none',
+        willUseBusinessPlan: !!(finalProfileKey && isBusinessPlanMode())
+      });
+
+      console.log('🐦 Twitter Debug:', {
+        platforms: validPlatforms,
+        hasTwitter,
+        postLength: requestData.content.length,
+        twitterOptions,
+        willAddTwitterOptions: !!twitterOptions,
+        matchesUIBehavior: true
+      });
+      
+      console.log('📦 Using prepared publish data with profile key and Twitter options:', JSON.stringify(publishData, null, 2));
+      
+      try {
+        // Use the API handlers directly with the properly prepared data
+        let ayrshareResults;
+        
+        if (requestData.replyTo?.url) {
+          ayrshareResults = await handleReplyPost(publishData, requestData.replyTo.url);
+        } else if (requestData.isThread && requestData.threadPosts) {
+          const threadPosts = requestData.threadPosts.map((tp: { content: string; media?: any[] }, index: number) => ({
+            content: tp.content,
+            media: tp.media || [],
+            characterCount: tp.content.length,
+            index,
+            total: requestData.threadPosts!.length
+          }));
+          ayrshareResults = await handleMultiPosts(publishData, threadPosts);
+        } else {
+          ayrshareResults = await handleStandardPost(publishData);
+        }
+        
+        console.log('✅ Post published to Ayrshare successfully:', ayrshareResults);
         
         // Update Jazz post with ayrsharePostId from publishing results
-        if (publishResult.results && result.jazzPost) {
-          await updateJazzPostWithAyrshareIds(result.jazzPost, publishResult.results, requestData.platforms);
+        if (ayrshareResults && result.jazzPost) {
+          await updateJazzPostWithAyrshareIds(result.jazzPost, ayrshareResults, requestData.platforms);
         }
+        
+        publishResult = { success: true, results: ayrshareResults };
+        
+      } catch (publishError) {
+        console.error('❌ Post created but publishing to Ayrshare failed:', publishError);
+        publishResult = { 
+          success: false, 
+          error: publishError instanceof Error ? publishError.message : 'Publishing failed' 
+        };
       }
+    } else {
+      console.log('📝 Post saved as draft - no publishing attempted');
+      publishResult = { success: true, results: { message: 'Post saved as draft' } };
     }
     
     // Get rate limit info for headers
