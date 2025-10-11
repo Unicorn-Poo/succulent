@@ -338,7 +338,7 @@ async function createJazzPostInAccountGroup(
 async function createPostInJazz(
   request: CreatePostRequest, 
   user: AuthenticatedUser
-): Promise<{ success: boolean; postId?: string; error?: string }> {
+): Promise<{ success: boolean; postId?: string; jazzPost?: any; error?: string }> {
   try {
     const now = new Date();
     const postData = {
@@ -355,7 +355,7 @@ async function createPostInJazz(
     const jazzPost = await createJazzPostInAccountGroup(postData, request, user);
     
     if (jazzPost) {
-      return { success: true, postId: jazzPost.id };
+      return { success: true, postId: jazzPost.id, jazzPost: jazzPost };
     } else {
       throw new Error('Jazz post creation failed');
     }
@@ -366,6 +366,67 @@ async function createPostInJazz(
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to create post' 
     };
+  }
+}
+
+/**
+ * Update Jazz post variants with ayrsharePostId from publishing results
+ */
+async function updateJazzPostWithAyrshareIds(
+  jazzPost: any,
+  publishResults: any,
+  platforms: string[]
+) {
+  try {
+    console.log('🔄 Updating Jazz post with Ayrshare IDs:', publishResults);
+    
+    // Extract post IDs from different result formats
+    let postIds: Record<string, string> = {};
+    
+    if (publishResults.postIds) {
+      // Standard single post result
+      postIds = publishResults.postIds;
+    } else if (publishResults.id) {
+      // Single post with single ID
+      // Map to all platforms that were requested
+      platforms.forEach(platform => {
+        postIds[platform] = publishResults.id;
+      });
+    } else if (Array.isArray(publishResults)) {
+      // Multi-post/thread results - use the first post's IDs
+      if (publishResults[0]?.postIds) {
+        postIds = publishResults[0].postIds;
+      } else if (publishResults[0]?.id) {
+        platforms.forEach(platform => {
+          postIds[platform] = publishResults[0].id;
+        });
+      }
+    }
+    
+    console.log('📍 Extracted post IDs:', postIds);
+    
+    // Update each platform variant with its ayrsharePostId
+    if (jazzPost.variants && Object.keys(postIds).length > 0) {
+      for (const [platform, ayrsharePostId] of Object.entries(postIds)) {
+        // Map Ayrshare platform names back to our internal names
+        const internalPlatform = platform === 'twitter' ? 'x' : platform;
+        
+        const variant = jazzPost.variants[internalPlatform];
+        if (variant && ayrsharePostId) {
+          variant.ayrsharePostId = ayrsharePostId;
+          console.log(`✅ Updated ${internalPlatform} variant with ayrsharePostId: ${ayrsharePostId}`);
+          
+          // If it was published immediately, update status
+          if (variant.status === 'draft' && variant.publishedAt) {
+            variant.status = 'published';
+          }
+        }
+      }
+    }
+    
+    console.log('🔄 Successfully updated Jazz post with Ayrshare IDs');
+  } catch (error) {
+    console.error('❌ Error updating Jazz post with Ayrshare IDs:', error);
   }
 }
 
@@ -614,13 +675,18 @@ export async function POST(request: NextRequest) {
     let publishResult = null;
     if (result.success) {
       console.log('📝 Post created successfully, now attempting to publish...');
-      publishResult = await publishPost(null, requestData, user);
+      publishResult = await publishPost(result.jazzPost, requestData, user);
       
       if (!publishResult.success) {
         console.error('❌ Post created but publishing failed:', publishResult.error);
         // Note: We still return success for the post creation, but log the publishing failure
       } else {
         console.log('✅ Post created and published successfully');
+        
+        // Update Jazz post with ayrsharePostId from publishing results
+        if (publishResult.results && result.jazzPost) {
+          await updateJazzPostWithAyrshareIds(result.jazzPost, publishResult.results, requestData.platforms);
+        }
       }
     }
     

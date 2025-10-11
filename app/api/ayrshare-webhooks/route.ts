@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
           timestamp: body.timestamp
         });
         break;
+
+      case 'post.published':
+      case 'post.scheduled':
+      case 'post.failed':
+        await handlePostStatusWebhook(body);
+        break;
         
       default:
         console.log('Unknown webhook event:', body.event);
@@ -53,5 +59,28 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Handle post status webhooks from Ayrshare
+ */
+async function handlePostStatusWebhook(webhookData: any) {
+  try {
+    const { event, postId, profileKey, platform, status, timestamp } = webhookData;
+    
+    console.log(`📡 Processing ${event} webhook for post ${postId}`);
+    
+    // Log webhook for monitoring and debugging
+    console.log(`📡 Webhook received for post ${postId} on profile ${profileKey}`);
+    console.log(`📊 Event details:`, { event, platform, status, timestamp });
+    
+    // For production, webhooks are logged for monitoring
+    // The actual post status updates are handled by the sync mechanism
+    // This approach is more reliable than trying to update Jazz directly in webhooks
+    console.log(`✅ Webhook logged - status updates handled by sync mechanism`);
+    
+  } catch (error) {
+    console.error('❌ Error handling post status webhook:', error);
   }
 } 
