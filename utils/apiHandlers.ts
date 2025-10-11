@@ -2,6 +2,14 @@ import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 import { extractTweetId, detectPlatformFromUrl, extractPostIdFromUrl } from './postValidation';
 import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
 import { INTERNAL_TO_AYRSHARE_PLATFORM, isBusinessPlanMode } from './ayrshareIntegration';
+import { 
+  logAyrshareOperation, 
+  logAyrshareAPICall, 
+  logAyrshareAPIResponse, 
+  logTwitterDebug,
+  logPostWorkflow,
+  generateRequestId 
+} from './ayrshareLogger';
 
 /**
  * Interface for post data sent to Ayrshare API
@@ -36,15 +44,22 @@ const mapPlatformsForAyrshare = (platforms: string[]): string[] => {
  * @returns API response
  */
 export const handleStandardPost = async (postData: PostData) => {
+	const requestId = generateRequestId();
+	
+	logPostWorkflow('Standard Post Started', postData, 'started', undefined, { requestId });
+	
 	// Map platform names for Ayrshare compatibility
 	const mappedPlatforms = mapPlatformsForAyrshare(postData.platforms);
 	
-	console.log('🔄 Platform Mapping Debug:');
-	console.log('📝 Original platforms:', postData.platforms);
-	console.log('🗺️ Mapped platforms:', mappedPlatforms);
-	console.log('🐦 Twitter/X in original?', postData.platforms.includes('x') || postData.platforms.includes('twitter'));
-	console.log('🐦 Twitter in mapped?', mappedPlatforms.includes('twitter'));
-	console.log('🗺️ Platform mapping details:', postData.platforms.map(p => `${p} -> ${INTERNAL_TO_AYRSHARE_PLATFORM[p] || p}`));
+	// Enhanced Twitter/X debugging
+	logTwitterDebug('Platform Mapping', {
+		platforms: postData.platforms,
+		mappedPlatforms,
+		hasTwitter: mappedPlatforms.includes('twitter'),
+		postLength: postData.post?.length || 0,
+		twitterOptions: postData.twitterOptions,
+		scheduledDate: postData.scheduleDate
+	});
 	
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
@@ -61,14 +76,15 @@ export const handleStandardPost = async (postData: PostData) => {
 	const postLength = postData.post?.length || 0;
 	const needsTwitterOptions = hasTwitter && !postData.twitterOptions && postLength > 280;
 	
-	console.log('🐦 TWITTER DEBUG - Full Analysis:');
-	console.log('🔍 Mapped platforms:', mappedPlatforms);
-	console.log('🐦 Has Twitter:', hasTwitter);
-	console.log('📏 Post length:', postLength);
-	console.log('🧵 Needs Twitter threading options:', needsTwitterOptions);
-	console.log('⚙️ Existing twitterOptions:', postData.twitterOptions);
-	console.log('📅 Has schedule date:', !!postData.scheduleDate);
-	console.log('📅 Schedule date value:', postData.scheduleDate);
+	// Enhanced Twitter debugging with structured logging
+	logTwitterDebug('Threading Analysis', {
+		mappedPlatforms,
+		hasTwitter,
+		postLength,
+		needsThreading: needsTwitterOptions,
+		twitterOptions: postData.twitterOptions,
+		scheduledDate: postData.scheduleDate
+	});
 
 	const requestBody = {
 		...postData,
@@ -95,44 +111,58 @@ export const handleStandardPost = async (postData: PostData) => {
 		})
 	);
 
-	// Debug media URLs specifically
-	console.log('🖼️ Media Debug:');
-	console.log('📷 Original mediaUrls:', postData.mediaUrls);
-	console.log('📷 Media in cleaned body:', cleanedBody.mediaUrls);
-	console.log('📷 Media array length:', cleanedBody.mediaUrls?.length || 0);
-	
-	// Additional debug for request body
-	console.log('📝 Original postData:', JSON.stringify(postData, null, 2));
-	console.log('📝 Request body after spread:', JSON.stringify(requestBody, null, 2));
-	console.log('📝 Cleaned request body:', JSON.stringify(cleanedBody, null, 2));
+	// Log media processing with structured logging
+	logAyrshareOperation({
+		timestamp: new Date().toISOString(),
+		operation: 'Media Processing',
+		status: 'started',
+		data: {
+			originalMediaCount: postData.mediaUrls?.length || 0,
+			cleanedMediaCount: cleanedBody.mediaUrls?.length || 0,
+			mediaUrls: cleanedBody.mediaUrls,
+			mediaPresent: !!cleanedBody.mediaUrls?.length
+		},
+		requestId
+	});
 	
 	// Validate schedule date if present
 	if (cleanedBody.scheduleDate) {
 		const scheduleDate = new Date(cleanedBody.scheduleDate);
 		const now = new Date();
-		console.log('📅 Schedule validation:');
-		console.log('📅 Schedule date:', cleanedBody.scheduleDate);
-		console.log('📅 Parsed date:', scheduleDate.toISOString());
-		console.log('📅 Current time:', now.toISOString());
-		console.log('📅 Is future date:', scheduleDate > now);
-		console.log('📅 Minutes from now:', Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60)));
+		const minutesFromNow = Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60));
+		
+		logAyrshareOperation({
+			timestamp: new Date().toISOString(),
+			operation: 'Schedule Validation',
+			status: minutesFromNow > 0 ? 'success' : 'warning',
+			data: {
+				scheduleDate: cleanedBody.scheduleDate,
+				parsedDate: scheduleDate.toISOString(),
+				currentTime: now.toISOString(),
+				isFutureDate: scheduleDate > now,
+				minutesFromNow
+			},
+			requestId
+		});
 	}
 
-	console.log('🌐 About to make Ayrshare API request...');
-	console.log('🔗 API URL:', `${AYRSHARE_API_URL}/post`);
-	console.log('📋 Request Headers:', JSON.stringify(headers, null, 2));
-	console.log('📦 Final Request Body:', JSON.stringify(cleanedBody, null, 2));
+	// Log the API call with structured logging
+	logAyrshareAPICall('Standard Post', `${AYRSHARE_API_URL}/post`, 'POST', headers, cleanedBody, requestId);
 
-	const response = await fetch(`${AYRSHARE_API_URL}/post`, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify(cleanedBody)
-	});
+	try {
+		const startTime = Date.now();
+		
+		const response = await fetch(`${AYRSHARE_API_URL}/post`, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(cleanedBody)
+		});
 
-	console.log('📡 Ayrshare Response Status:', response.status);
-	console.log('📡 Ayrshare Response Status Text:', response.statusText);
+		const responseTime = Date.now() - startTime;
+		const result = await response.json();
 
-	const result = await response.json();
+		// Log the API response with structured logging
+		logAyrshareAPIResponse('Standard Post', response.status, response.statusText, result, responseTime, requestId);
 	
 	// Log successful responses too
 	if (response.ok) {
@@ -302,6 +332,18 @@ export const handleStandardPost = async (postData: PostData) => {
 	}
 
 	return result;
+	
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		
+		logPostWorkflow('Standard Post Network Error', postData, 'error', errorMessage, { 
+			requestId,
+			errorType: 'network',
+			stack: error instanceof Error ? error.stack : undefined
+		});
+		
+		throw error;
+	}
 };
 
 /**
