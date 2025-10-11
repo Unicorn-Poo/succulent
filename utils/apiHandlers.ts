@@ -107,10 +107,15 @@ export const handleStandardPost = async (postData: PostData) => {
 			if (key === 'twitterOptions' && value && typeof value === 'object') {
 				return true;
 			}
-			// Filter out other undefined values
+			// Filter out other undefined values, including undefined twitterOptions
 			return value !== undefined;
 		})
 	);
+
+	// Add twitterOptions back if we have Twitter and they were filtered out
+	if (hasTwitter && !cleanedBody.twitterOptions && postData.twitterOptions) {
+		cleanedBody.twitterOptions = postData.twitterOptions;
+	}
 
 	// Log media processing with structured logging
 	logAyrshareOperation({
