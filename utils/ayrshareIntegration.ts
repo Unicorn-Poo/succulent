@@ -620,7 +620,7 @@ export const AYRSHARE_PLATFORM_MAP: Record<string, string> = {
   'reddit': 'reddit',
   'telegram': 'telegram',
   'threads': 'threads',
-  'limesky': 'limesky',
+  'bluesky': 'bluesky',
   'gmb': 'google', // Google My Business
 };
 
@@ -639,6 +639,7 @@ export const INTERNAL_TO_AYRSHARE_PLATFORM: Record<string, string> = {
   'reddit': 'reddit',
   'telegram': 'telegram',
   'threads': 'threads',
+  'bluesky': 'bluesky',
   'google': 'gmb', // Google My Business
 };
 
