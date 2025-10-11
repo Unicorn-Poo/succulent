@@ -39,9 +39,10 @@ export default function CSVPostUpload({
 
   // CSV template for download
   const csvTemplate = `title,content,platforms,scheduledDate,mediaUrls
-"My First Post","This is the content of my first post","instagram,x","2024-01-15T14:30:00Z","https://example.com/image1.jpg"
-"Scheduled Post","Another post with multiple platforms","instagram,x,linkedin","2024-01-16T10:00:00Z","https://example.com/image2.jpg|https://example.com/image3.jpg"
-"Simple Post","Just text, no media","x","",""`;
+"My First Post","This is the content of my first post","instagram,x","2025-12-15T14:30:00Z","https://example.com/image1.jpg"
+"Multi-platform Post","Post to multiple platforms","x,threads,bluesky","2025-12-16T10:00:00Z","https://example.com/image2.jpg|https://example.com/image3.jpg"
+"Simple Post","Just text, no media","bluesky","",""
+"All Platforms","Supported platforms: instagram,facebook,x,linkedin,youtube,tiktok,pinterest,reddit,telegram,threads,bluesky,google","x,bluesky","2025-12-17T12:00:00Z",""`;
 
   const downloadTemplate = () => {
     const blob = new Blob([csvTemplate], { type: 'text/csv' });
@@ -279,7 +280,7 @@ export default function CSVPostUpload({
         }
 
         // Validate platforms
-        const validPlatforms = ["instagram", "facebook", "x", "linkedin", "youtube", "tiktok", "pinterest", "reddit", "telegram", "threads", "google"];
+        const validPlatforms = ["instagram", "facebook", "x", "linkedin", "youtube", "tiktok", "pinterest", "reddit", "telegram", "threads", "bluesky", "google"];
         const invalidPlatforms = post.platforms.filter(p => !validPlatforms.includes(p));
         if (invalidPlatforms.length > 0) {
           post.errors!.push(`Invalid platforms: ${invalidPlatforms.join(', ')}`);
@@ -443,6 +444,35 @@ export default function CSVPostUpload({
           // Create platform variants (this is what determines which platforms the post appears on)
           for (const platform of post.platforms) {
             console.log(`🎯 Creating variant for platform: ${platform}`);
+            
+            // Check if platform account exists, create if missing
+            const existingAccounts = accountGroup.accounts ? Array.from(accountGroup.accounts) : [];
+            const platformAccountExists = existingAccounts.some((acc: any) => acc?.platform === platform);
+            
+            if (!platformAccountExists && accountGroup.accounts) {
+              console.log(`📱 Creating placeholder account for platform: ${platform}`);
+              const { PlatformAccount, AnalyticsDataPoint } = await import('@/app/schema');
+              
+              const newAccount = PlatformAccount.create({
+                name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Account`,
+                platform: platform as any,
+                apiUrl: undefined,
+                profileKey: undefined,
+                isLinked: false,
+                linkedAt: undefined,
+                username: undefined,
+                displayName: undefined,
+                avatar: undefined,
+                url: undefined,
+                status: 'pending',
+                lastError: undefined,
+                historicalAnalytics: co.list(AnalyticsDataPoint).create([], { owner: accountGroup._owner }),
+              }, { owner: accountGroup._owner });
+              
+              accountGroup.accounts.push(newAccount);
+              console.log(`✅ Created placeholder account for ${platform}`);
+            }
+            
             const platformVariant = PostVariant.create({
               text: baseText,
               postDate: new Date(),
@@ -475,6 +505,12 @@ export default function CSVPostUpload({
           }
           
           console.log(`✅ Post ${i + 1} created successfully: ${newPost.id}`);
+          console.log(`🔍 Created post structure:`, {
+            id: newPost.id,
+            title: newPost.title?.toString(),
+            variantKeys: Object.keys(newPost.variants || {}),
+            platforms: post.platforms
+          });
           
         } catch (postError) {
           console.error(`❌ Failed to create post ${i + 1}:`, postError);
