@@ -5,6 +5,13 @@ export const platformIcons = {
 	youtube: "/icons8-youtube-logo.svg",
 	facebook: "/icons8-facebook.svg",
 	linkedin: "/icons8-linkedin.svg",
+	threads: "/icons8-threads.svg",
+	bluesky: "/icons8-bluesky.svg",
+	tiktok: "/icons8-tiktok.svg",
+	pinterest: "/icons8-pinterest.svg",
+	reddit: "/icons8-reddit.svg",
+	telegram: "/icons8-telegram.svg",
+	google: "/icons8-google.svg",
 };
 
 export const platformLabels = {
