@@ -472,12 +472,44 @@ async function publishPost(
     console.log('📄 Content length:', request.content.length);
     console.log('🖼️ Media count:', request.media?.length || 0);
     
+    // CRITICAL: Get the account group's profile key to ensure posts go to the right account
+    let profileKey: string | undefined;
+    try {
+      const { jazzServerWorker } = await import('@/utils/jazzServer');
+      const { AccountGroup } = await import('@/app/schema');
+      const worker = await jazzServerWorker;
+      
+      if (worker) {
+        const accountGroup = await AccountGroup.load(request.accountGroupId, { loadAs: worker });
+        if (accountGroup?.ayrshareProfileKey) {
+          profileKey = accountGroup.ayrshareProfileKey;
+          console.log(`🔑 Using account group profile key: ${profileKey?.substring(0, 8)}...`);
+        } else {
+          console.warn(`⚠️ No Ayrshare profile key found for account group: ${request.accountGroupId}`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to get account group profile key:', error);
+    }
+
+    // Use request profileKey as fallback, but prioritize account group's profile key
+    const finalProfileKey = profileKey || request.profileKey;
+
     const publishData: PostData = {
       post: request.content,
       platforms: validPlatforms,
       mediaUrls: request.media?.map((m) => m.url).filter(Boolean) as string[],
       scheduleDate: request.scheduledDate,
+      profileKey: finalProfileKey, // FIXED: Now using the correct profile key
     };
+
+    console.log('🔑 Profile Key Debug:', {
+      accountGroupId: request.accountGroupId,
+      accountGroupProfileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
+      requestProfileKey: request.profileKey ? `${request.profileKey.substring(0, 8)}...` : 'none',
+      finalProfileKey: finalProfileKey ? `${finalProfileKey.substring(0, 8)}...` : 'none',
+      willUseBusinessPlan: !!(finalProfileKey && isBusinessPlanMode())
+    });
     
     console.log('📦 Final publish data being sent to Ayrshare:', JSON.stringify(publishData, null, 2));
     

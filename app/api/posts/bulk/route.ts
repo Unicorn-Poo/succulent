@@ -176,15 +176,43 @@ export async function POST(request: NextRequest) {
               requestId: batchId
             });
             
+            // CRITICAL: Get the account group's profile key to ensure posts go to the right account
+            let profileKey: string | undefined;
+            try {
+              const { jazzServerWorker } = await import('@/utils/jazzServer');
+              const { AccountGroup } = await import('@/app/schema');
+              const worker = await jazzServerWorker;
+              
+              if (worker) {
+                const accountGroup = await AccountGroup.load(accountGroupId, { loadAs: worker });
+                if (accountGroup?.ayrshareProfileKey) {
+                  profileKey = accountGroup.ayrshareProfileKey;
+                  console.log(`🔑 Bulk Post ${i + 1}: Using account group profile key: ${profileKey?.substring(0, 8)}...`);
+                } else {
+                  console.warn(`⚠️ Bulk Post ${i + 1}: No Ayrshare profile key found for account group: ${accountGroupId}`);
+                }
+              }
+            } catch (error) {
+              console.error(`❌ Bulk Post ${i + 1}: Failed to get account group profile key:`, error);
+            }
+            
             // Prepare data for Ayrshare
             const ayrsharePostData: PostData = {
               post: post.content,
               platforms: post.platforms,
               mediaUrls: post.mediaUrls || [],
-              scheduleDate: post.scheduledDate
+              scheduleDate: post.scheduledDate,
+              profileKey: profileKey // FIXED: Now using the correct profile key
             };
+
+            const { isBusinessPlanMode } = await import('@/utils/ayrshareIntegration');
+            console.log(`🔑 Bulk Post ${i + 1} Profile Key Debug:`, {
+              accountGroupId,
+              profileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
+              willUseBusinessPlan: !!(profileKey && isBusinessPlanMode())
+            });
             
-            // Use the standard post handler
+            // Use the standard post handler (now includes duplicate handling)
             publishResults = await handleStandardPost(ayrsharePostData);
             
             logAyrshareOperation({
@@ -212,17 +240,23 @@ export async function POST(request: NextRequest) {
             }
             
           } catch (publishError) {
+            const errorMessage = publishError instanceof Error ? publishError.message : 'Unknown error';
+            
             logAyrshareOperation({
               timestamp: new Date().toISOString(),
               operation: `Bulk Post ${i + 1} - Publishing Failed`,
               status: 'error',
-              error: publishError instanceof Error ? publishError.message : 'Unknown error',
+              error: errorMessage,
               data: { title: post.title, platforms: post.platforms },
               requestId: batchId
             });
             
-            // Don't fail the entire post if publishing fails - Jazz post was created
-            results.errors.push(`Post "${post.title}": Created but publishing failed - ${publishError instanceof Error ? publishError.message : 'Unknown error'}`);
+            // Handle duplicate errors appropriately - don't try to recover
+            if (errorMessage.includes('Duplicate content detected')) {
+              results.errors.push(`Post "${post.title}": Duplicate content - cannot post identical content within 48 hours`);
+            } else {
+              results.errors.push(`Post "${post.title}": Created but publishing failed - ${errorMessage}`);
+            }
           }
         }
         
