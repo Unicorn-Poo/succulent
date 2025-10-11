@@ -435,13 +435,14 @@ export default function CSVPostUpload({
             lastModified: undefined,
           }, { owner: accountGroup._owner });
 
-          // Create the variants record
+          // Create the variants record with platform-specific variants (like the working code)
           const variantsRecord = co.record(z.string(), PostVariant).create({
             base: baseVariant
           }, { owner: accountGroup._owner });
 
-          // Create platform variants
+          // Create platform variants (this is what determines which platforms the post appears on)
           for (const platform of post.platforms) {
+            console.log(`🎯 Creating variant for platform: ${platform}`);
             const platformVariant = PostVariant.create({
               text: baseText,
               postDate: new Date(),
@@ -454,7 +455,10 @@ export default function CSVPostUpload({
               lastModified: undefined,
             }, { owner: accountGroup._owner });
             variantsRecord[platform] = platformVariant;
+            console.log(`✅ Created variant for platform: ${platform}`);
           }
+          
+          console.log(`📋 Post variants created:`, Object.keys(variantsRecord));
 
           // Create the post
           const newPost = Post.create({

@@ -94,6 +94,12 @@ export default function AccountGroupPage() {
 	const jazzAccountGroup = me?.root?.accountGroups?.find((group: any, index: number) => {
 		if (!group) return false;
 		
+		console.log('🔍 Checking Jazz account group:', {
+			groupId: group.id,
+			targetId: accountGroupId,
+			matches: group.id === accountGroupId
+		});
+		
 		if (group.id === accountGroupId) return true;
 		if (accountGroupId === 'demo') return index === 0;
 		
@@ -108,6 +114,16 @@ export default function AccountGroupPage() {
 		}
 		
 		return false;
+	});
+	
+	console.log('🔍 Jazz Account Group Loading Debug:', {
+		hasMe: !!me,
+		hasRoot: !!me?.root,
+		hasAccountGroups: !!me?.root?.accountGroups,
+		accountGroupsLength: me?.root?.accountGroups?.length || 0,
+		targetAccountGroupId: accountGroupId,
+		foundJazzAccountGroup: !!jazzAccountGroup,
+		jazzAccountGroupId: jazzAccountGroup?.id
 	});
 	
 	const accountGroup = legacyAccountGroup || jazzAccountGroup;
@@ -329,6 +345,12 @@ export default function AccountGroupPage() {
 							<Button 
 								onClick={() => {
 									console.log('📁 CSV Upload button clicked');
+									console.log('🔍 Jazz Account Group at click:', {
+										hasJazzAccountGroup: !!jazzAccountGroup,
+										jazzAccountGroupId: jazzAccountGroup?.id,
+										hasOwner: !!(jazzAccountGroup?._owner),
+										hasPosts: !!(jazzAccountGroup?.posts)
+									});
 									setShowCSVUpload(true);
 								}} 
 								intent="secondary" 
@@ -336,7 +358,7 @@ export default function AccountGroupPage() {
 								className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
 							>
 								<Upload className="w-4 h-4 mr-2" />
-								Bulk Upload
+								Bulk Upload {!jazzAccountGroup && '(Debug)'}
 							</Button>
 							<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
 								<Plus className="w-4 h-4 mr-2" />
@@ -1082,6 +1104,7 @@ export default function AccountGroupPage() {
 				isOpen={showCSVUpload}
 				onOpenChange={setShowCSVUpload}
 				accountGroupId={accountGroup.id}
+				accountGroup={jazzAccountGroup || null}
 				onUploadComplete={handleCSVUploadComplete}
 			/>
 
