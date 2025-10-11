@@ -350,6 +350,14 @@ export default function CSVPostUpload({
       console.log('  - Valid posts:', validPosts.length);
       console.log('  - Posts with errors:', parsedPosts.length - validPosts.length);
       console.log('📦 Valid posts being sent:', validPosts);
+      console.log('🔍 Account Group Debug:', {
+        accountGroupId,
+        hasAccountGroup: !!accountGroup,
+        accountGroupType: typeof accountGroup,
+        hasOwner: !!(accountGroup?._owner),
+        hasPosts: !!(accountGroup?.posts),
+        postsType: typeof accountGroup?.posts
+      });
       
       if (validPosts.length === 0) {
         throw new Error('No valid posts found in CSV');
@@ -369,8 +377,16 @@ export default function CSVPostUpload({
         errors: [] as string[]
       };
 
-      if (!accountGroup || !accountGroup.posts) {
+      if (!accountGroup) {
         throw new Error('Account group not available for post creation');
+      }
+
+      // Ensure posts array exists
+      if (!accountGroup.posts) {
+        console.log('🔧 Creating posts array for account group...');
+        const { co } = await import('jazz-tools');
+        const { Post } = await import('@/app/schema');
+        accountGroup.posts = co.list(Post).create([], { owner: accountGroup._owner });
       }
 
       const { co, z } = await import('jazz-tools');
