@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
 			publishingChannels,
 			shopifyCredentials: shopifyCredentials ? 'present' : 'missing'
 		});
+	
 
 		if (!productId || !shopifyCredentials) {
 			return NextResponse.json(

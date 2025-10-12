@@ -197,11 +197,22 @@ export async function POST(request: NextRequest) {
 		let externalStoreResult = null;
 		if (externalStore && externalStore.isConfigured) {
 			try {
+				console.log('🛍️ EXTERNAL STORE IMAGE DEBUG:');
+				console.log('📷 Original imageUrls:', imageUrls);
+				console.log('📷 Uploaded Prodigi images:', uploadedImages);
+				
+				// Use the uploaded Prodigi asset URLs for the store, not the original URLs
+				const storeImageUrls = uploadedImages.length > 0 
+					? uploadedImages.map(img => img.url || img.downloadUrl).filter(Boolean)
+					: (imageUrls || []);
+				
+				console.log('🛍️ Using store image URLs:', storeImageUrls);
+
 				const storeProductData = {
 					name: productDesign.name,
 					description: productDesign.description,
 					price: retailPrice,
-					images: (imageUrls || []).map((url: string, index: number) => ({
+					images: storeImageUrls.map((url: string, index: number) => ({
 						url: url,
 						alt: `${productDesign.name} - Image ${index + 1}`
 					})),

@@ -58,6 +58,14 @@ export async function POST(request: NextRequest) {
 				createEndpoint = `${baseUrl}/admin/api/2023-10/products.json`;
 				headers['X-Shopify-Access-Token'] = apiKey;
 				
+				console.log('🖼️ SHOPIFY IMAGE DEBUG:');
+				console.log('📦 Full productData:', JSON.stringify(productData, null, 2));
+				console.log('🖼️ productData.images:', productData.images);
+				console.log('🖼️ Mapped images for Shopify:', productData.images?.map((img: any) => ({
+					src: img.url,
+					alt: img.alt || productData.name
+				})));
+
 				payload = {
 					product: {
 						title: productData.name,
