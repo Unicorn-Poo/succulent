@@ -168,6 +168,8 @@ export function logTwitterDebug(
     needsThreading?: boolean;
     twitterOptions?: any;
     scheduledDate?: string;
+    originalPlatforms?: string[];
+    willIncludeTwitter?: boolean;
   }
 ) {
   logAyrshareOperation({

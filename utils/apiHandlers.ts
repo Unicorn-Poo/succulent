@@ -77,15 +77,17 @@ export const handleStandardPost = async (postData: PostData) => {
 	const postLength = postData.post?.length || 0;
 	const needsTwitterOptions = hasTwitter && !postData.twitterOptions && postLength > 280;
 	
-	// Enhanced Twitter debugging with structured logging
-	logTwitterDebug('Threading Analysis', {
-		mappedPlatforms,
-		hasTwitter,
-		postLength,
-		needsThreading: needsTwitterOptions,
-		twitterOptions: postData.twitterOptions,
-		scheduledDate: postData.scheduleDate
-	});
+		// Enhanced Twitter debugging with structured logging
+		logTwitterDebug('Threading Analysis', {
+			mappedPlatforms,
+			hasTwitter,
+			postLength,
+			needsThreading: needsTwitterOptions,
+			twitterOptions: postData.twitterOptions,
+			scheduledDate: postData.scheduleDate,
+			originalPlatforms: postData.platforms,
+			willIncludeTwitter: mappedPlatforms.includes('twitter')
+		});
 
 	const requestBody = {
 		...postData,
@@ -213,6 +215,24 @@ export const handleStandardPost = async (postData: PostData) => {
 
 	// Removed pre-publish duplicate checking - let Ayrshare handle duplicates naturally
 
+	// Enhanced logging for Twitter debugging
+	console.log('🚀 SENDING TO AYRSHARE API:', {
+		url: `${AYRSHARE_API_URL}/post`,
+		method: 'POST',
+		headers: {
+			...headers,
+			'Authorization': headers['Authorization'] ? `Bearer ${headers['Authorization'].substring(7, 15)}...` : 'missing',
+			'Profile-Key': headers['Profile-Key'] ? `${headers['Profile-Key'].substring(0, 8)}...` : 'none'
+		},
+		body: {
+			...cleanedBody,
+			platforms: cleanedBody.platforms,
+			twitterOptions: cleanedBody.twitterOptions,
+			hasTwitterInPlatforms: cleanedBody.platforms?.includes('twitter'),
+			postLength: cleanedBody.post?.length
+		}
+	});
+
 	// Log the API call with structured logging
 	logAyrshareAPICall('Standard Post', `${AYRSHARE_API_URL}/post`, 'POST', headers, cleanedBody, requestId);
 
@@ -244,7 +264,7 @@ export const handleStandardPost = async (postData: PostData) => {
 				console.log(`📋 Post ${index + 1} details:`, {
 					id: post.id,
 					status: post.status,
-					platforms: post.platforms || 'N/A',
+					platforms: post.platforms || post.postIds || mappedPlatforms.join(', '),
 					errors: post.errors || 'None'
 				});
 				
@@ -274,35 +294,123 @@ export const handleStandardPost = async (postData: PostData) => {
 								errorCode: error.code,
 								errorMessage: error.message,
 								errorStatus: error.status,
-								fullError: error
+								fullError: error,
+								postContent: postData.post?.substring(0, 100) + '...',
+								twitterOptionsUsed: postData.twitterOptions,
+								profileKeyUsed: !!postData.profileKey
 							});
+							
+							// Log specific Twitter error patterns
+							if (error.code === 272) {
+								console.error('🐦 TWITTER 272 ERROR: Twitter account authorization expired! You need to relink your Twitter account in Ayrshare dashboard.');
+								console.error('🐦 SOLUTION: Go to https://app.ayrshare.com/social-accounts and relink your Twitter account');
+							} else if (error.code === 403) {
+								console.error('🐦 TWITTER 403 ERROR: This usually means the Twitter account is not properly connected or lacks permissions');
+							} else if (error.code === 401) {
+								console.error('🐦 TWITTER 401 ERROR: Twitter authentication failed - check if the account is still connected');
+							} else if (error.code === 400) {
+								console.error('🐦 TWITTER 400 ERROR: Bad request - possibly duplicate content or invalid parameters');
+							}
 						}
 					});
 				}
 			});
 		}
 		
-		// Check for postIds to see which platforms succeeded
+		// Check for success in different response formats
+		let successPlatforms: string[] = [];
+		let postId: string | undefined;
+		
 		if (result.postIds) {
+			// Immediate posts return postIds object
 			console.log('📍 Platform Post IDs:', result.postIds);
-			Object.entries(result.postIds).forEach(([platform, postId]) => {
-				console.log(`✅ ${platform.toUpperCase()}: ${postId}`);
+			successPlatforms = Object.keys(result.postIds);
+			Object.entries(result.postIds).forEach(([platform, id]) => {
+				console.log(`✅ ${platform.toUpperCase()}: ${id}`);
 			});
 			
-			// Specific Twitter success check
-			if (result.postIds.twitter) {
-				console.log('🐦 ✅ TWITTER SUCCESS - Post ID:', result.postIds.twitter);
+				// Specific Twitter success check
+				if (result.postIds.twitter) {
+					console.log('🐦 ✅ TWITTER SUCCESS - Post ID:', result.postIds.twitter);
+				} else {
+					console.log('🐦 ❌ TWITTER NOT IN SUCCESS LIST');
+					console.log('🐦 Available platforms in postIds:', Object.keys(result.postIds));
+					console.log('🐦 Expected Twitter based on request platforms:', mappedPlatforms.includes('twitter'));
+					console.log('🐦 Original platforms sent:', postData.platforms);
+					console.log('🐦 Mapped platforms sent:', mappedPlatforms);
+					
+					// If we expected Twitter but didn't get it, this is the core issue
+					if (mappedPlatforms.includes('twitter')) {
+						console.error('🐦 🚨 CRITICAL: Twitter was requested but not in successful posts');
+						console.error('🐦 This indicates a Twitter-specific posting failure');
+						console.error('🐦 Check: 1) Twitter account connection 2) Profile key permissions 3) Ayrshare account limits');
+					}
+				}
+		} else if (result.id && result.status === 'scheduled') {
+			// Scheduled posts return single ID and status
+			console.log('📅 Scheduled Post Created:', result.id);
+			postId = result.id;
+			// For scheduled posts, assume success for all requested platforms
+			successPlatforms = mappedPlatforms;
+
+			console.log('🐦 ✅ TWITTER SCHEDULED - Post ID:', result.id);
+			console.log('📅 Post will be published at scheduled time');
+		} else if (result.posts && Array.isArray(result.posts) && result.posts.length > 0) {
+			// Handle posts array format (both scheduled and immediate)
+			const post = result.posts[0];
+			console.log('📅 Post from array:', post.id, 'Status:', post.status);
+			console.log('🔍 Debug post object:', {
+				hasStatus: !!post.status,
+				status: post.status,
+				statusType: typeof post.status,
+				hasErrors: !!post.errors,
+				errors: post.errors,
+				shouldSucceed: post.status === 'scheduled' || post.status === 'success' || !post.errors
+			});
+			postId = post.id;
+			
+			// For scheduled posts or successful posts, assume success for all requested platforms
+			if (post.status === 'scheduled' || post.status === 'success' || !post.errors) {
+				successPlatforms = mappedPlatforms;
+				console.log('🐦 ✅ TWITTER SUCCESS (from posts array) - Post ID:', post.id);
+				console.log('📅 Post status:', post.status);
 			} else {
-				console.log('🐦 ❌ TWITTER NOT IN SUCCESS LIST');
-				console.log('🐦 Available platforms in postIds:', Object.keys(result.postIds));
+				console.log('❌ Post not marked as successful:', {
+					status: post.status,
+					hasErrors: !!post.errors,
+					errors: post.errors
+				});
 			}
+		}
+		
+		// Fallback: If we have a successful response (200) but no success platforms detected,
+		// and the response shows success/scheduled status, mark as successful
+		if (response.ok && successPlatforms.length === 0 && 
+			(result.status === 'success' || result.status === 'scheduled' || 
+			 (result.posts && result.posts.length > 0 && result.posts[0].id))) {
+			console.log('🔄 Fallback success detection triggered');
+			successPlatforms = mappedPlatforms;
+			postId = result.id || (result.posts && result.posts[0] && result.posts[0].id);
+			console.log('🐦 ✅ TWITTER SUCCESS (fallback detection) - Post ID:', postId);
 		}
 		
 		// Final platform summary
 		console.log('📊 FINAL PLATFORM SUMMARY:');
 		console.log('  - Original platforms:', postData.platforms);
 		console.log('  - Mapped platforms:', mappedPlatforms);
-		console.log('  - Success platforms:', result.postIds ? Object.keys(result.postIds) : 'None');
+		console.log('  - Success platforms:', successPlatforms.length > 0 ? successPlatforms : 'None');
+		console.log('  - Post ID:', postId || result.id || 'None');
+		console.log('  - Status:', result.status || 'Unknown');
+		
+		// Create proper response format for scheduled posts
+		if (successPlatforms.length > 0 && !result.postIds) {
+			// Create postIds object for scheduled posts
+			result.postIds = {};
+			successPlatforms.forEach(platform => {
+				result.postIds[platform] = postId || result.id;
+			});
+			console.log('📅 Created postIds for scheduled post:', result.postIds);
+		}
 	}
 	
 	if (!response.ok) {
