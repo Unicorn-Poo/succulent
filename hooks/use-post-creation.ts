@@ -244,7 +244,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		}
 		
 		const filtered = allAccounts.filter(
-			([key]) => !selectedPlatforms.includes(key)
+			([key, account]) => {
+				// Remove 'base' from selectedPlatforms for comparison
+				const platformsToMatch = selectedPlatforms.filter(p => p !== 'base');
+				const keyMatch = platformsToMatch.includes(key);
+				const platformMatch = platformsToMatch.includes(account.platform);
+				console.log(`🔍 Account ${key}:${account.platform} - keyMatch: ${keyMatch}, platformMatch: ${platformMatch}, platformsToMatch:`, platformsToMatch);
+				return keyMatch || platformMatch;
+			}
 		);
 		
 		console.log('🔍 All accounts:', allAccounts.map(([key, account]) => `${key}:${account.platform}`));
