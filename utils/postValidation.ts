@@ -94,12 +94,12 @@ export const validatePostContent = (content: string, platform: string) => {
 		errors.push('Post content cannot be empty');
 	}
 	
-	// Platform-specific validations can be added here
+	// Platform-specific validations based on current platform limits
 	switch (platform) {
 		case 'x':
 		case 'twitter':
 			if (content.length > 280) {
-				errors.push('Twitter posts cannot exceed 280 characters');
+				errors.push('Twitter/X posts cannot exceed 280 characters');
 			}
 			break;
 		case 'instagram':
@@ -107,7 +107,57 @@ export const validatePostContent = (content: string, platform: string) => {
 				errors.push('Instagram posts cannot exceed 2200 characters');
 			}
 			break;
-		// Add more platform-specific validations as needed
+		case 'bluesky':
+			if (content.length > 300) {
+				errors.push('Bluesky posts cannot exceed 300 characters');
+			}
+			break;
+		case 'facebook':
+			if (content.length > 63206) {
+				errors.push('Facebook posts cannot exceed 63,206 characters');
+			}
+			break;
+		case 'linkedin':
+			if (content.length > 3000) {
+				errors.push('LinkedIn posts cannot exceed 3,000 characters');
+			}
+			break;
+		case 'tiktok':
+			if (content.length > 150) {
+				errors.push('TikTok posts cannot exceed 150 characters');
+			}
+			break;
+		case 'pinterest':
+			if (content.length > 500) {
+				errors.push('Pinterest posts cannot exceed 500 characters');
+			}
+			break;
+		case 'reddit':
+			if (content.length > 40000) {
+				errors.push('Reddit posts cannot exceed 40,000 characters');
+			}
+			break;
+		case 'telegram':
+			if (content.length > 4096) {
+				errors.push('Telegram posts cannot exceed 4,096 characters');
+			}
+			break;
+		case 'threads':
+			if (content.length > 500) {
+				errors.push('Threads posts cannot exceed 500 characters');
+			}
+			break;
+		case 'youtube':
+			if (content.length > 5000) {
+				errors.push('YouTube posts cannot exceed 5,000 characters');
+			}
+			break;
+		case 'google':
+		case 'gmb':
+			if (content.length > 1500) {
+				errors.push('Google My Business posts cannot exceed 1,500 characters');
+			}
+			break;
 	}
 	
 	return {
