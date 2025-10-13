@@ -5,7 +5,7 @@ import { accountGroups } from "@/app/page";
 import PostCreationComponent from "@/components/organisms/post-creation";
 import { PostFullyLoaded } from "@/app/schema";
 import { Button } from "@radix-ui/themes";
-import { Home, Users } from "lucide-react";
+import { Home, Users, ArrowLeft } from "lucide-react";
 import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 
@@ -132,6 +132,18 @@ export default function PostPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Button 
+          variant="soft" 
+          onClick={() => router.push(`/account-group/${accountGroupId}`)}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to {accountGroup.name || "Account Group"}
+        </Button>
+      </div>
+      
       <PostCreationComponent 
         post={post as unknown as PostFullyLoaded} 
         accountGroup={accountGroup as any}

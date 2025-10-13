@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       
       try {
         // Create individual post using existing API
-        let postData = {
+        const postData = {
           accountGroupId,
           content: post.content,
           title: post.title,
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
             alt: `Image for ${post.title}`
           })),
           publishImmediately: !post.scheduledDate, // Publish immediately if not scheduled
+          // IMPORTANT: Scheduled posts should also be published to Ayrshare (with schedule)
           saveAsDraft: false
         };
 
@@ -117,7 +118,6 @@ export async function POST(request: NextRequest) {
         // Option 2: Create Jazz post AND publish to Ayrshare
         // For bulk uploads, let's do both to match user expectations
         
-        let jazzPost = null;
         let publishResults = null;
         
         // Step 1: Create Jazz post
@@ -160,7 +160,14 @@ export async function POST(request: NextRequest) {
           continue; // Skip to next post
         }
         
-        // Step 2: Publish to Ayrshare (if not a draft)
+        // Step 2: Publish to Ayrshare (both immediate AND scheduled posts)
+        console.log(`🔍 Bulk Post ${i + 1} Publishing Check:`, {
+          publishImmediately: postData.publishImmediately,
+          hasScheduledDate: !!postData.scheduledDate,
+          scheduledDate: postData.scheduledDate,
+          willPublish: postData.publishImmediately || !!postData.scheduledDate
+        });
+        
         if (postData.publishImmediately || postData.scheduledDate) {
           try {
             logAyrshareOperation({
@@ -260,10 +267,20 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // Count as success if Jazz post was created
-        results.created++;
-        if (post.scheduledDate) {
-          results.scheduled++;
+        // Count as success only if both Jazz post was created AND publishing succeeded (if attempted)
+        if (postData.publishImmediately || postData.scheduledDate) {
+          // Publishing was attempted - only count as success if it worked
+          if (publishResults) {
+            results.created++;
+            if (post.scheduledDate) {
+              results.scheduled++;
+            }
+          } else {
+            results.failed++;
+          }
+        } else {
+          // Draft post - count as created since no publishing was attempted
+          results.created++;
         }
         
         results.createdPosts.push({
@@ -273,6 +290,15 @@ export async function POST(request: NextRequest) {
           scheduled: !!post.scheduledDate,
           published: !!publishResults,
           ayrsharePostIds: publishResults?.postIds || null
+        });
+
+        console.log(`📊 Bulk Post ${i + 1} Final Status:`, {
+          title: post.title,
+          jazzCreated: true,
+          publishingAttempted: !!(postData.publishImmediately || postData.scheduledDate),
+          publishingSucceeded: !!publishResults,
+          countedAsCreated: !!(publishResults || (!postData.publishImmediately && !postData.scheduledDate)),
+          countedAsScheduled: !!(post.scheduledDate && publishResults)
         });
 
         
