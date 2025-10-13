@@ -364,162 +364,43 @@ export default function CSVPostUpload({
         throw new Error('No valid posts found in CSV');
       }
 
-      const requestBody = {
-        accountGroupId,
-        posts: validPosts
-      };
+      console.log('🚨 CSV Upload: Calling bulk API for Ayrshare publishing');
+
+      // Call the bulk API route for proper Jazz creation AND Ayrshare publishing
+      const response = await fetch('/api/posts/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountGroupId,
+          posts: validPosts.map(post => ({
+            title: post.title,
+            content: post.content,
+            platforms: post.platforms,
+            scheduledDate: post.scheduledDate,
+            mediaUrls: post.mediaUrls || []
+          }))
+        })
+      });
+
+      const apiResult = await response.json();
       
-      // Create posts directly using Jazz (no API needed for UI)
+      if (!response.ok) {
+        throw new Error(apiResult.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log('✅ Bulk API response:', apiResult);
+
       const results = {
-        success: true,
-        created: 0,
-        scheduled: 0,
-        failed: 0,
-        errors: [] as string[]
+        success: apiResult.success,
+        created: apiResult.created || 0,
+        scheduled: apiResult.scheduled || 0,
+        failed: apiResult.failed || 0,
+        errors: apiResult.errors || []
       };
 
-      if (!accountGroup) {
-        throw new Error('Account group not available for post creation');
-      }
-
-      // Ensure posts array exists
-      if (!accountGroup.posts) {
-        console.log('🔧 Creating posts array for account group...');
-        const { co } = await import('jazz-tools');
-        const { Post } = await import('@/app/schema');
-        accountGroup.posts = co.list(Post).create([], { owner: accountGroup._owner });
-      }
-
-      const { co, z } = await import('jazz-tools');
-      const { Post, PostVariant, MediaItem, URLImageMedia, ReplyTo } = await import('@/app/schema');
-
-      console.log(`🎯 Creating ${validPosts.length} Jazz posts directly...`);
-
-      // Create each post
-      for (let i = 0; i < validPosts.length; i++) {
-        const post = validPosts[i];
-        
-        try {
-          console.log(`🎯 Creating Jazz post ${i + 1}: ${post.title}`);
-          
-          // Create the collaborative objects
-          const titleText = co.plainText().create(post.title, { owner: accountGroup._owner });
-          const baseText = co.plainText().create(post.content, { owner: accountGroup._owner });
-          const mediaList = co.list(MediaItem).create([], { owner: accountGroup._owner });
-          
-          // Add media if provided
-          if (post.mediaUrls && post.mediaUrls.length > 0) {
-            for (const mediaUrl of post.mediaUrls) {
-              const altText = co.plainText().create(`Image for ${post.title}`, { owner: accountGroup._owner });
-              const urlImageMedia = URLImageMedia.create({
-                type: 'url-image',
-                url: mediaUrl,
-                alt: altText,
-                filename: `bulk-upload-${Date.now()}.jpg`
-              }, { owner: accountGroup._owner });
-              mediaList.push(urlImageMedia);
-            }
-          }
-          
-          const replyToObj = ReplyTo.create({}, { owner: accountGroup._owner });
-          
-          // Create the base post variant
-          const baseVariant = PostVariant.create({
-            text: baseText,
-            postDate: new Date(),
-            media: mediaList,
-            replyTo: replyToObj,
-            status: post.scheduledDate ? "scheduled" : "draft",
-            scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
-            publishedAt: undefined,
-            edited: false,
-            lastModified: undefined,
-          }, { owner: accountGroup._owner });
-
-          // Create the variants record with platform-specific variants (like the working code)
-          const variantsRecord = co.record(z.string(), PostVariant).create({
-            base: baseVariant
-          }, { owner: accountGroup._owner });
-
-          // Create platform variants (this is what determines which platforms the post appears on)
-          for (const platform of post.platforms) {
-            console.log(`🎯 Creating variant for platform: ${platform}`);
-            
-            // Check if platform account exists, create if missing
-            const existingAccounts = accountGroup.accounts ? Array.from(accountGroup.accounts) : [];
-            const platformAccountExists = existingAccounts.some((acc: any) => acc?.platform === platform);
-            
-            if (!platformAccountExists && accountGroup.accounts) {
-              console.log(`📱 Creating placeholder account for platform: ${platform}`);
-              const { PlatformAccount, AnalyticsDataPoint } = await import('@/app/schema');
-              
-              const newAccount = PlatformAccount.create({
-                name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Account`,
-                platform: platform as any,
-                apiUrl: undefined,
-                profileKey: undefined,
-                isLinked: false,
-                linkedAt: undefined,
-                username: undefined,
-                displayName: undefined,
-                avatar: undefined,
-                url: undefined,
-                status: 'pending',
-                lastError: undefined,
-                historicalAnalytics: co.list(AnalyticsDataPoint).create([], { owner: accountGroup._owner }),
-              }, { owner: accountGroup._owner });
-              
-              accountGroup.accounts.push(newAccount);
-              console.log(`✅ Created placeholder account for ${platform}`);
-            }
-            
-            const platformVariant = PostVariant.create({
-              text: baseText,
-              postDate: new Date(),
-              media: mediaList,
-              replyTo: replyToObj,
-              status: post.scheduledDate ? "scheduled" : "draft",
-              scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
-              publishedAt: undefined,
-              edited: false,
-              lastModified: undefined,
-            }, { owner: accountGroup._owner });
-            variantsRecord[platform] = platformVariant;
-            console.log(`✅ Created variant for platform: ${platform}`);
-          }
-          
-          console.log(`📋 Post variants created:`, Object.keys(variantsRecord));
-
-          // Create the post
-          const newPost = Post.create({
-            title: titleText,
-            variants: variantsRecord,
-          }, { owner: accountGroup._owner });
-
-          // Add the post to the account group
-          accountGroup.posts.push(newPost);
-          
-          results.created++;
-          if (post.scheduledDate) {
-            results.scheduled++;
-          }
-          
-          console.log(`✅ Post ${i + 1} created successfully: ${newPost.id}`);
-          console.log(`🔍 Created post structure:`, {
-            id: newPost.id,
-            title: newPost.title?.toString(),
-            variantKeys: Object.keys(newPost.variants || {}),
-            platforms: post.platforms
-          });
-          
-        } catch (postError) {
-          console.error(`❌ Failed to create post ${i + 1}:`, postError);
-          results.failed++;
-          results.errors.push(`Post "${post.title}": ${postError instanceof Error ? postError.message : 'Creation failed'}`);
-        }
-      }
-
-      console.log('📊 Final bulk upload results:', results);
+      console.log('📊 CSV upload completed via bulk API:', results);
       
       setUploadResults(results);
       onUploadComplete(results);
