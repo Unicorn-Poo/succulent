@@ -174,20 +174,36 @@ export async function POST(request: NextRequest) {
             
             const replyToObj = ReplyTo.create({}, { owner: accountGroup._owner });
             
-            // Create variants for each platform
-            const variantsRecord = co.record(z.string(), PostVariant).create({}, { owner: accountGroup._owner });
+            // Create the base variant first (like regular post creation)
+            const baseVariant = PostVariant.create({
+              text: baseText,
+              postDate: new Date(),
+              media: mediaList,
+              replyTo: replyToObj,
+              status: post.scheduledDate ? "scheduled" : "draft",
+              scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
+              publishedAt: undefined,
+              edited: false,
+              lastModified: undefined,
+            }, { owner: accountGroup._owner });
             
+            // Create variants record with base variant
+            const variantsRecord = co.record(z.string(), PostVariant).create({ 
+              base: baseVariant 
+            }, { owner: accountGroup._owner });
+            
+            // Create platform-specific variants that copy from base
             for (const platform of post.platforms) {
               const platformVariant = PostVariant.create({
-                text: baseText,
-                postDate: new Date(),
-                media: mediaList,
-                replyTo: replyToObj,
-                status: post.scheduledDate ? "scheduled" : "draft",
-                scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
-                publishedAt: undefined,
-                edited: false,
-                lastModified: undefined,
+                text: baseVariant.text,
+                postDate: baseVariant.postDate,
+                media: mediaList, // Use the same media list
+                replyTo: baseVariant.replyTo,
+                status: baseVariant.status,
+                scheduledFor: baseVariant.scheduledFor,
+                publishedAt: baseVariant.publishedAt,
+                edited: baseVariant.edited,
+                lastModified: baseVariant.lastModified,
               }, { owner: accountGroup._owner });
               variantsRecord[platform] = platformVariant;
             }
