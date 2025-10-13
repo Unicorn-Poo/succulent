@@ -288,6 +288,11 @@ export async function POST(request: NextRequest) {
             // Filter out 'base' platform (like regular post creation does)
             const validPlatforms = post.platforms.filter((p: string) => p !== 'base');
             
+            // Validate we have platforms after filtering
+            if (validPlatforms.length === 0) {
+              throw new Error(`No valid platforms found after filtering 'base' from: ${post.platforms.join(', ')}`);
+            }
+            
             // Prepare data for Ayrshare (like regular post creation)
             const ayrsharePostData: PostData = {
               post: post.content,
@@ -394,12 +399,22 @@ export async function POST(request: NextRequest) {
           } catch (publishError) {
             const errorMessage = publishError instanceof Error ? publishError.message : 'Unknown error';
             
+            console.error(`🚨 CRITICAL: Publishing failed for post ${i + 1}:`, {
+              title: post.title,
+              error: errorMessage,
+              originalPlatforms: post.platforms,
+              fullError: publishError
+            });
+            
             logAyrshareOperation({
               timestamp: new Date().toISOString(),
               operation: `Bulk Post ${i + 1} - Publishing Failed`,
               status: 'error',
               error: errorMessage,
-              data: { title: post.title, platforms: post.platforms },
+              data: { 
+                title: post.title, 
+                originalPlatforms: post.platforms
+              },
               requestId: batchId
             });
             
