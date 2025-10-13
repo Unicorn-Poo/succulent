@@ -285,10 +285,13 @@ export async function POST(request: NextRequest) {
               console.log(`🆓 Bulk Post ${i + 1}: Using free account mode - no profile key needed`);
             }
             
+            // Filter out 'base' platform (like regular post creation does)
+            const validPlatforms = post.platforms.filter((p: string) => p !== 'base');
+            
             // Prepare data for Ayrshare (like regular post creation)
             const ayrsharePostData: PostData = {
               post: post.content,
-              platforms: post.platforms,
+              platforms: validPlatforms,
               mediaUrls: post.mediaUrls || [],
               scheduleDate: post.scheduledDate,
               ...(isBusinessPlanMode() && profileKey ? { profileKey } : {})
@@ -299,6 +302,8 @@ export async function POST(request: NextRequest) {
               profileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
               businessPlanMode: isBusinessPlanMode(),
               willUseBusinessPlan: !!(profileKey && isBusinessPlanMode()),
+              originalPlatforms: post.platforms,
+              filteredPlatforms: validPlatforms,
               finalPostData: {
                 hasProfileKey: !!ayrsharePostData.profileKey,
                 platforms: ayrsharePostData.platforms,
@@ -314,7 +319,9 @@ export async function POST(request: NextRequest) {
               hasScheduleDate: !!ayrsharePostData.scheduleDate,
               scheduleDate: ayrsharePostData.scheduleDate,
               hasProfileKey: !!ayrsharePostData.profileKey,
-              contentLength: ayrsharePostData.post.length
+              contentLength: ayrsharePostData.post.length,
+              mediaCount: ayrsharePostData.mediaUrls?.length || 0,
+              fullPostData: JSON.stringify(ayrsharePostData, null, 2)
             });
             
             publishResults = await handleStandardPost(ayrsharePostData);
@@ -323,7 +330,9 @@ export async function POST(request: NextRequest) {
               success: !!publishResults,
               postId: publishResults?.id,
               platformIds: publishResults?.postIds,
-              error: publishResults?.error
+              status: publishResults?.status,
+              error: publishResults?.error,
+              fullResponse: JSON.stringify(publishResults, null, 2)
             });
             
             // Update Jazz post status after successful publishing
