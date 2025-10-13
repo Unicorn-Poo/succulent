@@ -254,28 +254,40 @@ export async function POST(request: NextRequest) {
               requestId: batchId
             });
             
-            // Get the profile key from the loaded account group
-            const profileKey = accountGroup?.ayrshareProfileKey;
-            if (profileKey) {
-              console.log(`🔑 Bulk Post ${i + 1}: Using profile key: ${profileKey.substring(0, 8)}...`);
+            const { isBusinessPlanMode } = await import('@/utils/ayrshareIntegration');
+            
+            // Get the profile key from the loaded account group (only for business plan mode)
+            let profileKey = null;
+            if (isBusinessPlanMode()) {
+              profileKey = accountGroup?.ayrshareProfileKey;
+              if (profileKey) {
+                console.log(`🔑 Bulk Post ${i + 1}: Using profile key: ${profileKey.substring(0, 8)}...`);
+              } else {
+                console.warn(`⚠️ Bulk Post ${i + 1}: No Ayrshare profile key found for account group: ${accountGroupId}`);
+              }
             } else {
-              console.warn(`⚠️ Bulk Post ${i + 1}: No Ayrshare profile key found for account group: ${accountGroupId}`);
+              console.log(`🆓 Bulk Post ${i + 1}: Using free account mode - no profile key needed`);
             }
             
-            // Prepare data for Ayrshare
+            // Prepare data for Ayrshare (like regular post creation)
             const ayrsharePostData: PostData = {
               post: post.content,
               platforms: post.platforms,
               mediaUrls: post.mediaUrls || [],
               scheduleDate: post.scheduledDate,
-              profileKey: profileKey // FIXED: Now using the correct profile key
+              ...(isBusinessPlanMode() && profileKey ? { profileKey } : {})
             };
 
-            const { isBusinessPlanMode } = await import('@/utils/ayrshareIntegration');
             console.log(`🔑 Bulk Post ${i + 1} Profile Key Debug:`, {
               accountGroupId,
               profileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
-              willUseBusinessPlan: !!(profileKey && isBusinessPlanMode())
+              businessPlanMode: isBusinessPlanMode(),
+              willUseBusinessPlan: !!(profileKey && isBusinessPlanMode()),
+              finalPostData: {
+                hasProfileKey: !!ayrsharePostData.profileKey,
+                platforms: ayrsharePostData.platforms,
+                hasScheduleDate: !!ayrsharePostData.scheduleDate
+              }
             });
             
             // Import and use the standard post handler
