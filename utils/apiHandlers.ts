@@ -109,6 +109,10 @@ export const handleStandardPost = async (postData: PostData) => {
 			if (key === 'twitterOptions' && value && typeof value === 'object') {
 				return true;
 			}
+			// Filter out empty mediaUrls arrays - Ayrshare doesn't like empty arrays
+			if (key === 'mediaUrls' && Array.isArray(value) && value.length === 0) {
+				return false;
+			}
 			// Filter out other undefined values, including undefined twitterOptions
 			return value !== undefined;
 		})
