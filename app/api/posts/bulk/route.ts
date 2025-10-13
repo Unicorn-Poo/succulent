@@ -60,6 +60,31 @@ export async function POST(request: NextRequest) {
       totalPosts: posts.length 
     });
 
+    // Load the account group once at the beginning
+    let accountGroup = null;
+    try {
+      const { jazzServerWorker } = await import('@/utils/jazzServer');
+      const { AccountGroup } = await import('@/app/schema');
+      const worker = await jazzServerWorker;
+      
+      if (worker) {
+        accountGroup = await AccountGroup.load(accountGroupId, { 
+          loadAs: worker,
+          resolve: {
+            posts: { $each: true },
+            accounts: { $each: true }
+          }
+        });
+        console.log(`🔄 Loaded account group: ${accountGroup?.id}, has ${accountGroup?.posts?.length || 0} existing posts`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load account group:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to load account group' },
+        { status: 500 }
+      );
+    }
+
     const results = {
       success: true,
       created: 0,
@@ -120,30 +145,63 @@ export async function POST(request: NextRequest) {
         
         let publishResults = null;
         
-        // Step 1: Create Jazz post
+        // Step 1: Create Jazz post (using existing CSV upload logic)
         try {
-          const { jazzServerWorker } = await import('@/utils/jazzServer');
-          const { MyAppAccount, Post, PostVariant, MediaItem, URLImageMedia, ReplyTo } = await import('@/app/schema');
-          const { co } = await import('jazz-tools');
-          
-          logAyrshareOperation({
-            timestamp: new Date().toISOString(),
-            operation: `Bulk Post ${i + 1} - Jazz Creation`,
-            status: 'started',
-            data: { title: post.title },
-            requestId: batchId
-          });
-          
-          // Create simplified Jazz post for bulk upload
-          // TODO: Implement full Jazz post creation logic similar to API route
-          
-          logAyrshareOperation({
-            timestamp: new Date().toISOString(),
-            operation: `Bulk Post ${i + 1} - Jazz Created`,
-            status: 'success',
-            data: { title: post.title, postId },
-            requestId: batchId
-          });
+          if (accountGroup) {
+            // Use the CSV upload logic that actually works
+            const { co, z } = await import('jazz-tools');
+            const { Post, PostVariant, MediaItem, URLImageMedia, ReplyTo } = await import('@/app/schema');
+
+            // Create the collaborative objects
+            const titleText = co.plainText().create(post.title, { owner: accountGroup._owner });
+            const baseText = co.plainText().create(post.content, { owner: accountGroup._owner });
+            const mediaList = co.list(MediaItem).create([], { owner: accountGroup._owner });
+            
+            // Add media if provided
+            if (post.mediaUrls && post.mediaUrls.length > 0) {
+              for (const mediaUrl of post.mediaUrls) {
+                const altText = co.plainText().create(`Image for ${post.title}`, { owner: accountGroup._owner });
+                const urlImageMedia = URLImageMedia.create({
+                  type: 'url-image',
+                  url: mediaUrl,
+                  alt: altText,
+                  filename: `bulk-upload-${Date.now()}.jpg`
+                }, { owner: accountGroup._owner });
+                mediaList.push(urlImageMedia);
+              }
+            }
+            
+            const replyToObj = ReplyTo.create({}, { owner: accountGroup._owner });
+            
+            // Create variants for each platform
+            const variantsRecord = co.record(z.string(), PostVariant).create({}, { owner: accountGroup._owner });
+            
+            for (const platform of post.platforms) {
+              const platformVariant = PostVariant.create({
+                text: baseText,
+                postDate: new Date(),
+                media: mediaList,
+                replyTo: replyToObj,
+                status: post.scheduledDate ? "scheduled" : "draft",
+                scheduledFor: post.scheduledDate ? new Date(post.scheduledDate) : undefined,
+                publishedAt: undefined,
+                edited: false,
+                lastModified: undefined,
+              }, { owner: accountGroup._owner });
+              variantsRecord[platform] = platformVariant;
+            }
+
+            // Create the post
+            const newPost = Post.create({
+              title: titleText,
+              variants: variantsRecord,
+            }, { owner: accountGroup._owner });
+
+            // Add the post to the account group
+            accountGroup.posts.push(newPost);
+            
+            console.log(`✅ Jazz post created: ${newPost.id}`);
+          }
           
         } catch (jazzError) {
           logAyrshareOperation({
@@ -168,6 +226,7 @@ export async function POST(request: NextRequest) {
           willPublish: postData.publishImmediately || !!postData.scheduledDate
         });
         
+        // CRITICAL: Always publish scheduled posts to Ayrshare
         if (postData.publishImmediately || postData.scheduledDate) {
           try {
             logAyrshareOperation({
@@ -183,24 +242,12 @@ export async function POST(request: NextRequest) {
               requestId: batchId
             });
             
-            // CRITICAL: Get the account group's profile key to ensure posts go to the right account
-            let profileKey: string | undefined;
-            try {
-              const { jazzServerWorker } = await import('@/utils/jazzServer');
-              const { AccountGroup } = await import('@/app/schema');
-              const worker = await jazzServerWorker;
-              
-              if (worker) {
-                const accountGroup = await AccountGroup.load(accountGroupId, { loadAs: worker });
-                if (accountGroup?.ayrshareProfileKey) {
-                  profileKey = accountGroup.ayrshareProfileKey;
-                  console.log(`🔑 Bulk Post ${i + 1}: Using account group profile key: ${profileKey?.substring(0, 8)}...`);
-                } else {
-                  console.warn(`⚠️ Bulk Post ${i + 1}: No Ayrshare profile key found for account group: ${accountGroupId}`);
-                }
-              }
-            } catch (error) {
-              console.error(`❌ Bulk Post ${i + 1}: Failed to get account group profile key:`, error);
+            // Get the profile key from the loaded account group
+            const profileKey = accountGroup?.ayrshareProfileKey;
+            if (profileKey) {
+              console.log(`🔑 Bulk Post ${i + 1}: Using profile key: ${profileKey.substring(0, 8)}...`);
+            } else {
+              console.warn(`⚠️ Bulk Post ${i + 1}: No Ayrshare profile key found for account group: ${accountGroupId}`);
             }
             
             // Prepare data for Ayrshare
@@ -219,8 +266,11 @@ export async function POST(request: NextRequest) {
               willUseBusinessPlan: !!(profileKey && isBusinessPlanMode())
             });
             
-            // Use the standard post handler (now includes duplicate handling)
+            // Import and use the standard post handler
+            const { handleStandardPost } = await import('@/utils/apiHandlers');
+            console.log(`📤 Publishing to Ayrshare:`, ayrsharePostData);
             publishResults = await handleStandardPost(ayrsharePostData);
+            console.log(`✅ Ayrshare response:`, publishResults);
             
             logAyrshareOperation({
               timestamp: new Date().toISOString(),
