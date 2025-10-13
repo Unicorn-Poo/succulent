@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
         // For bulk uploads, let's do both to match user expectations
         
         let publishResults = null;
+        let createdJazzPost = null;
         
         // Step 1: Create Jazz post (using existing CSV upload logic)
         try {
@@ -199,6 +200,7 @@ export async function POST(request: NextRequest) {
 
             // Add the post to the account group
             accountGroup.posts.push(newPost);
+            createdJazzPost = newPost; // Store reference for later update
             
             console.log(`✅ Jazz post created: ${newPost.id}`);
           }
@@ -227,7 +229,17 @@ export async function POST(request: NextRequest) {
         });
         
         // CRITICAL: Always publish scheduled posts to Ayrshare
-        if (postData.publishImmediately || postData.scheduledDate) {
+        const shouldPublish = postData.publishImmediately || !!postData.scheduledDate;
+        console.log(`🚨 CRITICAL DEBUG - Post ${i + 1}:`, {
+          title: post.title,
+          hasScheduledDate: !!post.scheduledDate,
+          scheduledDate: post.scheduledDate,
+          publishImmediately: postData.publishImmediately,
+          shouldPublish: shouldPublish,
+          willEnterPublishingBlock: shouldPublish
+        });
+        
+        if (shouldPublish) {
           try {
             logAyrshareOperation({
               timestamp: new Date().toISOString(),
@@ -268,9 +280,55 @@ export async function POST(request: NextRequest) {
             
             // Import and use the standard post handler
             const { handleStandardPost } = await import('@/utils/apiHandlers');
-            console.log(`📤 Publishing to Ayrshare:`, ayrsharePostData);
+            console.log(`🚨 CRITICAL: About to call Ayrshare API for post ${i + 1}:`, {
+              title: post.title,
+              platforms: ayrsharePostData.platforms,
+              hasScheduleDate: !!ayrsharePostData.scheduleDate,
+              scheduleDate: ayrsharePostData.scheduleDate,
+              hasProfileKey: !!ayrsharePostData.profileKey,
+              contentLength: ayrsharePostData.post.length
+            });
+            
             publishResults = await handleStandardPost(ayrsharePostData);
-            console.log(`✅ Ayrshare response:`, publishResults);
+            
+            console.log(`🚨 CRITICAL: Ayrshare API response for post ${i + 1}:`, {
+              success: !!publishResults,
+              postId: publishResults?.id,
+              platformIds: publishResults?.postIds,
+              error: publishResults?.error
+            });
+            
+            // Update Jazz post status after successful publishing
+            if (publishResults && createdJazzPost) {
+              try {
+                console.log(`🔄 Updating Jazz post status for: ${post.title}`);
+                
+                if (createdJazzPost.variants) {
+                  // Update all platform variants to reflect published status
+                  for (const [platform, variant] of Object.entries(createdJazzPost.variants)) {
+                    if (variant && post.platforms.includes(platform as any)) {
+                      console.log(`📝 Updating ${platform} variant status to: ${postData.publishImmediately ? 'published' : 'scheduled'}`);
+                      
+                      (variant as any).status = postData.publishImmediately ? 'published' : 'scheduled';
+                      (variant as any).publishedAt = postData.publishImmediately ? new Date() : undefined;
+                      (variant as any).ayrsharePostId = publishResults.id;
+                      
+                      // Add platform-specific post IDs
+                      const platformKey = platform === 'x' ? 'twitter' : platform;
+                      const platformPostId = publishResults.postIds?.[platformKey];
+                      if (platformPostId) {
+                        (variant as any).socialPostUrl = `https://${platform}.com/post/${platformPostId}`;
+                        console.log(`🔗 Added social URL for ${platform}: ${platformPostId}`);
+                      }
+                    }
+                  }
+                  console.log(`✅ Successfully updated Jazz post status for: ${post.title}`);
+                }
+              } catch (updateError) {
+                console.error(`⚠️ Failed to update Jazz post status:`, updateError);
+                // Don't fail the whole operation for this
+              }
+            }
             
             logAyrshareOperation({
               timestamp: new Date().toISOString(),
@@ -315,6 +373,15 @@ export async function POST(request: NextRequest) {
               results.errors.push(`Post "${post.title}": Created but publishing failed - ${errorMessage}`);
             }
           }
+        } else {
+          // Draft only - no publishing attempted
+          console.log(`🚨 CRITICAL: Post ${i + 1} NOT PUBLISHED - Saved as draft only`, {
+            title: post.title,
+            reason: 'shouldPublish was false',
+            publishImmediately: postData.publishImmediately,
+            scheduledDate: postData.scheduledDate,
+            hasScheduledDate: !!postData.scheduledDate
+          });
         }
         
         // Count as success only if both Jazz post was created AND publishing succeeded (if attempted)
