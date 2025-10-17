@@ -23,6 +23,8 @@ import CalendarView from "@/components/organisms/calendar-view";
 import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
+import PostViewSelector, { PostViewType } from "@/components/atoms/post-view-selector";
+import { PostGridView, PostImageView, PostSuccinctView } from "@/components/organisms/post-views";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
 
 export default function AccountGroupPage() {
@@ -70,6 +72,7 @@ export default function AccountGroupPage() {
 	const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const [showCSVUpload, setShowCSVUpload] = useState(false);
+	const [postView, setPostView] = useState<PostViewType>('grid');
 	
 	const accountGroupId = params.groupId as string;
 	
@@ -414,7 +417,7 @@ export default function AccountGroupPage() {
 							</div>
 						) : (
 							<div className="space-y-6">
-								{/* Posts Header with Filters */}
+								{/* Posts Header with Filters and View Selector */}
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-4">
 										<h2 className="text-xl font-semibold text-gray-900">Posts</h2>
@@ -431,25 +434,34 @@ export default function AccountGroupPage() {
 										</div>
 									</div>
 									
-									{/* Filter Controls */}
-									<div className="flex items-center gap-2">
-										{[
-											{ key: 'all', label: 'All', icon: List },
-											{ key: 'draft', label: 'Drafts', icon: MessageCircle },
-											{ key: 'scheduled', label: 'Scheduled', icon: Calendar },
-											{ key: 'published', label: 'Published', icon: Eye }
-										].map(({ key, label, icon: Icon }) => (
-											<Button
-												key={key}
-												variant={postsFilter === key ? 'solid' : 'outline'}
-												intent={postsFilter === key ? 'primary' : 'secondary'}
-												size="1"
-												onClick={() => setPostsFilter(key as any)}
-											>
-												<Icon className="w-3 h-3 mr-1" />
-												{label}
-											</Button>
-										))}
+									{/* Filter Controls and View Selector */}
+									<div className="flex items-center gap-4">
+										{/* Filter Controls */}
+										<div className="flex items-center gap-2">
+											{[
+												{ key: 'all', label: 'All', icon: List },
+												{ key: 'draft', label: 'Drafts', icon: MessageCircle },
+												{ key: 'scheduled', label: 'Scheduled', icon: Calendar },
+												{ key: 'published', label: 'Published', icon: Eye }
+											].map(({ key, label, icon: Icon }) => (
+												<Button
+													key={key}
+													variant={postsFilter === key ? 'solid' : 'outline'}
+													intent={postsFilter === key ? 'primary' : 'secondary'}
+													size="1"
+													onClick={() => setPostsFilter(key as any)}
+												>
+													<Icon className="w-3 h-3 mr-1" />
+													{label}
+												</Button>
+											))}
+										</div>
+										
+										{/* View Selector */}
+										<PostViewSelector 
+											currentView={postView} 
+											onViewChange={setPostView}
+										/>
 									</div>
 								</div>
 
@@ -495,117 +507,39 @@ export default function AccountGroupPage() {
 									</div>
 								)}
 
-								{/* Posts Grid */}
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-									{posts
-										.filter(post => {
-											if (postsFilter === 'all') return true;
-											const postStatus = getPostStatus(post);
-											return postStatus === postsFilter;
-										})
-										.map((post: any, index: number) => {
-											const postId = post.id || post.variants?.base?.id || index;
-											
-											// Extract post data
-											const postTitle = post.title?.toString() || post.title || "Untitled Post";
-											const postContent = post.variants?.base?.text?.toString() || 
-															  post.variants?.base?.text || 
-															  post.content || 
-															  "";
-											const postStatus = getPostStatus(post);
-											const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
-											const hasMedia = post.variants?.base?.media && post.variants.base.media.length > 0;
-											
-											// Status styling
-											const getStatusColor = (status: string) => {
-												switch (status) {
-													case 'published': return 'bg-green-100 text-green-800';
-													case 'scheduled': return 'bg-yellow-100 text-yellow-800';
-													case 'draft': return 'bg-gray-100 text-gray-800';
-													default: return 'bg-gray-100 text-gray-800';
-												}
-											};
-											
-											const getStatusIcon = (status: string) => {
-												switch (status) {
-													case 'published': return '✓';
-													case 'scheduled': return '⏰';
-													case 'draft': return '📝';
-													default: return '📝';
-												}
-											};
-											
-											const isSelected = selectedPosts.has(postId);
-											
-											return (
-												<div
-													key={postId}
-													className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
-														isSelected ? 'border-lime-400 bg-lime-50' : 'border-gray-200 hover:border-lime-300'
-													}`}
-												>
-													{/* Selection Checkbox */}
-													<div
-														className="absolute top-3 right-3 z-10 cursor-pointer"
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															handlePostSelect(postId, !isSelected);
-														}}
-													>
-														{isSelected ? (
-															<CheckSquare className="w-5 h-5 text-lime-600" />
-														) : (
-															<Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-														)}
-													</div>
-
-													{/* Clickable content area */}
-													<Link
-														href={`/account-group/${accountGroup.id}/post/${postId}`}
-														className="block"
-													>
-														{/* Header with status and date */}
-														<div className="flex items-center justify-between mb-3 pr-8">
-															<div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(postStatus)}`}>
-																{getStatusIcon(postStatus)} {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-															</div>
-															<div className="text-xs text-gray-500">
-																{new Date(postDate).toLocaleDateString()}
-															</div>
-														</div>
-														
-														{/* Title */}
-														<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-lime-600 transition-colors">
-															{postTitle}
-														</h3>
-														
-														{/* Content Preview */}
-														<p className="text-sm text-gray-600 mb-3 line-clamp-3">
-															{postContent || "No content"}
-														</p>
-														
-														{/* Footer with media indicator and platforms */}
-														<div className="flex items-center justify-between pt-3 border-t border-gray-100">
-															<div className="flex items-center gap-2">
-																{hasMedia && (
-																	<div className="flex items-center gap-1 text-xs text-gray-500">
-																		<span>📎</span>
-																		<span>{post.variants.base.media.length} media</span>
-																	</div>
-																)}
-															</div>
-															
-															<div className="flex items-center gap-1">
-																<MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
-																<span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
-															</div>
-														</div>
-													</Link>
-												</div>
-											);
-										})}
-								</div>
+								{/* Posts Views */}
+								{postView === 'grid' && (
+									<PostGridView 
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+									/>
+								)}
+								
+								{postView === 'image' && (
+									<PostImageView 
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+									/>
+								)}
+								
+								{postView === 'succinct' && (
+									<PostSuccinctView 
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+									/>
+								)}
 								
 								{/* Empty state for filtered results */}
 								{posts.filter(post => {
