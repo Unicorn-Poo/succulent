@@ -1,5 +1,6 @@
 import { getEnhancedOptimalTiming } from './optimalTimingEngine';
 import { EngagementAutomationEngine } from './engagementAutomation';
+import { BrandPersona, BrandPersonaManager, loadBrandPersona } from './brandPersonaManager';
 
 interface AIDecision {
   action: string;
@@ -28,11 +29,26 @@ export class AIGrowthEngine {
   private profileKey?: string;
   private platform: string;
   private aggressiveness: 'conservative' | 'moderate' | 'aggressive';
+  private brandManager?: BrandPersonaManager;
+  private brandPersona?: BrandPersona;
 
-  constructor(platform: string, profileKey?: string, aggressiveness: 'conservative' | 'moderate' | 'aggressive' = 'moderate') {
+  constructor(
+    platform: string, 
+    profileKey?: string, 
+    aggressiveness: 'conservative' | 'moderate' | 'aggressive' = 'moderate',
+    accountGroup?: any
+  ) {
     this.platform = platform;
     this.profileKey = profileKey;
     this.aggressiveness = aggressiveness;
+    
+    // Load brand persona if available
+    if (accountGroup) {
+      this.brandPersona = loadBrandPersona(accountGroup);
+      if (this.brandPersona) {
+        this.brandManager = new BrandPersonaManager(this.brandPersona);
+      }
+    }
   }
 
   /**
@@ -91,7 +107,7 @@ export class AIGrowthEngine {
   }
 
   /**
-   * Generate AI-powered growth recommendations
+   * Generate AI-powered growth recommendations based on brand persona
    */
   async generateGrowthRecommendations(): Promise<AIDecision[]> {
     const decisions: AIDecision[] = [];
@@ -99,12 +115,18 @@ export class AIGrowthEngine {
     // Analyze current performance and generate recommendations
     const performanceAnalysis = await this.analyzeCurrentPerformance();
     
-    // Content strategy recommendations
+    // Content strategy recommendations based on brand persona
     if (performanceAnalysis.engagementRate < 3.0) {
+      const contentSuggestion = this.brandPersona ? 
+        `Create more ${this.brandPersona.messaging.contentPillars[0]} content with ${this.brandPersona.contentGuidelines.callToActionStyle} calls-to-action` :
+        'Increase question-based content by 40%';
+        
       decisions.push({
-        action: 'Increase question-based content by 40%',
+        action: contentSuggestion,
         confidence: 85,
-        reasoning: 'Question-based posts generate 60% more comments than statements',
+        reasoning: this.brandPersona ? 
+          `Based on your brand focus on ${this.brandPersona.messaging.contentPillars.join(', ')}, this content type performs best` :
+          'Question-based posts generate 60% more comments than statements',
         expectedImpact: '+1.2% engagement rate within 2 weeks',
         priority: 'high'
       });
@@ -207,7 +229,7 @@ export class AIGrowthEngine {
   }
 
   /**
-   * Generate content suggestions based on trending topics and performance data
+   * Generate content suggestions based on brand persona and trending topics
    */
   async generateContentSuggestions(count: number = 5): Promise<{
     title: string;
@@ -219,23 +241,41 @@ export class AIGrowthEngine {
   }[]> {
     const suggestions = [];
     
-    // Get trending topics for the platform
-    const trendingTopics = await this.getTrendingTopics();
+    // Get topics relevant to brand persona or fallback to trending
+    const relevantTopics = this.brandPersona ? 
+      this.brandPersona.messaging.contentPillars :
+      await this.getTrendingTopics();
     
     for (let i = 0; i < count; i++) {
-      const topic = trendingTopics[i % trendingTopics.length];
-      const contentTemplate = this.selectContentTemplate(topic);
+      const topic = relevantTopics[i % relevantTopics.length];
       
-      const content = this.generateContentFromTemplate(contentTemplate, topic);
+      // Use brand persona to generate content or fallback to template
+      let content: string;
+      if (this.brandManager) {
+        content = this.brandManager.generateBrandedContent(topic, 'post', this.platform);
+      } else {
+        const contentTemplate = this.selectContentTemplate(topic);
+        content = this.generateContentFromTemplate(contentTemplate, topic);
+      }
+      
+      // Get brand-appropriate hashtags
+      const hashtags = this.brandManager ? 
+        this.brandManager.getBrandedHashtags(topic, this.platform) :
+        await this.generateOptimalHashtags(content, 'educational');
+      
       const analysis = await this.analyzeContent(content);
+      
+      const reasoning = this.brandPersona ? 
+        `Content aligns with your brand pillar "${topic}" and ${this.brandPersona.voice.tone} voice for maximum authenticity` :
+        `${topic} is trending with high engagement potential for ${this.platform}`;
       
       suggestions.push({
         title: `${topic.charAt(0).toUpperCase() + topic.slice(1)} Content`,
         content,
-        hashtags: analysis.optimalHashtags,
+        hashtags,
         bestTime: analysis.bestPostingTime,
         engagementPotential: analysis.engagementPotential,
-        reasoning: `${topic} is trending with high engagement potential for ${this.platform}`
+        reasoning
       });
     }
 
@@ -324,7 +364,12 @@ export class AIGrowthEngine {
   }
 
   private async getTrendingTopics(): Promise<string[]> {
-    // Platform-specific trending topics
+    // If brand persona exists, prioritize brand content pillars
+    if (this.brandPersona) {
+      return this.brandPersona.messaging.contentPillars;
+    }
+
+    // Platform-specific trending topics as fallback
     const topics = {
       instagram: ['lifestyle tips', 'productivity', 'self improvement', 'creativity', 'wellness'],
       twitter: ['tech news', 'industry insights', 'hot takes', 'breaking news', 'discussions'],
@@ -349,7 +394,16 @@ export class AIGrowthEngine {
   }
 
   private generateContentFromTemplate(template: string, topic: string): string {
-    const placeholders = {
+    // Use brand persona context if available
+    const brandContext = this.brandPersona ? {
+      '{topic}': topic,
+      '{tip}': `Here's what works in ${this.brandPersona.messaging.contentPillars[0]}`,
+      '{benefit}': this.brandPersona.messaging.valueProposition,
+      '{insight}': `Key insight from my experience with ${topic}`,
+      '{context}': `Based on my work with ${this.brandPersona.messaging.targetAudience}`,
+      '{learning}': `What I've learned about ${topic}`,
+      '{process}': `My approach to ${topic}`
+    } : {
       '{topic}': topic,
       '{tip}': `Here's a proven strategy that works`,
       '{benefit}': `improve your results significantly`,
@@ -360,7 +414,7 @@ export class AIGrowthEngine {
     };
 
     let content = template;
-    Object.entries(placeholders).forEach(([placeholder, replacement]) => {
+    Object.entries(brandContext).forEach(([placeholder, replacement]) => {
       content = content.replace(new RegExp(placeholder, 'g'), replacement);
     });
 
@@ -374,13 +428,14 @@ export class AIGrowthEngine {
 export async function executeAIGrowthActions(
   platform: string, 
   profileKey?: string,
-  aggressiveness: 'conservative' | 'moderate' | 'aggressive' = 'moderate'
+  aggressiveness: 'conservative' | 'moderate' | 'aggressive' = 'moderate',
+  accountGroup?: any
 ): Promise<{
   recommendations: AIDecision[];
   executedActions: { executed: number; skipped: number; results: string[] };
   contentSuggestions: any[];
 }> {
-  const ai = new AIGrowthEngine(platform, profileKey, aggressiveness);
+  const ai = new AIGrowthEngine(platform, profileKey, aggressiveness, accountGroup);
   
   const [recommendations, executedActions, contentSuggestions] = await Promise.all([
     ai.generateGrowthRecommendations(),

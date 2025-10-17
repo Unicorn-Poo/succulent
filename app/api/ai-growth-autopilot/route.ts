@@ -3,7 +3,11 @@ import { executeAIGrowthActions } from '../../../utils/aiGrowthEngine';
 
 export async function POST(request: NextRequest) {
   try {
-    const { platform, profileKey, aggressiveness = 'moderate', executeActions = false } = await request.json();
+    const { platform, profileKey, aggressiveness = 'moderate', executeActions = false, accountGroupId } = await request.json();
+    
+    // TODO: Load account group from Jazz database using accountGroupId
+    // For now, we'll pass null and the AI will use generic recommendations
+    let accountGroup = null;
 
     if (!platform) {
       return NextResponse.json(
@@ -13,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get AI recommendations and execute if requested
-    const result = await executeAIGrowthActions(platform, profileKey, aggressiveness);
+    const result = await executeAIGrowthActions(platform, profileKey, aggressiveness, accountGroup);
 
     // Add timestamp and additional metadata
     const response = {

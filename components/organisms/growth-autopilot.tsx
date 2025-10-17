@@ -133,9 +133,73 @@ export default function GrowthAutopilot({
   const generateAutopilotActions = useCallback(async () => {
     setIsLoading(true);
 
-    // Simulate AI analysis and action generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Use the real AI growth engine with brand persona
+      const aiResults = await fetch('/api/ai-growth-autopilot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform,
+          profileKey,
+          aggressiveness: settings.aggressiveness,
+          accountGroupId: accountGroup?.id
+        })
+      });
 
+      if (aiResults.ok) {
+        const data = await aiResults.json();
+        
+        // Convert AI recommendations to autopilot actions
+        const actions: AutopilotAction[] = data.recommendations.map((rec: any, index: number) => ({
+          id: `ai_action_${index}`,
+          type: rec.action.includes('content') ? 'post' : 
+                rec.action.includes('reply') ? 'reply' :
+                rec.action.includes('hashtag') ? 'hashtag' :
+                rec.action.includes('DM') ? 'dm' : 'schedule',
+          title: rec.action,
+          description: rec.reasoning,
+          confidence: rec.confidence,
+          impact: rec.priority === 'high' ? 'high' : rec.priority === 'medium' ? 'medium' : 'low',
+          status: 'pending',
+          platform,
+          reason: rec.expectedImpact,
+          createdAt: new Date().toISOString()
+        }));
+
+        // Add content suggestions as post actions
+        data.contentSuggestions.forEach((suggestion: any, index: number) => {
+          actions.push({
+            id: `content_${index}`,
+            type: 'post',
+            title: `Schedule: ${suggestion.title}`,
+            description: `AI-generated content with ${suggestion.engagementPotential}% engagement potential`,
+            confidence: suggestion.engagementPotential,
+            impact: suggestion.engagementPotential > 80 ? 'high' : 'medium',
+            status: 'pending',
+            platform,
+            content: suggestion.content,
+            reason: suggestion.reasoning,
+            createdAt: new Date().toISOString()
+          });
+        });
+
+        setPendingActions(actions);
+        setDashboard(prev => ({
+          ...prev,
+          nextActions: actions.slice(0, 3),
+          status: 'active'
+        }));
+
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Error getting AI recommendations:', error);
+    }
+
+    // Fallback to simulated actions if API fails
     const actions: AutopilotAction[] = [
       {
         id: 'action_1',
