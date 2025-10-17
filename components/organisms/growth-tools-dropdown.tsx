@@ -137,8 +137,8 @@ export default function GrowthToolsDropdown({
     },
     {
       id: 'persona',
-      name: 'Brand Persona Setup',
-      description: 'Define your brand voice for AI automation',
+      name: '🤖 ChatGPT Brand Persona',
+      description: 'Use ChatGPT to create your brand voice (REQUIRED)',
       icon: Palette,
       category: 'optimization',
       impact: 'high',
@@ -315,12 +315,14 @@ export default function GrowthToolsDropdown({
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg cursor-pointer hover:from-purple-100 hover:to-pink-100 transition-colors"
               onClick={() => onToolSelect?.('persona')}
             >
-              <Palette className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                <Palette className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <p className="font-medium text-purple-800">Set Brand Persona</p>
+                <p className="font-medium text-purple-800">🤖 ChatGPT Brand Persona (IMPORTANT)</p>
                 <p className="text-sm text-purple-600">Define your voice for AI automation</p>
               </div>
             </div>
