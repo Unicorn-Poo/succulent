@@ -31,3 +31,5 @@ console.log('Input: ["twitter"]');
 console.log('Output:', mapPlatformsForAyrshare(['twitter']));
 console.log('');
 console.log('Expected for Ayrshare API: ["instagram", "twitter"] and ["twitter"] and ["twitter"]');
+
+
