@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  generateBuildId: async () => {
+    // Force cache invalidation for growth engine updates
+    return `growth-engine-v2-${Date.now()}`;
+  },
   typescript: {
     // Allow production builds to successfully complete even if
     // your project has TypeScript errors.

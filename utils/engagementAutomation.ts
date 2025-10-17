@@ -1,5 +1,6 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 import { isBusinessPlanMode } from './ayrshareIntegration';
+import { BrandPersonaManager, loadBrandPersona } from './brandPersonaManager';
 
 interface CommentData {
   id: string;
@@ -59,9 +60,18 @@ interface DMConversation {
 
 export class EngagementAutomationEngine {
   private profileKey?: string;
+  private brandManager?: BrandPersonaManager;
 
-  constructor(profileKey?: string) {
+  constructor(profileKey?: string, accountGroup?: any) {
     this.profileKey = profileKey;
+    
+    // Initialize brand persona manager
+    if (accountGroup) {
+      const persona = loadBrandPersona(accountGroup);
+      if (persona) {
+        this.brandManager = new BrandPersonaManager(persona);
+      }
+    }
   }
 
   /**
@@ -462,13 +472,24 @@ export class EngagementAutomationEngine {
   }
 
   /**
-   * Personalize response template
+   * Personalize response template using brand persona
    */
   private personalizeResponse(template: string, comment: CommentData): string {
-    return template
+    let response = template
       .replace('{username}', comment.authorUsername)
       .replace('{author}', comment.author)
       .replace('{platform}', comment.platform);
+
+    // Use brand persona if available
+    if (this.brandManager && comment.sentiment) {
+      response = this.brandManager.generateContextualReply(
+        comment.comment,
+        comment.sentiment,
+        comment.platform
+      );
+    }
+
+    return response;
   }
 }
 

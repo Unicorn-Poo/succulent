@@ -15,6 +15,7 @@ import ContentDiscoveryManager from './content-discovery-manager';
 import BrandManagementDashboard from './brand-management-dashboard';
 import AutoScheduleManager from './auto-schedule-manager';
 import UnifiedAutomationDashboard from './unified-automation-dashboard';
+import BrandPersonaSetup from './brand-persona-setup';
 
 interface GrowthTool {
   id: string;
@@ -133,6 +134,15 @@ export default function GrowthToolsDropdown({
       category: 'automation',
       impact: 'medium',
       component: AutoScheduleManager
+    },
+    {
+      id: 'persona',
+      name: 'Brand Persona Setup',
+      description: 'Define your brand voice for AI automation',
+      icon: Palette,
+      category: 'optimization',
+      impact: 'high',
+      component: BrandPersonaSetup
     }
   ];
 
@@ -306,12 +316,12 @@ export default function GrowthToolsDropdown({
             
             <div 
               className="flex items-center space-x-3 p-3 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
-                onClick={() => onToolSelect?.('schedule')}
+              onClick={() => onToolSelect?.('persona')}
             >
-              <Clock className="w-5 h-5 text-purple-600" />
+              <Palette className="w-5 h-5 text-purple-600" />
               <div>
-                <p className="font-medium text-purple-800">Setup Auto-Scheduling</p>
-                <p className="text-sm text-purple-600">Consistent posting without effort</p>
+                <p className="font-medium text-purple-800">Set Brand Persona</p>
+                <p className="text-sm text-purple-600">Define your voice for AI automation</p>
               </div>
             </div>
           </div>
