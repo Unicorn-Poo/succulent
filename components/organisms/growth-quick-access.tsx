@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '../atoms/button';
-import { Zap, TrendingUp, MessageCircle, Search, Clock, ChevronDown } from 'lucide-react';
+import { Zap, TrendingUp, MessageCircle, Search, Clock, ChevronDown, BarChart3 } from 'lucide-react';
 
 interface GrowthQuickAccessProps {
   platform: string;
