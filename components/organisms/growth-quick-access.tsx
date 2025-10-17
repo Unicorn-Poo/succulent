@@ -21,6 +21,13 @@ export default function GrowthQuickAccess({
 
   const quickActions = [
     {
+      id: 'dashboard',
+      name: '📊 Activity Dashboard',
+      description: 'Monitor automation',
+      icon: BarChart3,
+      color: 'from-green-600 to-blue-600'
+    },
+    {
       id: 'autopilot',
       name: '🤖 AI Autopilot',
       description: 'Full automation',

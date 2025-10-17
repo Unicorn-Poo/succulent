@@ -14,6 +14,7 @@ import CompetitorAnalysisDashboard from './competitor-analysis-dashboard';
 import ContentDiscoveryManager from './content-discovery-manager';
 import BrandManagementDashboard from './brand-management-dashboard';
 import AutoScheduleManager from './auto-schedule-manager';
+import UnifiedAutomationDashboard from './unified-automation-dashboard';
 
 interface GrowthTool {
   id: string;
@@ -43,6 +44,15 @@ export default function GrowthToolsDropdown({
   const [isOpen, setIsOpen] = useState(false);
 
   const growthTools: GrowthTool[] = [
+    {
+      id: 'dashboard',
+      name: 'Automation Dashboard',
+      description: 'Monitor all automated activity in real-time',
+      icon: BarChart3,
+      category: 'analytics',
+      impact: 'high',
+      component: UnifiedAutomationDashboard
+    },
     {
       id: 'autopilot',
       name: 'AI Growth Autopilot',
@@ -203,13 +213,22 @@ export default function GrowthToolsDropdown({
           </div>
         </div>
 
-        <Button
-          onClick={() => setSelectedTool('autopilot')}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        >
-          <Zap className="w-4 h-4 mr-2" />
-          🤖 Launch AI Growth Autopilot
-        </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Button
+              onClick={() => onToolSelect?.('dashboard')}
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              📊 Activity Dashboard
+            </Button>
+            <Button
+              onClick={() => onToolSelect?.('autopilot')}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              🤖 AI Autopilot
+            </Button>
+          </div>
       </div>
 
       {/* Growth Tools Grid */}
@@ -253,8 +272,19 @@ export default function GrowthToolsDropdown({
           <h4 className="font-medium text-gray-900 mb-3">🎯 Quick Start Recommendations</h4>
           <div className="space-y-3">
             <div 
+              className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              onClick={() => onToolSelect?.('dashboard')}
+            >
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-800">View Activity Dashboard</p>
+                <p className="text-sm text-blue-600">Monitor all automated actions</p>
+              </div>
+            </div>
+            
+            <div 
               className="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
-                onClick={() => onToolSelect?.('hashtags')}
+              onClick={() => onToolSelect?.('hashtags')}
             >
               <Search className="w-5 h-5 text-green-600" />
               <div>
