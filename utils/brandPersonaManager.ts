@@ -251,17 +251,56 @@ export class BrandPersonaManager {
   private generateBrandedPost(topic: string, platform: string, tone: string): string {
     if (!this.persona) return '';
 
+    // Use the specific topic from content pillars, not generic topic
+    const actualTopic = this.persona.messaging.contentPillars.includes(topic) ? 
+      topic : 
+      this.persona.messaging.contentPillars[0];
+
     const templates = this.getPostTemplates(tone, platform);
     const template = templates[Math.floor(Math.random() * templates.length)];
     
-    const contentPillar = this.persona.messaging.contentPillars[0] || topic;
-    const valueProps = this.persona.messaging.valueProposition;
+    // Generate dynamic content based on persona
+    const content = template
+      .replace(/{topic}/g, actualTopic)
+      .replace(/{contentPillar}/g, actualTopic)
+      .replace(/{valueProposition}/g, this.persona.messaging.valueProposition)
+      .replace(/{brand}/g, this.persona.name)
+      .replace(/{audience}/g, this.persona.messaging.targetAudience)
+      .replace(/{cta}/g, this.generateCTA(this.persona.contentGuidelines.callToActionStyle));
 
-    return template
-      .replace('{topic}', topic)
-      .replace('{contentPillar}', contentPillar)
-      .replace('{valueProposition}', valueProps)
-      .replace('{cta}', this.generateCTA(this.persona.contentGuidelines.callToActionStyle));
+    // Apply writing style adjustments
+    return this.applyWritingStyle(content, this.persona.voice.writingStyle);
+  }
+
+  private applyWritingStyle(content: string, style: string): string {
+    switch (style) {
+      case 'formal':
+        // More structured, professional language
+        return content.replace(/\b(I|me|my)\b/g, match => match);
+      
+      case 'conversational':
+        // Add conversational elements but don't hardcode
+        return content;
+      
+      case 'witty':
+        // Keep the content but ensure it matches the persona's wit level
+        return content;
+      
+      case 'direct':
+        // More straightforward, less fluff
+        return content.replace(/\n\n/g, '\n').replace(/\s{2,}/g, ' ');
+      
+      case 'storytelling':
+        // Add narrative elements
+        return content;
+      
+      case 'technical':
+        // More precise language
+        return content;
+      
+      default:
+        return content;
+    }
   }
 
   private generateBrandedReply(comment: string, tone: string): string {
@@ -312,38 +351,223 @@ export class BrandPersonaManager {
   }
 
   private getPostTemplates(tone: string, platform: string): string[] {
-    const templates = {
-      professional: [
-        'Sharing insights on {topic}: {valueProposition}\n\nKey takeaway: {contentPillar}\n\n{cta}',
-        'Professional perspective on {topic}:\n\n{valueProposition}\n\nWhat\'s your experience with this? {cta}'
-      ],
-      friendly: [
-        'Hey everyone! 👋 Let\'s talk about {topic}!\n\n{valueProposition}\n\nWhat do you think? {cta}',
-        'Quick friendly reminder about {topic}: {valueProposition} ✨\n\n{cta}'
-      ],
-      educational: [
-        '📚 Today\'s lesson: {topic}\n\n{valueProposition}\n\nKey insight: {contentPillar}\n\n{cta}',
-        '💡 Quick tip about {topic}:\n\n{valueProposition}\n\nTry this and let me know how it goes! {cta}'
-      ],
-      inspirational: [
-        '✨ Remember: {topic} is about {valueProposition}\n\n{contentPillar}\n\nYou\'ve got this! {cta}',
-        '🌟 Motivation Monday: {topic}\n\n{valueProposition}\n\nWhat\'s inspiring you today? {cta}'
-      ]
+    if (!this.persona) return ['Sharing thoughts on {topic}. {cta}'];
+
+    // Generate dynamic templates based on persona characteristics
+    const templates: string[] = [];
+    
+    // Base structure variations
+    const structures = [
+      '{opener} {topic}:\n\n{valueProposition}\n\n{closer} {cta}',
+      '{opener} {topic}\n\n{valueProposition}\n\n{insight}\n\n{cta}',
+      '{valueProposition}\n\n{context}\n\n{cta}',
+      '{insight} {topic}:\n\n{valueProposition}\n\n{cta}'
+    ];
+
+    // Generate openers based on tone (no hardcoded emojis)
+    const openers = this.generateOpeners(tone);
+    const closers = this.generateClosers(tone);
+    const insights = this.generateInsights(tone);
+    const contexts = this.generateContexts(tone);
+
+    // Create templates by combining elements
+    structures.forEach(structure => {
+      templates.push(
+        structure
+          .replace('{opener}', openers[Math.floor(Math.random() * openers.length)])
+          .replace('{closer}', closers[Math.floor(Math.random() * closers.length)])
+          .replace('{insight}', insights[Math.floor(Math.random() * insights.length)])
+          .replace('{context}', contexts[Math.floor(Math.random() * contexts.length)])
+      );
+    });
+
+    return templates;
+  }
+
+  private generateOpeners(tone: string): string[] {
+    if (!this.persona) return ['Sharing thoughts on'];
+
+    // Generate openers based purely on tone, no hardcoded content
+    const openers = {
+      professional: ['Sharing insights on', 'Professional perspective on', 'Expert analysis of'],
+      casual: ['Quick thoughts on', 'Just wanted to share about', 'Thinking about'],
+      friendly: ['Let\'s talk about', 'Friendly reminder about', 'Something I\'ve been exploring:'],
+      authoritative: ['Important insights on', 'Critical understanding of', 'Essential knowledge about'],
+      playful: ['Fun exploration of', 'Playful dive into', 'Let\'s have some fun with'],
+      inspirational: ['Today\'s inspiration:', 'Gentle reminder about', 'Beautiful insight about'],
+      educational: ['Learning moment:', 'Understanding', 'Exploring']
     };
 
-    return templates[tone as keyof typeof templates] || templates.friendly;
+    return openers[tone as keyof typeof openers] || openers[this.persona.voice.tone as keyof typeof openers] || openers.friendly;
+  }
+
+  private generateClosers(tone: string): string[] {
+    if (!this.persona) return ['Key point:'];
+
+    // Generate closers based purely on tone and writing style
+    const closers = {
+      professional: ['Key takeaway:', 'Important note:', 'Professional insight:'],
+      casual: ['Bottom line:', 'Here\'s the thing:', 'Simple truth:'],
+      friendly: ['Here\'s what I\'ve learned:', 'Something to remember:', 'Important point:'],
+      authoritative: ['This is crucial:', 'Essential understanding:', 'Key principle:'],
+      playful: ['Fun fact:', 'Here\'s the interesting part:', 'Plot twist:'],
+      inspirational: ['Remember this:', 'Important truth:', 'Key insight:'],
+      educational: ['Key insight:', 'Important learning:', 'Takeaway:']
+    };
+
+    return closers[tone as keyof typeof closers] || closers[this.persona.voice.tone as keyof typeof closers] || closers.friendly;
+  }
+
+  private generateInsights(tone: string): string[] {
+    if (!this.persona) return ['Key insight:'];
+
+    // Generate insights based on tone and personality traits
+    const baseInsights = {
+      professional: ['Key insight from experience:', 'Professional observation:', 'Strategic perspective:'],
+      casual: ['Here\'s what I\'ve noticed:', 'Something interesting:', 'Quick thought:'],
+      friendly: ['Something I\'ve been thinking about:', 'Here\'s what resonates with me:', 'Insight to share:'],
+      authoritative: ['Critical understanding:', 'Essential principle:', 'Fundamental truth:'],
+      playful: ['Fun discovery:', 'Interesting realization:', 'Cool pattern:'],
+      inspirational: ['Important insight:', 'Beautiful realization:', 'Key understanding:'],
+      educational: ['Learning insight:', 'Educational moment:', 'Knowledge gained:']
+    };
+
+    return baseInsights[tone as keyof typeof baseInsights] || baseInsights[this.persona.voice.tone as keyof typeof baseInsights] || baseInsights.friendly;
+  }
+
+  private generateContexts(tone: string): string[] {
+    if (!this.persona) return ['Based on my experience'];
+
+    // Generate contexts based on tone and target audience
+    const contexts = {
+      professional: ['Based on industry research', 'From professional experience', 'According to best practices'],
+      casual: ['Just my experience', 'From what I\'ve seen', 'In my opinion'],
+      friendly: ['Something I want to share', 'Based on my journey', 'From my experience'],
+      authoritative: ['According to proven methods', 'Based on extensive research', 'From authoritative sources'],
+      playful: ['Just for fun', 'Playing with ideas', 'Exploring possibilities'],
+      inspirational: ['From the heart', 'Based on my journey', 'Something meaningful'],
+      educational: ['From my studies', 'Based on learning', 'Educational insight']
+    };
+
+    return contexts[tone as keyof typeof contexts] || contexts[this.persona.voice.tone as keyof typeof contexts] || contexts.friendly;
   }
 
   private generateCTA(style: string): string {
-    const ctas = {
-      subtle: ['What are your thoughts?', 'I\'d love to hear your perspective.', 'Share your experience below.'],
-      direct: ['Comment below!', 'Let me know in the comments!', 'Share your thoughts! 👇'],
-      creative: ['Drop your thoughts in the comments! 💭', 'What\'s your take? Spill the tea! ☕', 'Your turn - what do you think? 🤔'],
+    if (!this.persona) {
+      const ctas = ['What are your thoughts?', 'Share below!', 'Let me know!'];
+      return ctas[Math.floor(Math.random() * ctas.length)];
+    }
+
+    // Extract CTAs from the persona's own examples if available
+    if (this.persona.examples.samplePosts.length > 0) {
+      const extractedCTAs = this.extractCTAsFromExamples();
+      if (extractedCTAs.length > 0) {
+        return extractedCTAs[Math.floor(Math.random() * extractedCTAs.length)];
+      }
+    }
+
+    // Fallback to generic CTAs based only on style
+    const baseStyles = {
+      subtle: ['What are your thoughts?', 'I\'d love to hear your perspective.', 'Share your experience.'],
+      direct: ['Share your thoughts below!', 'Let me know in the comments!', 'Comment with your experience!'],
+      creative: ['Drop your thoughts in the comments!', 'What\'s your take on this?', 'Share below!'],
       none: ['']
     };
 
-    const ctaOptions = ctas[style as keyof typeof ctas] || ctas.direct;
-    return ctaOptions[Math.floor(Math.random() * ctaOptions.length)];
+    let ctas = baseStyles[style as keyof typeof baseStyles] || baseStyles.direct;
+
+    const selectedCTA = ctas[Math.floor(Math.random() * ctas.length)];
+    
+    // Add emojis ONLY if persona allows them
+    return this.addEmojisBasedOnPersona(selectedCTA);
+  }
+
+  private extractCTAsFromExamples(): string[] {
+    if (!this.persona || this.persona.examples.samplePosts.length === 0) return [];
+
+    const ctas: string[] = [];
+    
+    // Look for question patterns in sample posts
+    this.persona.examples.samplePosts.forEach(post => {
+      // Find sentences that end with ? (likely CTAs)
+      const questions = post.match(/[^.!?]*\?[^.!?]*/g);
+      if (questions) {
+        questions.forEach(question => {
+          const cleanQuestion = question.trim().replace(/^.*\n/, ''); // Remove everything before last line break
+          if (cleanQuestion.length > 5 && cleanQuestion.length < 100) {
+            ctas.push(cleanQuestion);
+          }
+        });
+      }
+
+      // Look for imperative statements (commands/requests)
+      const imperatives = post.match(/(Share|Tell|Let|Comment|Drop|What's)[^.!?]*[.!?]/gi);
+      if (imperatives) {
+        imperatives.forEach(imperative => {
+          const cleanImperative = imperative.trim();
+          if (cleanImperative.length > 5 && cleanImperative.length < 100) {
+            ctas.push(cleanImperative);
+          }
+        });
+      }
+    });
+
+    return [...new Set(ctas)]; // Remove duplicates
+  }
+
+  private addEmojisBasedOnPersona(text: string): string {
+    if (!this.persona || this.persona.voice.emojiUsage === 'none') {
+      return text;
+    }
+
+    const emojiCount = this.getEmojiCount();
+    if (emojiCount === 0) return text;
+
+    // Generate contextual emojis based on content pillars and tone
+    const contextualEmojis = this.getContextualEmojis();
+    const selectedEmojis = contextualEmojis.slice(0, emojiCount);
+
+    return `${text} ${selectedEmojis.join(' ')}`;
+  }
+
+  private getEmojiCount(): number {
+    if (!this.persona) return 0;
+
+    switch (this.persona.voice.emojiUsage) {
+      case 'minimal': return Math.random() > 0.5 ? 1 : 0;
+      case 'moderate': return Math.floor(Math.random() * 3) + 1; // 1-3
+      case 'frequent': return Math.floor(Math.random() * 4) + 2; // 2-5
+      default: return 0;
+    }
+  }
+
+  private getContextualEmojis(): string[] {
+    if (!this.persona) return [];
+
+    // Only use emojis if the persona examples contain them
+    const allEmojisFromExamples: string[] = [];
+    
+    // Extract emojis from the persona's own examples
+    const allExampleText = [
+      ...this.persona.examples.samplePosts,
+      ...this.persona.examples.sampleReplies,
+      ...this.persona.examples.sampleDMs
+    ].join(' ');
+
+    // Find all emojis actually used in the persona examples
+    const emojiMatches = allExampleText.match(/[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}]/gu);
+    
+    if (emojiMatches) {
+      allEmojisFromExamples.push(...emojiMatches);
+    }
+
+    // If no emojis in examples, return empty array (respect the persona's actual usage)
+    if (allEmojisFromExamples.length === 0) {
+      return [];
+    }
+
+    // Remove duplicates and return the emojis actually used by this brand
+    return [...new Set(allEmojisFromExamples)];
   }
 
   private detectTone(content: string): string {
