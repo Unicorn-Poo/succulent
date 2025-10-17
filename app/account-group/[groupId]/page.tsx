@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check, Trash2, Square, CheckSquare, Upload } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check, Trash2, Square, CheckSquare, Upload, TrendingUp, Zap } from "lucide-react";
 import Link from "next/link";
 import { accountGroups } from "@/app/page";
 import { Home } from "lucide-react";
@@ -25,6 +25,8 @@ import { getPostStatus } from "@/utils/postValidation";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
 import PostViewSelector, { PostViewType } from "@/components/atoms/post-view-selector";
 import { PostGridView, PostImageView, PostSuccinctView } from "@/components/organisms/post-views";
+import GrowthToolsDropdown from "@/components/organisms/growth-tools-dropdown";
+import GrowthQuickAccess from "@/components/organisms/growth-quick-access";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
 
 export default function AccountGroupPage() {
@@ -73,6 +75,7 @@ export default function AccountGroupPage() {
 	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const [showCSVUpload, setShowCSVUpload] = useState(false);
 	const [postView, setPostView] = useState<PostViewType>('grid');
+	const [selectedGrowthTool, setSelectedGrowthTool] = useState<string | null>(null);
 	
 	const accountGroupId = params.groupId as string;
 	
@@ -345,6 +348,19 @@ export default function AccountGroupPage() {
 							</div>
 						</div>
 						<div className="flex gap-2">
+							<GrowthQuickAccess
+								platform={accounts.find(acc => acc.isLinked)?.platform || 'instagram'}
+								profileKey={(jazzAccountGroup as any)?.ayrshareProfileKey || (accountGroup as any)?.ayrshareProfileKey}
+								accountGroup={jazzAccountGroup}
+								onToolSelect={(toolId) => {
+									if (toolId === 'tools-overview') {
+										handleTabChange('tools');
+									} else {
+										setSelectedGrowthTool(toolId);
+										handleTabChange('tools');
+									}
+								}}
+							/>
 							<Button 
 								onClick={() => {
 									console.log('📁 CSV Upload button clicked');
@@ -613,12 +629,39 @@ export default function AccountGroupPage() {
 
 					{/* Enhanced Tools Tab */}
 					<Tabs.Content value="tools" className="mt-6">
-						<AccountGroupTools 
-							accounts={transformedAccounts}
-							accountGroupId={accountGroup.id}
-							accountGroup={jazzAccountGroup}
-							onToolUsed={handleToolUsed}
-						/>
+						<div className="space-y-8">
+							{/* Growth Tools Section */}
+							<div>
+								<div className="flex items-center space-x-2 mb-4">
+									<TrendingUp className="w-5 h-5 text-blue-600" />
+									<h2 className="text-xl font-semibold text-gray-900">Growth Automation Tools</h2>
+								</div>
+								<GrowthToolsDropdown
+									platform={accounts.find(acc => acc.isLinked)?.platform || 'instagram'}
+									profileKey={(jazzAccountGroup as any)?.ayrshareProfileKey || (accountGroup as any)?.ayrshareProfileKey}
+									accountGroup={jazzAccountGroup}
+									selectedTool={selectedGrowthTool}
+									onToolSelect={setSelectedGrowthTool}
+								/>
+							</div>
+
+							{/* Divider */}
+							<div className="border-t border-gray-200"></div>
+
+							{/* Original Tools Section */}
+							<div>
+								<div className="flex items-center space-x-2 mb-4">
+									<Settings className="w-5 h-5 text-gray-600" />
+									<h2 className="text-xl font-semibold text-gray-900">Account Management Tools</h2>
+								</div>
+								<AccountGroupTools 
+									accounts={transformedAccounts}
+									accountGroupId={accountGroup.id}
+									accountGroup={jazzAccountGroup}
+									onToolUsed={handleToolUsed}
+								/>
+							</div>
+						</div>
 					</Tabs.Content>
 
 					{/* Accounts Tab */}
