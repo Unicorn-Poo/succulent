@@ -3,14 +3,16 @@
 import { Card, Text, Heading, Tabs, Button } from "@radix-ui/themes";
 import { Settings, User, Store, Bell, Shield, Key } from "lucide-react";
 import { GelatoSettings } from "./gelato-settings";
-import type { MyAppAccountLoaded } from "../app/schema";
+import { NotificationSettings } from "./notification-settings";
+import type { MyAppAccountLoaded, AccountGroupType } from "../app/schema";
 
 interface AccountSettingsProps {
 	account: MyAppAccountLoaded;
+	accountGroup?: AccountGroupType;
 	onClose?: () => void;
 }
 
-export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
+export const AccountSettings = ({ account, accountGroup, onClose }: AccountSettingsProps) => {
 	return (
 		<div className="max-w-4xl mx-auto p-6 space-y-6">
 			{/* Header */}
@@ -103,7 +105,7 @@ export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
 						</div>
 
 						{/* Gelato Integration */}
-						<GelatoSettings account={account} />
+						{accountGroup && <GelatoSettings accountGroup={accountGroup} />}
 
 						{/* Future integrations can be added here */}
 						<Card>
@@ -143,72 +145,78 @@ export const AccountSettings = ({ account, onClose }: AccountSettingsProps) => {
 
 				{/* Notifications Tab */}
 				<Tabs.Content value="notifications" className="mt-6">
-					<Card>
-						<div className="p-6">
-							<div className="flex items-center gap-3 mb-6">
-								<Bell className="w-5 h-5 text-gray-600" />
-								<Heading size="4">Notification Preferences</Heading>
-							</div>
-							
-							<div className="space-y-4">
-								<div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-									<div>
-										<Text size="2" weight="medium" className="block">
-											Product Creation Notifications
-										</Text>
-										<Text size="1" color="gray">
-											Get notified when Gelato products are created
-										</Text>
-									</div>
-									<input
-										type="checkbox"
-										checked={account.profile?.preferences?.notifyOnProductCreation || false}
-										onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-											if (account.profile) {
-												if (!account.profile.preferences) {
-													account.profile.preferences = {
-														autoCreateProducts: false,
-														defaultProductType: undefined,
-														notifyOnProductCreation: false,
-													};
-												}
-												account.profile.preferences.notifyOnProductCreation = e.target.checked;
-											}
-										}}
-										className="w-4 h-4"
-									/>
+					<div className="space-y-6">
+						{/* Push Notifications */}
+						{accountGroup && <NotificationSettings accountGroup={accountGroup} />}
+						
+						{/* Legacy Product Notifications */}
+						<Card>
+							<div className="p-6">
+								<div className="flex items-center gap-3 mb-6">
+									<Store className="w-5 h-5 text-gray-600" />
+									<Heading size="4">Product Creation Preferences</Heading>
 								</div>
+								
+								<div className="space-y-4">
+									<div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+										<div>
+											<Text size="2" weight="medium" className="block">
+												Product Creation Notifications
+											</Text>
+											<Text size="1" color="gray">
+												Get notified when Gelato products are created
+											</Text>
+										</div>
+										<input
+											type="checkbox"
+											checked={account.profile?.preferences?.notifyOnProductCreation || false}
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+												if (account.profile) {
+													if (!(account.profile as any).preferences) {
+														(account.profile as any).preferences = {
+															autoCreateProducts: false,
+															defaultProductType: undefined,
+															notifyOnProductCreation: false,
+														};
+													}
+													(account.profile as any).preferences.notifyOnProductCreation = e.target.checked;
+												}
+											}}
+											className="w-4 h-4"
+										/>
+									</div>
 
-								<div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-									<div>
-										<Text size="2" weight="medium" className="block">
-											Auto-Create Products
-										</Text>
-										<Text size="1" color="gray">
-											Automatically create products when posting with images
-										</Text>
-									</div>
-									<input
-										type="checkbox"
-										checked={account.profile?.preferences?.autoCreateProducts || false}
-										onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-											if (account.profile) {
-												if (!account.profile.preferences) {
-													account.profile.preferences = {
-														autoCreateProducts: false,
-														defaultProductType: undefined,
-														notifyOnProductCreation: false,
-													};
+									<div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+										<div>
+											<Text size="2" weight="medium" className="block">
+												Auto-Create Products
+											</Text>
+											<Text size="1" color="gray">
+												Automatically create products when posting with images
+											</Text>
+										</div>
+										<input
+											type="checkbox"
+											checked={account.profile?.preferences?.autoCreateProducts || false}
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+												if (account.profile) {
+													if (!(account.profile as any).preferences) {
+														(account.profile as any).preferences = {
+															autoCreateProducts: false,
+															defaultProductType: undefined,
+															notifyOnProductCreation: false,
+														};
+													}
+													(account.profile as any).preferences.autoCreateProducts = e.target.checked;
 												}
-												account.profile.preferences.autoCreateProducts = e.target.checked;
-											}
-										}}
-										className="w-4 h-4"
-									/>
+											}}
+											className="w-4 h-4"
+										/>
+									</div>
 								</div>
 							</div>
-						</div>
-					</Card>
+						</Card>
+					</div>
 				</Tabs.Content>
 
 				{/* Security Tab */}

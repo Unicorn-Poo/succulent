@@ -8,6 +8,7 @@ import {
   generateRequestId 
 } from '@/utils/ayrshareLogger';
 import { handleStandardPost, PostData } from '@/utils/apiHandlers';
+import { updatePostWithResults, updateBulkPostsWithResults } from '@/utils/reliablePostUpdater';
 
 // Schema for bulk post creation
 const BulkPostSchema = z.object({
@@ -340,34 +341,28 @@ export async function POST(request: NextRequest) {
               fullResponse: JSON.stringify(publishResults, null, 2)
             });
             
-            // Update Jazz post status after successful publishing
+            // Update Jazz post status after successful publishing using reliable updater
             if (publishResults && createdJazzPost) {
               try {
-                console.log(`🔄 Updating Jazz post status for: ${post.title}`);
+                const updateResult = await updatePostWithResults({
+                  jazzPost: createdJazzPost,
+                  publishResults: publishResults,
+                  platforms: post.platforms,
+                  isScheduled: !!post.scheduledDate,
+                  postTitle: post.title,
+                  accountGroup: accountGroup,
+                });
                 
-                if (createdJazzPost.variants) {
-                  // Update all platform variants to reflect published status
-                  for (const [platform, variant] of Object.entries(createdJazzPost.variants)) {
-                    if (variant && post.platforms.includes(platform as any)) {
-                      console.log(`📝 Updating ${platform} variant status to: ${postData.publishImmediately ? 'published' : 'scheduled'}`);
-                      
-                      (variant as any).status = postData.publishImmediately ? 'published' : 'scheduled';
-                      (variant as any).publishedAt = postData.publishImmediately ? new Date() : undefined;
-                      (variant as any).ayrsharePostId = publishResults.id;
-                      
-                      // Add platform-specific post IDs
-                      const platformKey = platform === 'x' ? 'twitter' : platform;
-                      const platformPostId = publishResults.postIds?.[platformKey];
-                      if (platformPostId) {
-                        (variant as any).socialPostUrl = `https://${platform}.com/post/${platformPostId}`;
-                        console.log(`🔗 Added social URL for ${platform}: ${platformPostId}`);
-                      }
-                    }
+                if (updateResult.success) {
+                  console.log(`✅ Successfully updated post "${post.title}" with reliable updater`);
+                  if (updateResult.notificationSent) {
+                    console.log(`📱 Notification sent for post "${post.title}"`);
                   }
-                  console.log(`✅ Successfully updated Jazz post status for: ${post.title}`);
+                } else {
+                  console.error(`⚠️ Reliable updater failed for post "${post.title}":`, updateResult.error);
                 }
               } catch (updateError) {
-                console.error(`⚠️ Failed to update Jazz post status:`, updateError);
+                console.error(`❌ Reliable updater error for post "${post.title}":`, updateError);
                 // Don't fail the whole operation for this
               }
             }
@@ -487,6 +482,32 @@ export async function POST(request: NextRequest) {
     }
 
     const responseTime = Date.now() - startTime;
+    
+    // Send bulk completion notification
+    try {
+      if (accountGroup) {
+        const { notifyBulkUploadComplete, getPushoverConfig } = await import('@/utils/pushoverNotifications');
+        const pushoverConfig = getPushoverConfig(accountGroup);
+        
+        if (pushoverConfig.enabled && accountGroup?.notificationSettings?.pushover?.notifyOnBulkComplete !== false) {
+          const notificationResult = await notifyBulkUploadComplete(pushoverConfig, {
+            totalPosts: posts.length,
+            successCount: results.created,
+            scheduledCount: results.scheduled,
+            failedCount: results.failed,
+            accountGroupName: accountGroup?.name,
+          });
+          
+          if (notificationResult.success) {
+            console.log('📱 Bulk completion notification sent successfully');
+          } else {
+            console.warn('⚠️ Bulk completion notification failed:', notificationResult.error);
+          }
+        }
+      }
+    } catch (notificationError) {
+      console.error('❌ Bulk completion notification error:', notificationError);
+    }
     
     logPostWorkflow('Bulk Upload Completed', { batchSize: posts.length }, 'success', undefined, {
       batchId,

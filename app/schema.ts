@@ -603,6 +603,26 @@ export const AccountGroup = co.map({
 		defaultProductType: z.optional(z.string()),
 		notifyOnProductCreation: z.optional(z.boolean()),
 	})),
+	
+	// Notification Settings
+	notificationSettings: z.optional(z.object({
+		pushover: z.optional(z.object({
+			enabled: z.boolean(),
+			apiToken: z.string(),
+			userKey: z.string(),
+			notifyOnPublish: z.optional(z.boolean()),
+			notifyOnSchedule: z.optional(z.boolean()),
+			notifyOnFailure: z.optional(z.boolean()),
+			notifyOnBulkComplete: z.optional(z.boolean()),
+		})),
+		email: z.optional(z.object({
+			enabled: z.boolean(),
+			recipients: z.array(z.string()),
+			notifyOnPublish: z.optional(z.boolean()),
+			notifyOnSchedule: z.optional(z.boolean()),
+			notifyOnFailure: z.optional(z.boolean()),
+		})),
+	})),
 });
 
 export type AccountGroupType = co.loaded<typeof AccountGroup, {
@@ -779,6 +799,13 @@ export const SucculentProfile = co.profile({
     allowCORSOrigins: z.boolean().default(true),
     enableUsageLogging: z.boolean().default(true),
     rateLimitNotifications: z.boolean().default(true),
+  })),
+  
+  // User preferences for legacy compatibility
+  preferences: z.optional(z.object({
+    autoCreateProducts: z.boolean(),
+    defaultProductType: z.optional(z.string()),
+    notifyOnProductCreation: z.boolean(),
   })),
 });
 

@@ -667,9 +667,53 @@ export async function POST(request: NextRequest) {
         
         console.log('✅ Post published to Ayrshare successfully:', ayrshareResults);
         
-        // Update Jazz post with ayrsharePostId from publishing results
+        // Update Jazz post with ayrsharePostId from publishing results using reliable updater
         if (ayrshareResults && result.jazzPost) {
-          await updateJazzPostWithAyrshareIds(result.jazzPost, ayrshareResults, requestData.platforms);
+          try {
+            const { updatePostWithResults } = await import('@/utils/reliablePostUpdater');
+            
+            // Get account group for notifications
+            let accountGroup = null;
+            try {
+              const { jazzServerWorker } = await import('@/utils/jazzServer');
+              const { AccountGroup } = await import('@/app/schema');
+              const worker = await jazzServerWorker;
+              
+              if (worker) {
+                accountGroup = await AccountGroup.load(requestData.accountGroupId, { 
+                  loadAs: worker,
+                  resolve: {
+                    accounts: { $each: true }
+                  }
+                });
+              }
+            } catch (groupError) {
+              console.warn('⚠️ Could not load account group for notifications:', groupError);
+            }
+            
+            const updateResult = await updatePostWithResults({
+              jazzPost: result.jazzPost,
+              publishResults: ayrshareResults,
+              platforms: requestData.platforms,
+              isScheduled: !!requestData.scheduledDate,
+              postTitle: requestData.title || 'API Post',
+              accountGroup: accountGroup,
+            });
+            
+            if (updateResult.success) {
+              console.log('✅ Successfully updated post with reliable updater');
+              if (updateResult.notificationSent) {
+                console.log('📱 Notification sent for post');
+              }
+            } else {
+              console.error('⚠️ Reliable updater failed:', updateResult.error);
+              // Fallback to old method
+              await updateJazzPostWithAyrshareIds(result.jazzPost, ayrshareResults, requestData.platforms);
+            }
+          } catch (updateError) {
+            console.error('❌ Reliable updater error, falling back to old method:', updateError);
+            await updateJazzPostWithAyrshareIds(result.jazzPost, ayrshareResults, requestData.platforms);
+          }
         }
         
         publishResult = { success: true, results: ayrshareResults };
