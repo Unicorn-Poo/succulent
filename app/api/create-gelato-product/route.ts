@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sharp from 'sharp';
 
 export async function POST(request: NextRequest) {
 	try {
@@ -75,42 +74,40 @@ export async function POST(request: NextRequest) {
 				(template.tags || []).filter(Boolean),
 			vendor: productData.vendor || template.vendor || 'Gelato',
 			productType: productData.productType || template.productType || 'Custom Product',
-			// Add variants with direct image URLs (no upload needed!)
-			...(imageUrls && imageUrls.length > 0 && template.variants && {
-				variants: template.variants.slice(0, 1).map((variant: any) => {
+			// Include ALL template variants (required for Gelato)
+			...(template.variants && {
+				variants: template.variants.map((variant: any) => {
 					console.log(`🏗️ Processing variant ${variant.id} with ${variant.imagePlaceholders?.length || 0} image placeholders`);
 					
-					// Map images to template placeholders using correct Gelato format
-					const imagePlaceholders = [];
+					const variantData: any = {
+						templateVariantId: variant.id
+					};
 					
-					if (variant.imagePlaceholders && variant.imagePlaceholders.length > 0) {
+					// Only add imagePlaceholders if this variant has them AND we have images
+					if (variant.imagePlaceholders && variant.imagePlaceholders.length > 0 && imageUrls && imageUrls.length > 0) {
+						const imagePlaceholders = [];
+						
 						for (let i = 0; i < Math.min(imageUrls.length, variant.imagePlaceholders.length); i++) {
 							const templatePlaceholder = variant.imagePlaceholders[i];
 							const imageUrl = imageUrls[i];
 							
 							console.log(`🔍 IMAGE MAPPING DEBUG - Template placeholder ${i}:`, templatePlaceholder);
 							
-							// Use the correct structure from Gelato docs with proper filename
 							const placeholder = {
 								name: templatePlaceholder.name,
-								fileUrl: `${imageUrl}?filename=image-${i + 1}.jpg`  // Add filename parameter
+								fileUrl: imageUrl
 							};
 							
 							console.log(`🏗️ Image placeholder ${i + 1} FINAL:`, placeholder);
 							imagePlaceholders.push(placeholder);
 						}
-					} else {
-						// Fallback if no placeholders defined
-						imagePlaceholders.push({
-							name: 'ImageFront',
-							fileUrl: `${imageUrls[0]}?filename=image.jpg`
-						});
+						
+						if (imagePlaceholders.length > 0) {
+							variantData.imagePlaceholders = imagePlaceholders;
+						}
 					}
 					
-					return {
-						templateVariantId: variant.id,
-						imagePlaceholders
-					};
+					return variantData;
 				})
 			})
 		};
