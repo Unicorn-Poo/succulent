@@ -42,6 +42,14 @@ export async function POST(request: NextRequest) {
 		}
 
 		const template = await templateResponse.json();
+		
+		console.log(`🔍 TEMPLATE DEBUG - Template structure:`, {
+			templateId,
+			hasVariants: !!template.variants,
+			variantCount: template.variants?.length || 0,
+			firstVariant: template.variants?.[0],
+			imagePlaceholders: template.variants?.[0]?.imagePlaceholders
+		});
 
 		if (imageUrls && imageUrls.length > 0) {
 			console.log(`📷 Direct image URLs for Gelato:`, imageUrls);
@@ -50,11 +58,14 @@ export async function POST(request: NextRequest) {
 		console.log(`🏗️ Creating product with ${imageUrls?.length || 0} direct image URLs`);
 		console.log(`🏗️ Template has ${template.variants?.length || 0} variants`);
 		
-		// Create product from template using the correct endpoint with direct URLs
+		// Create product from template
 		const productPayload = {
 			templateId: templateId,
 			title: productData.title || `${template.displayName || template.title || 'Product'} - ${new Date().toLocaleDateString()}`,
 			description: productData.description || `Custom product created from social media post`,
+			// Gelato-specific publishing settings
+			isVisibleInTheOnlineStore: true, // Ensure product is visible in Shopify
+			salesChannels: productData.shopifyData?.publishingChannels || ['web'], // Use selected channels or default to web
 			// Use only template tags from productData (no default tags)
 			tags: productData.tags && productData.tags.length > 0 ? 
 				productData.tags.filter(Boolean) : 
@@ -82,6 +93,12 @@ export async function POST(request: NextRequest) {
 				})
 			})
 		};
+		
+		console.log(`🔍 SHOPIFY CHANNELS DEBUG - Sales channels being used:`, {
+			selectedChannels: productData.shopifyData?.publishingChannels,
+			finalChannels: productPayload.salesChannels,
+			isVisible: productPayload.isVisibleInTheOnlineStore
+		});
 		
 		console.log(`🏗️ Final product payload (using direct URLs):`, JSON.stringify(productPayload, null, 2));
 		console.log(`🔍 SHOPIFY TITLE DEBUG - Title being sent to Gelato: "${productPayload.title}"`);
