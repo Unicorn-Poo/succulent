@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
 		};
 		
 		console.log(`🏗️ Final product payload (using direct URLs):`, JSON.stringify(productPayload, null, 2));
+		console.log(`🔍 SHOPIFY TITLE DEBUG - Title being sent to Gelato: "${productPayload.title}"`);
 
 		// Use the correct "create from template" endpoint
 		const createResponse = await fetch(`https://ecommerce.gelatoapis.com/v1/stores/${storeId}/products:create-from-template`, {
@@ -104,6 +105,24 @@ export async function POST(request: NextRequest) {
 		}
 
 		const createdProduct = await createResponse.json();
+		
+		console.log(`✅ GELATO PRODUCT CREATED:`, {
+			gelatoProductId: createdProduct.id,
+			titleSent: productPayload.title,
+			titleReturned: createdProduct.title,
+			titleMatch: productPayload.title === createdProduct.title,
+			storeId: storeId,
+			hasShopifyIntegration: !!createdProduct.shopifyIntegration,
+			shopifyStatus: createdProduct.shopifyStatus,
+			fullProduct: createdProduct
+		});
+		
+		// Check if Gelato is supposed to auto-sync to Shopify
+		if (!createdProduct.shopifyIntegration && !createdProduct.shopifyStatus) {
+			console.warn(`⚠️ GELATO-SHOPIFY INTEGRATION WARNING: No Shopify integration detected in Gelato response`);
+			console.warn(`💡 This means Gelato products won't automatically appear in Shopify`);
+			console.warn(`🔧 Check your Gelato dashboard to ensure Shopify integration is properly configured`);
+		}
 
 		// Return product info including Shopify management data
 		return NextResponse.json({
@@ -117,6 +136,8 @@ export async function POST(request: NextRequest) {
 				needsShopifyManagement: !!(productData.shopifyData && productData.shopifyData.publishingChannels?.length > 0),
 				// Estimated time for Shopify publication (typically 1-3 minutes)
 				estimatedPublishTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+				// Pass the actual title that Gelato created for sync matching
+				actualGelatoTitle: createdProduct.title,
 			}
 		});
 

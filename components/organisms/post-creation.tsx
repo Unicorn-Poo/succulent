@@ -856,12 +856,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								product: result.product,
 								template: template,
 								sourcePost: {
-									title: finalProductTitle, // Use the full product title as the main title
+									title: finalProductTitle, // Our custom title
 									variant: activeTab
 								},
 								shopifyData: {
 									publishingChannels: selectedPublishingChannels,
-									needsShopifyManagement: isShopifyConfigured
+									needsShopifyManagement: isShopifyConfigured,
+									// Store the actual title Gelato created for sync matching
+									actualGelatoTitle: result.shopifyData?.actualGelatoTitle
 								}
 							});
 						} else {
@@ -1061,18 +1063,40 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Gelato handlers
 	const handleGelatoProductCreated = async (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+		console.log(`🔍 SHOPIFY SYNC DEBUG - Product created:`, {
+			productId: result.productId,
+			hasShopifyData: !!result.shopifyData,
+			needsShopifyManagement: result.shopifyData?.needsShopifyManagement,
+			isShopifyConfigured,
+			publishingChannels: result.shopifyData?.publishingChannels,
+			willTriggerSync: !!(result.shopifyData?.needsShopifyManagement && isShopifyConfigured)
+		});
+		
 		// Add product to Jazz object for persistence
 		const createdProduct = addProductToJazz(result);
 		
 		// If Shopify management is needed, trigger it automatically
 		if (result.shopifyData?.needsShopifyManagement && isShopifyConfigured && createdProduct) {
+			console.log(`🚀 SHOPIFY SYNC DEBUG - Triggering automatic sync for product ${result.productId}`);
 			handleShopifyManagement(result);
+		} else {
+			console.log(`⏭️ SHOPIFY SYNC DEBUG - Skipping sync:`, {
+				needsManagement: result.shopifyData?.needsShopifyManagement,
+				isConfigured: isShopifyConfigured,
+				hasCreatedProduct: !!createdProduct
+			});
 		}
 	};
 
 	// Handle Shopify management for created products
 			const handleShopifyManagement = async (productResult: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
 		try {
+			console.log(`🔄 SHOPIFY SYNC DEBUG - Starting sync for product:`, {
+				productId: productResult.productId,
+				productTitle: productResult.sourcePost?.title,
+				publishingChannels: productResult.shopifyData?.publishingChannels
+			});
+			
 			// Update status to syncing
 			updateProductInJazz(productResult.productId, {
 				shopifyStatus: 'syncing',
@@ -1097,13 +1121,20 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				},
 				body: JSON.stringify({
 					productId: productResult.productId,
-					productTitle: productResult.sourcePost?.title, // This is now the full product title with suffix
+					productTitle: productResult.shopifyData?.actualGelatoTitle || productResult.sourcePost?.title, // Use Gelato's actual title if available
 					shopifyCredentials: shopifyCredentials,
 					publishingChannels: validChannels,
 				}),
 			});
 
 			const result = await response.json();
+			
+			console.log(`🔍 SHOPIFY SYNC DEBUG - API Response:`, {
+				success: result.success,
+				shopifyProductId: result.shopifyProductId,
+				error: result.error,
+				fullResult: result
+			});
 			
 			if (result.success) {
 				updateProductInJazz(productResult.productId, {
