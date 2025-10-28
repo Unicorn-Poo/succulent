@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 			description: productData.description || `Custom product created from social media post`,
 			// Gelato-specific publishing settings
 			isVisibleInTheOnlineStore: true, // Ensure product is visible in Shopify
-			salesChannels: productData.shopifyData?.publishingChannels || ['web'], // Use selected channels or default to web
+			salesChannels: ['web'], // For Shopify stores, Gelato expects just 'web' channel
 			// Use only template tags from productData (no default tags)
 			tags: productData.tags && productData.tags.length > 0 ? 
 				productData.tags.filter(Boolean) : 
@@ -96,8 +96,9 @@ export async function POST(request: NextRequest) {
 		
 		console.log(`🔍 SHOPIFY CHANNELS DEBUG - Sales channels being used:`, {
 			selectedChannels: productData.shopifyData?.publishingChannels,
-			finalChannels: productPayload.salesChannels,
-			isVisible: productPayload.isVisibleInTheOnlineStore
+			gelatoChannels: productPayload.salesChannels,
+			isVisible: productPayload.isVisibleInTheOnlineStore,
+			note: 'Gelato uses its own channel format - Shopify channels will be applied after sync'
 		});
 		
 		console.log(`🏗️ Final product payload (using direct URLs):`, JSON.stringify(productPayload, null, 2));
