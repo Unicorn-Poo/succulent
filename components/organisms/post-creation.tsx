@@ -721,14 +721,40 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 
 		try {
+			// Debug: Log the current post structure
+			console.log(`🔍 GELATO IMAGE DEBUG - Current Post Structure:`, {
+				hasVariants: !!currentPost.variants,
+				activeTab,
+				variantExists: !!currentPost.variants?.[activeTab],
+				hasMedia: !!currentPost.variants?.[activeTab]?.media,
+				mediaLength: currentPost.variants?.[activeTab]?.media?.length,
+				fullVariant: currentPost.variants?.[activeTab]
+			});
+			
 			// Extract media URLs using the same logic as post publishing
 			const mediaArray = currentPost.variants[activeTab]?.media?.filter(Boolean) || [];
+			console.log(`🔍 GELATO IMAGE DEBUG - Media Array:`, {
+				mediaArrayLength: mediaArray.length,
+				mediaArray: mediaArray.map((item, index) => ({
+					index,
+					type: item?.type,
+					hasUrl: !!(item as any)?.url,
+					hasImage: !!(item as any)?.image,
+					hasVideo: !!(item as any)?.video,
+					imageId: (item as any)?.image?.id,
+					url: (item as any)?.url,
+					fullItem: item
+				}))
+			});
+			
 			const imageUrls = mediaArray?.map((item, index) => {
 				console.log(`📷 Processing Gelato media item ${index}:`, {
 					type: item?.type,
 					hasUrl: !!(item as any)?.url,
 					hasImage: !!(item as any)?.image,
-					hasVideo: !!(item as any)?.video
+					hasVideo: !!(item as any)?.video,
+					imageId: (item as any)?.image?.id,
+					url: (item as any)?.url
 				});
 				
 				// Handle URL-based media from API posts
@@ -743,6 +769,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					const fileStream = (item as any).image;
 					const fileStreamId = fileStream?.id;
 					
+					console.log(`📷 FileStream details:`, {
+						hasFileStream: !!fileStream,
+						fileStreamId,
+						fileStreamType: typeof fileStreamId,
+						startsWithCo: typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')
+					});
+					
 					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
 						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
 						console.log(`📷 Created proxy URL for Gelato image: ${proxyUrl}`);
@@ -753,12 +786,18 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					}
 				}
 				
-				console.log(`📷 No valid media URL for Gelato item ${index}`);
+				console.log(`📷 No valid media URL for Gelato item ${index} - type: ${item?.type}`);
 				return null;
 			}).filter((url): url is string => typeof url === 'string') || [];
 
+			console.log(`🔍 GELATO IMAGE DEBUG - Extracted URLs:`, {
+				imageUrlsLength: imageUrls.length,
+				imageUrls: imageUrls
+			});
+
 			if (imageUrls.length === 0) {
-				handleGelatoError('No images found in this post to create products');
+				console.error(`❌ GELATO IMAGE DEBUG - No images found! Post structure:`, currentPost);
+				handleGelatoError('No images found in this post to create products. Check that the post has uploaded images.');
 				return;
 			}
 
@@ -766,25 +805,58 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			// Convert HTTP URLs to data URLs for Gelato API
 			const dataUrls = [];
-			for (const url of imageUrls) {
+			console.log(`🔄 GELATO IMAGE DEBUG - Starting URL to Data URL conversion for ${imageUrls.length} URLs`);
+			
+			for (let i = 0; i < imageUrls.length; i++) {
+				const url = imageUrls[i];
 				try {
-					console.log(`📷 Converting URL to data URL for Gelato: ${url}`);
+					console.log(`📷 Converting URL ${i + 1}/${imageUrls.length} to data URL for Gelato: ${url}`);
+					
 					const response = await fetch(url);
+					console.log(`📷 Fetch response for URL ${i + 1}:`, {
+						ok: response.ok,
+						status: response.status,
+						statusText: response.statusText,
+						contentType: response.headers.get('content-type'),
+						contentLength: response.headers.get('content-length')
+					});
+					
+					if (!response.ok) {
+						throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+					}
+					
 					const blob = await response.blob();
-					const dataUrl = await new Promise<string>((resolve) => {
+					console.log(`📷 Blob created for URL ${i + 1}:`, {
+						size: blob.size,
+						type: blob.type
+					});
+					
+					if (blob.size === 0) {
+						throw new Error('Empty blob received');
+					}
+					
+					const dataUrl = await new Promise<string>((resolve, reject) => {
 						const reader = new FileReader();
 						reader.onload = () => resolve(reader.result as string);
+						reader.onerror = () => reject(new Error('FileReader failed'));
 						reader.readAsDataURL(blob);
 					});
+					
 					dataUrls.push(dataUrl);
-					console.log(`📷 ✅ Converted to data URL (${dataUrl.substring(0, 50)}...)`);
+					console.log(`📷 ✅ URL ${i + 1} converted to data URL (${dataUrl.substring(0, 50)}...) - Size: ${dataUrl.length} chars`);
 				} catch (error) {
-					console.error(`❌ Failed to convert URL to data URL: ${url}`, error);
+					console.error(`❌ Failed to convert URL ${i + 1} to data URL: ${url}`, error);
 				}
 			}
 			
+			console.log(`🔍 GELATO IMAGE DEBUG - Data URL Conversion Results:`, {
+				originalUrls: imageUrls.length,
+				successfulConversions: dataUrls.length,
+				failedConversions: imageUrls.length - dataUrls.length
+			});
+			
 			if (dataUrls.length === 0) {
-				handleGelatoError('Failed to convert any images to data URLs for product creation');
+				handleGelatoError('Failed to convert any images to data URLs for product creation. Check that the image URLs are accessible.');
 				return;
 			}
 
