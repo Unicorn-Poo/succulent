@@ -492,31 +492,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			console.log(`📷 Final Prodigi image URLs (${imageUrls.length}):`, imageUrls);
 
-			// Convert HTTP URLs to data URLs for Prodigi API
-			const dataUrls = [];
-			for (const url of imageUrls) {
-				try {
-					console.log(`📷 Converting URL to data URL for Prodigi: ${url}`);
-					const response = await fetch(url);
-					const blob = await response.blob();
-					const dataUrl = await new Promise<string>((resolve) => {
-						const reader = new FileReader();
-						reader.onload = () => resolve(reader.result as string);
-						reader.readAsDataURL(blob);
-					});
-					dataUrls.push(dataUrl);
-					console.log(`📷 ✅ Converted to data URL (${dataUrl.substring(0, 50)}...)`);
-				} catch (error) {
-					console.error(`❌ Failed to convert URL to data URL: ${url}`, error);
-				}
-			}
-			
-			if (dataUrls.length === 0) {
-				handleProdigiError('Failed to convert any images to data URLs for product creation');
-				return;
-			}
-
-			console.log(`📷 Successfully converted ${dataUrls.length} URLs to data URLs for Prodigi`);
+			console.log(`📷 URLs being sent to Prodigi:`, imageUrls);
 
 			const results = [];
 			const errors = [];
@@ -530,7 +506,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						sandboxMode: accountGroupProdigiCredentials.sandboxMode,
 						productId: template.prodigiTemplateId || template.id,
 						template: template,
-						imageUrls: dataUrls, // Use data URLs instead of HTTP URLs
+						imageUrls: imageUrls,
 						post: {
 							id: post.id,
 							title: customName || (currentPost.variants[activeTab]?.text?.toString() || '').substring(0, 100) || `${template.displayName || template.name} Product`,
@@ -803,64 +779,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			console.log(`📷 Final Gelato image URLs (${imageUrls.length}):`, imageUrls);
 
-			// Convert HTTP URLs to data URLs for Gelato API
-			const dataUrls = [];
-			console.log(`🔄 GELATO IMAGE DEBUG - Starting URL to Data URL conversion for ${imageUrls.length} URLs`);
-			
-			for (let i = 0; i < imageUrls.length; i++) {
-				const url = imageUrls[i];
-				try {
-					console.log(`📷 Converting URL ${i + 1}/${imageUrls.length} to data URL for Gelato: ${url}`);
-					
-					const response = await fetch(url);
-					console.log(`📷 Fetch response for URL ${i + 1}:`, {
-						ok: response.ok,
-						status: response.status,
-						statusText: response.statusText,
-						contentType: response.headers.get('content-type'),
-						contentLength: response.headers.get('content-length')
-					});
-					
-					if (!response.ok) {
-						throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-					}
-					
-					const blob = await response.blob();
-					console.log(`📷 Blob created for URL ${i + 1}:`, {
-						size: blob.size,
-						type: blob.type
-					});
-					
-					if (blob.size === 0) {
-						throw new Error('Empty blob received');
-					}
-					
-					const dataUrl = await new Promise<string>((resolve, reject) => {
-						const reader = new FileReader();
-						reader.onload = () => resolve(reader.result as string);
-						reader.onerror = () => reject(new Error('FileReader failed'));
-						reader.readAsDataURL(blob);
-					});
-					
-					dataUrls.push(dataUrl);
-					console.log(`📷 ✅ URL ${i + 1} converted to data URL (${dataUrl.substring(0, 50)}...) - Size: ${dataUrl.length} chars`);
-				} catch (error) {
-					console.error(`❌ Failed to convert URL ${i + 1} to data URL: ${url}`, error);
-				}
-			}
-			
-			console.log(`🔍 GELATO IMAGE DEBUG - Data URL Conversion Results:`, {
-				originalUrls: imageUrls.length,
-				successfulConversions: dataUrls.length,
-				failedConversions: imageUrls.length - dataUrls.length
-			});
-			
-			if (dataUrls.length === 0) {
-				handleGelatoError('Failed to convert any images to data URLs for product creation. Check that the image URLs are accessible.');
-				return;
-			}
-
-			console.log(`📷 Successfully converted ${dataUrls.length} URLs to data URLs for Gelato`);
+			// Skip data URL conversion - send URLs directly to Gelato!
+			console.log(`🚀 GELATO DIRECT URLS - Skipping conversion, sending ${imageUrls.length} URLs directly to Gelato`);
+			console.log(`📷 URLs being sent directly:`, imageUrls);
 
 			const results = [];
 			const errors = [];
@@ -913,6 +834,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						}
 					};
 
+					console.log(`🚀 Sending direct URLs to Gelato API for template ${template.id}:`, imageUrls);
+					
 					const response = await fetch('/api/create-gelato-product', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -921,7 +844,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							storeId: accountGroupGelatoCredentials.storeId,
 							templateId: template.gelatoTemplateId || template.id, // Use the real Gelato template ID
 							productData: productData,
-							imageUrls: dataUrls, // Use data URLs instead of HTTP URLs
+							imageUrls: imageUrls, // Send direct URLs - no conversion!
 						}),
 					});
 
@@ -1852,7 +1775,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																...prev,
 																[template.id]: e.target.value
 															}))}
-															placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
+															placeholder={`${template.displayName || template.name}`}
 															className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
 														/>
 													</div>

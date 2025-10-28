@@ -52,15 +52,44 @@ export async function POST(request: NextRequest) {
 		// Upload images as assets for later use
 		const uploadedImages: any[] = [];
 		if (imageUrls && imageUrls.length > 0) {
-			for (const dataUrl of imageUrls) {
+			console.log(`🔍 PRODIGI IMAGE DEBUG - Processing ${imageUrls.length} image URLs`);
+			
+			for (let i = 0; i < imageUrls.length; i++) {
+				const url = imageUrls[i];
 				try {
-					// Convert data URL to blob
-					const response = await fetch(dataUrl);
-					const blob = await response.blob();
+					console.log(`📷 Processing Prodigi image ${i + 1}/${imageUrls.length}: ${url}`);
+					
+					// Handle both data URLs and direct URLs
+					let blob;
+					if (url.startsWith('data:')) {
+						console.log(`📷 Converting data URL to blob for Prodigi`);
+						const response = await fetch(url);
+						blob = await response.blob();
+					} else {
+						console.log(`📷 Fetching direct URL for Prodigi: ${url}`);
+						const response = await fetch(url);
+						
+						if (!response.ok) {
+							throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+						}
+						
+						blob = await response.blob();
+					}
+					
+					console.log(`📷 Prodigi blob created:`, {
+						size: blob.size,
+						type: blob.type
+					});
+					
+					if (blob.size === 0) {
+						throw new Error('Empty image received');
+					}
 					
 					// Create form data for image upload
 					const formData = new FormData();
-					formData.append('file', blob, 'social-media-image.jpg');
+					formData.append('file', blob, `social-media-image-${i + 1}.jpg`);
+					
+					console.log(`📤 Uploading image ${i + 1} to Prodigi assets...`);
 					
 					// Upload image as asset to Prodigi
 					const uploadResponse = await fetch(`${baseUrl}/assets`, {
@@ -71,21 +100,43 @@ export async function POST(request: NextRequest) {
 						body: formData,
 					});
 					
+					console.log(`📤 Prodigi upload response for image ${i + 1}:`, {
+						ok: uploadResponse.ok,
+						status: uploadResponse.status,
+						statusText: uploadResponse.statusText
+					});
+					
 					if (uploadResponse.ok) {
 						const uploadResult = await uploadResponse.json();
+						console.log(`✅ Prodigi image ${i + 1} uploaded successfully:`, uploadResult);
+						
 						uploadedImages.push({
 							id: uploadResult.id || uploadResult.assetId,
 							url: uploadResult.url || uploadResult.downloadUrl,
-							filename: uploadResult.filename || 'social-media-image.jpg',
+							filename: uploadResult.filename || `social-media-image-${i + 1}.jpg`,
 							size: uploadResult.size,
 							format: uploadResult.format || 'jpeg'
 						});
+					} else {
+						const errorText = await uploadResponse.text();
+						console.error(`❌ Failed to upload image ${i + 1} to Prodigi:`, uploadResponse.status, errorText);
 					}
 				} catch (uploadError) {
-					console.error('Upload error:', uploadError);
+					console.error(`❌ Error processing Prodigi image ${i + 1}:`, uploadError);
 				}
 			}
 		}
+		
+		console.log(`🔍 PRODIGI ASSET UPLOAD SUMMARY:`, {
+			originalUrls: imageUrls?.length || 0,
+			successfulUploads: uploadedImages.length,
+			failedUploads: (imageUrls?.length || 0) - uploadedImages.length,
+			uploadedAssets: uploadedImages.map(img => ({
+				id: img.id,
+				url: img.url,
+				size: img.size
+			}))
+		});
 
 		// Create a product design/template that can be used for future orders
 		const productDesign = {
