@@ -779,9 +779,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			console.log(`📷 Final Gelato image URLs (${imageUrls.length}):`, imageUrls);
 
-			// Skip data URL conversion - send URLs directly to Gelato!
-			console.log(`🚀 GELATO DIRECT URLS - Skipping conversion, sending ${imageUrls.length} URLs directly to Gelato`);
-			console.log(`📷 URLs being sent directly:`, imageUrls);
+			console.log(`🚀 Using direct URLs for Gelato: ${imageUrls.length} images`);
 
 			const results = [];
 			const errors = [];
@@ -844,7 +842,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							storeId: accountGroupGelatoCredentials.storeId,
 							templateId: template.gelatoTemplateId || template.id, // Use the real Gelato template ID
 							productData: productData,
-							imageUrls: imageUrls, // Send direct URLs - no conversion!
+							imageUrls: imageUrls, // Use direct URLs
 						}),
 					});
 
