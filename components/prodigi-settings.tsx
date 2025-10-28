@@ -135,7 +135,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 					}
 					// Add new templates
 					result.templates.forEach((template: any) => {
-						accountGroup.prodigiCredentials?.templates.push(template);
+						accountGroup.prodigiCredentials?.templates?.push(template);
 					});
 				}
 				setProductFetchResult('success');

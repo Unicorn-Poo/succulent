@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
 	try {
 		const { 
 			productId,
-			productTitle, // Add product title for better matching
+			productTitle, // Product title with template suffix (e.g. "Flowerscape No.65 Canvas")
 			shopifyCredentials,
 			publishingChannels,
 			maxRetries = 3, // Reduced to 3 for faster feedback  
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
 				if (productTitle) {
 					let product = products.find((p: any) => {
 						const title = p.title?.toLowerCase().trim() || '';
-						const searchTitle = productTitle.toLowerCase().trim();
-						console.log(`Comparing "${title}" with "${searchTitle}"`);
-						return title === searchTitle;
+						const searchTitleLower = productTitle.toLowerCase().trim();
+						console.log(`Comparing "${title}" with "${searchTitleLower}"`);
+						return title === searchTitleLower;
 					});
 					
 					if (product) {
@@ -78,13 +78,13 @@ export async function POST(request: NextRequest) {
 					// Strategy 2: Partial title match - but only if it's a close match
 					product = products.find((p: any) => {
 						const title = p.title?.toLowerCase().trim() || '';
-						const searchTitle = productTitle.toLowerCase().trim();
+						const searchTitleLower = productTitle.toLowerCase().trim();
 						// Only match if the titles are very similar (at least 80% overlap)
 						const titleWords = title.split(' ');
-						const searchWords = searchTitle.split(' ');
+						const searchWords = searchTitleLower.split(' ');
 						const commonWords = titleWords.filter((word: string) => searchWords.includes(word));
 						const similarity = commonWords.length / Math.max(titleWords.length, searchWords.length);
-						console.log(`Similarity between "${title}" and "${searchTitle}": ${similarity}`);
+						console.log(`Similarity between "${title}" and "${searchTitleLower}": ${similarity}`);
 						return similarity > 0.8;
 					});
 					
@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
 						// Try exact match again with extended results
 						product = extendedProducts.find((p: any) => {
 							const title = p.title?.toLowerCase().trim() || '';
-							const searchTitle = productTitle.toLowerCase().trim();
-							return title === searchTitle;
+							const searchTitleLower = productTitle.toLowerCase().trim();
+							return title === searchTitleLower;
 						});
 						
 						if (product) {

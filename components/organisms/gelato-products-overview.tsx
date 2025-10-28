@@ -21,11 +21,16 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 		setRetryingProducts(prev => new Set(prev).add(productId));
 		
 		try {
+			// Find the product to get the productTitle (which is now the full title with suffix)
+			const product = createdProducts.find((p: any) => p?.productId === productId);
+			const productTitle = product?.sourcePost?.title;
+			
 			const response = await fetch('/api/manage-gelato-shopify-product', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					productId,
+					productTitle,
 					shopifyCredentials: {
 						storeUrl: shopifyConfig?.storeUrl,
 						accessToken: shopifyConfig?.accessToken,
