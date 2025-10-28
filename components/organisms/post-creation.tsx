@@ -801,8 +801,37 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					];
 
 					const customName = customProductNames[template.id];
+					
+					// Smart template suffix detection
+					let templateSuffix = 'Print'; // Default
+					const templateName = (template?.displayName || template?.name || '').toLowerCase();
+					
+					if (templateName.includes('canvas')) {
+						templateSuffix = 'Canvas';
+					} else if (templateName.includes('print')) {
+						templateSuffix = 'Print';
+					} else if (templateName.includes('poster')) {
+						templateSuffix = 'Poster';
+					} else if (templateName.includes('frame')) {
+						templateSuffix = 'Framed Print';
+					} else if (templateName.includes('mug')) {
+						templateSuffix = 'Mug';
+					} else if (templateName.includes('tshirt')) {
+						templateSuffix = 'T-Shirt';
+					} else if (templateName.includes('pillow') || templateName.includes('cushion')) {
+						templateSuffix = 'Pillow';
+					} else if (templateName.includes('bag')) {
+						templateSuffix = 'Bag';
+					} else if (templateName.includes('card')) {
+						templateSuffix = 'Card';
+					} else if (templateName.includes('sticker')) {
+						templateSuffix = 'Sticker';
+					}
+					
+					const finalProductTitle = customName || `${title} ${templateSuffix}` || `${template?.displayName || template?.name} - ${new Date().toLocaleDateString()}`;
+					
 					const productData = {
-						title: customName || `${title} Print` || `${template?.displayName || template?.name} - ${new Date().toLocaleDateString()}`,
+						title: finalProductTitle,
 						description: template.description,
 						tags: productTags,
 						vendor: 'scape squared',
@@ -832,7 +861,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								product: result.product,
 								template: template,
 								sourcePost: {
-									title: title || 'Untitled Post',
+									title: finalProductTitle, // Use the full product title as the main title
 									variant: activeTab
 								},
 								shopifyData: {
@@ -1073,7 +1102,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				},
 				body: JSON.stringify({
 					productId: productResult.productId,
-					productTitle: productResult.product?.title || productResult.title, // Pass the product title for better matching
+					productTitle: productResult.sourcePost?.title, // This is now the full product title with suffix
 					shopifyCredentials: shopifyCredentials,
 					publishingChannels: validChannels,
 				}),
