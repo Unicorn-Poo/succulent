@@ -42,12 +42,39 @@ export async function POST(request: NextRequest) {
 		}
 
 		const template = await templateResponse.json();
+		
+		console.log('🔍 TEMPLATE VARIANTS DEBUG:', {
+			templateId,
+			hasVariants: !!template.variants,
+			variantCount: template.variants?.length || 0,
+			variants: template.variants?.map((v: any) => ({
+				id: v.id,
+				hasImagePlaceholders: !!v.imagePlaceholders,
+				placeholderCount: v.imagePlaceholders?.length || 0,
+				placeholderNames: v.imagePlaceholders?.map((p: any) => p.name) || []
+			}))
+		});
 
     if (!imageUrls || imageUrls.length === 0) {
       return NextResponse.json(
         { error: 'No image URLs provided' },
         { status: 400 }
       );
+    }
+    
+    // TEST: Check if Gelato can access our proxy URL
+    console.log('🧪 TESTING: Can we access the proxy URL from server?');
+    try {
+      const testResponse = await fetch(imageUrls[0]);
+      console.log('🧪 PROXY URL TEST:', {
+        url: imageUrls[0],
+        accessible: testResponse.ok,
+        status: testResponse.status,
+        contentType: testResponse.headers.get('content-type'),
+        contentLength: testResponse.headers.get('content-length')
+      });
+    } catch (testError) {
+      console.error('🧪 PROXY URL TEST FAILED:', testError);
     }
 
 		// Product payload with ALL variants and images (based on Gelato docs)
@@ -60,13 +87,23 @@ export async function POST(request: NextRequest) {
 			tags: productData.tags && productData.tags.length > 0 ? 
 				productData.tags.filter(Boolean) : 
 				(template.tags || []).filter(Boolean),
-			variants: template.variants.map((variant: any) => ({
-				templateVariantId: variant.id,
-				imagePlaceholders: variant.imagePlaceholders?.map((placeholder: any) => ({
-					name: placeholder.name,
-					fileUrl: imageUrls?.[0]
-				})) || []
-			})),
+			variants: template.variants.map((variant: any) => {
+				const variantData = {
+					templateVariantId: variant.id,
+					imagePlaceholders: variant.imagePlaceholders?.map((placeholder: any) => ({
+						name: placeholder.name,
+						fileUrl: imageUrls?.[0]
+					})) || []
+				};
+				
+				console.log(`🔍 VARIANT ${variant.id} DEBUG:`, {
+					templateVariantId: variantData.templateVariantId,
+					placeholderCount: variantData.imagePlaceholders.length,
+					placeholders: variantData.imagePlaceholders
+				});
+				
+				return variantData;
+			}),
 			productType: productData.productType || template.productType || "Printable Material",
 			vendor: productData.vendor || template.vendor || "Gelato"
 		};
