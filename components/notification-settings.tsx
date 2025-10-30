@@ -78,11 +78,25 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
     }
 
     // Update account group with notification settings
-    if (!accountGroup.notificationSettings) {
-      (accountGroup as any).notificationSettings = {};
+    const accountGroupWithSettings = accountGroup as AccountGroupType & {
+      notificationSettings?: {
+        pushover?: {
+          enabled: boolean;
+          apiToken: string;
+          userKey: string;
+          notifyOnPublish?: boolean;
+          notifyOnSchedule?: boolean;
+          notifyOnFailure?: boolean;
+          notifyOnBulkComplete?: boolean;
+        };
+      };
+    };
+
+    if (!accountGroupWithSettings.notificationSettings) {
+      accountGroupWithSettings.notificationSettings = {};
     }
 
-    (accountGroup.notificationSettings as any).pushover = {
+    accountGroupWithSettings.notificationSettings.pushover = {
       enabled: formData.enabled,
       apiToken: formData.apiToken.trim(),
       userKey: formData.userKey.trim(),
@@ -179,7 +193,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
                     Pushover Setup Required
                   </Text>
                   <Text size="2" className="text-blue-800 mb-3 block">
-                    To receive notifications, you'll need a Pushover account and app token:
+                    To receive notifications, you&apos;ll need a Pushover account and app token:
                   </Text>
                   <ol className="text-sm text-blue-800 space-y-1 ml-4">
                     <li>1. Sign up at <a href="https://pushover.net" target="_blank" rel="noopener noreferrer" className="underline">pushover.net</a></li>
@@ -331,3 +345,4 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
     </Card>
   );
 };
+

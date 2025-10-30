@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
         });
       }
     } catch (error) {
+      console.error('❌ Failed to load account group:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to load account group' },
         { status: 500 }
@@ -169,3 +170,4 @@ export async function GET() {
     usage: 'POST /api/test-notifications with { accountGroupId: string, testType: string }'
   });
 }
+
