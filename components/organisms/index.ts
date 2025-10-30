@@ -23,4 +23,5 @@ export { default as BrandManagementDashboard } from './brand-management-dashboar
 export { default as AutoScheduleManager } from './auto-schedule-manager';
 export { default as MasterGrowthDashboard } from './master-growth-dashboard';
 export { default as UnifiedAutomationDashboard } from './unified-automation-dashboard';
-export { default as BrandPersonaSetup } from './brand-persona-setup'; 
+export { default as BrandPersonaSetup } from './brand-persona-setup';
+export { default as AIAutopilotDashboard } from './ai-autopilot-dashboard'; 

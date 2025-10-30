@@ -9,12 +9,14 @@
     "lint": "next lint --fix"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.58",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-navigation-menu": "^1.2.13",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/themes": "^3.2.1",
+    "ai": "^5.0.82",
     "clsx": "^2.1.1",
     "html-react-parser": "^5.2.5",
     "jazz-tools": "^0.17.5",
@@ -26,7 +28,8 @@
     "sharp": "^0.34.3",
     "stripe": "^14.25.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
