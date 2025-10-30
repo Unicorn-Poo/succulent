@@ -38,7 +38,7 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
   
   try {
     let updateSuccess = false;
-    let socialUrls: Record<string, string> = {};
+    const socialUrls: Record<string, string> = {};
 
     // Same logic as existing updateJazzPostWithAyrshareIds function
     if (publishResults && jazzPost?.variants) {
@@ -120,6 +120,7 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
     }
 
     if (updateSuccess) {
+      console.log(`✅ Successfully updated post "${postTitle}" status to ${isScheduled ? 'scheduled' : 'published'}`);
       return { success: true, notificationSent };
     } else {
       return { success: false, error: 'Failed to update any variants' };

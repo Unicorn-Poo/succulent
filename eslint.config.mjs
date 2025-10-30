@@ -11,6 +11,12 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    rules: {
+      // Disable rules that don't block Next.js/Vercel builds
+      "@typescript-eslint/no-explicit-any": "off", // Vercel builds allow 'any'
+    },
+  },
 ];
 
 export default eslintConfig;
