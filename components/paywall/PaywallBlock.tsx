@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, Text, Button, Badge, Dialog, Flex, Box } from "@radix-ui/themes";
-import { Lock, Star, Zap, Crown, ExternalLink, X, Check } from "lucide-react";
+import { Card, Text, Button, Badge, Dialog } from "@radix-ui/themes";
+import { Lock, Star, Zap, Crown, X, Check } from "lucide-react";
 import { useState } from "react";
 import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
@@ -55,11 +55,10 @@ export function PaywallBlock({
 }: PaywallBlockProps) {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { me } = useAccount(MyAppAccount);
-  
-  if (!me) return null;
-
   const subscription = useSubscription(me);
   const { hasFeature, currentTier, isInTrial, getTrialInfo, startTrial, getUpgradeOptions } = subscription;
+  
+  if (!me) return null;
 
   // If user has the feature, render children
   if (hasFeature(feature)) {
@@ -393,10 +392,9 @@ export function FeaturePreview({
   children: React.ReactNode;
 }) {
   const { me } = useAccount(MyAppAccount);
+  const { hasFeature } = useSubscription(me);
   
   if (!me) return null;
-
-  const { hasFeature } = useSubscription(me);
 
   if (hasFeature(feature)) {
     return <>{children}</>;

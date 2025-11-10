@@ -28,12 +28,11 @@ export function PlanEnforcement({
   onLimitReached 
 }: PlanEnforcementProps) {
   const { me } = useAccount(MyAppAccount);
+  const { hasFeature, currentTier } = useSubscription(me);
   
   if (!me) {
     return <div>Loading...</div>;
   }
-
-  const { hasFeature, currentTier } = useSubscription(me);
 
   // If user has the feature, render children
   if (hasFeature(feature)) {
@@ -86,10 +85,9 @@ export function PlanEnforcement({
 
 export function PostLimitGuard({ children }: { children: ReactNode }) {
   const { me } = useAccount(MyAppAccount);
+  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
   
   if (!me) return null;
-
-  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
 
   if (hasReachedLimit('maxPosts')) {
     return (
@@ -115,7 +113,7 @@ export function PostLimitGuard({ children }: { children: ReactNode }) {
             </Text>
           </div>
           <Text size="1" className="text-amber-700 mb-2">
-            You've used {postsUsed} of {postsLimit} posts this month ({usage.toFixed(0)}%)
+            You&apos;ve used {postsUsed} of {postsLimit} posts this month ({usage.toFixed(0)}%)
           </Text>
           <Progress value={usage} className="mb-2" />
           <Button size="1" variant="soft" onClick={() => window.open('/pricing', '_blank')}>
@@ -132,10 +130,9 @@ export function PostLimitGuard({ children }: { children: ReactNode }) {
 
 export function AccountLimitGuard({ children }: { children: ReactNode }) {
   const { me } = useAccount(MyAppAccount);
+  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
   
   if (!me) return null;
-
-  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
 
   if (hasReachedLimit('maxConnectedAccounts')) {
     return (
@@ -161,7 +158,7 @@ export function AccountLimitGuard({ children }: { children: ReactNode }) {
             </Text>
           </div>
           <Text size="1" className="text-amber-700 mb-2">
-            You've connected {accountsUsed} of {accountsLimit} accounts ({usage.toFixed(0)}%)
+            You&apos;ve connected {accountsUsed} of {accountsLimit} accounts ({usage.toFixed(0)}%)
           </Text>
           <Progress value={usage} className="mb-2" />
           <Button size="1" variant="soft" onClick={() => window.open('/pricing', '_blank')}>
@@ -178,10 +175,9 @@ export function AccountLimitGuard({ children }: { children: ReactNode }) {
 
 export function StorageLimitGuard({ children }: { children: ReactNode }) {
   const { me } = useAccount(MyAppAccount);
+  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
   
   if (!me) return null;
-
-  const { hasReachedLimit, getUsagePercentage, subscription } = useSubscription(me);
 
   if (hasReachedLimit('maxStorageMB')) {
     return (
@@ -207,7 +203,7 @@ export function StorageLimitGuard({ children }: { children: ReactNode }) {
             </Text>
           </div>
           <Text size="1" className="text-amber-700 mb-2">
-            You've used {storageUsed.toFixed(1)}MB of {storageLimit}MB ({usage.toFixed(0)}%)
+            You&apos;ve used {storageUsed.toFixed(1)}MB of {storageLimit}MB ({usage.toFixed(0)}%)
           </Text>
           <Progress value={usage} className="mb-2" />
           <Button size="1" variant="soft" onClick={() => window.open('/pricing', '_blank')}>
@@ -240,12 +236,11 @@ export function UsageTracker({
   onUsageTracked 
 }: UsageTrackerProps) {
   const { me } = useAccount(MyAppAccount);
-  
-  if (!me) return null;
-
   const subscription = useSubscription(me);
-
+  
   const trackUsage = () => {
+    if (!me) return;
+    
     let success = false;
     
     switch (trackingType) {
@@ -274,7 +269,9 @@ export function UsageTracker({
   // Track usage when component mounts
   useEffect(() => {
     trackUsage();
-  }, []);
+  }, [trackUsage]);
+  
+  if (!me) return null;
 
   return <>{children}</>;
 }
@@ -365,10 +362,9 @@ export function BulkUploadGuard({ children }: { children: ReactNode }) {
 
 export function TrialBanner() {
   const { me } = useAccount(MyAppAccount);
+  const { isInTrial, getTrialInfo, currentTier } = useSubscription(me);
   
   if (!me) return null;
-
-  const { isInTrial, getTrialInfo, currentTier } = useSubscription(me);
 
   if (!isInTrial()) return null;
 
@@ -404,10 +400,9 @@ export function TrialBanner() {
 
 export function UsageDashboard() {
   const { me } = useAccount(MyAppAccount);
+  const { getUsageSummary, currentTier } = useSubscription(me);
   
   if (!me) return null;
-
-  const { getUsageSummary, currentTier } = useSubscription(me);
   const summary = getUsageSummary();
 
   if (!summary) return null;
@@ -497,12 +492,11 @@ export function UsageDashboard() {
 
 export function useFeatureCheck(feature: string) {
   const { me } = useAccount(MyAppAccount);
+  const { hasFeature, currentTier } = useSubscription(me);
   
   if (!me) {
     return { hasFeature: false, currentTier: 'free' };
   }
-
-  const { hasFeature, currentTier } = useSubscription(me);
   
   return {
     hasFeature: hasFeature(feature),
@@ -513,6 +507,7 @@ export function useFeatureCheck(feature: string) {
 
 export function usePlanLimits() {
   const { me } = useAccount(MyAppAccount);
+  const subscription = useSubscription(me);
   
   if (!me) {
     return {
@@ -524,8 +519,6 @@ export function usePlanLimits() {
       canUploadMedia: false
     };
   }
-
-  const subscription = useSubscription(me);
   
   return {
     hasReachedPostLimit: subscription.hasReachedLimit('maxPosts'),

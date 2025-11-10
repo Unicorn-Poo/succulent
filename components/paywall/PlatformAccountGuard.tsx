@@ -4,7 +4,7 @@ import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import { useSubscription } from "@/utils/subscriptionManager";
 import { Card, Text, Badge, Button } from "@radix-ui/themes";
-import { AlertTriangle, Crown, Users, Lock } from "lucide-react";
+import { Crown, Users, Lock } from "lucide-react";
 import { ReactNode } from "react";
 
 // =============================================================================
@@ -25,10 +25,9 @@ export function PlatformAccountGuard({
   onUpgradeClick 
 }: PlatformAccountGuardProps) {
   const { me } = useAccount(MyAppAccount);
+  const { canAddPlatformAccount, currentTier, getPlatformLimits } = useSubscription(me);
   
   if (!me) return null;
-
-  const { canAddPlatformAccount, currentTier, getPlatformLimits } = useSubscription(me);
   const platformLimits = getPlatformLimits();
   
   // Check if this platform can have another account
@@ -137,10 +136,9 @@ interface PlatformAccountOverviewProps {
 
 export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: PlatformAccountOverviewProps) {
   const { me } = useAccount(MyAppAccount);
+  const { currentTier, getPlatformLimits } = useSubscription(me);
   
   if (!me) return null;
-
-  const { currentTier, getPlatformLimits } = useSubscription(me);
   const platformLimits = getPlatformLimits();
   
   // Count accounts per platform
@@ -237,6 +235,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
 
 export function usePlatformLimits(existingAccounts: any[]) {
   const { me } = useAccount(MyAppAccount);
+  const { canAddPlatformAccount, currentTier, getPlatformLimits } = useSubscription(me);
   
   if (!me) {
     return {
@@ -245,8 +244,6 @@ export function usePlatformLimits(existingAccounts: any[]) {
       isLimited: true
     };
   }
-
-  const { canAddPlatformAccount, currentTier, getPlatformLimits } = useSubscription(me);
   const platformLimits = getPlatformLimits();
   
   return {

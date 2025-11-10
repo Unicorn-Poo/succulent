@@ -12,13 +12,13 @@ declare global {
 }
 
 export const ReplyPreview = ({ htmlContent, author, username, platform }: { htmlContent: string | undefined, author: string, username: string, platform: string | null }) => {
-  if (!htmlContent) return null;
-
   useEffect(() => {
-    if (platform === 'x' && window.twttr?.widgets?.load) {
+    if (htmlContent && platform === 'x' && window.twttr?.widgets?.load) {
       window.twttr.widgets.load();
     }
   }, [htmlContent, platform]);
+
+  if (!htmlContent) return null;
 
   if (platform === 'instagram') {
     return <InstagramPreview author={author} content={htmlContent} />;

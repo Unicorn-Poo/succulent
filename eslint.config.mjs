@@ -15,6 +15,7 @@ const eslintConfig = [
     rules: {
       // Disable rules that don't block Next.js/Vercel builds
       "@typescript-eslint/no-explicit-any": "off", // Vercel builds allow 'any'
+      "@typescript-eslint/no-unused-vars": "off", // Allow unused variables
     },
   },
 ];

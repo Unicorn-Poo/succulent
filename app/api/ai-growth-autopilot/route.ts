@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     
     // TODO: Load account group from Jazz database using accountGroupId
     // For now, we'll pass null and the AI will use generic recommendations
-    let accountGroup = null;
+    const accountGroup = null;
 
     if (!platform) {
       return NextResponse.json(

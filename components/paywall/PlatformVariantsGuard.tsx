@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { MyAppAccountLoaded } from '@/app/schema';
 import { useSubscription } from '@/utils/subscriptionManager';
 import { PaywallBlock } from './PaywallBlock';
-import { Button } from '@/components/atoms/button';
 
 interface PlatformVariantsGuardProps {
   account: MyAppAccountLoaded;
@@ -19,7 +18,7 @@ export function PlatformVariantsGuard({
   children, 
   onUpgrade 
 }: PlatformVariantsGuardProps) {
-  const { canCreatePlatformVariants, getUsageSummary, currentTier } = useSubscription(account);
+  const { canCreatePlatformVariants, getUsageSummary } = useSubscription(account);
   const [canCreateVariants, setCanCreateVariants] = useState(true);
   const [usageSummary, setUsageSummary] = useState<any>(null);
 

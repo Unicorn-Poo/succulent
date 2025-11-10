@@ -11,8 +11,8 @@ import { useState } from 'react';
 export function Navigation() {
   const { me, logOut } = useAccount(MyAppAccount);
   const [showDropdown, setShowDropdown] = useState(false);
-  
-  const { currentTier, currentPlan } = me ? useSubscription(me) : { currentTier: 'free', currentPlan: null };
+  const subscription = useSubscription(me);
+  const { currentTier, currentPlan } = me ? subscription : { currentTier: 'free' as const, currentPlan: null };
   const isAdmin = me?.profile?.email && ['admin@succulent.app', 'sammi@succulent.app'].includes(me.profile.email);
 
   if (!me) {

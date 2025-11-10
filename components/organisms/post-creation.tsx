@@ -580,7 +580,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		}
 	};
 
-	const addProdigiProductToJazz = (productData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+	const addProdigiProductToJazz = (productData: any) => {  
 		if (!accountGroupProdigiCredentials) return;
 
 		// Ensure created products list exists
@@ -622,7 +622,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	};
 
 	// Prodigi handlers
-	const handleProdigiProductCreated = async (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+	const handleProdigiProductCreated = async (result: any) => {  
 		try {
 			// Add to Jazz collaborative object
 			const prodigiProduct = addProdigiProductToJazz(result);
@@ -1019,7 +1019,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	};
 
 	// Helper function to add a product to Jazz
-	const addProductToJazz = (productData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+	const addProductToJazz = (productData: any) => {  
 		if (!accountGroupGelatoCredentials) return;
 		
 		// Initialize createdProducts if it doesn't exist
@@ -1060,7 +1060,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	};
 
 	// Gelato handlers
-	const handleGelatoProductCreated = async (result: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+	const handleGelatoProductCreated = async (result: any) => {  
 		console.log(`🔍 SHOPIFY SYNC DEBUG - Product created:`, {
 			productId: result.productId,
 			hasShopifyData: !!result.shopifyData,
@@ -1087,7 +1087,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 	};
 
 	// Handle Shopify management for created products
-			const handleShopifyManagement = async (productResult: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+			const handleShopifyManagement = async (productResult: any) => {  
 		try {
 			console.log(`🔄 SHOPIFY SYNC DEBUG - Starting sync for product:`, {
 				productId: productResult.productId,
@@ -1187,7 +1187,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Convert post to SucculentPost format for Gelato
 	const convertToSucculentPost = (): any => { // Changed to any to avoid SucculentPost type conflict
-		const variants: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+		const variants: Record<string, any> = {};  
 		
 		Object.keys(currentPost.variants).forEach(platformName => {
 			const variant = currentPost.variants[platformName];
@@ -1210,7 +1210,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 	// Check if post has images for Gelato
 	const hasImages = currentPost.variants[activeTab]?.media?.some(
-		(item: any) => item?.type === 'image' // eslint-disable-line @typescript-eslint/no-explicit-any
+		(item: any) => item?.type === 'image'  
 	) || false;
 
 	// Enhanced Gelato product creation with Shopify integration
@@ -1712,7 +1712,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										</a>
 									</Text>
 									<Text size="2" className="block text-lime-700">
-										<strong>Step 2:</strong> Go to the "Settings" tab in this account group
+										<strong>Step 2:</strong> Go to the &quot;Settings&quot; tab in this account group
 									</Text>
 									<Text size="2" className="block text-lime-700">
 										<strong>Step 3:</strong> Enter your credentials and test the connection
@@ -2349,7 +2349,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				selectedPlatforms={selectedPlatforms}
 				accountGroup={accountGroup}
 				activeTab={activeTab}
-				media={currentPost.variants[activeTab]?.media?.filter(Boolean) as any[] || []} // eslint-disable-line @typescript-eslint/no-explicit-any
+				media={currentPost.variants[activeTab]?.media?.filter(Boolean) as any[] || []}  
 				isReply={seriesType === "reply"}
 				isQuote={isQuoteTweet}
 				replyTo={currentPost.variants[activeTab]?.replyTo}
@@ -2386,7 +2386,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						</div>
 						
 						<p className="text-gray-700 dark:text-gray-300 mb-6">
-							Are you sure you want to delete "{title || 'Untitled Post'}"? This will permanently remove the post and all its content.
+							Are you sure you want to delete &quot;{title || 'Untitled Post'}&quot;? This will permanently remove the post and all its content.
 						</p>
 						
 						<div className="flex gap-3 justify-end">
