@@ -172,39 +172,52 @@ export const validatePostContent = (content: string, platform: string) => {
  * @returns The actual post status, with proper fallback logic
  */
 export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
-  // First check if there's a direct status field (legacy posts)
+  // PRIORITY 1: Check if post is actually published (publishedAt takes precedence)
+  // This should override any status field if the post has been published
+  if (post.publishedAt || (post.variants && Object.values(post.variants).some((v: any) => v?.publishedAt))) {
+    return 'published';
+  }
+
+  // PRIORITY 2: Check if there's a direct status field (legacy posts)
   if (post.status && ['draft', 'scheduled', 'published'].includes(post.status)) {
+    // But only trust it if not published (already checked above)
     return post.status;
   }
 
-  // Check variants for status - look in all platform variants
+  // PRIORITY 3: Check variants for status - look in all platform variants
   if (post.variants) {
     // Check common variant names first
     const commonVariants = ['base', 'instagram', 'x', 'twitter', 'facebook', 'linkedin', 'youtube', 'tiktok'];
     
     for (const variantKey of commonVariants) {
       const variant = post.variants[variantKey];
+      // Only trust status if variant doesn't have publishedAt (already checked above)
       if (variant?.status && ['draft', 'scheduled', 'published'].includes(variant.status)) {
+        // Double-check: if this variant has publishedAt, it's published regardless of status
+        if (variant.publishedAt) {
+          return 'published';
+        }
         return variant.status;
       }
     }
     
     // If not found in common variants, check all variants
     for (const [variantKey, variant] of Object.entries(post.variants)) {
-      if (variant && typeof variant === 'object' && (variant as any).status) {
-        const status = (variant as any).status;
-        if (['draft', 'scheduled', 'published'].includes(status)) {
-          return status;
+      if (variant && typeof variant === 'object') {
+        const v = variant as any;
+        // If variant has publishedAt, it's published
+        if (v.publishedAt) {
+          return 'published';
+        }
+        // Otherwise check status field
+        if (v.status && ['draft', 'scheduled', 'published'].includes(v.status)) {
+          return v.status;
         }
       }
     }
   }
 
-  // Final fallback - if post has publishedAt or scheduledFor, it's likely not a draft
-  if (post.publishedAt || (post.variants && Object.values(post.variants).some((v: any) => v?.publishedAt))) {
-    return 'published';
-  }
-  
+  // PRIORITY 4: Check scheduledFor (only if not published)
   if (post.scheduledFor || (post.variants && Object.values(post.variants).some((v: any) => v?.scheduledFor))) {
     return 'scheduled';
   }

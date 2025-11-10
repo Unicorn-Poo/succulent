@@ -15,7 +15,7 @@ interface PostViewsProps {
 function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
   if (!mediaItem) return null;
   
-  // Handle different media types
+  // Handle URL-based images
   if (mediaItem.type === 'image' && mediaItem.url) {
     return (
       <img
@@ -27,11 +27,47 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
     );
   }
   
+  // Handle FileStream images (Jazz collaborative objects)
+  if (mediaItem.type === 'image' && mediaItem.image) {
+    const fileStreamId = mediaItem.image?.id;
+    if (fileStreamId && typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+      const proxyUrl = `/api/media-proxy/${fileStreamId}`;
+      return (
+        <img
+          src={proxyUrl}
+          alt="Post media"
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      );
+    }
+  }
+  
+  // Handle URL-based videos
   if (mediaItem.type === 'video' && mediaItem.thumbnail) {
     return (
       <div className="relative w-full h-full">
         <img
           src={mediaItem.thumbnail}
+          alt="Video thumbnail"
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+          <div className="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+            <div className="w-0 h-0 border-l-2 border-l-gray-800 border-y-2 border-y-transparent ml-0.5" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Handle URL-based video or video with url
+  if (mediaItem.type === 'video' && mediaItem.url) {
+    return (
+      <div className="relative w-full h-full">
+        <img
+          src={mediaItem.url}
           alt="Video thumbnail"
           className="w-full h-full object-cover"
           loading="lazy"
@@ -73,9 +109,23 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
     }
   };
 
+  // Sort posts by date (newest first)
+  const sortedPosts = [...posts].sort((a: any, b: any) => {
+    const getPostDate = (post: any) => {
+      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.publishedAt) return new Date(post.publishedAt);
+      if (post.scheduledFor) return new Date(post.scheduledFor);
+      if (post.createdAt) return new Date(post.createdAt);
+      return new Date(0);
+    };
+    return getPostDate(b).getTime() - getPostDate(a).getTime();
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {posts
+      {sortedPosts
         .filter(post => {
           if (postsFilter === 'all') return true;
           const postStatus = getPostStatus(post);
@@ -167,9 +217,23 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
 
 // Image View - Focus on media content
 export function PostImageView({ posts, accountGroupId, accountGroupName, postsFilter, selectedPosts, onPostSelect }: PostViewsProps) {
+  // Sort posts by date (newest first)
+  const sortedPosts = [...posts].sort((a: any, b: any) => {
+    const getPostDate = (post: any) => {
+      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.publishedAt) return new Date(post.publishedAt);
+      if (post.scheduledFor) return new Date(post.scheduledFor);
+      if (post.createdAt) return new Date(post.createdAt);
+      return new Date(0);
+    };
+    return getPostDate(b).getTime() - getPostDate(a).getTime();
+  });
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-      {posts
+      {sortedPosts
         .filter(post => {
           if (postsFilter === 'all') return true;
           const postStatus = getPostStatus(post);
@@ -202,11 +266,11 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                   onPostSelect(postId, !isSelected);
                 }}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  isSelected ? 'bg-lime-600' : 'bg-black bg-opacity-50'
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+                  isSelected ? 'bg-lime-600 border-2 border-white' : 'bg-black bg-opacity-70 border-2 border-white'
                 }`}>
                   {isSelected ? (
-                    <CheckSquare className="w-4 h-4 text-white" />
+                    <CheckSquare className="w-4 h-4 text-white fill-white" />
                   ) : (
                     <Square className="w-4 h-4 text-white" />
                   )}
@@ -285,9 +349,23 @@ export function PostSuccinctView({ posts, accountGroupId, accountGroupName, post
     }
   };
 
+  // Sort posts by date (newest first)
+  const sortedPosts = [...posts].sort((a: any, b: any) => {
+    const getPostDate = (post: any) => {
+      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.publishedAt) return new Date(post.publishedAt);
+      if (post.scheduledFor) return new Date(post.scheduledFor);
+      if (post.createdAt) return new Date(post.createdAt);
+      return new Date(0);
+    };
+    return getPostDate(b).getTime() - getPostDate(a).getTime();
+  });
+
   return (
     <div className="space-y-2">
-      {posts
+      {sortedPosts
         .filter(post => {
           if (postsFilter === 'all') return true;
           const postStatus = getPostStatus(post);
