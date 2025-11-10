@@ -1,6 +1,6 @@
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from './postConstants';
 import { extractTweetId, detectPlatformFromUrl, extractPostIdFromUrl } from './postValidation';
-import { formatThreadWithNumbering, ThreadPost } from './threadUtils';
+import { ThreadPost } from './threadUtils';
 import { INTERNAL_TO_AYRSHARE_PLATFORM, isBusinessPlanMode } from './ayrshareIntegration';
 import { 
   logAyrshareOperation, 
@@ -137,84 +137,25 @@ export const handleStandardPost = async (postData: PostData) => {
 		requestId
 	});
 	
-	// Validate and log schedule date if present
+	// Validate schedule date and remove if in past or too soon (Ayrshare requires 5+ minutes)
 	if (cleanedBody.scheduleDate) {
-		// Validate schedule date format and timing
-		let scheduleDate: Date;
 		try {
-			scheduleDate = new Date(cleanedBody.scheduleDate);
+			const scheduleDate = new Date(cleanedBody.scheduleDate);
 			if (isNaN(scheduleDate.getTime())) {
 				throw new Error('Invalid date format');
 			}
+			
+			const now = new Date();
+			const minutesFromNow = Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60));
+			const minMinutes = 5;
+			
+			// Remove scheduleDate if in past or too soon to force immediate posting
+			if (minutesFromNow < minMinutes) {
+				delete cleanedBody.scheduleDate;
+			}
 		} catch (dateError) {
-			logAyrshareOperation({
-				timestamp: new Date().toISOString(),
-				operation: 'Schedule Validation Failed',
-				status: 'error',
-				error: 'Invalid schedule date format',
-				data: {
-					scheduleDate: cleanedBody.scheduleDate,
-					error: dateError instanceof Error ? dateError.message : 'Unknown date error'
-				},
-				requestId
-			});
-			throw new Error(`Invalid schedule date format: ${cleanedBody.scheduleDate}`);
+			throw new Error(`Invalid schedule date format: ${cleanedBody.scheduleDate}, error: ${dateError}`);
 		}
-
-		const now = new Date();
-		const minutesFromNow = Math.round((scheduleDate.getTime() - now.getTime()) / (1000 * 60));
-		
-		// Ayrshare requires at least 5 minutes in the future
-		const minMinutes = 5;
-		
-		logAyrshareOperation({
-			timestamp: new Date().toISOString(),
-			operation: 'Schedule Validation',
-			status: minutesFromNow >= minMinutes ? 'success' : 'warning',
-			data: {
-				scheduleDate: cleanedBody.scheduleDate,
-				parsedDate: scheduleDate.toISOString(),
-				currentTime: now.toISOString(),
-				isFutureDate: scheduleDate > now,
-				minutesFromNow,
-				isScheduled: true,
-				willSchedule: minutesFromNow >= minMinutes,
-				meetsMinimum: minutesFromNow >= minMinutes,
-				minimumRequired: minMinutes
-			},
-			requestId
-		});
-
-		if (minutesFromNow < minMinutes) {
-			const warningMessage = minutesFromNow <= 0 
-				? 'Scheduled date is in the past - post will be published immediately'
-				: `Scheduled date is too soon (${minutesFromNow} minutes) - Ayrshare requires at least ${minMinutes} minutes. Post may be published immediately.`;
-				
-			logAyrshareOperation({
-				timestamp: new Date().toISOString(),
-				operation: 'Schedule Warning',
-				status: 'warning',
-				data: {
-					message: warningMessage,
-					scheduleDate: cleanedBody.scheduleDate,
-					minutesFromNow,
-					willBeImmediate: true
-				},
-				requestId
-			});
-		}
-	} else {
-		logAyrshareOperation({
-			timestamp: new Date().toISOString(),
-			operation: 'Schedule Check',
-			status: 'started',
-			data: {
-				isScheduled: false,
-				willPublishImmediately: true,
-				hasScheduleDate: false
-			},
-			requestId
-		});
 	}
 
 	// Removed pre-publish duplicate checking - let Ayrshare handle duplicates naturally
