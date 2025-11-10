@@ -10,7 +10,7 @@ import {
 } from './pushoverNotifications';
 
 interface PostUpdateData {
-  jazzPost: any;
+  jazzPost: any; // Keep parameter name for backward compatibility with callers
   publishResults: any;
   platforms: string[];
   isScheduled: boolean;
@@ -27,21 +27,20 @@ interface BulkUpdateSummary {
 }
 
 /**
- * Update Jazz post with publishing results - same pattern as existing updateJazzPostWithAyrshareIds
+ * Update post with publishing results
  */
 export async function updatePostWithResults(data: PostUpdateData): Promise<{
   success: boolean;
   error?: string;
   notificationSent?: boolean;
 }> {
-  const { jazzPost, publishResults, platforms, isScheduled, postTitle, accountGroup } = data;
+  const { jazzPost: post, publishResults, platforms, isScheduled, postTitle, accountGroup } = data;
   
   try {
     let updateSuccess = false;
     const socialUrls: Record<string, string> = {};
 
-    // Same logic as existing updateJazzPostWithAyrshareIds function
-    if (publishResults && jazzPost?.variants) {
+    if (publishResults && post?.variants) {
       // Extract post IDs from different result formats
       let postIds: Record<string, string> = {};
       
@@ -66,7 +65,7 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
         for (const [platform, ayrsharePostId] of Object.entries(postIds)) {
           const internalPlatform = platform === 'twitter' ? 'x' : platform;
           
-          const variant = jazzPost.variants[internalPlatform];
+          const variant = post.variants[internalPlatform];
           if (variant && ayrsharePostId) {
             variant.ayrsharePostId = ayrsharePostId;
             
@@ -102,7 +101,7 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
             platforms,
             accountGroupName: accountGroup?.name,
             scheduledDate: isScheduled ? 'scheduled time' : undefined,
-            // REMOVED: postId: jazzPost?.id - Jazz IDs should not be accessed directly
+            // REMOVED: postId: post?.id - IDs should not be accessed directly
             ayrsharePostId: publishResults?.id,
             socialUrls,
             status: isScheduled ? 'scheduled' : 'published',
@@ -264,20 +263,20 @@ export async function retryFailedUpdate(
 
 /**
  * Validate that a post update was successful
- * SAFE: This function only reads variant properties, never accesses Jazz IDs
+ * SAFE: This function only reads variant properties, never accesses post IDs directly
  */
-export function validatePostUpdate(jazzPost: any, expectedStatus: 'scheduled' | 'published'): {
+export function validatePostUpdate(post: any, expectedStatus: 'scheduled' | 'published'): {
   isValid: boolean;
   issues: string[];
 } {
   const issues: string[] = [];
   
-  if (!jazzPost?.variants) {
+  if (!post?.variants) {
     issues.push('Post has no variants');
     return { isValid: false, issues };
   }
   
-  for (const [platform, variant] of Object.entries(jazzPost.variants)) {
+  for (const [platform, variant] of Object.entries(post.variants)) {
     const variantObj = variant as any;
     
     if (!variantObj) {
