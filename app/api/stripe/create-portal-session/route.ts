@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { STRIPE_CONFIG } from '@/utils/paymentIntegration';
 
+export const dynamic = 'force-dynamic';
+
 const stripe = new Stripe(STRIPE_CONFIG.SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
