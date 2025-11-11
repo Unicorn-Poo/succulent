@@ -79,6 +79,8 @@ export default function AccountGroupPage() {
 	
 	const accountGroupId = params.groupId as string;
 	
+	// Use minimal resolve - x is local-first, so we only need to specify what to eagerly load
+	// The rest will be loaded on-demand from local cache
 	const { me } = useAccount(MyAppAccount, {
 		resolve: {
 			root: {
@@ -86,7 +88,10 @@ export default function AccountGroupPage() {
 					accounts: { $each: true },
 					posts: { $each: {
 						title: true,
-						variants: true // Load variants to see post content
+						variants: { $each: {
+							text: true,
+							media: { $each: true }
+						}}
 					}}
 				}}
 			}
@@ -99,12 +104,6 @@ export default function AccountGroupPage() {
 	
 	const jazzAccountGroup = me?.root?.accountGroups?.find((group: any, index: number) => {
 		if (!group) return false;
-		
-		console.log('🔍 Checking Jazz account group:', {
-			groupId: group.id,
-			targetId: accountGroupId,
-			matches: group.id === accountGroupId
-		});
 		
 		if (group.id === accountGroupId) return true;
 		if (accountGroupId === 'demo') return index === 0;
@@ -120,16 +119,6 @@ export default function AccountGroupPage() {
 		}
 		
 		return false;
-	});
-	
-	console.log('🔍 Jazz Account Group Loading Debug:', {
-		hasMe: !!me,
-		hasRoot: !!me?.root,
-		hasAccountGroups: !!me?.root?.accountGroups,
-		accountGroupsLength: me?.root?.accountGroups?.length || 0,
-		targetAccountGroupId: accountGroupId,
-		foundJazzAccountGroup: !!jazzAccountGroup,
-		jazzAccountGroupId: jazzAccountGroup?.id
 	});
 	
 	const accountGroup = legacyAccountGroup || jazzAccountGroup;
@@ -180,12 +169,39 @@ export default function AccountGroupPage() {
 	};
 
 	const getPostsArray = () => {
+		let postsArray: any[] = [];
 		if (legacyAccountGroup) {
-			return legacyAccountGroup.posts || [];
+			postsArray = legacyAccountGroup.posts || [];
 		} else if (jazzAccountGroup) {
-			return safeArrayAccess(jazzAccountGroup.posts);
+			postsArray = safeArrayAccess(jazzAccountGroup.posts);
 		}
-		return [];
+		
+		// Sort by newest first - prioritize publishedAt, then scheduledFor, then createdAt/postDate
+		return [...postsArray].sort((a: any, b: any) => {
+			const getPostDate = (post: any) => {
+				// Check all variants for publishedAt (most recent activity)
+				if (post.variants) {
+					for (const variant of Object.values(post.variants)) {
+						const v = variant as any;
+						if (v?.publishedAt) return new Date(v.publishedAt).getTime();
+					}
+					for (const variant of Object.values(post.variants)) {
+						const v = variant as any;
+						if (v?.scheduledFor) return new Date(v.scheduledFor).getTime();
+					}
+					for (const variant of Object.values(post.variants)) {
+						const v = variant as any;
+						if (v?.postDate) return new Date(v.postDate).getTime();
+					}
+				}
+				// Fallback to top-level dates
+				if (post.publishedAt) return new Date(post.publishedAt).getTime();
+				if (post.scheduledFor) return new Date(post.scheduledFor).getTime();
+				if (post.createdAt) return new Date(post.createdAt).getTime();
+				return 0; // Put undated posts at the end
+			};
+			return getPostDate(b) - getPostDate(a); // Newest first (descending)
+		});
 	};
 
 	const accounts = getAccountsArray();
@@ -362,14 +378,35 @@ export default function AccountGroupPage() {
 								}}
 							/>
 							<Button 
+								onClick={async () => {
+									if (!jazzAccountGroup?.id) return;
+									try {
+										const response = await fetch('/api/sync-post-status', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({ accountGroupId: jazzAccountGroup.id })
+										});
+										const result = await response.json();
+										if (result.success) {
+											alert(`✅ Synced ${result.updated || 0} post statuses from Ayrshare`);
+										} else {
+											alert(`⚠️ Sync failed: ${result.error || 'Unknown error'}`);
+										}
+									} catch (error) {
+										console.error('❌ Failed to sync post statuses:', error);
+										alert('❌ Failed to sync post statuses');
+									}
+								}} 
+								intent="secondary" 
+								variant="soft"
+								className="text-xs"
+								title="Sync post statuses from Ayrshare"
+							>
+								<Calendar className="w-4 h-4 mr-1" />
+								Sync Status
+							</Button>
+							<Button 
 								onClick={() => {
-									console.log('📁 CSV Upload button clicked');
-									console.log('🔍 Jazz Account Group at click:', {
-										hasJazzAccountGroup: !!jazzAccountGroup,
-										jazzAccountGroupId: jazzAccountGroup?.id,
-										hasOwner: !!(jazzAccountGroup?._owner),
-										hasPosts: !!(jazzAccountGroup?.posts)
-									});
 									setShowCSVUpload(true);
 								}} 
 								intent="secondary" 
@@ -377,7 +414,7 @@ export default function AccountGroupPage() {
 								className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
 							>
 								<Upload className="w-4 h-4 mr-2" />
-								Bulk Upload {!jazzAccountGroup && '(Debug)'}
+								Bulk Upload
 							</Button>
 							<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
 								<Plus className="w-4 h-4 mr-2" />
@@ -417,6 +454,52 @@ export default function AccountGroupPage() {
 							Settings
 						</Tabs.Trigger>
 					</Tabs.List>
+
+					{/* Settings Tab - Delete Account Group */}
+					<Tabs.Content value="settings" className="mt-6">
+						<div className="bg-white rounded-lg border border-gray-200 p-6">
+							<h2 className="text-xl font-semibold text-gray-900 mb-4">Account Group Settings</h2>
+							
+							<div className="border-t border-gray-200 pt-6">
+								<h3 className="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
+								<p className="text-sm text-gray-600 mb-4">
+									Deleting this account group will permanently remove all posts, accounts, and settings associated with it. This action cannot be undone.
+								</p>
+								<Button
+									onClick={async () => {
+										if (!confirm(`Are you sure you want to delete "${accountGroup.name || 'this account group'}"? This will delete all ${posts.length} posts and cannot be undone.`)) {
+											return;
+										}
+										
+										if (!jazzAccountGroup || !me?.root?.accountGroups) {
+											alert('Cannot delete account group. Please refresh and try again.');
+											return;
+										}
+										
+										try {
+											// Find and remove the account group from root
+											const groupIndex = me.root.accountGroups.findIndex((g: any) => g?.id === jazzAccountGroup.id);
+											if (groupIndex >= 0) {
+												me.root.accountGroups.splice(groupIndex, 1);
+												// Navigate back to home
+												router.push('/');
+											} else {
+												alert('Account group not found. It may have already been deleted.');
+											}
+										} catch (error) {
+											console.error('❌ Failed to delete account group:', error);
+											alert('Failed to delete account group. Please try again.');
+										}
+									}}
+									intent="danger"
+									variant="solid"
+								>
+									<Trash2 className="w-4 h-4 mr-2" />
+									Delete Account Group
+								</Button>
+							</div>
+						</div>
+					</Tabs.Content>
 
 					{/* Posts Tab */}
 					<Tabs.Content value="posts" className="mt-6">
@@ -554,6 +637,7 @@ export default function AccountGroupPage() {
 										postsFilter={postsFilter}
 										selectedPosts={selectedPosts}
 										onPostSelect={handlePostSelect}
+										onSelectAll={handleSelectAll}
 									/>
 								)}
 								

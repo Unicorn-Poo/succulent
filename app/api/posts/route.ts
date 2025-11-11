@@ -13,7 +13,7 @@ import {
   PlatformNames
 } from '@/app/schema';
 import { handleStandardPost, handleReplyPost, handleMultiPosts, PostData } from '@/utils/apiHandlers';
-import { isBusinessPlanMode } from '@/utils/ayrshareIntegration';
+import { isBusinessPlanMode, INTERNAL_TO_AYRSHARE_PLATFORM } from '@/utils/ayrshareIntegration';
 import { validateAPIKey, logAPIKeyUsage, checkRateLimit, validateAccountGroupAccess } from '@/utils/apiKeyManager';
 // Removed workaround storage imports - using proper Jazz integration
 
@@ -120,6 +120,14 @@ const CreatePostSchema = z.object({
     content: zod.string().optional(), // Override base content for this platform
     media: zod.array(zod.string().url()).optional(), // Override base media for this platform
   })).optional(),
+  
+  // Platform-specific options (twitterOptions, instagramOptions, etc.)
+  twitterOptions: z.object({
+    thread: z.boolean().optional(),
+    threadNumber: z.boolean().optional(),
+    replyToTweetId: z.string().optional(),
+    mediaUrls: z.array(z.string().url()).optional(),
+  }).optional(),
   
   // Reply configuration
   replyTo: z.object({
@@ -293,6 +301,12 @@ async function createPostInAccountGroup(
       likesCount: undefined,
     }, { owner: groupOwner });
     
+    // Prepare platform options for base variant (if provided at top level)
+    const basePlatformOptions: Record<string, any> = {};
+    if (request.twitterOptions) {
+      basePlatformOptions.twitterOptions = request.twitterOptions;
+    }
+    
     const baseVariant = PostVariant.create({
       text: baseText,
       postDate: new Date(),
@@ -307,6 +321,7 @@ async function createPostInAccountGroup(
       performance: undefined,
       ayrsharePostId: undefined,
       socialPostUrl: undefined,
+      platformOptions: Object.keys(basePlatformOptions).length > 0 ? basePlatformOptions : undefined,
     }, { owner: groupOwner });
     
     const variants = co.record(z.string(), PostVariant).create({ base: baseVariant }, { owner: groupOwner });
@@ -350,6 +365,17 @@ async function createPostInAccountGroup(
         variantMediaList = await createMediaListFromUrls(variantOverride.media, request.alt);
       }
       
+      // Prepare platform options for this variant
+      // Inherit from base, but can be overridden per-platform in the future
+      const variantPlatformOptions: Record<string, any> = {};
+      if (baseVariant.platformOptions) {
+        Object.assign(variantPlatformOptions, baseVariant.platformOptions);
+      }
+      // If twitterOptions provided and this is x platform, save it
+      if (request.twitterOptions && platform === 'x') {
+        variantPlatformOptions.twitterOptions = request.twitterOptions;
+      }
+      
       const platformVariant = PostVariant.create({
         text: variantText,
         postDate: baseVariant.postDate,
@@ -363,6 +389,7 @@ async function createPostInAccountGroup(
         performance: baseVariant.performance,
         ayrsharePostId: baseVariant.ayrsharePostId,
         socialPostUrl: baseVariant.socialPostUrl,
+        platformOptions: Object.keys(variantPlatformOptions).length > 0 ? variantPlatformOptions : undefined,
       }, { owner: groupOwner });
       variants[platform] = platformVariant;
     }
@@ -385,6 +412,15 @@ async function createPostInAccountGroup(
             variantMediaList = await createMediaListFromUrls(typedVariantData.media, request.alt);
           }
           
+          // Prepare platform options for this variant
+          const variantPlatformOptions: Record<string, any> = {};
+          if (baseVariant.platformOptions) {
+            Object.assign(variantPlatformOptions, baseVariant.platformOptions);
+          }
+          if (request.twitterOptions && platform === 'x') {
+            variantPlatformOptions.twitterOptions = request.twitterOptions;
+          }
+          
           const platformVariant = PostVariant.create({
             text: variantText,
             postDate: baseVariant.postDate,
@@ -398,6 +434,7 @@ async function createPostInAccountGroup(
             performance: baseVariant.performance,
             ayrsharePostId: baseVariant.ayrsharePostId,
             socialPostUrl: baseVariant.socialPostUrl,
+            platformOptions: Object.keys(variantPlatformOptions).length > 0 ? variantPlatformOptions : undefined,
           }, { owner: groupOwner });
           variants[platform] = platformVariant;
         }
@@ -478,6 +515,121 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
   }
   
   return mediaUrls;
+}
+
+/**
+ * Prepare publish requests for Ayrshare API
+ * Handles platform-specific variants by creating separate requests per platform when variants exist
+ */
+async function preparePublishRequests(
+  requestData: CreatePostRequest,
+  post: any,
+  profileKey: string | undefined
+): Promise<Array<{ postData: import('@/utils/apiHandlers').PostData; platforms: string[] }>> {
+  type PostData = import('@/utils/apiHandlers').PostData;
+  const requests: Array<{ postData: PostData; platforms: string[] }> = [];
+  const platformsWithoutVariants: string[] = [];
+  
+  // Get base content and media
+  const baseContent = requestData.content;
+  const baseMediaUrls = requestData.media?.map((m) => m.url).filter(Boolean) as string[] || 
+                        requestData.imageUrls || [];
+  
+  // Process each platform
+  for (const platform of requestData.platforms) {
+    if (!PlatformNames.includes(platform as any)) continue;
+    
+    const variantOverride = requestData.variants?.[platform];
+    const variant = post?.variants?.[platform];
+    
+    // Determine content: variant override > saved variant > base
+    let content = baseContent;
+    if (variantOverride?.content) {
+      content = variantOverride.content;
+    } else if (variant?.text) {
+      content = variant.text.toString();
+    }
+    
+    // Determine media: variant override > saved variant > base
+    let mediaUrls: string[] = baseMediaUrls;
+    if (variantOverride?.media && variantOverride.media.length > 0) {
+      mediaUrls = variantOverride.media;
+    } else if (variant) {
+      const variantMediaUrls = extractMediaUrlsFromVariant(variant);
+      if (variantMediaUrls.length > 0) {
+        mediaUrls = variantMediaUrls;
+      }
+    }
+    
+    // Determine platform options: request > saved variant > defaults
+    let twitterOptions: any = undefined;
+    if (platform === 'x') {
+      // Check request first
+      if (requestData.twitterOptions) {
+        twitterOptions = requestData.twitterOptions;
+      } else if (variant?.platformOptions?.twitterOptions) {
+        // Check saved variant
+        twitterOptions = variant.platformOptions.twitterOptions;
+      } else {
+        // Default: enable threading for long posts
+        const contentLength = content.length;
+        if (contentLength > 280) {
+          twitterOptions = { thread: true, threadNumber: true };
+        }
+      }
+    }
+    
+    // If variant exists (override or saved), create separate request for this platform
+    if (variantOverride || variant) {
+      const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+      requests.push({
+        postData: {
+          post: content,
+          platforms: [ayrsharePlatform],
+          mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+          scheduleDate: requestData.scheduledDate,
+          profileKey: profileKey,
+          twitterOptions: twitterOptions,
+        },
+        platforms: [platform],
+      });
+    } else {
+      // No variant - group with other platforms without variants
+      platformsWithoutVariants.push(platform);
+    }
+  }
+  
+  // Create single request for platforms without variants
+  if (platformsWithoutVariants.length > 0) {
+    const mappedPlatforms = platformsWithoutVariants.map(
+      p => INTERNAL_TO_AYRSHARE_PLATFORM[p] || p
+    );
+    
+    // Determine twitter options for grouped request
+    const hasTwitter = platformsWithoutVariants.includes('x');
+    let twitterOptions: any = undefined;
+    if (hasTwitter) {
+      if (requestData.twitterOptions) {
+        twitterOptions = requestData.twitterOptions;
+      } else if (baseContent.length > 280) {
+        twitterOptions = { thread: true, threadNumber: true };
+      }
+    }
+    
+    requests.push({
+      postData: {
+        post: baseContent,
+        platforms: mappedPlatforms,
+        mediaUrls: baseMediaUrls.length > 0 ? baseMediaUrls : undefined,
+        scheduleDate: requestData.scheduledDate,
+        profileKey: profileKey,
+        twitterOptions: twitterOptions,
+      },
+      platforms: platformsWithoutVariants,
+    });
+  }
+  
+  return requests;
 }
 
 /**
@@ -740,24 +892,6 @@ export async function POST(request: NextRequest) {
       // Use request profileKey as fallback, but prioritize account group's profile key
       const finalProfileKey = profileKey || requestData.profileKey;
 
-      // Add Twitter-specific options for ALL X/Twitter posts (matches UI behavior)
-      const validPlatforms = requestData.platforms.filter((p: string) => PlatformNames.includes(p as any));
-      const hasTwitter = validPlatforms.includes('x');
-      
-      const twitterOptions = hasTwitter ? {
-        thread: true,
-        threadNumber: true
-      } : undefined;
-
-      const publishData: PostData = {
-        post: requestData.content,
-        platforms: validPlatforms,
-        mediaUrls: requestData.media?.map((m) => m.url).filter(Boolean) as string[],
-        scheduleDate: requestData.scheduledDate,
-        profileKey: finalProfileKey, // FIXED: Now using the correct profile key
-        twitterOptions: twitterOptions // FIXED: Added Twitter options for X/Twitter posts
-      };
-
       console.log('🔑 Profile Key Debug:', {
         accountGroupId: requestData.accountGroupId,
         accountGroupProfileKey: profileKey ? `${profileKey.substring(0, 8)}...` : 'none',
@@ -765,38 +899,93 @@ export async function POST(request: NextRequest) {
         finalProfileKey: finalProfileKey ? `${finalProfileKey.substring(0, 8)}...` : 'none',
         willUseBusinessPlan: !!(finalProfileKey && isBusinessPlanMode())
       });
-
-      console.log('🐦 Twitter Debug:', {
-        platforms: validPlatforms,
-        hasTwitter,
-        postLength: requestData.content.length,
-        twitterOptions,
-        willAddTwitterOptions: !!twitterOptions,
-        matchesUIBehavior: true
-      });
-      
-      console.log('📦 Using prepared publish data with profile key and Twitter options:', JSON.stringify(publishData, null, 2));
       
       try {
-        // Use the API handlers directly with the properly prepared data
-        let ayrshareResults;
+        // Prepare publish requests - handles variants by creating separate requests per platform
+        const publishRequests = await preparePublishRequests(requestData, result.post, finalProfileKey);
         
-        if (requestData.replyTo?.url) {
-          ayrshareResults = await handleReplyPost(publishData, requestData.replyTo.url);
-        } else if (requestData.isThread && requestData.threadPosts) {
-          const threadPosts = requestData.threadPosts.map((tp: { content: string; media?: any[] }, index: number) => ({
-            content: tp.content,
-            media: tp.media || [],
-            characterCount: tp.content.length,
-            index,
-            total: requestData.threadPosts!.length
-          }));
-          ayrshareResults = await handleMultiPosts(publishData, threadPosts);
-        } else {
-          ayrshareResults = await handleStandardPost(publishData);
+        console.log(`📦 Prepared ${publishRequests.length} publish request(s) for ${requestData.platforms.length} platform(s)`);
+        
+        // Aggregate results from all requests
+        const allPostIds: Record<string, string> = {};
+        const allPlatforms: string[] = [];
+        let aggregatedResults: any = null;
+        const errors: Array<{ platform: string; error: string }> = [];
+        
+        // Process each publish request
+        for (const { postData, platforms } of publishRequests) {
+          try {
+            console.log(`🚀 Publishing to platforms: ${platforms.join(', ')}`);
+            
+            let ayrshareResults: any;
+            
+            // Handle special cases (reply, thread) - these should be rare with variants
+            if (requestData.replyTo?.url && platforms.length === 1) {
+              ayrshareResults = await handleReplyPost(postData, requestData.replyTo.url);
+            } else if (requestData.isThread && requestData.threadPosts && platforms.length === 1) {
+              const threadPosts = requestData.threadPosts.map((tp: { content: string; media?: any[] }, index: number) => ({
+                content: tp.content,
+                media: tp.media || [],
+                characterCount: tp.content.length,
+                index,
+                total: requestData.threadPosts!.length
+              }));
+              ayrshareResults = await handleMultiPosts(postData, threadPosts);
+            } else {
+              // Standard post
+              ayrshareResults = await handleStandardPost(postData);
+            }
+            
+            // Aggregate post IDs from response
+            if (ayrshareResults?.postIds) {
+              Object.assign(allPostIds, ayrshareResults.postIds);
+            } else if (ayrshareResults?.id) {
+              // Single ID for scheduled posts - assign to all platforms in this request
+              platforms.forEach(p => {
+                const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[p] || p;
+                allPostIds[ayrsharePlatform] = ayrshareResults.id;
+              });
+            } else if (ayrshareResults?.posts && Array.isArray(ayrshareResults.posts)) {
+              // Posts array format
+              const post = ayrshareResults.posts[0];
+              if (post?.id) {
+                platforms.forEach(p => {
+                  const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[p] || p;
+                  allPostIds[ayrsharePlatform] = post.id;
+                });
+              }
+            }
+            
+            allPlatforms.push(...platforms);
+            
+            // Store first result as aggregated (for status checking)
+            if (!aggregatedResults) {
+              aggregatedResults = ayrshareResults;
+            }
+            
+            console.log(`✅ Successfully published to ${platforms.join(', ')}`);
+          } catch (platformError) {
+            const errorMessage = platformError instanceof Error ? platformError.message : 'Unknown error';
+            console.error(`❌ Failed to publish to ${platforms.join(', ')}:`, errorMessage);
+            errors.push({ platform: platforms.join(', '), error: errorMessage });
+            // Continue with other platforms
+          }
         }
         
-        console.log('✅ Post published to Ayrshare successfully:', ayrshareResults);
+        // Create aggregated result structure
+        const ayrshareResults = {
+          ...aggregatedResults,
+          postIds: allPostIds,
+          platforms: allPlatforms,
+          errors: errors.length > 0 ? errors : undefined,
+        };
+        
+        console.log('✅ Post publishing complete:', {
+          totalPlatforms: allPlatforms.length,
+          successfulPlatforms: Object.keys(allPostIds).length,
+          errors: errors.length,
+          postIds: allPostIds
+        });
         
         // Update post with ayrsharePostId from publishing results using reliable updater
         if (ayrshareResults && result.post) {

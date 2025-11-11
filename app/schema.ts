@@ -260,6 +260,8 @@ export const PostVariant = co.map({
 	// Ayrshare integration
 	ayrsharePostId: z.optional(z.string()),
 	socialPostUrl: z.optional(z.string()),
+	// Platform-specific options (twitterOptions, instagramOptions, etc.)
+	platformOptions: z.optional(z.record(z.string(), z.any())),
 });
 
 export const Post = co.map({
