@@ -40,6 +40,33 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
     let updateSuccess = false;
     const socialUrls: Record<string, string> = {};
 
+    // Determine actual status from Ayrshare's response (source of truth)
+    // Ayrshare returns: 'scheduled' status OR postIds (immediate) OR posts array with status
+    let actualIsScheduled = isScheduled; // Fallback to provided value
+    
+    if (publishResults) {
+      // Check Ayrshare's response for scheduled status
+      if (publishResults.status === 'scheduled') {
+        actualIsScheduled = true;
+      } else if (publishResults.posts && Array.isArray(publishResults.posts) && publishResults.posts.length > 0) {
+        // Check first post's status in array format
+        const firstPost = publishResults.posts[0];
+        if (firstPost.status === 'scheduled') {
+          actualIsScheduled = true;
+        } else if (firstPost.status === 'success' || publishResults.postIds) {
+          // Immediate posts have postIds or status 'success'
+          actualIsScheduled = false;
+        }
+      } else if (publishResults.postIds) {
+        // Immediate posts return postIds object
+        actualIsScheduled = false;
+      } else if (publishResults.id && !publishResults.status) {
+        // If we have an ID but no status, check if scheduleDate was in request
+        // This is a fallback - ideally Ayrshare should return status
+        actualIsScheduled = isScheduled;
+      }
+    }
+
     if (publishResults && post?.variants) {
       // Extract post IDs from different result formats
       let postIds: Record<string, string> = {};
@@ -62,6 +89,17 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
 
       // Update each platform variant with its ayrsharePostId
       if (Object.keys(postIds).length > 0) {
+        // Also update base variant if it exists
+        const baseVariant = post.variants.base;
+        if (baseVariant) {
+          baseVariant.status = actualIsScheduled ? 'scheduled' : 'published';
+          if (!actualIsScheduled) {
+            baseVariant.publishedAt = new Date();
+            // Clear scheduledFor if published immediately
+            baseVariant.scheduledFor = undefined;
+          }
+        }
+        
         for (const [platform, ayrsharePostId] of Object.entries(postIds)) {
           const internalPlatform = platform === 'twitter' ? 'x' : platform;
           
@@ -69,10 +107,12 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
           if (variant && ayrsharePostId) {
             variant.ayrsharePostId = ayrsharePostId;
             
-            // Additional updates beyond the existing function
-            variant.status = isScheduled ? 'scheduled' : 'published';
-            if (!isScheduled) {
+            // Use Ayrshare's actual response status (source of truth)
+            variant.status = actualIsScheduled ? 'scheduled' : 'published';
+            if (!actualIsScheduled) {
               variant.publishedAt = new Date();
+              // Clear scheduledFor if published immediately
+              variant.scheduledFor = undefined;
             }
             
             // Store social URL for notifications

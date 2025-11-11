@@ -178,6 +178,29 @@ export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
     return 'published';
   }
 
+  // PRIORITY 1.5: Check if post has ayrsharePostId (indicates it was published to Ayrshare)
+  // If a variant has ayrsharePostId but no scheduledFor, it's likely published
+  if (post.variants) {
+    for (const variant of Object.values(post.variants)) {
+      const v = variant as any;
+      // If variant has ayrsharePostId and no scheduledFor, it was published
+      if (v?.ayrsharePostId && !v?.scheduledFor) {
+        return 'published';
+      }
+      // If variant has ayrsharePostId AND scheduledFor in the future, it's scheduled
+      if (v?.ayrsharePostId && v?.scheduledFor) {
+        const scheduledDate = new Date(v.scheduledFor);
+        const now = new Date();
+        if (scheduledDate > now) {
+          return 'scheduled';
+        } else {
+          // Scheduled date has passed, so it's published
+          return 'published';
+        }
+      }
+    }
+  }
+
   // PRIORITY 2: Check if there's a direct status field (legacy posts)
   if (post.status && ['draft', 'scheduled', 'published'].includes(post.status)) {
     // But only trust it if not published (already checked above)
@@ -197,6 +220,10 @@ export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
         if (variant.publishedAt) {
           return 'published';
         }
+        // If variant has ayrsharePostId, it's published (even if status says scheduled)
+        if (variant.ayrsharePostId && !variant.scheduledFor) {
+          return 'published';
+        }
         return variant.status;
       }
     }
@@ -207,6 +234,10 @@ export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
         const v = variant as any;
         // If variant has publishedAt, it's published
         if (v.publishedAt) {
+          return 'published';
+        }
+        // If variant has ayrsharePostId and no scheduledFor, it's published
+        if (v.ayrsharePostId && !v.scheduledFor) {
           return 'published';
         }
         // Otherwise check status field

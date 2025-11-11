@@ -1,5 +1,4 @@
 import { Grid3X3, Image, List } from "lucide-react";
-import { Button } from "@/components/atoms/button";
 
 export type PostViewType = 'grid' | 'image' | 'succinct';
 
@@ -18,22 +17,19 @@ export default function PostViewSelector({ currentView, onViewChange }: PostView
   return (
     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
       {viewOptions.map(({ key, label, icon: Icon, description }) => (
-        <Button
+        <button
           key={key}
-          variant={currentView === key ? 'solid' : 'ghost'}
-          intent={currentView === key ? 'primary' : 'secondary'}
-          size="1"
           onClick={() => onViewChange(key)}
-          className={`flex items-center gap-1 px-3 py-1 transition-all ${
+          className={`flex items-center gap-1 px-3 py-1 transition-all rounded-md text-xs font-medium ${
             currentView === key 
-              ? 'bg-white shadow-sm text-lime-700' 
+              ? 'bg-white shadow-sm text-lime-700 border border-lime-200' 
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
           }`}
           title={description}
         >
           <Icon className="w-3 h-3" />
-          <span className="text-xs font-medium">{label}</span>
-        </Button>
+          <span>{label}</span>
+        </button>
       ))}
     </div>
   );

@@ -140,7 +140,7 @@ export default function AccountGroupPage() {
 				<div className="text-center">
 					<Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
 					<h1 className="text-2xl font-bold text-gray-900 mb-2">Account Group Not Found</h1>
-					<p className="text-gray-600 mb-6">The account group you're looking for doesn't exist.</p>
+					<p className="text-gray-600 mb-6">The account group you&apos;re looking for doesn&apos;t exist.</p>
 					<Link href="/">
 						<Button>
 							<Home className="w-4 h-4 mr-2" />

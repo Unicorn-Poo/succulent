@@ -299,7 +299,8 @@ async function createPostInAccountGroup(
       media: baseMediaList,
       replyTo: replyToObj,
       status: request.publishImmediately ? 'published' : (request.scheduledDate ? 'scheduled' : 'draft'),
-      scheduledFor: request.scheduledDate ? new Date(request.scheduledDate) : undefined,
+      // Only set scheduledFor if we're actually scheduling (not publishing immediately)
+      scheduledFor: request.scheduledDate && !request.publishImmediately ? new Date(request.scheduledDate) : undefined,
       publishedAt: request.publishImmediately ? new Date() : undefined,
       edited: false,
       lastModified: undefined,
@@ -517,6 +518,23 @@ async function updatePostWithAyrshareIds(
     
     // Update each platform variant with its ayrsharePostId
     if (post.variants && Object.keys(postIds).length > 0) {
+      // Determine if post is scheduled based on Ayrshare response
+      // Check if any result indicates scheduled status
+      const isScheduled = publishResults?.status === 'scheduled' || 
+                         (publishResults?.posts && Array.isArray(publishResults.posts) && 
+                          publishResults.posts[0]?.status === 'scheduled');
+      
+      // Update base variant status
+      const baseVariant = post.variants.base;
+      if (baseVariant) {
+        baseVariant.status = isScheduled ? 'scheduled' : 'published';
+        if (!isScheduled) {
+          baseVariant.publishedAt = new Date();
+          // Clear scheduledFor if published immediately
+          baseVariant.scheduledFor = undefined;
+        }
+      }
+      
       for (const [platform, ayrsharePostId] of Object.entries(postIds)) {
         // Map Ayrshare platform names back to our internal names
         const internalPlatform = platform === 'twitter' ? 'x' : platform;
@@ -526,9 +544,12 @@ async function updatePostWithAyrshareIds(
           variant.ayrsharePostId = ayrsharePostId;
           console.log(`✅ Updated ${internalPlatform} variant with ayrsharePostId: ${ayrsharePostId}`);
           
-          // If it was published immediately, update status
-          if (variant.status === 'draft' && variant.publishedAt) {
-            variant.status = 'published';
+          // Update status based on Ayrshare response
+          variant.status = isScheduled ? 'scheduled' : 'published';
+          if (!isScheduled) {
+            variant.publishedAt = new Date();
+            // Clear scheduledFor if published immediately
+            variant.scheduledFor = undefined;
           }
         }
       }
@@ -801,11 +822,14 @@ export async function POST(request: NextRequest) {
               console.warn('⚠️ Could not load account group for notifications:', groupError);
             }
             
+            // Determine if post is scheduled: true only if scheduledDate exists AND publishImmediately is false
+            const isScheduled = !!requestData.scheduledDate && !requestData.publishImmediately;
+            
             const updateResult = await updatePostWithResults({
               jazzPost: result.post,
               publishResults: ayrshareResults,
               platforms: requestData.platforms,
-              isScheduled: !!requestData.scheduledDate,
+              isScheduled: isScheduled,
               postTitle: requestData.title || 'API Post',
               accountGroup: accountGroup,
             });

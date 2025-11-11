@@ -104,9 +104,29 @@ export async function syncPostStatusesForAccountGroup(
           
           if (ayrshareStatus.status === 'published' && ayrshareStatus.publishedAt) {
             variantObj.publishedAt = ayrshareStatus.publishedAt;
+            // Clear scheduledFor when published
+            variantObj.scheduledFor = undefined;
+          } else if (ayrshareStatus.status === 'scheduled') {
+            // Clear publishedAt when scheduled
+            variantObj.publishedAt = undefined;
           }
           
           result.updated++;
+        }
+        
+        // Also update base variant if this is a platform variant
+        if (variantKey !== 'base' && post.variants.base) {
+          const baseVariant = post.variants.base as any;
+          // Update base variant to match if it's different
+          if (baseVariant.status !== ayrshareStatus.status) {
+            baseVariant.status = ayrshareStatus.status;
+            if (ayrshareStatus.status === 'published' && ayrshareStatus.publishedAt) {
+              baseVariant.publishedAt = ayrshareStatus.publishedAt;
+              baseVariant.scheduledFor = undefined;
+            } else if (ayrshareStatus.status === 'scheduled') {
+              baseVariant.publishedAt = undefined;
+            }
+          }
         }
       }
     }
