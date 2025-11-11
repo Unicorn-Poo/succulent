@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAPIKey, validateAccountGroupAccess } from '@/utils/apiKeyManager';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Retrieve posts from account group using Jazz server worker
  */

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLearningAutopilot, AILearningSystem } from '@/utils/aiLearningSystem';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/ai-learning - AI Learning System endpoints
  * Actions: 'analyze', 'recommendations', 'predict', 'learn', 'stats'
