@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Table, Dialog, TextField, Select } from '@radix-ui/themes';
 import { Users, CreditCard, Settings, BarChart3, Shield, Search, Plus, Edit, Trash2, Download } from 'lucide-react';
 import { useAccount } from 'jazz-tools/react';
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
+          <p className="text-gray-600">You don&apos;t have permission to access this page.</p>
         </div>
       </div>
     );
@@ -220,11 +220,7 @@ function UsersTab() {
     reason: '',
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [searchTerm]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/users?search=${searchTerm}`);
       if (response.ok) {
@@ -236,7 +232,11 @@ function UsersTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
@@ -723,11 +723,11 @@ function AdminSettingsTab() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Text size="2" color="gray">Public Key</Text>
-                  <TextField.Input placeholder="pk_test_..." mt="1" />
+                  <TextField.Root placeholder="pk_test_..." mt="1" />
                 </div>
                 <div>
                   <Text size="2" color="gray">Secret Key</Text>
-                  <TextField.Input type="password" placeholder="sk_test_..." mt="1" />
+                  <TextField.Root type="password" placeholder="sk_test_..." mt="1" />
                 </div>
               </div>
             </div>
@@ -737,11 +737,11 @@ function AdminSettingsTab() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Text size="2" color="gray">SMTP Host</Text>
-                  <TextField.Input placeholder="smtp.gmail.com" mt="1" />
+                  <TextField.Root placeholder="smtp.gmail.com" mt="1" />
                 </div>
                 <div>
                   <Text size="2" color="gray">From Email</Text>
-                  <TextField.Input placeholder="noreply@yourapp.com" mt="1" />
+                  <TextField.Root placeholder="noreply@yourapp.com" mt="1" />
                 </div>
               </div>
             </div>

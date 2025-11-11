@@ -323,11 +323,11 @@ function AdminGroupsTab({ account }: { account: MyAppAccountLoaded }) {
           <div className="space-y-4">
             <div>
               <Text as="label" size="2" weight="medium">Group Name</Text>
-              <TextField.Input placeholder="e.g., Customer Support" mt="1" />
+              <TextField.Root placeholder="e.g., Customer Support" mt="1" />
             </div>
             <div>
               <Text as="label" size="2" weight="medium">Description</Text>
-              <TextField.Input placeholder="Brief description of the group's purpose" mt="1" />
+              <TextField.Root placeholder="Brief description of the group's purpose" mt="1" />
             </div>
             <div>
               <Text as="label" size="2" weight="medium">Permissions</Text>
@@ -496,11 +496,11 @@ function CompanySettingsTab({ account }: { account: MyAppAccountLoaded }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Text size="2" color="gray">Company Name</Text>
-                  <TextField.Input defaultValue="Succulent" mt="1" />
+                  <TextField.Root defaultValue="Succulent" mt="1" />
                 </div>
                 <div>
                   <Text size="2" color="gray">Creator Email</Text>
-                  <TextField.Input defaultValue={account.profile?.email} mt="1" disabled />
+                  <TextField.Root defaultValue={account.profile?.email} mt="1" disabled />
                 </div>
               </div>
             </div>

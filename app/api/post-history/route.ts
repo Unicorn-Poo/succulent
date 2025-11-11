@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchPostHistory, importPostHistoryForAccountGroup, importAyrsharePostsToAccountGroup } from '@/utils/postPerformance';
+import { fetchPostHistory, importPostHistoryForAccountGroup } from '@/utils/postPerformance';
 
 // =============================================================================
 // 📜 POST HISTORY API ENDPOINT
@@ -85,12 +85,14 @@ export async function GET(request: NextRequest) {
     let importResult = null;
     if (shouldImport && accountGroupId && historyResponse.history.length > 0) {
       try {
-        // Import posts to Jazz AccountGroup
-        importResult = await importAyrsharePostsToAccountGroup(
-          accountGroupId,
-          historyResponse.history,
-          profileKey || undefined
-        );
+        // Note: Import functionality requires the actual account group object from Jazz
+        // This would need to be fetched from your Jazz context/database
+        // For now, return a message indicating import is not fully implemented at this level
+        importResult = {
+          message: 'Import functionality requires account group object from Jazz context',
+          note: 'Use importPostHistoryForAccountGroup() with the actual account group object',
+          postsAvailable: historyResponse.history.length
+        };
       } catch (error) {
         console.error('❌ Failed to import posts to Jazz:', error);
         importResult = {

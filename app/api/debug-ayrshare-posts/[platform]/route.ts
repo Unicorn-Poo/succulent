@@ -3,10 +3,10 @@ import { fetchPlatformPostHistory } from '@/utils/postPerformance';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
   try {
-    const { platform } = params;
+    const { platform } = await params;
     const searchParams = request.nextUrl.searchParams;
     const profileKey = searchParams.get('profileKey');
     const limit = parseInt(searchParams.get('limit') || '5');
