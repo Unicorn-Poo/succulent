@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncPostStatusesForAccountGroup } from '../../../utils/postStatusSync';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/sync-post-status - Sync post statuses from Ayrshare
  * 

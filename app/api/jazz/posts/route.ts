@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/jazz/posts - List Jazz posts created by the server worker
  * This helps debug if Jazz post creation is working

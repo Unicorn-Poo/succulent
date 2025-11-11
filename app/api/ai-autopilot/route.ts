@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAIAutopilot, getQuickAutopilotDecision } from '@/utils/aiAutopilot';
 
+export const dynamic = 'force-dynamic';
 /**
  * POST /api/ai-autopilot - Control and interact with AI autopilot
  * Actions: 'start', 'stop', 'analyze', 'decision', 'status'

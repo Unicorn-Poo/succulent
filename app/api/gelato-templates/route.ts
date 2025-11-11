@@ -494,8 +494,6 @@ export async function POST(request: NextRequest) {
 			acc[type].push(product);
 			return acc;
 		}, {});
-
-
 		
 		return NextResponse.json({
 			success: true,

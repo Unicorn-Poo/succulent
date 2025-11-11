@@ -6,6 +6,8 @@ import {
   getPushoverConfig 
 } from '@/utils/pushoverNotifications';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/test-notifications - Test notification system
  * Body: { accountGroupId: string, testType: 'config' | 'publish' | 'schedule' | 'failure' | 'bulk' }

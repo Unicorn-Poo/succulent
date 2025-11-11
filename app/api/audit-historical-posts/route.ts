@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from '@/utils/postConstants';
 import { generateRequestId, logAyrshareOperation } from '@/utils/ayrshareLogger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * CRITICAL: Audit historical posts for cross-posting issues
  * GET /api/audit-historical-posts - Identify posts that may have been cross-posted

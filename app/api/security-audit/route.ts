@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRequestId, logAyrshareOperation } from '@/utils/ayrshareLogger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * EMERGENCY SECURITY AUDIT
  * Check for cross-posting issues and profile key isolation

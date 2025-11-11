@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/jazz/test - Test Jazz server worker connectivity
  * Verifies that Jazz server worker is properly initialized

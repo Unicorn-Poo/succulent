@@ -60,7 +60,6 @@ const mockUsers = [
 ];
 
 // Force dynamic rendering to prevent build-time static analysis issues
-export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,
