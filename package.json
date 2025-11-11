@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "prebuild": "pnpm type-check || echo '⚠️  Type check failed but continuing build (Next.js ignores build errors)'",
     "start": "next start",
     "lint": "next lint --fix",
     "lint:check": "next lint",
     "type-check": "tsc --noEmit",
+    "check": "pnpm type-check && pnpm lint:check",
     "prepare": "husky"
   },
   "lint-staged": {

@@ -87,8 +87,8 @@ export default function AccountDashboard() {
 
 function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(account.profile.name || '');
-  const [email, setEmail] = useState(account.profile.email || '');
+  const [name, setName] = useState(account.profile?.name || '');
+  const [email, setEmail] = useState(account.profile?.email || '');
 
   const handleSave = () => {
     if (account.profile) {
@@ -123,7 +123,7 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900">{account.profile.name || 'Not set'}</p>
+                <p className="text-gray-900">{account.profile?.name || 'Not set'}</p>
               )}
             </div>
 
@@ -137,21 +137,21 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900">{account.profile.email || 'Not set'}</p>
+                <p className="text-gray-900">{account.profile?.email || 'Not set'}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Account Created</label>
               <p className="text-gray-900">
-                {account.profile.createdAt ? new Date(account.profile.createdAt).toLocaleDateString() : 'Unknown'}
+                {account.profile?.createdAt ? new Date(account.profile.createdAt).toLocaleDateString() : 'Unknown'}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Last Updated</label>
               <p className="text-gray-900">
-                {account.profile.updatedAt ? new Date(account.profile.updatedAt).toLocaleDateString() : 'Unknown'}
+                {account.profile?.updatedAt ? new Date(account.profile.updatedAt).toLocaleDateString() : 'Unknown'}
               </p>
             </div>
           </div>

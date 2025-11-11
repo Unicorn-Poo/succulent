@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 /**
  * Serve Jazz FileStream media publicly for external services like Ayrshare
  * This endpoint takes a Jazz FileStream ID and serves the media with proper headers
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { mediaId: string } }
+  { params }: { params: Promise<{ mediaId: string }> }
 ) {
   try {
-    const { mediaId } = params;
+    const { mediaId } = await params;
     
     if (!mediaId) {
       return NextResponse.json({
@@ -117,11 +120,11 @@ export async function GET(
 
 export async function HEAD(
   request: NextRequest,
-  { params }: { params: { mediaId: string } }
+  { params }: { params: Promise<{ mediaId: string }> }
 ) {
   // For HEAD requests, just return headers without body
   try {
-    const { mediaId } = params;
+    const { mediaId } = await params;
     
     if (!mediaId) {
       return new NextResponse(null, { status: 400 });

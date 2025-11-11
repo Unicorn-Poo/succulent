@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation"; 
 import { useState, useEffect } from "react";
-import { accountGroups } from "@/app/page";
+// Legacy accountGroups import removed - using Jazz account groups instead
 import PostCreationComponent from "@/components/organisms/post-creation";
 import { PostFullyLoaded } from "@/app/schema";
 import { Button } from "@radix-ui/themes";
@@ -33,10 +33,7 @@ export default function PostPage() {
     }
   });
   
-  const legacyAccountGroup = Object.values(accountGroups).find(
-    (group) => group.id === params.groupId
-  );
-  
+  // Legacy accountGroups removed - using Jazz account groups only
   const jazzAccountGroup = me?.root?.accountGroups?.find((group: any, index: number) => {
     if (!group) return false;
     
@@ -58,7 +55,7 @@ export default function PostPage() {
     return false;
   });
   
-  const accountGroup = jazzAccountGroup || legacyAccountGroup;
+  const accountGroup = jazzAccountGroup;
   
   const safeArrayAccess = (collaborativeArray: any): any[] => {
     try {
@@ -79,9 +76,7 @@ export default function PostPage() {
   };
 
   const getPostsArray = () => {
-    if (legacyAccountGroup) {
-      return legacyAccountGroup.posts || [];
-    } else if (jazzAccountGroup) {
+    if (jazzAccountGroup) {
       return safeArrayAccess(jazzAccountGroup.posts);
     }
     return [];
@@ -98,7 +93,7 @@ export default function PostPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Account Group Not Found</h2>
-          <p className="text-gray-600 mb-4">The account group you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">The account group you&apos;re looking for doesn&apos;t exist.</p>
           <Button onClick={() => router.push("/")}>
             <Home className="w-4 h-4 mr-2" />
             Back to Home
@@ -114,7 +109,7 @@ export default function PostPage() {
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Post Not Found</h2>
           <p className="text-gray-600 mb-4">
-            The post you're looking for doesn't exist in {accountGroup.name}.
+            The post you&apos;re looking for doesn&apos;t exist in {accountGroup.name}.
           </p>
           <div className="mb-4">
             <p className="text-sm text-gray-500">

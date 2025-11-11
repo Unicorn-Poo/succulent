@@ -21,14 +21,17 @@ interface MediaProxyResponse {
 const mediaCache = new Map<string, { buffer: ArrayBuffer; contentType: string; timestamp: number }>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileStreamId: string } }
+  { params }: { params: Promise<{ fileStreamId: string }> }
 ) {
   const startTime = Date.now();
+  const { fileStreamId } = await params;
   
   try {
-    const { fileStreamId } = params;
     
     // Validate input
     if (!fileStreamId || !fileStreamId.startsWith('co_')) {
@@ -181,10 +184,10 @@ export async function GET(
 
 export async function HEAD(
   request: NextRequest,
-  { params }: { params: { fileStreamId: string } }
+  { params }: { params: Promise<{ fileStreamId: string }> }
 ) {
   try {
-    const { fileStreamId } = params;
+    const { fileStreamId } = await params;
     
     if (!fileStreamId || !fileStreamId.startsWith('co_')) {
       return new NextResponse(null, { status: 400 });

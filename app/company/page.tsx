@@ -246,7 +246,15 @@ function AdminGroupsTab({ account }: { account: MyAppAccountLoaded }) {
     addToAdminGroup 
   } = useAdminGroups(account);
   
-  const [adminGroups, setAdminGroups] = useState([]);
+  interface AdminGroup {
+    id: string;
+    name: string;
+    description: string;
+    memberCount: number;
+    permissions: string[];
+  }
+  
+  const [adminGroups, setAdminGroups] = useState<AdminGroup[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   useEffect(() => {

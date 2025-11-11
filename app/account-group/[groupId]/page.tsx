@@ -1,11 +1,37 @@
 "use client";
-import { useParams, useRouter } from "next/navigation"; 
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Dialog, TextField, TextArea, Text, Tabs, Card, Button as RadixButton } from "@radix-ui/themes";
+import {
+	Dialog,
+	TextField,
+	TextArea,
+	Text,
+	Tabs,
+	Card,
+	Button as RadixButton,
+} from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
-import { Plus, Users, BarChart3, Settings, MessageCircle, Cog, Eye, List, Calendar, Copy, Check, Trash2, Square, CheckSquare, Upload, TrendingUp, Zap } from "lucide-react";
+import {
+	Plus,
+	Users,
+	BarChart3,
+	Settings,
+	MessageCircle,
+	Cog,
+	Eye,
+	List,
+	Calendar,
+	Copy,
+	Check,
+	Trash2,
+	Square,
+	CheckSquare,
+	Upload,
+	TrendingUp,
+	Zap,
+} from "lucide-react";
 import Link from "next/link";
-import { accountGroups } from "@/app/page";
+// Legacy accountGroups import removed - using Jazz account groups instead
 import { Home } from "lucide-react";
 import { useAccount } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
@@ -17,14 +43,30 @@ import { ExternalStoreSettings } from "@/components/external-store-settings";
 import { CollaborationSettings } from "@/components/organisms/collaboration-settings";
 import AccountLinkingManager from "@/components/organisms/account-linking-manager";
 import { co, z } from "jazz-tools";
-import { Post, PostVariant, MediaItem, ReplyTo, PlatformAccount, AnalyticsDataPoint } from "@/app/schema";
+import {
+	Post,
+	PostVariant,
+	MediaItem,
+	ReplyTo,
+	PlatformAccount,
+	AnalyticsDataPoint,
+} from "@/app/schema";
 import { PlatformPreview } from "@/components/organisms/platform-previews";
 import CalendarView from "@/components/organisms/calendar-view";
-import { PlatformFeedView, PlatformAnalyticsDashboard } from "@/components/organisms";
+import {
+	PlatformFeedView,
+	PlatformAnalyticsDashboard,
+} from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
-import PostViewSelector, { PostViewType } from "@/components/atoms/post-view-selector";
-import { PostGridView, PostImageView, PostSuccinctView } from "@/components/organisms/post-views";
+import PostViewSelector, {
+	PostViewType,
+} from "@/components/atoms/post-view-selector";
+import {
+	PostGridView,
+	PostImageView,
+	PostSuccinctView,
+} from "@/components/organisms/post-views";
 import GrowthToolsDropdown from "@/components/organisms/growth-tools-dropdown";
 import GrowthQuickAccess from "@/components/organisms/growth-quick-access";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
@@ -33,14 +75,21 @@ export default function AccountGroupPage() {
 	const params = useParams();
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState(() => {
-		if (typeof window !== 'undefined') {
-			const hash = window.location.hash.replace('#', '');
-			const validTabs = ['posts', 'analytics', 'tools', 'accounts', 'calendar', 'settings'];
+		if (typeof window !== "undefined") {
+			const hash = window.location.hash.replace("#", "");
+			const validTabs = [
+				"posts",
+				"analytics",
+				"tools",
+				"accounts",
+				"calendar",
+				"settings",
+			];
 			if (validTabs.includes(hash)) {
 				return hash;
 			}
 		}
-		return 'posts';
+		return "posts";
 	});
 
 	const handleTabChange = (newTab: string) => {
@@ -50,86 +99,111 @@ export default function AccountGroupPage() {
 
 	useEffect(() => {
 		const handleHashChange = () => {
-			const hash = window.location.hash.replace('#', '');
-			const validTabs = ['posts', 'analytics', 'tools', 'accounts', 'calendar', 'settings'];
+			const hash = window.location.hash.replace("#", "");
+			const validTabs = [
+				"posts",
+				"analytics",
+				"tools",
+				"accounts",
+				"calendar",
+				"settings",
+			];
 			if (validTabs.includes(hash)) {
 				setActiveTab(hash);
 			}
 		};
 
-		window.addEventListener('hashchange', handleHashChange);
-		return () => window.removeEventListener('hashchange', handleHashChange);
+		window.addEventListener("hashchange", handleHashChange);
+		return () => window.removeEventListener("hashchange", handleHashChange);
 	}, []);
-	
-	const [showCollaborationSettings, setShowCollaborationSettings] = useState(false);
+
+	const [showCollaborationSettings, setShowCollaborationSettings] =
+		useState(false);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [newPostTitle, setNewPostTitle] = useState("");
 	const [newPostText, setNewPostText] = useState("");
 	const [showPreview, setShowPreview] = useState(false);
 	const [previewAccount, setPreviewAccount] = useState<any>(null);
-	const [previewMode, setPreviewMode] = useState<'feed' | 'profile'>('feed');
-	const [postsFilter, setPostsFilter] = useState<'all' | 'draft' | 'scheduled' | 'published'>('all');
+	const [previewMode, setPreviewMode] = useState<"feed" | "profile">("feed");
+	const [postsFilter, setPostsFilter] = useState<
+		"all" | "draft" | "scheduled" | "published"
+	>("all");
 	const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
 	const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
 	const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const [showCSVUpload, setShowCSVUpload] = useState(false);
-	const [postView, setPostView] = useState<PostViewType>('grid');
-	const [selectedGrowthTool, setSelectedGrowthTool] = useState<string | null>(null);
-	
+	const [postView, setPostView] = useState<PostViewType>("grid");
+	const [selectedGrowthTool, setSelectedGrowthTool] = useState<string | null>(
+		null
+	);
+
 	const accountGroupId = params.groupId as string;
-	
+
 	// Use minimal resolve - x is local-first, so we only need to specify what to eagerly load
 	// The rest will be loaded on-demand from local cache
 	const { me } = useAccount(MyAppAccount, {
 		resolve: {
 			root: {
-				accountGroups: { $each: {
-					accounts: { $each: true },
-					posts: { $each: {
-						title: true,
-						variants: { $each: {
-							text: true,
-							media: { $each: true }
-						}}
-					}}
-				}}
+				accountGroups: {
+					$each: {
+						accounts: { $each: true },
+						posts: {
+							$each: {
+								title: true,
+								variants: {
+									$each: {
+										text: true,
+										media: { $each: true },
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	});
+
+	// Legacy accountGroups removed - using Jazz account groups only
+	const jazzAccountGroup = me?.root?.accountGroups?.find(
+		(group: any, index: number) => {
+			if (!group) return false;
+
+			if (group.id === accountGroupId) return true;
+			if (accountGroupId === "demo") return index === 0;
+
+			if (accountGroupId.startsWith("group-")) {
+				const groupIndex = parseInt(accountGroupId.replace("group-", ""));
+				return index === groupIndex;
 			}
+
+			if (group?.name) {
+				const safeName = group.name
+					.toString()
+					.toLowerCase()
+					.replace(/\s+/g, "-")
+					.replace(/[^a-z0-9-]/g, "");
+				return safeName === accountGroupId;
+			}
+
+			return false;
 		}
-	});
-	
-	const legacyAccountGroup = Object.values(accountGroups).find(
-		(group) => group.id === accountGroupId
 	);
-	
-	const jazzAccountGroup = me?.root?.accountGroups?.find((group: any, index: number) => {
-		if (!group) return false;
-		
-		if (group.id === accountGroupId) return true;
-		if (accountGroupId === 'demo') return index === 0;
-		
-		if (accountGroupId.startsWith('group-')) {
-			const groupIndex = parseInt(accountGroupId.replace('group-', ''));
-			return index === groupIndex;
-		}
-		
-		if (group?.name) {
-			const safeName = group.name.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-			return safeName === accountGroupId;
-		}
-		
-		return false;
-	});
-	
-	const accountGroup = legacyAccountGroup || jazzAccountGroup;
-	
+
+	const accountGroup = jazzAccountGroup;
+
 	if (!accountGroup) {
 		return (
 			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
 				<div className="text-center">
 					<Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-					<h1 className="text-2xl font-bold text-gray-900 mb-2">Account Group Not Found</h1>
-					<p className="text-gray-600 mb-6">The account group you&apos;re looking for doesn&apos;t exist.</p>
+					<h1 className="text-2xl font-bold text-gray-900 mb-2">
+						Account Group Not Found
+					</h1>
+					<p className="text-gray-600 mb-6">
+						The account group you&apos;re looking for doesn&apos;t exist.
+					</p>
 					<Link href="/">
 						<Button>
 							<Home className="w-4 h-4 mr-2" />
@@ -146,23 +220,21 @@ export default function AccountGroupPage() {
 			if (!collaborativeArray) {
 				return [];
 			}
-			
+
 			if (Array.isArray(collaborativeArray)) {
-				return collaborativeArray.filter(item => item != null);
+				return collaborativeArray.filter((item) => item != null);
 			}
-			
+
 			const array = Array.from(collaborativeArray || []);
-			return array.filter(item => item != null);
+			return array.filter((item) => item != null);
 		} catch (error) {
-			console.error('🚨 Jazz collaborative array is corrupted:', error);
+			console.error("🚨 Jazz collaborative array is corrupted:", error);
 			return [];
 		}
 	};
 
 	const getAccountsArray = () => {
-		if (legacyAccountGroup) {
-			return Object.values(legacyAccountGroup.accounts || {});
-		} else if (jazzAccountGroup) {
+		if (jazzAccountGroup) {
 			return safeArrayAccess(jazzAccountGroup.accounts);
 		}
 		return [];
@@ -170,12 +242,10 @@ export default function AccountGroupPage() {
 
 	const getPostsArray = () => {
 		let postsArray: any[] = [];
-		if (legacyAccountGroup) {
-			postsArray = legacyAccountGroup.posts || [];
-		} else if (jazzAccountGroup) {
+		if (jazzAccountGroup) {
 			postsArray = safeArrayAccess(jazzAccountGroup.posts);
 		}
-		
+
 		// Sort by newest first - prioritize publishedAt, then scheduledFor, then createdAt/postDate
 		return [...postsArray].sort((a: any, b: any) => {
 			const getPostDate = (post: any) => {
@@ -214,7 +284,7 @@ export default function AccountGroupPage() {
 		platform: account.platform || "unknown",
 		profileKey: account.profileKey,
 		isLinked: account.isLinked || false,
-		status: account.status || "pending"
+		status: account.status || "pending",
 	}));
 
 	const handleCreatePost = () => {
@@ -222,48 +292,69 @@ export default function AccountGroupPage() {
 
 		if (jazzAccountGroup) {
 			// Create a proper Jazz Post for collaborative account groups
-			
+
 			// Create the collaborative objects with the correct syntax
-			const titleText = co.plainText().create(newPostTitle, { owner: jazzAccountGroup._owner });
-			const baseText = co.plainText().create(newPostText || "", { owner: jazzAccountGroup._owner });
-			const mediaList = co.list(MediaItem).create([], { owner: jazzAccountGroup._owner });
+			const titleText = co
+				.plainText()
+				.create(newPostTitle, { owner: jazzAccountGroup._owner });
+			const baseText = co
+				.plainText()
+				.create(newPostText || "", { owner: jazzAccountGroup._owner });
+			const mediaList = co
+				.list(MediaItem)
+				.create([], { owner: jazzAccountGroup._owner });
 			const replyToObj = ReplyTo.create({}, { owner: jazzAccountGroup._owner });
-			
+
 			// Create the base post variant
-			const baseVariant = PostVariant.create({
-				text: baseText,
-				postDate: new Date(),
-				media: mediaList,
-				replyTo: replyToObj,
-				status: "draft",
-				scheduledFor: undefined,
-				publishedAt: undefined,
-				edited: false,
-				lastModified: undefined,
-			}, { owner: jazzAccountGroup._owner });
+			const baseVariant = PostVariant.create(
+				{
+					text: baseText,
+					postDate: new Date(),
+					media: mediaList,
+					replyTo: replyToObj,
+					status: "draft",
+					scheduledFor: undefined,
+					publishedAt: undefined,
+					edited: false,
+					lastModified: undefined,
+				},
+				{ owner: jazzAccountGroup._owner }
+			);
 
 			// Create the variants record
-			const variantsRecord = co.record(z.string(), PostVariant).create({
-				base: baseVariant
-			}, { owner: jazzAccountGroup._owner });
+			const variantsRecord = co.record(z.string(), PostVariant).create(
+				{
+					base: baseVariant,
+				},
+				{ owner: jazzAccountGroup._owner }
+			);
 
 			// Create the post
-			const newPost = Post.create({
-				title: titleText,
-				variants: variantsRecord,
-			}, { owner: jazzAccountGroup._owner });
+			const newPost = Post.create(
+				{
+					title: titleText,
+					variants: variantsRecord,
+				},
+				{ owner: jazzAccountGroup._owner }
+			);
 
 			// Add the post to the account group
 			jazzAccountGroup.posts.push(newPost);
-			
+
 			// Navigate to the newly created post
 			router.push(`/account-group/${accountGroup.id}/post/${newPost.id}`);
 		} else {
 			// For legacy account groups, use the old approach
 			const newPostId = Date.now().toString();
-			router.push(`/account-group/${accountGroup.id}/post/${newPostId}?title=${encodeURIComponent(newPostTitle)}&content=${encodeURIComponent(newPostText)}`);
+			router.push(
+				`/account-group/${
+					accountGroup.id
+				}/post/${newPostId}?title=${encodeURIComponent(
+					newPostTitle
+				)}&content=${encodeURIComponent(newPostText)}`
+			);
 		}
-		
+
 		// Reset form
 		setNewPostTitle("");
 		setNewPostText("");
@@ -287,12 +378,16 @@ export default function AccountGroupPage() {
 
 	// Select all filtered posts
 	const handleSelectAll = () => {
-		const filteredPosts = posts.filter(post => {
-			if (postsFilter === 'all') return true;
+		const filteredPosts = posts.filter((post) => {
+			if (postsFilter === "all") return true;
 			const postStatus = getPostStatus(post);
 			return postStatus === postsFilter;
 		});
-		const allIds = new Set(filteredPosts.map((post: any) => post.id || post.variants?.base?.id || 'unknown'));
+		const allIds = new Set(
+			filteredPosts.map(
+				(post: any) => post.id || post.variants?.base?.id || "unknown"
+			)
+		);
 		setSelectedPosts(allIds);
 	};
 
@@ -304,7 +399,7 @@ export default function AccountGroupPage() {
 	// Handle bulk deletion
 	const handleBulkDelete = async () => {
 		if (!jazzAccountGroup || selectedPosts.size === 0) return;
-		
+
 		setIsBulkDeleting(true);
 		try {
 			// Remove selected posts from the account group's posts array
@@ -312,7 +407,7 @@ export default function AccountGroupPage() {
 			if (postsArray) {
 				// Get posts to delete by their IDs
 				const postsToDelete = Array.from(selectedPosts);
-				
+
 				// Remove posts in reverse order to avoid index shifting issues
 				for (let i = postsArray.length - 1; i >= 0; i--) {
 					const post = postsArray[i];
@@ -320,16 +415,16 @@ export default function AccountGroupPage() {
 						postsArray.splice(i, 1);
 					}
 				}
-				
+
 				console.log(`✅ Successfully deleted ${selectedPosts.size} posts`);
-				
+
 				// Clear selection
 				setSelectedPosts(new Set());
 				setShowBulkDeleteDialog(false);
 			}
 		} catch (error) {
-			console.error('❌ Failed to delete posts:', error);
-			alert('Failed to delete posts. Please try again.');
+			console.error("❌ Failed to delete posts:", error);
+			alert("Failed to delete posts. Please try again.");
 		} finally {
 			setIsBulkDeleting(false);
 		}
@@ -359,45 +454,59 @@ export default function AccountGroupPage() {
 									{accountGroup.name || "Account Group"}
 								</h1>
 								<p className="text-sm text-gray-500">
-									{accounts.length} account{accounts.length !== 1 ? 's' : ''} • {posts.length} post{posts.length !== 1 ? 's' : ''}
+									{accounts.length} account{accounts.length !== 1 ? "s" : ""} •{" "}
+									{posts.length} post{posts.length !== 1 ? "s" : ""}
 								</p>
 							</div>
 						</div>
 						<div className="flex gap-2">
 							<GrowthQuickAccess
-								platform={accounts.find(acc => acc.isLinked)?.platform || 'instagram'}
-								profileKey={(jazzAccountGroup as any)?.ayrshareProfileKey || (accountGroup as any)?.ayrshareProfileKey}
+								platform={
+									accounts.find((acc) => acc.isLinked)?.platform || "instagram"
+								}
+								profileKey={
+									(jazzAccountGroup as any)?.ayrshareProfileKey ||
+									(accountGroup as any)?.ayrshareProfileKey
+								}
 								accountGroup={jazzAccountGroup}
 								onToolSelect={(toolId) => {
-									if (toolId === 'tools-overview') {
-										handleTabChange('tools');
+									if (toolId === "tools-overview") {
+										handleTabChange("tools");
 									} else {
 										setSelectedGrowthTool(toolId);
-										handleTabChange('tools');
+										handleTabChange("tools");
 									}
 								}}
 							/>
-							<Button 
+							<Button
 								onClick={async () => {
 									if (!jazzAccountGroup?.id) return;
 									try {
-										const response = await fetch('/api/sync-post-status', {
-											method: 'POST',
-											headers: { 'Content-Type': 'application/json' },
-											body: JSON.stringify({ accountGroupId: jazzAccountGroup.id })
+										const response = await fetch("/api/sync-post-status", {
+											method: "POST",
+											headers: { "Content-Type": "application/json" },
+											body: JSON.stringify({
+												accountGroupId: jazzAccountGroup.id,
+											}),
 										});
 										const result = await response.json();
 										if (result.success) {
-											alert(`✅ Synced ${result.updated || 0} post statuses from Ayrshare`);
+											alert(
+												`✅ Synced ${
+													result.updated || 0
+												} post statuses from Ayrshare`
+											);
 										} else {
-											alert(`⚠️ Sync failed: ${result.error || 'Unknown error'}`);
+											alert(
+												`⚠️ Sync failed: ${result.error || "Unknown error"}`
+											);
 										}
 									} catch (error) {
-										console.error('❌ Failed to sync post statuses:', error);
-										alert('❌ Failed to sync post statuses');
+										console.error("❌ Failed to sync post statuses:", error);
+										alert("❌ Failed to sync post statuses");
 									}
-								}} 
-								intent="secondary" 
+								}}
+								intent="secondary"
 								variant="soft"
 								className="text-xs"
 								title="Sync post statuses from Ayrshare"
@@ -405,18 +514,22 @@ export default function AccountGroupPage() {
 								<Calendar className="w-4 h-4 mr-1" />
 								Sync Status
 							</Button>
-							<Button 
+							<Button
 								onClick={() => {
 									setShowCSVUpload(true);
-								}} 
-								intent="secondary" 
+								}}
+								intent="secondary"
 								variant="outline"
 								className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
 							>
 								<Upload className="w-4 h-4 mr-2" />
 								Bulk Upload
 							</Button>
-							<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
+							<Button
+								onClick={() => setShowCreateDialog(true)}
+								intent="primary"
+								variant="solid"
+							>
 								<Plus className="w-4 h-4 mr-2" />
 								Create Post
 							</Button>
@@ -458,37 +571,62 @@ export default function AccountGroupPage() {
 					{/* Settings Tab - Delete Account Group */}
 					<Tabs.Content value="settings" className="mt-6">
 						<div className="bg-white rounded-lg border border-gray-200 p-6">
-							<h2 className="text-xl font-semibold text-gray-900 mb-4">Account Group Settings</h2>
-							
+							<h2 className="text-xl font-semibold text-gray-900 mb-4">
+								Account Group Settings
+							</h2>
+
 							<div className="border-t border-gray-200 pt-6">
-								<h3 className="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
+								<h3 className="text-lg font-medium text-red-600 mb-2">
+									Danger Zone
+								</h3>
 								<p className="text-sm text-gray-600 mb-4">
-									Deleting this account group will permanently remove all posts, accounts, and settings associated with it. This action cannot be undone.
+									Deleting this account group will permanently remove all posts,
+									accounts, and settings associated with it. This action cannot
+									be undone.
 								</p>
 								<Button
 									onClick={async () => {
-										if (!confirm(`Are you sure you want to delete "${accountGroup.name || 'this account group'}"? This will delete all ${posts.length} posts and cannot be undone.`)) {
+										if (
+											!confirm(
+												`Are you sure you want to delete "${
+													accountGroup.name || "this account group"
+												}"? This will delete all ${
+													posts.length
+												} posts and cannot be undone.`
+											)
+										) {
 											return;
 										}
-										
+
 										if (!jazzAccountGroup || !me?.root?.accountGroups) {
-											alert('Cannot delete account group. Please refresh and try again.');
+											alert(
+												"Cannot delete account group. Please refresh and try again."
+											);
 											return;
 										}
-										
+
 										try {
 											// Find and remove the account group from root
-											const groupIndex = me.root.accountGroups.findIndex((g: any) => g?.id === jazzAccountGroup.id);
+											const groupIndex = me.root.accountGroups.findIndex(
+												(g: any) => g?.id === jazzAccountGroup.id
+											);
 											if (groupIndex >= 0) {
 												me.root.accountGroups.splice(groupIndex, 1);
 												// Navigate back to home
-												router.push('/');
+												router.push("/");
 											} else {
-												alert('Account group not found. It may have already been deleted.');
+												alert(
+													"Account group not found. It may have already been deleted."
+												);
 											}
 										} catch (error) {
-											console.error('❌ Failed to delete account group:', error);
-											alert('Failed to delete account group. Please try again.');
+											console.error(
+												"❌ Failed to delete account group:",
+												error
+											);
+											alert(
+												"Failed to delete account group. Please try again."
+											);
 										}
 									}}
 									intent="danger"
@@ -507,9 +645,15 @@ export default function AccountGroupPage() {
 							<div className="text-center py-12">
 								<div className="text-gray-500 mb-4">
 									<p className="text-lg mb-2">No posts yet</p>
-									<p className="text-sm">Create your first post to get started!</p>
+									<p className="text-sm">
+										Create your first post to get started!
+									</p>
 								</div>
-								<Button onClick={() => setShowCreateDialog(true)} intent="primary" variant="solid">
+								<Button
+									onClick={() => setShowCreateDialog(true)}
+									intent="primary"
+									variant="solid"
+								>
 									<Plus className="w-4 h-4 mr-2" />
 									Create First Post
 								</Button>
@@ -519,34 +663,48 @@ export default function AccountGroupPage() {
 								{/* Posts Header with Filters and View Selector */}
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-4">
-										<h2 className="text-xl font-semibold text-gray-900">Posts</h2>
+										<h2 className="text-xl font-semibold text-gray-900">
+											Posts
+										</h2>
 										<div className="text-sm text-gray-500">
 											{(() => {
 												const filterCounts = {
 													all: posts.length,
-													draft: posts.filter(p => getPostStatus(p) === 'draft').length,
-													scheduled: posts.filter(p => getPostStatus(p) === 'scheduled').length,
-													published: posts.filter(p => getPostStatus(p) === 'published').length
+													draft: posts.filter(
+														(p) => getPostStatus(p) === "draft"
+													).length,
+													scheduled: posts.filter(
+														(p) => getPostStatus(p) === "scheduled"
+													).length,
+													published: posts.filter(
+														(p) => getPostStatus(p) === "published"
+													).length,
 												};
-												return `${filterCounts[postsFilter]} ${postsFilter === 'all' ? 'total' : postsFilter} post${filterCounts[postsFilter] !== 1 ? 's' : ''}`;
+												return `${filterCounts[postsFilter]} ${
+													postsFilter === "all" ? "total" : postsFilter
+												} post${filterCounts[postsFilter] !== 1 ? "s" : ""}`;
 											})()}
 										</div>
 									</div>
-									
+
 									{/* Filter Controls and View Selector */}
 									<div className="flex items-center gap-4">
 										{/* Filter Controls */}
 										<div className="flex items-center gap-2">
 											{[
-												{ key: 'all', label: 'All', icon: List },
-												{ key: 'draft', label: 'Drafts', icon: MessageCircle },
-												{ key: 'scheduled', label: 'Scheduled', icon: Calendar },
-												{ key: 'published', label: 'Published', icon: Eye }
+												{ key: "all", label: "All", icon: List },
+												{ key: "draft", label: "Drafts", icon: MessageCircle },
+												{
+													key: "scheduled",
+													label: "Scheduled",
+													icon: Calendar,
+												},
+												{ key: "published", label: "Published", icon: Eye },
 											].map(({ key, label, icon: Icon }) => (
 												<Button
 													key={key}
-													variant={postsFilter === key ? 'solid' : 'outline'}
-													intent={postsFilter === key ? 'primary' : 'secondary'}
+													variant={postsFilter === key ? "solid" : "outline"}
+													intent={postsFilter === key ? "primary" : "secondary"}
 													size="1"
 													onClick={() => setPostsFilter(key as any)}
 												>
@@ -555,10 +713,10 @@ export default function AccountGroupPage() {
 												</Button>
 											))}
 										</div>
-										
+
 										{/* View Selector */}
-										<PostViewSelector 
-											currentView={postView} 
+										<PostViewSelector
+											currentView={postView}
 											onViewChange={setPostView}
 										/>
 									</div>
@@ -571,7 +729,8 @@ export default function AccountGroupPage() {
 											<div className="flex items-center gap-2">
 												<CheckSquare className="w-4 h-4 text-lime-600" />
 												<span className="text-sm font-medium text-lime-800">
-													{selectedPosts.size} post{selectedPosts.size !== 1 ? 's' : ''} selected
+													{selectedPosts.size} post
+													{selectedPosts.size !== 1 ? "s" : ""} selected
 												</span>
 											</div>
 											<Button
@@ -583,7 +742,7 @@ export default function AccountGroupPage() {
 												Clear Selection
 											</Button>
 										</div>
-										
+
 										<div className="flex items-center gap-2">
 											<Button
 												size="1"
@@ -607,8 +766,8 @@ export default function AccountGroupPage() {
 								)}
 
 								{/* Posts Views */}
-								{postView === 'grid' && (
-									<PostGridView 
+								{postView === "grid" && (
+									<PostGridView
 										posts={posts}
 										accountGroupId={accountGroup.id}
 										accountGroupName={accountGroup.name || "Account Group"}
@@ -617,9 +776,9 @@ export default function AccountGroupPage() {
 										onPostSelect={handlePostSelect}
 									/>
 								)}
-								
-								{postView === 'image' && (
-									<PostImageView 
+
+								{postView === "image" && (
+									<PostImageView
 										posts={posts}
 										accountGroupId={accountGroup.id}
 										accountGroupName={accountGroup.name || "Account Group"}
@@ -628,9 +787,9 @@ export default function AccountGroupPage() {
 										onPostSelect={handlePostSelect}
 									/>
 								)}
-								
-								{postView === 'succinct' && (
-									<PostSuccinctView 
+
+								{postView === "succinct" && (
+									<PostSuccinctView
 										posts={posts}
 										accountGroupId={accountGroup.id}
 										accountGroupName={accountGroup.name || "Account Group"}
@@ -640,25 +799,31 @@ export default function AccountGroupPage() {
 										onSelectAll={handleSelectAll}
 									/>
 								)}
-								
+
 								{/* Empty state for filtered results */}
-								{posts.filter(post => {
-									if (postsFilter === 'all') return true;
+								{posts.filter((post) => {
+									if (postsFilter === "all") return true;
 									const postStatus = getPostStatus(post);
 									return postStatus === postsFilter;
-								}).length === 0 && postsFilter !== 'all' && (
-									<div className="text-center py-8">
-										<div className="text-gray-400 mb-2">
-											<MessageCircle className="w-8 h-8 mx-auto mb-2" />
+								}).length === 0 &&
+									postsFilter !== "all" && (
+										<div className="text-center py-8">
+											<div className="text-gray-400 mb-2">
+												<MessageCircle className="w-8 h-8 mx-auto mb-2" />
+											</div>
+											<p className="text-gray-500">
+												No {postsFilter} posts found
+											</p>
+											<p className="text-sm text-gray-400 mt-1">
+												{postsFilter === "draft" &&
+													"Create a new post to get started"}
+												{postsFilter === "scheduled" &&
+													"Schedule some posts for future publishing"}
+												{postsFilter === "published" &&
+													"Publish some posts to see them here"}
+											</p>
 										</div>
-										<p className="text-gray-500">No {postsFilter} posts found</p>
-										<p className="text-sm text-gray-400 mt-1">
-											{postsFilter === 'draft' && "Create a new post to get started"}
-											{postsFilter === 'scheduled' && "Schedule some posts for future publishing"}
-											{postsFilter === 'published' && "Publish some posts to see them here"}
-										</p>
-									</div>
-								)}
+									)}
 							</div>
 						)}
 					</Tabs.Content>
@@ -666,20 +831,42 @@ export default function AccountGroupPage() {
 					{/* Analytics Tab */}
 					<Tabs.Content value="analytics" className="mt-6">
 						{(() => {
-							const linkedAccounts = transformedAccounts.filter(account => account.isLinked);
+							const linkedAccounts = transformedAccounts.filter(
+								(account) => account.isLinked
+							);
 							const supportedPlatforms = linkedAccounts
-								.map(account => account.platform)
-								.filter(platform => ['instagram', 'x', 'twitter', 'linkedin', 'facebook', 'youtube', 'tiktok'].includes(platform));
+								.map((account) => account.platform)
+								.filter((platform) =>
+									[
+										"instagram",
+										"x",
+										"twitter",
+										"linkedin",
+										"facebook",
+										"youtube",
+										"tiktok",
+									].includes(platform)
+								);
 
 							if (linkedAccounts.length === 0) {
 								return (
 									<div className="text-center py-12">
 										<BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-										<Text size="4" weight="medium" className="mb-2 block">No Connected Accounts</Text>
-										<Text size="2" color="gray" className="mb-6 block">
-											Connect your social media accounts to start viewing analytics data.
+										<Text size="4" weight="medium" className="mb-2 block">
+											No Connected Accounts
 										</Text>
-										<RadixButton onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}>
+										<Text size="2" color="gray" className="mb-6 block">
+											Connect your social media accounts to start viewing
+											analytics data.
+										</Text>
+										<RadixButton
+											onClick={() =>
+												window.open(
+													"https://app.ayrshare.com/social-accounts",
+													"_blank"
+												)
+											}
+										>
 											Connect Accounts
 										</RadixButton>
 									</div>
@@ -690,19 +877,23 @@ export default function AccountGroupPage() {
 								return (
 									<div className="text-center py-12">
 										<BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-										<Text size="4" weight="medium" className="mb-2 block">Unsupported Platforms</Text>
+										<Text size="4" weight="medium" className="mb-2 block">
+											Unsupported Platforms
+										</Text>
 										<Text size="2" color="gray" className="mb-6 block">
-											Analytics are available for Instagram, X (Twitter), LinkedIn, Facebook, YouTube, and TikTok.
+											Analytics are available for Instagram, X (Twitter),
+											LinkedIn, Facebook, YouTube, and TikTok.
 										</Text>
 										<Text size="2" color="gray" className="block">
-											Connected platforms: {linkedAccounts.map(a => a.platform).join(', ')}
+											Connected platforms:{" "}
+											{linkedAccounts.map((a) => a.platform).join(", ")}
 										</Text>
 									</div>
 								);
 							}
 
 							return (
-								<AnalyticsDashboard 
+								<AnalyticsDashboard
 									accountGroup={jazzAccountGroup || accountGroup}
 									selectedPlatforms={supportedPlatforms}
 									timeframe="30d"
@@ -718,11 +909,19 @@ export default function AccountGroupPage() {
 							<div>
 								<div className="flex items-center space-x-2 mb-4">
 									<TrendingUp className="w-5 h-5 text-blue-600" />
-									<h2 className="text-xl font-semibold text-gray-900">Growth Automation Tools</h2>
+									<h2 className="text-xl font-semibold text-gray-900">
+										Growth Automation Tools
+									</h2>
 								</div>
 								<GrowthToolsDropdown
-									platform={accounts.find(acc => acc.isLinked)?.platform || 'instagram'}
-									profileKey={(jazzAccountGroup as any)?.ayrshareProfileKey || (accountGroup as any)?.ayrshareProfileKey}
+									platform={
+										accounts.find((acc) => acc.isLinked)?.platform ||
+										"instagram"
+									}
+									profileKey={
+										(jazzAccountGroup as any)?.ayrshareProfileKey ||
+										(accountGroup as any)?.ayrshareProfileKey
+									}
 									accountGroup={jazzAccountGroup}
 									selectedTool={selectedGrowthTool}
 									onToolSelect={setSelectedGrowthTool}
@@ -736,9 +935,11 @@ export default function AccountGroupPage() {
 							<div>
 								<div className="flex items-center space-x-2 mb-4">
 									<Settings className="w-5 h-5 text-gray-600" />
-									<h2 className="text-xl font-semibold text-gray-900">Account Management Tools</h2>
+									<h2 className="text-xl font-semibold text-gray-900">
+										Account Management Tools
+									</h2>
 								</div>
-								<AccountGroupTools 
+								<AccountGroupTools
 									accounts={transformedAccounts}
 									accountGroupId={accountGroup.id}
 									accountGroup={jazzAccountGroup}
@@ -752,9 +953,16 @@ export default function AccountGroupPage() {
 					<Tabs.Content value="accounts" className="mt-6">
 						<div className="space-y-6">
 							<div className="flex items-center justify-between">
-								<Text size="5" weight="bold">Connected Accounts</Text>
+								<Text size="5" weight="bold">
+									Connected Accounts
+								</Text>
 								<Button
-									onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')}
+									onClick={() =>
+										window.open(
+											"https://app.ayrshare.com/social-accounts",
+											"_blank"
+										)
+									}
 									intent="success"
 									variant="solid"
 								>
@@ -765,34 +973,62 @@ export default function AccountGroupPage() {
 							{accounts.length === 0 ? (
 								<div className="text-center py-12">
 									<Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-									<Text size="4" weight="medium" className="mb-2 block">No Accounts Connected</Text>
-									<Text size="2" color="gray" className="mb-6 block">
-										Connect your social media accounts to start posting and managing content.
+									<Text size="4" weight="medium" className="mb-2 block">
+										No Accounts Connected
 									</Text>
-									<Button onClick={() => window.open('https://app.ayrshare.com/social-accounts', '_blank')} intent="success" variant="solid">
+									<Text size="2" color="gray" className="mb-6 block">
+										Connect your social media accounts to start posting and
+										managing content.
+									</Text>
+									<Button
+										onClick={() =>
+											window.open(
+												"https://app.ayrshare.com/social-accounts",
+												"_blank"
+											)
+										}
+										intent="success"
+										variant="solid"
+									>
 										Connect Accounts
 									</Button>
 								</div>
 							) : (
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 									{accounts.map((account: any) => (
-										<div key={account.id || account._id} className="bg-white rounded-lg p-6 border border-gray-200">
+										<div
+											key={account.id || account._id}
+											className="bg-white rounded-lg p-6 border border-gray-200"
+										>
 											<div className="flex items-center gap-3 mb-3">
 												<div className="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
-													<Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
+													<Text size="2" weight="bold">
+														{account.platform?.charAt(0).toUpperCase()}
+													</Text>
 												</div>
 												<div>
-													<Text size="3" weight="medium" className="block">{account.name}</Text>
-													<Text size="2" color="gray">{account.platform}</Text>
+													<Text size="3" weight="medium" className="block">
+														{account.name}
+													</Text>
+													<Text size="2" color="gray">
+														{account.platform}
+													</Text>
 												</div>
 											</div>
 											<div className="flex items-center gap-2 mb-4">
-												<div className={`w-2 h-2 rounded-full ${account.isLinked ? 'bg-green-500' : 'bg-gray-300'}`} />
-												<Text size="2" color={account.isLinked ? "green" : "gray"}>
-													{account.isLinked ? 'Connected' : 'Not Connected'}
+												<div
+													className={`w-2 h-2 rounded-full ${
+														account.isLinked ? "bg-green-500" : "bg-gray-300"
+													}`}
+												/>
+												<Text
+													size="2"
+													color={account.isLinked ? "green" : "gray"}
+												>
+													{account.isLinked ? "Connected" : "Not Connected"}
 												</Text>
 											</div>
-											
+
 											{/* Preview Buttons */}
 											{account.isLinked && (
 												<div className="flex gap-2">
@@ -802,7 +1038,7 @@ export default function AccountGroupPage() {
 														className="flex-1"
 														onClick={() => {
 															setPreviewAccount(account);
-															setPreviewMode('feed');
+															setPreviewMode("feed");
 															setShowPreview(true);
 														}}
 													>
@@ -815,7 +1051,7 @@ export default function AccountGroupPage() {
 														className="flex-1"
 														onClick={() => {
 															setPreviewAccount(account);
-															setPreviewMode('profile');
+															setPreviewMode("profile");
 															setShowPreview(true);
 														}}
 													>
@@ -842,9 +1078,11 @@ export default function AccountGroupPage() {
 							<div className="flex items-center justify-between mb-6">
 								<div className="flex items-center gap-3">
 									<Cog className="w-5 h-5 text-gray-600" />
-									<Text size="5" weight="bold">Account Group Settings</Text>
+									<Text size="5" weight="bold">
+										Account Group Settings
+									</Text>
 								</div>
-								
+
 								{/* Copy Account Group ID */}
 								<div className="flex items-center gap-3">
 									{/* Jazz ID Display (for reference) */}
@@ -853,9 +1091,9 @@ export default function AccountGroupPage() {
 											Jazz ID: {jazzAccountGroup.id}
 										</div>
 									)}
-									
+
 									{/* API ID Copy Button */}
-									<div 
+									<div
 										className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md border cursor-pointer hover:bg-gray-100 transition-colors"
 										onClick={async () => {
 											try {
@@ -864,7 +1102,7 @@ export default function AccountGroupPage() {
 												setCopiedAccountGroupId(true);
 												setTimeout(() => setCopiedAccountGroupId(false), 2000);
 											} catch (err) {
-												console.error('Failed to copy account group ID:', err);
+												console.error("Failed to copy account group ID:", err);
 											}
 										}}
 										title="Click to copy the API-friendly Account Group ID"
@@ -883,47 +1121,71 @@ export default function AccountGroupPage() {
 
 							{/* Account Linking Management */}
 							{jazzAccountGroup && (
-								<AccountLinkingManager 
+								<AccountLinkingManager
 									accountGroup={jazzAccountGroup}
 									onAccountsUpdated={(updatedAccounts) => {
 										// Simple approach: only add new accounts that don't already exist
 										if (jazzAccountGroup.accounts) {
 											try {
-												const currentAccounts = safeArrayAccess(jazzAccountGroup.accounts);
-												const existingPlatforms = new Set(currentAccounts.map((acc: any) => acc?.platform).filter(Boolean));
-												
+												const currentAccounts = safeArrayAccess(
+													jazzAccountGroup.accounts
+												);
+												const existingPlatforms = new Set(
+													currentAccounts
+														.map((acc: any) => acc?.platform)
+														.filter(Boolean)
+												);
+
 												// Only add truly new accounts to avoid infinite loops
 												updatedAccounts.forEach((account) => {
-													if (!existingPlatforms.has(account.platform) && account.autoCreated) {
+													if (
+														!existingPlatforms.has(account.platform) &&
+														account.autoCreated
+													) {
 														// Create and add only new auto-created accounts
-														const newAccount = PlatformAccount.create({
-															name: account.name,
-															platform: account.platform,
-															apiUrl: undefined,
-															profileKey: account.profileKey,
-															isLinked: account.isLinked,
-															linkedAt: account.linkedAt,
-															username: account.username,
-															displayName: account.displayName,
-															avatar: account.avatar,
-															url: account.url,
-															status: account.status,
-															lastError: undefined,
-															historicalAnalytics: co.list(AnalyticsDataPoint).create([], { owner: jazzAccountGroup._owner }),
-														}, { owner: jazzAccountGroup._owner });
-														
+														const newAccount = PlatformAccount.create(
+															{
+																name: account.name,
+																platform: account.platform,
+																apiUrl: undefined,
+																profileKey: account.profileKey,
+																isLinked: account.isLinked,
+																linkedAt: account.linkedAt,
+																username: account.username,
+																displayName: account.displayName,
+																avatar: account.avatar,
+																url: account.url,
+																status: account.status,
+																lastError: undefined,
+																historicalAnalytics: co
+																	.list(AnalyticsDataPoint)
+																	.create([], {
+																		owner: jazzAccountGroup._owner,
+																	}),
+															},
+															{ owner: jazzAccountGroup._owner }
+														);
+
 														jazzAccountGroup.accounts.push(newAccount);
 													} else if (existingPlatforms.has(account.platform)) {
 														// Update existing accounts in place
-														const existingAccount = currentAccounts.find((acc: any) => acc?.platform === account.platform);
+														const existingAccount = currentAccounts.find(
+															(acc: any) => acc?.platform === account.platform
+														);
 														if (existingAccount) {
 															existingAccount.isLinked = account.isLinked;
 															existingAccount.status = account.status;
-															if (account.linkedAt) existingAccount.linkedAt = account.linkedAt;
-															if (account.username) existingAccount.username = account.username;
-															if (account.displayName) existingAccount.displayName = account.displayName;
-															if (account.avatar) existingAccount.avatar = account.avatar;
-															if (account.url) existingAccount.url = account.url;
+															if (account.linkedAt)
+																existingAccount.linkedAt = account.linkedAt;
+															if (account.username)
+																existingAccount.username = account.username;
+															if (account.displayName)
+																existingAccount.displayName =
+																	account.displayName;
+															if (account.avatar)
+																existingAccount.avatar = account.avatar;
+															if (account.url)
+																existingAccount.url = account.url;
 														}
 													}
 												});
@@ -956,7 +1218,7 @@ export default function AccountGroupPage() {
 											Manage Team
 										</Button>
 									</div>
-									
+
 									<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
 										<div className="bg-gray-50 p-4 rounded-lg">
 											<Text size="2" weight="medium" className="block mb-1">
@@ -1004,9 +1266,12 @@ export default function AccountGroupPage() {
 							{/* Future settings can be added here */}
 							{!jazzAccountGroup && (
 								<div className="text-center py-12">
-									<Text size="4" weight="medium" className="mb-2 block">Settings Not Available</Text>
+									<Text size="4" weight="medium" className="mb-2 block">
+										Settings Not Available
+									</Text>
 									<Text size="2" color="gray" className="mb-6 block">
-										Settings are only available for collaborative account groups created with Jazz.
+										Settings are only available for collaborative account groups
+										created with Jazz.
 									</Text>
 								</div>
 							)}
@@ -1024,15 +1289,17 @@ export default function AccountGroupPage() {
 					</Dialog.Description>
 
 					<div className="space-y-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Post Title</label>
-              <TextField.Root
-                value={newPostTitle}
-                onChange={(e) => setNewPostTitle(e.target.value)}
-                placeholder="Enter post title..."
-              />
-            </div>
-							{/* <div>
+						<div>
+							<label className="block text-sm font-medium mb-2">
+								Post Title
+							</label>
+							<TextField.Root
+								value={newPostTitle}
+								onChange={(e) => setNewPostTitle(e.target.value)}
+								placeholder="Enter post title..."
+							/>
+						</div>
+						{/* <div>
 								<label className="block text-sm font-medium mb-2">Post Title</label>
 								<SmartTitleInput
 									value={newPostTitle}
@@ -1041,7 +1308,7 @@ export default function AccountGroupPage() {
 									placeholder="Enter post title..."
 								/>
 							</div> */}
-						
+
 						<div>
 							<label className="block text-sm font-medium mb-2">Content</label>
 							<TextArea
@@ -1057,7 +1324,10 @@ export default function AccountGroupPage() {
 						<Button variant="soft" onClick={() => setShowCreateDialog(false)}>
 							Cancel
 						</Button>
-						<Button onClick={handleCreatePost} className="bg-lime-600 hover:bg-lime-700 text-white">
+						<Button
+							onClick={handleCreatePost}
+							className="bg-lime-600 hover:bg-lime-700 text-white"
+						>
 							Create Post
 						</Button>
 					</div>
@@ -1066,23 +1336,30 @@ export default function AccountGroupPage() {
 
 			{/* Preview Modal */}
 			<Dialog.Root open={showPreview} onOpenChange={setShowPreview}>
-				<Dialog.Content style={{ maxWidth: previewMode === 'feed' ? 600 : 800, maxHeight: '90vh', overflow: 'auto' }}>
+				<Dialog.Content
+					style={{
+						maxWidth: previewMode === "feed" ? 600 : 800,
+						maxHeight: "90vh",
+						overflow: "auto",
+					}}
+				>
 					<Dialog.Title>
-						{previewAccount?.name} - {previewMode === 'feed' ? 'Feed' : 'Analytics'} View
+						{previewAccount?.name} -{" "}
+						{previewMode === "feed" ? "Feed" : "Analytics"} View
 					</Dialog.Title>
-					
+
 					{previewAccount && (
 						<div className="mt-4">
-							{previewMode === 'feed' ? (
+							{previewMode === "feed" ? (
 								<PlatformFeedView
 									account={{
 										id: previewAccount.id,
 										name: previewAccount.name,
 										platform: previewAccount.platform,
 										profileKey: previewAccount.profileKey,
-										isLinked: previewAccount.isLinked
+										isLinked: previewAccount.isLinked,
 									}}
-									localPosts={posts.filter(post => {
+									localPosts={posts.filter((post) => {
 										// Filter posts for this specific platform
 										if (post.platforms && Array.isArray(post.platforms)) {
 											return post.platforms.includes(previewAccount.platform);
@@ -1103,7 +1380,7 @@ export default function AccountGroupPage() {
 										name: previewAccount.name,
 										platform: previewAccount.platform,
 										profileKey: previewAccount.profileKey,
-										isLinked: previewAccount.isLinked
+										isLinked: previewAccount.isLinked,
 									}}
 									accountGroupId={accountGroup.id}
 									jazzAccountGroup={jazzAccountGroup} // Pass Jazz AccountGroup for real database access
@@ -1111,10 +1388,14 @@ export default function AccountGroupPage() {
 							)}
 						</div>
 					)}
-					
+
 					<div className="flex justify-end gap-2 mt-6">
-						<Button onClick={() => setPreviewMode(previewMode === 'feed' ? 'profile' : 'feed')}>
-							Switch to {previewMode === 'feed' ? 'Analytics' : 'Feed'} View
+						<Button
+							onClick={() =>
+								setPreviewMode(previewMode === "feed" ? "profile" : "feed")
+							}
+						>
+							Switch to {previewMode === "feed" ? "Analytics" : "Feed"} View
 						</Button>
 						<Button variant="soft" onClick={() => setShowPreview(false)}>
 							Close
@@ -1124,22 +1405,26 @@ export default function AccountGroupPage() {
 			</Dialog.Root>
 
 			{/* Bulk Delete Confirmation Dialog */}
-			<Dialog.Root open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+			<Dialog.Root
+				open={showBulkDeleteDialog}
+				onOpenChange={setShowBulkDeleteDialog}
+			>
 				<Dialog.Content style={{ maxWidth: 500 }}>
 					<Dialog.Title>Delete Selected Posts</Dialog.Title>
 					<Dialog.Description>
-						Are you sure you want to delete {selectedPosts.size} post{selectedPosts.size !== 1 ? 's' : ''}? This action cannot be undone.
+						Are you sure you want to delete {selectedPosts.size} post
+						{selectedPosts.size !== 1 ? "s" : ""}? This action cannot be undone.
 					</Dialog.Description>
 
 					<div className="flex justify-end gap-2 mt-6">
-						<Button 
-							variant="soft" 
+						<Button
+							variant="soft"
 							onClick={() => setShowBulkDeleteDialog(false)}
 							disabled={isBulkDeleting}
 						>
 							Cancel
 						</Button>
-						<Button 
+						<Button
 							onClick={handleBulkDelete}
 							className="bg-red-600 hover:bg-red-700 text-white"
 							disabled={isBulkDeleting}
@@ -1152,7 +1437,8 @@ export default function AccountGroupPage() {
 							) : (
 								<>
 									<Trash2 className="w-4 h-4 mr-2" />
-									Delete {selectedPosts.size} Post{selectedPosts.size !== 1 ? 's' : ''}
+									Delete {selectedPosts.size} Post
+									{selectedPosts.size !== 1 ? "s" : ""}
 								</>
 							)}
 						</Button>
@@ -1171,7 +1457,7 @@ export default function AccountGroupPage() {
 
 			{/* Collaboration Settings Dialog */}
 			{showCollaborationSettings && jazzAccountGroup && (
-				<CollaborationSettings 
+				<CollaborationSettings
 					accountGroup={jazzAccountGroup as any}
 					onClose={() => setShowCollaborationSettings(false)}
 				/>

@@ -39,7 +39,8 @@ interface LegacyAccountGroup {
 }
 
 // Legacy account groups (removed - no longer needed after demo cleanup)
-export const accountGroups: Record<string, LegacyAccountGroup> = {};
+// Removed export to fix Next.js type checking - this was only used for demo purposes
+const accountGroups: Record<string, LegacyAccountGroup> = {};
 
 export default function HomePage() {
   const router = useRouter();

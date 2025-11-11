@@ -65,10 +65,10 @@ const UpdateAPIKeySchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
-    const { keyId } = params;
+    const { keyId } = await params;
 
     // Authenticate user
     const authResult = await authenticateWebSession(request);
@@ -114,10 +114,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
-    const { keyId } = params;
+    const { keyId } = await params;
 
     // Authenticate user
     const authResult = await authenticateWebSession(request);
@@ -191,10 +191,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
-    const { keyId } = params;
+    const { keyId } = await params;
 
     // Authenticate user
     const authResult = await authenticateWebSession(request);

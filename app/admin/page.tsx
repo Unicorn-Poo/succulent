@@ -154,7 +154,7 @@ function OverviewTab() {
           {Object.entries(stats.subscriptions).map(([tier, count]) => (
             <div key={tier} className="flex justify-between">
               <span className="capitalize">{tier}</span>
-              <span className="font-medium">{count}</span>
+              <span className="font-medium">{String(count)}</span>
             </div>
           ))}
         </div>
@@ -164,7 +164,7 @@ function OverviewTab() {
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
         <div className="space-y-2">
-          {stats.recentActivity.map((activity: any, index: number) => (
+          {stats.recentActivity.map((activity: { user: string; action: string; time: string }, index: number) => (
             <div key={index} className="flex justify-between items-center">
               <div>
                 <span className="font-medium">{activity.user}</span>
@@ -612,8 +612,17 @@ function SubscriptionsTab() {
 // 💰 PAYMENTS TAB
 // =============================================================================
 
+interface Payment {
+  id: number;
+  user: string;
+  amount: number;
+  status: string;
+  date: string;
+  invoice: string;
+}
+
 function PaymentsTab() {
-  const [payments, setPayments] = useState([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
     // Fetch payments from your backend
