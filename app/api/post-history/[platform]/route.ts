@@ -8,6 +8,9 @@ import { fetchPlatformPostHistory } from '@/utils/postPerformance';
 // Note: Jazz import functionality moved to client-side components
 // where we have access to Jazz AccountGroup objects and context
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/post-history/[platform]
  * Fetch historical post data for a specific platform using Ayrshare's platform-specific endpoint
@@ -15,11 +18,11 @@ import { fetchPlatformPostHistory } from '@/utils/postPerformance';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
-    const platform = params.platform;
+    const { platform } = await params;
     
     // Extract query parameters
     const profileKey = searchParams.get('profileKey');
@@ -131,11 +134,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
+  const { platform } = await params;
   try {
     const body = await request.json();
-    const platform = params.platform;
     const { accountGroupId, profileKey, options = {} } = body;
 
     if (!accountGroupId) {
@@ -185,7 +188,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error(`❌ ${params.platform} import error:`, error);
+    console.error(`❌ ${platform} import error:`, error);
     return NextResponse.json(
       { 
         error: 'Failed to import posts',
