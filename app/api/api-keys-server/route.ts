@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'jazz-tools';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 const CreateAPIKeySchema = z.object({
   accountId: z.string(),
   name: z.string().min(1, 'API key name is required'),

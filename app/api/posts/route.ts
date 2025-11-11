@@ -17,6 +17,9 @@ import { isBusinessPlanMode, INTERNAL_TO_AYRSHARE_PLATFORM } from '@/utils/ayrsh
 import { validateAPIKey, logAPIKeyUsage, checkRateLimit, validateAccountGroupAccess } from '@/utils/apiKeyManager';
 // Removed workaround storage imports - using proper Jazz integration
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 // =============================================================================
 // 🔐 AUTHENTICATION & VALIDATION
 // =============================================================================

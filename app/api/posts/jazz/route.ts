@@ -5,6 +5,9 @@ import { Post, PostVariant, MediaItem, ImageMedia, VideoMedia, ReplyTo, AccountG
 import { co, JazzRequestError } from 'jazz-tools';
 import { validateAPIKey, logAPIKeyUsage, validateAccountGroupAccess } from '@/utils/apiKeyManager';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/posts/jazz - Create posts using Jazz server-side capabilities
  * This creates real Jazz Post objects and stores them in account groups

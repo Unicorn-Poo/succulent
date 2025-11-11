@@ -10,6 +10,9 @@ import {
 import { handleStandardPost, PostData } from '@/utils/apiHandlers';
 import { updatePostWithResults, updateBulkPostsWithResults } from '@/utils/reliablePostUpdater';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 // Schema for bulk post creation
 const BulkPostSchema = z.object({
   accountGroupId: z.string().min(1, 'Account group ID is required'),

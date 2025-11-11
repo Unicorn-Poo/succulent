@@ -9,6 +9,9 @@ import {
   CreateAPIKeyOptions
 } from '@/utils/apiKeyManager';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 // =============================================================================
 // 🔐 AUTHENTICATION FOR API KEY MANAGEMENT
 // =============================================================================

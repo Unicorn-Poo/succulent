@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Group } from 'jazz-tools';
 
+// Force dynamic rendering to prevent build-time static analysis issues
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { accountGroupId } = await request.json();
