@@ -324,7 +324,7 @@ async function createPostInAccountGroup(
       performance: undefined,
       ayrsharePostId: undefined,
       socialPostUrl: undefined,
-      platformOptions: Object.keys(basePlatformOptions).length > 0 ? basePlatformOptions : undefined,
+      platformOptions: Object.keys(basePlatformOptions).length > 0 ? JSON.stringify(basePlatformOptions) : undefined,
     }, { owner: groupOwner });
     
     const variants = co.record(z.string(), PostVariant).create({ base: baseVariant }, { owner: groupOwner });
@@ -372,7 +372,11 @@ async function createPostInAccountGroup(
       // Inherit from base, but can be overridden per-platform in the future
       const variantPlatformOptions: Record<string, any> = {};
       if (baseVariant.platformOptions) {
-        Object.assign(variantPlatformOptions, baseVariant.platformOptions);
+        try {
+          Object.assign(variantPlatformOptions, JSON.parse(baseVariant.platformOptions));
+        } catch (e) {
+          // If parsing fails, treat as empty
+        }
       }
       // If twitterOptions provided and this is x platform, save it
       if (request.twitterOptions && platform === 'x') {
@@ -392,7 +396,7 @@ async function createPostInAccountGroup(
         performance: baseVariant.performance,
         ayrsharePostId: baseVariant.ayrsharePostId,
         socialPostUrl: baseVariant.socialPostUrl,
-        platformOptions: Object.keys(variantPlatformOptions).length > 0 ? variantPlatformOptions : undefined,
+        platformOptions: Object.keys(variantPlatformOptions).length > 0 ? JSON.stringify(variantPlatformOptions) : undefined,
       }, { owner: groupOwner });
       variants[platform] = platformVariant;
     }
@@ -437,7 +441,7 @@ async function createPostInAccountGroup(
             performance: baseVariant.performance,
             ayrsharePostId: baseVariant.ayrsharePostId,
             socialPostUrl: baseVariant.socialPostUrl,
-            platformOptions: Object.keys(variantPlatformOptions).length > 0 ? variantPlatformOptions : undefined,
+            platformOptions: Object.keys(variantPlatformOptions).length > 0 ? JSON.stringify(variantPlatformOptions) : undefined,
           }, { owner: groupOwner });
           variants[platform] = platformVariant;
         }
@@ -570,9 +574,16 @@ async function preparePublishRequests(
       // Check request first
       if (requestData.twitterOptions) {
         twitterOptions = requestData.twitterOptions;
-      } else if (variant?.platformOptions?.twitterOptions) {
-        // Check saved variant
-        twitterOptions = variant.platformOptions.twitterOptions;
+      } else if (variant?.platformOptions) {
+        // Check saved variant (parse JSON string)
+        try {
+          const parsedOptions = JSON.parse(variant.platformOptions);
+          if (parsedOptions?.twitterOptions) {
+            twitterOptions = parsedOptions.twitterOptions;
+          }
+        } catch (e) {
+          // If parsing fails, ignore
+        }
       } else {
         // Default: enable threading for long posts
         const contentLength = content.length;

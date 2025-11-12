@@ -189,6 +189,7 @@ export async function POST(request: NextRequest) {
               publishedAt: undefined,
               edited: false,
               lastModified: undefined,
+              platformOptions: undefined,
             }, { owner: accountGroup._owner });
             
             // Create variants record with base variant
@@ -208,6 +209,7 @@ export async function POST(request: NextRequest) {
                 publishedAt: baseVariant.publishedAt,
                 edited: baseVariant.edited,
                 lastModified: baseVariant.lastModified,
+                platformOptions: baseVariant.platformOptions,
               }, { owner: accountGroup._owner });
               variantsRecord[platform] = platformVariant;
             }

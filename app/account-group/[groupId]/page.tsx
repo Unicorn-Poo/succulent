@@ -317,6 +317,7 @@ export default function AccountGroupPage() {
 					publishedAt: undefined,
 					edited: false,
 					lastModified: undefined,
+					platformOptions: undefined,
 				},
 				{ owner: jazzAccountGroup._owner }
 			);
