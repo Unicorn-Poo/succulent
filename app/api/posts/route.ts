@@ -570,20 +570,61 @@ async function createPostInAccountGroup(
       }
     }
 
+    // CRITICAL: Create ONLY ONE post with all variants
+    const variantKeys = Object.keys(variants);
+    console.log("📝 [CREATE POST] Creating SINGLE post with variants:", {
+      variantCount: variantKeys.length,
+      variantPlatforms: variantKeys,
+      title: postData.title,
+      platformsInRequest: request.platforms.length,
+      hasVariantsInRequest: !!request.variants,
+    });
+
     const post = Post.create(
       {
         title: titleText,
-        variants: variants,
+        variants: variants, // All variants go into ONE post
       },
       { owner: groupOwner }
     );
 
-    // Ensure posts list exists and add the post
+    console.log("📝 [POST CREATED] Post object created:", {
+      postId: post.id,
+      variantCount: Object.keys(post.variants || {}).length,
+      variantKeys: Object.keys(post.variants || {}),
+    });
+
+    // Ensure posts list exists and add the post ONCE
     if (!accountGroup.posts) {
       const { co } = await import("jazz-tools");
       accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
+      console.log("📝 [POSTS LIST CREATED] New posts list created");
     }
+
+    const postsBeforeAdd = accountGroup.posts.length;
+    console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
+
+    // CRITICAL: Check if post already exists to prevent duplicates
+    const existingPost = accountGroup.posts.find((p: any) => p.id === post.id);
+    if (existingPost) {
+      console.warn(
+        "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
+        post.id
+      );
+      return existingPost;
+    }
+
+    // Add post ONCE - this should be the only place we add it
     accountGroup.posts.push(post);
+    const postsAfterAdd = accountGroup.posts.length;
+    console.log("✅ [POST ADDED] Added SINGLE post to account group:", {
+      postId: post.id,
+      variantCount: Object.keys(post.variants || {}).length,
+      variantPlatforms: Object.keys(post.variants || {}),
+      postsBeforeAdd,
+      postsAfterAdd,
+      postsAdded: postsAfterAdd - postsBeforeAdd,
+    });
 
     return post;
   } catch (error) {
@@ -876,6 +917,10 @@ async function updatePostWithAyrshareIds(
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random()
+    .toString(36)
+    .substring(7)}`;
+  console.log(`🆔 [API REQUEST START] ${requestId} - POST /api/posts`);
   let authResult:
     | {
         isValid: boolean;
@@ -1037,8 +1082,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🚀 Create the post
+    // 🚀 Create the post (ONLY ONE POST, even with variants)
+    console.log(
+      `📝 [POST CREATION START] ${requestId} - Creating SINGLE post with variants:`,
+      {
+        platforms: requestData.platforms,
+        platformCount: requestData.platforms.length,
+        hasVariants: !!requestData.variants,
+        variantPlatforms: requestData.variants
+          ? Object.keys(requestData.variants)
+          : [],
+      }
+    );
+
     const result = await createPost(requestData, user);
+
+    if (result.success && result.post) {
+      console.log(
+        `✅ [POST CREATION SUCCESS] ${requestId} - SINGLE post created:`,
+        {
+          postId: result.postId,
+          variantCount: Object.keys(result.post.variants || {}).length,
+          variantPlatforms: Object.keys(result.post.variants || {}),
+          totalVariantsInPost: Object.keys(result.post.variants || {}).length,
+        }
+      );
+    } else {
+      console.error(`❌ [POST CREATION FAILED] ${requestId}:`, result.error);
+    }
 
     // 🚀 Publish the post (if immediate or scheduled)
     let publishResult = null;
