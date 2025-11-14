@@ -17,6 +17,7 @@ import {
   checkRateLimit,
   validateAccountGroupAccess,
 } from "@/utils/apiKeyManager";
+import { findExistingPost } from "@/utils/postListHelpers";
 // Removed workaround storage imports - using proper Jazz integration
 
 // Force dynamic rendering to prevent build-time static analysis issues
@@ -605,9 +606,7 @@ async function createPostInAccountGroup(
       console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
 
       // CRITICAL: Check if post already exists to prevent duplicates
-      const existingPost = accountGroup.posts.find(
-        (p: any) => p && typeof p === "object" && p.id === post.id
-      );
+      const existingPost = findExistingPost(accountGroup.posts, post.id);
     if (existingPost) {
       console.warn(
         "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
