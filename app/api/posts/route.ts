@@ -605,7 +605,8 @@ async function createPostInAccountGroup(
     console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
 
     // CRITICAL: Check if post already exists to prevent duplicates
-    const existingPost = accountGroup.posts.find((p: any) => p.id === post.id);
+    // Filter out null entries that might exist in the list
+    const existingPost = accountGroup.posts.find((p: any) => p && p.id === post.id);
     if (existingPost) {
       console.warn(
         "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
