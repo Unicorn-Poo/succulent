@@ -17,6 +17,7 @@ import {
   checkRateLimit,
   validateAccountGroupAccess,
 } from "@/utils/apiKeyManager";
+import { findExistingPost } from "@/utils/postListHelpers";
 // Removed workaround storage imports - using proper Jazz integration
 
 // Force dynamic rendering to prevent build-time static analysis issues
@@ -602,24 +603,24 @@ async function createPostInAccountGroup(
       { owner: groupOwner }
     );
 
-    console.log("📝 [POST CREATED] Post object created:", {
-      postId: post.id,
-      variantCount: Object.keys(post.variants || {}).length,
-      variantKeys: Object.keys(post.variants || {}),
-    });
+      console.log("📝 [POST CREATED] Post object created:", {
+        postId: post.id,
+        variantCount: Object.keys(post.variants || {}).length,
+        variantKeys: Object.keys(post.variants || {}),
+      });
 
-    // Ensure posts list exists and add the post ONCE
-    if (!accountGroup.posts) {
-      const { co } = await import("jazz-tools");
-      accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
-      console.log("📝 [POSTS LIST CREATED] New posts list created");
-    }
+      // Ensure posts list exists and add the post ONCE
+      if (!accountGroup.posts) {
+        const { co } = await import("jazz-tools");
+        accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
+        console.log("📝 [POSTS LIST CREATED] New posts list created");
+      }
 
-    const postsBeforeAdd = accountGroup.posts.length;
-    console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
+      const postsBeforeAdd = accountGroup.posts.length;
+      console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
 
-    // CRITICAL: Check if post already exists to prevent duplicates
-    const existingPost = accountGroup.posts.find((p: any) => p.id === post.id);
+      // CRITICAL: Check if post already exists to prevent duplicates
+      const existingPost = findExistingPost(accountGroup.posts, post.id);
     if (existingPost) {
       console.warn(
         "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
