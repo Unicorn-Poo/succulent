@@ -27,6 +27,14 @@ export interface PostData {
 		replyToTweetId?: string;
 		mediaUrls?: string[];
 	};
+	redditOptions?: {
+		title?: string;
+		subreddit?: string;
+	};
+	pinterestOptions?: {
+		boardId?: string;
+		boardName?: string;
+	};
 	instagramOptions?: any;
 	facebookOptions?: any;
 	linkedinOptions?: any;
@@ -102,21 +110,47 @@ export const handleStandardPost = async (postData: PostData) => {
 	};
 
 	// Clean up undefined fields that might cause issues with Ayrshare
-	// But preserve twitterOptions even if they exist as an object
+	// But preserve platform-specific options even if they exist as an object
 	const cleanedBody = Object.fromEntries(
 		Object.entries(requestBody).filter(([key, value]) => {
-			// Always keep twitterOptions if it exists as an object
-			if (key === 'twitterOptions' && value && typeof value === 'object') {
+			// Always keep platform-specific options if they exist as objects
+			if ((key === 'twitterOptions' || key === 'redditOptions' || key === 'pinterestOptions') 
+				&& value && typeof value === 'object') {
 				return true;
 			}
 			// Filter out empty mediaUrls arrays - Ayrshare doesn't like empty arrays
 			if (key === 'mediaUrls' && Array.isArray(value) && value.length === 0) {
 				return false;
 			}
-			// Filter out other undefined values, including undefined twitterOptions
+			// Filter out other undefined values
 			return value !== undefined;
 		})
 	);
+	
+	// Validate media URLs are properly formatted and accessible
+	if (cleanedBody.mediaUrls && Array.isArray(cleanedBody.mediaUrls)) {
+		const validMediaUrls = cleanedBody.mediaUrls.filter((url: string) => {
+			if (typeof url !== 'string') return false;
+			if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
+			// Ensure URL is properly encoded
+			try {
+				new URL(url);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+		
+		if (validMediaUrls.length !== cleanedBody.mediaUrls.length) {
+			console.warn('⚠️ Some media URLs were filtered out as invalid:', {
+				original: cleanedBody.mediaUrls.length,
+				valid: validMediaUrls.length,
+				invalid: cleanedBody.mediaUrls.filter((url: string) => !validMediaUrls.includes(url))
+			});
+		}
+		
+		cleanedBody.mediaUrls = validMediaUrls.length > 0 ? validMediaUrls : undefined;
+	}
 
 	// Add twitterOptions back if we have Twitter and they were filtered out
 	if (hasTwitter && !cleanedBody.twitterOptions && postData.twitterOptions) {

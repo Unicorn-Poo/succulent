@@ -154,6 +154,20 @@ const CreatePostSchema = z.object({
     })
     .optional(),
 
+  redditOptions: z
+    .object({
+      title: z.string().optional(),
+      subreddit: z.string().optional(),
+    })
+    .optional(),
+
+  pinterestOptions: z
+    .object({
+      boardId: z.string().optional(),
+      boardName: z.string().optional(),
+    })
+    .optional(),
+
   // Reply configuration
   replyTo: z
     .object({
@@ -744,6 +758,9 @@ async function preparePublishRequests(
 
     // Determine platform options: request > saved variant > defaults
     let twitterOptions: any = undefined;
+    let redditOptions: any = undefined;
+    let pinterestOptions: any = undefined;
+
     if (platform === "x") {
       // Check request first
       if (requestData.twitterOptions) {
@@ -767,10 +784,62 @@ async function preparePublishRequests(
       }
     }
 
+    if (platform === "reddit") {
+      // Check request first
+      if (requestData.redditOptions) {
+        redditOptions = requestData.redditOptions;
+      } else if (variant?.platformOptions) {
+        // Check saved variant (parse JSON string)
+        try {
+          const parsedOptions = JSON.parse(variant.platformOptions);
+          if (parsedOptions?.redditOptions) {
+            redditOptions = parsedOptions.redditOptions;
+          }
+        } catch (e) {
+          // If parsing fails, ignore
+        }
+      }
+    }
+
+    if (platform === "pinterest") {
+      // Check request first
+      if (requestData.pinterestOptions) {
+        pinterestOptions = requestData.pinterestOptions;
+      } else if (variant?.platformOptions) {
+        // Check saved variant (parse JSON string)
+        try {
+          const parsedOptions = JSON.parse(variant.platformOptions);
+          if (parsedOptions?.pinterestOptions) {
+            pinterestOptions = parsedOptions.pinterestOptions;
+          }
+        } catch (e) {
+          // If parsing fails, ignore
+        }
+      }
+
+      // Fallback to environment variable if not provided
+      if (!pinterestOptions) {
+        const envBoardId = process.env.PINTEREST_BOARD_ID;
+        const envBoardName = process.env.PINTEREST_BOARD_NAME;
+        if (envBoardId || envBoardName) {
+          pinterestOptions = {
+            boardId: envBoardId,
+            boardName: envBoardName,
+          };
+        }
+      }
+    }
+
     // If variant exists (override or saved), create separate request for this platform
     if (variantOverride || variant) {
       const ayrsharePlatform =
         INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+
+      // Log media URLs being sent for debugging
+      if (mediaUrls.length > 0) {
+        console.log(`📷 [MEDIA URLs] Platform: ${platform}, URLs:`, mediaUrls);
+      }
+
       requests.push({
         postData: {
           post: content,
@@ -779,6 +848,8 @@ async function preparePublishRequests(
           scheduleDate: requestData.scheduledDate,
           profileKey: profileKey,
           twitterOptions: twitterOptions,
+          redditOptions: redditOptions,
+          pinterestOptions: pinterestOptions,
         },
         platforms: [platform],
       });
@@ -794,14 +865,40 @@ async function preparePublishRequests(
       (p) => INTERNAL_TO_AYRSHARE_PLATFORM[p] || p
     );
 
-    // Determine twitter options for grouped request
+    // Determine platform options for grouped request
     const hasTwitter = platformsWithoutVariants.includes("x");
+    const hasReddit = platformsWithoutVariants.includes("reddit");
+    const hasPinterest = platformsWithoutVariants.includes("pinterest");
+
     let twitterOptions: any = undefined;
+    let redditOptions: any = undefined;
+    let pinterestOptions: any = undefined;
+
     if (hasTwitter) {
       if (requestData.twitterOptions) {
         twitterOptions = requestData.twitterOptions;
       } else if (baseContent.length > 280) {
         twitterOptions = { thread: true, threadNumber: true };
+      }
+    }
+
+    if (hasReddit && requestData.redditOptions) {
+      redditOptions = requestData.redditOptions;
+    }
+
+    if (hasPinterest) {
+      if (requestData.pinterestOptions) {
+        pinterestOptions = requestData.pinterestOptions;
+      } else {
+        // Fallback to environment variable if not provided
+        const envBoardId = process.env.PINTEREST_BOARD_ID;
+        const envBoardName = process.env.PINTEREST_BOARD_NAME;
+        if (envBoardId || envBoardName) {
+          pinterestOptions = {
+            boardId: envBoardId,
+            boardName: envBoardName,
+          };
+        }
       }
     }
 
@@ -813,6 +910,8 @@ async function preparePublishRequests(
         scheduleDate: requestData.scheduledDate,
         profileKey: profileKey,
         twitterOptions: twitterOptions,
+        redditOptions: redditOptions,
+        pinterestOptions: pinterestOptions,
       },
       platforms: platformsWithoutVariants,
     });
