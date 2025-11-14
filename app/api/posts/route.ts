@@ -603,24 +603,24 @@ async function createPostInAccountGroup(
       { owner: groupOwner }
     );
 
-      console.log("📝 [POST CREATED] Post object created:", {
-        postId: post.id,
-        variantCount: Object.keys(post.variants || {}).length,
-        variantKeys: Object.keys(post.variants || {}),
-      });
+    console.log("📝 [POST CREATED] Post object created:", {
+      postId: post.id,
+      variantCount: Object.keys(post.variants || {}).length,
+      variantKeys: Object.keys(post.variants || {}),
+    });
 
-      // Ensure posts list exists and add the post ONCE
-      if (!accountGroup.posts) {
-        const { co } = await import("jazz-tools");
-        accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
-        console.log("📝 [POSTS LIST CREATED] New posts list created");
-      }
+    // Ensure posts list exists and add the post ONCE
+    if (!accountGroup.posts) {
+      const { co } = await import("jazz-tools");
+      accountGroup.posts = co.list(Post).create([], { owner: groupOwner });
+      console.log("📝 [POSTS LIST CREATED] New posts list created");
+    }
 
-      const postsBeforeAdd = accountGroup.posts.length;
-      console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
+    const postsBeforeAdd = accountGroup.posts.length;
+    console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
 
-      // CRITICAL: Check if post already exists to prevent duplicates
-      const existingPost = findExistingPost(accountGroup.posts, post.id);
+    // CRITICAL: Check if post already exists to prevent duplicates
+    const existingPost = findExistingPost(accountGroup.posts, post.id);
     if (existingPost) {
       console.warn(
         "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
@@ -800,6 +800,11 @@ async function preparePublishRequests(
           // If parsing fails, ignore
         }
       }
+
+      // Fallback: Use request title if redditOptions not provided
+      if (!redditOptions && requestData.title) {
+        redditOptions = { title: requestData.title };
+      }
     }
 
     if (platform === "pinterest") {
@@ -823,11 +828,40 @@ async function preparePublishRequests(
         const envBoardId = process.env.PINTEREST_BOARD_ID;
         const envBoardName = process.env.PINTEREST_BOARD_NAME;
         if (envBoardId || envBoardName) {
-          pinterestOptions = {
-            boardId: envBoardId,
-            boardName: envBoardName,
-          };
+          // If boardId is provided but not numeric, treat it as boardName
+          if (envBoardId && !/^\d+$/.test(envBoardId)) {
+            console.warn(
+              "⚠️ PINTEREST_BOARD_ID is not numeric, using as boardName:",
+              envBoardId
+            );
+            pinterestOptions = {
+              boardName: envBoardId || envBoardName,
+            };
+          } else {
+            pinterestOptions = {
+              boardId: envBoardId,
+              boardName: envBoardName,
+            };
+          }
         }
+      }
+
+      // If boardId exists but is not numeric, convert it to boardName
+      if (
+        pinterestOptions?.boardId &&
+        !/^\d+$/.test(pinterestOptions.boardId)
+      ) {
+        console.warn(
+          "⚠️ Pinterest boardId is not numeric, converting to boardName:",
+          pinterestOptions.boardId
+        );
+        pinterestOptions = {
+          boardName: pinterestOptions.boardId,
+          ...(pinterestOptions.boardName && {
+            boardName: pinterestOptions.boardName,
+          }),
+        };
+        delete pinterestOptions.boardId;
       }
     }
 
@@ -883,8 +917,13 @@ async function preparePublishRequests(
       }
     }
 
-    if (hasReddit && requestData.redditOptions) {
-      redditOptions = requestData.redditOptions;
+    if (hasReddit) {
+      if (requestData.redditOptions) {
+        redditOptions = requestData.redditOptions;
+      } else if (requestData.title) {
+        // Fallback: Use request title if redditOptions not provided
+        redditOptions = { title: requestData.title };
+      }
     }
 
     if (hasPinterest) {
@@ -895,11 +934,40 @@ async function preparePublishRequests(
         const envBoardId = process.env.PINTEREST_BOARD_ID;
         const envBoardName = process.env.PINTEREST_BOARD_NAME;
         if (envBoardId || envBoardName) {
-          pinterestOptions = {
-            boardId: envBoardId,
-            boardName: envBoardName,
-          };
+          // If boardId is provided but not numeric, treat it as boardName
+          if (envBoardId && !/^\d+$/.test(envBoardId)) {
+            console.warn(
+              "⚠️ PINTEREST_BOARD_ID is not numeric, using as boardName:",
+              envBoardId
+            );
+            pinterestOptions = {
+              boardName: envBoardId || envBoardName,
+            };
+          } else {
+            pinterestOptions = {
+              boardId: envBoardId,
+              boardName: envBoardName,
+            };
+          }
         }
+      }
+
+      // If boardId exists but is not numeric, convert it to boardName
+      if (
+        pinterestOptions?.boardId &&
+        !/^\d+$/.test(pinterestOptions.boardId)
+      ) {
+        console.warn(
+          "⚠️ Pinterest boardId is not numeric, converting to boardName:",
+          pinterestOptions.boardId
+        );
+        pinterestOptions = {
+          boardName: pinterestOptions.boardId,
+          ...(pinterestOptions.boardName && {
+            boardName: pinterestOptions.boardName,
+          }),
+        };
+        delete pinterestOptions.boardId;
       }
     }
 

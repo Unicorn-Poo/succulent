@@ -106,7 +106,20 @@ export const handleStandardPost = async (postData: PostData) => {
 		twitterOptions: postData.twitterOptions || (needsTwitterOptions ? {
 			thread: true,
 			threadNumber: true
-		} : undefined)
+		} : undefined),
+		// Include redditOptions if provided
+		redditOptions: postData.redditOptions,
+		// Include pinterestOptions if provided, but validate boardId is numeric
+		pinterestOptions: postData.pinterestOptions ? (() => {
+			const options = { ...postData.pinterestOptions };
+			// Ayrshare requires boardId to be numeric only - if it's not, use boardName instead
+			if (options.boardId && !/^\d+$/.test(options.boardId)) {
+				console.warn('⚠️ Pinterest boardId must be numeric. Removing non-numeric boardId:', options.boardId);
+				delete options.boardId;
+			}
+			// Only include if we have at least boardId (numeric) or boardName
+			return (options.boardId || options.boardName) ? options : undefined;
+		})() : undefined
 	};
 
 	// Clean up undefined fields that might cause issues with Ayrshare
