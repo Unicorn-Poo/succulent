@@ -731,8 +731,19 @@ async function preparePublishRequests(
     requestData.imageUrls ||
     [];
 
+  // Collect all platforms to process: from requestData.platforms AND post.variants
+  // This ensures variant-only platforms (like Instagram) are included
+  const allPlatformsToProcess = new Set<string>(requestData.platforms);
+  if (post?.variants) {
+    for (const platform of Object.keys(post.variants)) {
+      if (platform !== "base" && PlatformNames.includes(platform as any)) {
+        allPlatformsToProcess.add(platform);
+      }
+    }
+  }
+
   // Process each platform
-  for (const platform of requestData.platforms) {
+  for (const platform of allPlatformsToProcess) {
     if (!PlatformNames.includes(platform as any)) continue;
 
     const variantOverride = requestData.variants?.[platform];
