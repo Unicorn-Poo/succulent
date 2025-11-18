@@ -106,89 +106,90 @@ async function authenticateAPIKey(request: NextRequest): Promise<{
 // 📝 REQUEST VALIDATION
 // =============================================================================
 
-const CreatePostSchema = z.object({
+const TwitterOptionsSchema = zod.object({
+  thread: zod.boolean().optional(),
+  threadNumber: zod.boolean().optional(),
+  replyToTweetId: zod.string().optional(),
+  mediaUrls: zod.array(zod.string().url()).optional(),
+});
+
+const RedditOptionsSchema = zod.object({
+  title: zod.string().optional(),
+  subreddit: zod.string().optional(),
+});
+
+const PinterestOptionsSchema = zod.object({
+  boardId: zod.string().optional(),
+  boardName: zod.string().optional(),
+});
+
+const VariantDetailsSchema = zod
+  .object({
+    content: zod.string().optional(),
+    media: zod.array(zod.string().url()).optional(),
+    twitterOptions: TwitterOptionsSchema.optional(),
+    redditOptions: RedditOptionsSchema.optional(),
+    pinterestOptions: PinterestOptionsSchema.optional(),
+  })
+  .passthrough();
+
+const CreatePostSchema = zod.object({
   // Required fields
-  accountGroupId: z.string().min(1, "Account group ID is required"),
-  content: z.string().min(1, "Post content is required"),
-  platforms: z
-    .array(z.enum(PlatformNames))
+  accountGroupId: zod.string().min(1, "Account group ID is required"),
+  content: zod.string().min(1, "Post content is required"),
+  platforms: zod
+    .array(zod.enum(PlatformNames))
     .min(1, "At least one platform is required"),
 
   // Optional fields
-  title: z.string().optional(),
-  scheduledDate: z.string().datetime().optional(),
+  title: zod.string().optional(),
+  scheduledDate: zod.string().datetime().optional(),
 
   // Media attachments - URL-based only
-  media: z
+  media: zod
     .array(
-      z.object({
-        type: z.enum(["image", "video"]),
-        url: z.string().url(),
-        alt: z.string().optional(),
-        filename: z.string().optional(),
+      zod.object({
+        type: zod.enum(["image", "video"]),
+        url: zod.string().url(),
+        alt: zod.string().optional(),
+        filename: zod.string().optional(),
       })
     )
     .optional(),
 
   // Legacy support: imageUrls and alt (for backward compatibility)
-  imageUrls: z.array(z.string().url()).optional(),
-  alt: z.string().optional(),
+  imageUrls: zod.array(zod.string().url()).optional(),
+  alt: zod.string().optional(),
 
   // Platform-specific variants
-  variants: zod
-    .record(
-      zod.string(),
-      zod.object({
-        content: zod.string().optional(), // Override base content for this platform
-        media: zod.array(zod.string().url()).optional(), // Override base media for this platform
-      })
-    )
-    .optional(),
+  variants: zod.record(zod.string(), VariantDetailsSchema).optional(),
 
-  // Platform-specific options (twitterOptions, instagramOptions, etc.)
-  twitterOptions: z
-    .object({
-      thread: z.boolean().optional(),
-      threadNumber: z.boolean().optional(),
-      replyToTweetId: z.string().optional(),
-      mediaUrls: z.array(z.string().url()).optional(),
-    })
-    .optional(),
-
-  redditOptions: z
-    .object({
-      title: z.string().optional(),
-      subreddit: z.string().optional(),
-    })
-    .optional(),
-
-  pinterestOptions: z
-    .object({
-      boardId: z.string().optional(),
-      boardName: z.string().optional(),
-    })
-    .optional(),
+  // Platform-specific options (twitterOptions, redditOptions, etc.)
+  twitterOptions: TwitterOptionsSchema.optional(),
+  redditOptions: RedditOptionsSchema.optional(),
+  reddit: RedditOptionsSchema.optional(),
+  pinterestOptions: PinterestOptionsSchema.optional(),
 
   // Reply configuration
-  replyTo: z
+  replyTo: zod
     .object({
-      url: z.string().url(),
-      platform: z.enum(PlatformNames).optional(),
+      url: zod.string().url(),
+      platform: zod.enum(PlatformNames).optional(),
     })
     .optional(),
 
   // Thread/multi-post configuration
-  isThread: z.boolean().optional(),
-  threadPosts: z
+  isThread: zod.boolean().optional(),
+  threadPosts: zod
     .array(
-      z.object({
-        content: z.string(),
-        media: z
+      zod.object({
+        content: zod.string(),
+        media: zod
           .array(
-            z.object({
-              type: z.enum(["image", "video"]),
-              url: z.string().url(),
-              alt: z.string().optional(),
+            zod.object({
+              type: zod.enum(["image", "video"]),
+              url: zod.string().url(),
+              alt: zod.string().optional(),
             })
           )
           .optional(),
@@ -197,14 +198,87 @@ const CreatePostSchema = z.object({
     .optional(),
 
   // Publishing options
-  publishImmediately: z.boolean().default(false),
-  saveAsDraft: z.boolean().default(true),
+  publishImmediately: zod.boolean().default(false),
+  saveAsDraft: zod.boolean().default(true),
 
   // Business plan options
-  profileKey: z.string().optional(), // For Ayrshare Business Plan integration
+  profileKey: zod.string().optional(), // For Ayrshare Business Plan integration
 });
 
-type CreatePostRequest = z.infer<typeof CreatePostSchema>;
+type CreatePostRequest = zod.infer<typeof CreatePostSchema>;
+type VariantOverride = zod.infer<typeof VariantDetailsSchema>;
+
+const PLATFORM_OPTION_KEYS: Record<string, string> = {
+  x: "twitterOptions",
+  twitter: "twitterOptions",
+  reddit: "redditOptions",
+  pinterest: "pinterestOptions",
+};
+
+export function getPlatformOptionsKey(platform: string): string {
+  if (!platform) return "platformOptions";
+  const normalized = platform.toLowerCase();
+  return PLATFORM_OPTION_KEYS[normalized] || `${normalized}Options`;
+}
+
+function parsePlatformOptions(options: any): Record<string, any> {
+  if (!options) return {};
+  if (typeof options === "string") {
+    try {
+      const parsed = JSON.parse(options);
+      return typeof parsed === "object" && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof options === "object") {
+    return { ...options };
+  }
+  return {};
+}
+
+function extractOptionFields(
+  source?: Record<string, any>
+): Record<string, any> {
+  if (!source || typeof source !== "object") return {};
+  return Object.entries(source).reduce<Record<string, any>>(
+    (acc, [key, value]) => {
+      if (key.endsWith("Options") && value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    {}
+  );
+}
+
+export function normalizeVariantOptionAliases(
+  target: Record<string, any> | undefined
+) {
+  if (!target || typeof target !== "object") return;
+  if (target.reddit && !target.redditOptions) {
+    target.redditOptions = target.reddit;
+  }
+  if ("reddit" in target) {
+    delete target.reddit;
+  }
+}
+
+export function normalizeRequestOptionAliases(
+  requestData: CreatePostRequest & Record<string, any>
+) {
+  if (requestData.reddit && !requestData.redditOptions) {
+    requestData.redditOptions = requestData.reddit;
+  }
+  if ("reddit" in requestData) {
+    delete requestData.reddit;
+  }
+  if (requestData.variants) {
+    Object.values(requestData.variants).forEach((variant) => {
+      normalizeVariantOptionAliases(variant as Record<string, any>);
+    });
+  }
+}
 
 // =============================================================================
 // 🎯 POST CREATION LOGIC
@@ -459,7 +533,13 @@ async function createPostInAccountGroup(
     // Create platform variants - use variant overrides if provided
     for (const platform of request.platforms) {
       // Check if this platform has variant overrides
-      const variantOverride = request.variants?.[platform];
+      const variantOverride = request.variants?.[platform] as
+        | VariantOverride
+        | undefined;
+      const variantOverrideObject =
+        variantOverride && typeof variantOverride === "object"
+          ? (variantOverride as Record<string, any>)
+          : undefined;
 
       // Use variant content if provided, otherwise use base content
       const variantText = variantOverride?.content
@@ -476,21 +556,21 @@ async function createPostInAccountGroup(
       }
 
       // Prepare platform options for this variant
-      // Inherit from base, but can be overridden per-platform in the future
-      const variantPlatformOptions: Record<string, any> = {};
-      if (baseVariant.platformOptions) {
-        try {
-          Object.assign(
-            variantPlatformOptions,
-            JSON.parse(baseVariant.platformOptions)
-          );
-        } catch (e) {
-          // If parsing fails, treat as empty
-        }
-      }
-      // If twitterOptions provided and this is x platform, save it
-      if (request.twitterOptions && platform === "x") {
-        variantPlatformOptions.twitterOptions = request.twitterOptions;
+      const variantPlatformOptions: Record<string, any> = parsePlatformOptions(
+        baseVariant.platformOptions
+      );
+      Object.assign(
+        variantPlatformOptions,
+        extractOptionFields(variantOverrideObject)
+      );
+      const optionKey = getPlatformOptionsKey(platform);
+      if (
+        variantPlatformOptions[optionKey] === undefined &&
+        (request as Record<string, any>)[optionKey]
+      ) {
+        variantPlatformOptions[optionKey] = (request as Record<string, any>)[
+          optionKey
+        ];
       }
 
       const platformVariant = PostVariant.create(
@@ -522,10 +602,7 @@ async function createPostInAccountGroup(
     // Also create variants for platforms specified in variants but not in platforms array
     if (request.variants) {
       for (const [platform, variantData] of Object.entries(request.variants)) {
-        const typedVariantData = variantData as {
-          content?: string;
-          media?: string[];
-        };
+        const typedVariantData = variantData as VariantOverride;
         if (
           !request.platforms.includes(platform as any) &&
           PlatformNames.includes(platform as any)
@@ -549,12 +626,20 @@ async function createPostInAccountGroup(
           }
 
           // Prepare platform options for this variant
-          const variantPlatformOptions: Record<string, any> = {};
-          if (baseVariant.platformOptions) {
-            Object.assign(variantPlatformOptions, baseVariant.platformOptions);
-          }
-          if (request.twitterOptions && platform === "x") {
-            variantPlatformOptions.twitterOptions = request.twitterOptions;
+          const variantPlatformOptions: Record<string, any> =
+            parsePlatformOptions(baseVariant.platformOptions);
+          Object.assign(
+            variantPlatformOptions,
+            extractOptionFields(typedVariantData)
+          );
+          const optionKey = getPlatformOptionsKey(platform);
+          if (
+            variantPlatformOptions[optionKey] === undefined &&
+            (request as Record<string, any>)[optionKey]
+          ) {
+            variantPlatformOptions[optionKey] = (
+              request as Record<string, any>
+            )[optionKey];
           }
 
           const platformVariant = PostVariant.create(
@@ -710,7 +795,7 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
  * Prepare publish requests for Ayrshare API
  * Handles platform-specific variants by creating separate requests per platform when variants exist
  */
-async function preparePublishRequests(
+export async function preparePublishRequests(
   requestData: CreatePostRequest,
   post: any,
   profileKey: string | undefined
@@ -748,6 +833,7 @@ async function preparePublishRequests(
 
     const variantOverride = requestData.variants?.[platform];
     const variant = post?.variants?.[platform];
+    const parsedVariantOptions = parsePlatformOptions(variant?.platformOptions);
 
     // Determine content: variant override > saved variant > base
     let content = baseContent;
@@ -774,65 +860,49 @@ async function preparePublishRequests(
     let pinterestOptions: any = undefined;
 
     if (platform === "x") {
-      // Check request first
-      if (requestData.twitterOptions) {
+      const overrideTwitterOptions = variantOverride?.twitterOptions;
+      const savedTwitterOptions = parsedVariantOptions.twitterOptions;
+      if (overrideTwitterOptions) {
+        twitterOptions = overrideTwitterOptions;
+      } else if (savedTwitterOptions) {
+        twitterOptions = savedTwitterOptions;
+      } else if (requestData.twitterOptions) {
         twitterOptions = requestData.twitterOptions;
-      } else if (variant?.platformOptions) {
-        // Check saved variant (parse JSON string)
-        try {
-          const parsedOptions = JSON.parse(variant.platformOptions);
-          if (parsedOptions?.twitterOptions) {
-            twitterOptions = parsedOptions.twitterOptions;
-          }
-        } catch (e) {
-          // If parsing fails, ignore
-        }
-      } else {
-        // Default: enable threading for long posts
-        const contentLength = content.length;
-        if (contentLength > 280) {
-          twitterOptions = { thread: true, threadNumber: true };
-        }
+      } else if (content.length > 280) {
+        twitterOptions = { thread: true, threadNumber: true };
       }
     }
 
     if (platform === "reddit") {
-      // Check request first
-      if (requestData.redditOptions) {
-        redditOptions = requestData.redditOptions;
-      } else if (variant?.platformOptions) {
-        // Check saved variant (parse JSON string)
-        try {
-          const parsedOptions = JSON.parse(variant.platformOptions);
-          if (parsedOptions?.redditOptions) {
-            redditOptions = parsedOptions.redditOptions;
-          }
-        } catch (e) {
-          // If parsing fails, ignore
-        }
-      }
+      redditOptions =
+        variantOverride?.redditOptions ??
+        parsedVariantOptions.redditOptions ??
+        requestData.redditOptions;
 
       // Fallback: Use request title if redditOptions not provided
       if (!redditOptions && requestData.title) {
         redditOptions = { title: requestData.title };
       }
+
+      // Final fallback: Use first line of content as title if no title/subreddit provided
+      if (
+        !redditOptions ||
+        (!redditOptions.title && !redditOptions.subreddit)
+      ) {
+        const firstLine = content.split("\n")[0].trim();
+        if (firstLine) {
+          redditOptions = { title: firstLine.substring(0, 300) }; // Reddit title limit
+        } else {
+          redditOptions = { title: "Post" }; // Absolute fallback
+        }
+      }
     }
 
     if (platform === "pinterest") {
-      // Check request first
-      if (requestData.pinterestOptions) {
-        pinterestOptions = requestData.pinterestOptions;
-      } else if (variant?.platformOptions) {
-        // Check saved variant (parse JSON string)
-        try {
-          const parsedOptions = JSON.parse(variant.platformOptions);
-          if (parsedOptions?.pinterestOptions) {
-            pinterestOptions = parsedOptions.pinterestOptions;
-          }
-        } catch (e) {
-          // If parsing fails, ignore
-        }
-      }
+      pinterestOptions =
+        variantOverride?.pinterestOptions ??
+        parsedVariantOptions.pinterestOptions ??
+        requestData.pinterestOptions;
 
       // Fallback to environment variable if not provided
       if (!pinterestOptions) {
@@ -845,8 +915,9 @@ async function preparePublishRequests(
               "⚠️ PINTEREST_BOARD_ID is not numeric, using as boardName:",
               envBoardId
             );
+            // Use the envBoardId directly if it looks like username/boardname format
             pinterestOptions = {
-              boardName: envBoardId || envBoardName,
+              boardName: envBoardId,
             };
           } else {
             pinterestOptions = {
@@ -934,6 +1005,14 @@ async function preparePublishRequests(
       } else if (requestData.title) {
         // Fallback: Use request title if redditOptions not provided
         redditOptions = { title: requestData.title };
+      } else {
+        // Final fallback: Use first line of content as title
+        const firstLine = baseContent.split("\n")[0].trim();
+        if (firstLine) {
+          redditOptions = { title: firstLine.substring(0, 300) }; // Reddit title limit
+        } else {
+          redditOptions = { title: "Post" }; // Absolute fallback
+        }
       }
     }
 
@@ -951,8 +1030,9 @@ async function preparePublishRequests(
               "⚠️ PINTEREST_BOARD_ID is not numeric, using as boardName:",
               envBoardId
             );
+            // Use the envBoardId directly if it looks like username/boardname format
             pinterestOptions = {
-              boardName: envBoardId || envBoardName,
+              boardName: envBoardId,
             };
           } else {
             pinterestOptions = {
@@ -1187,6 +1267,9 @@ export async function POST(request: NextRequest) {
         );
       }
       requestData = CreatePostSchema.parse(body);
+      normalizeRequestOptionAliases(
+        requestData as CreatePostRequest & Record<string, any>
+      );
     } catch (error) {
       await logAPIKeyUsage(
         user.account,

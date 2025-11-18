@@ -2350,6 +2350,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				accountGroup={accountGroup}
 				activeTab={activeTab}
 				media={currentPost.variants[activeTab]?.media?.filter(Boolean) as any[] || []}  
+				variants={currentPost.variants as Record<string, any>}
 				isReply={seriesType === "reply"}
 				isQuote={isQuoteTweet}
 				replyTo={currentPost.variants[activeTab]?.replyTo}

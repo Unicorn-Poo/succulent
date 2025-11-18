@@ -7,8 +7,8 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/$1",
   },
   transform: {
-    "^.+\\.(t|j)sx?$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }],
+    "^.+\\.(t|j)sx?$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.jest.json" }],
   },
-  setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ["<rootDir>/tests/setupTests.ts"],
   clearMocks: true,
 };

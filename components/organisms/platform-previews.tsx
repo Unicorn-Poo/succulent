@@ -5,7 +5,7 @@ import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Play, Bookmark, S
 import Image from "next/image";
 import { ThreadPost } from "@/utils/threadUtils";
 import { useState, useEffect } from "react";
-import { ReplyPreview } from "@/components/molecules";
+import { ReplyPreview } from "@/components/molecules/reply-preview";
 
 interface AccountInfo {
 	id: string;

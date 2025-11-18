@@ -29,6 +29,7 @@ interface PreviewModalProps {
 	};
 	activeTab: string;
 	media?: any[];
+	variants?: Record<string, any>;
 	isReply?: boolean;
 	isQuote?: boolean;
 	replyTo?: any;
@@ -45,6 +46,7 @@ export const PreviewModal = ({
 	accountGroup,
 	activeTab,
 	media = [],
+	variants,
 	isReply = false,
 	isQuote = false,
 	replyTo,
@@ -54,6 +56,33 @@ export const PreviewModal = ({
 }: PreviewModalProps) => {
 	const [currentThreadIndex, setCurrentThreadIndex] = useState(0);
 	const [previewMode, setPreviewMode] = useState<'current' | 'all'>('current');
+	const fallbackMedia = media || [];
+
+	const normalizeVariantKey = (key?: string) => {
+		if (!key) return key;
+		return key.replace(/-account$/, "");
+	};
+
+	const getVariantMedia = (...keys: (string | undefined)[]) => {
+		if (!variants) {
+			return fallbackMedia;
+		}
+
+		for (const key of keys) {
+			if (!key) continue;
+			const normalized = normalizeVariantKey(key) || key;
+			const variant = variants[normalized] || variants[key];
+			if (variant?.media) {
+				try {
+					return Array.from(variant.media).filter(Boolean);
+				} catch {
+					return (variant.media as any[])?.filter?.(Boolean) || fallbackMedia;
+				}
+			}
+		}
+
+		return fallbackMedia;
+	};
 
 	// Helper function to find account by ID in both legacy and Jazz formats
 	const findAccountById = (accountId: string) => {
@@ -102,22 +131,31 @@ export const PreviewModal = ({
 
 	// Determine the account to display for the current preview
 	let displayAccount: any;
+	let displayVariantKey = activeTab;
 	if (isReply && replyTo?.platform) {
 		// For replies, find the account that matches the platform
 		displayAccount = findAccountByPlatform(replyTo.platform);
+		displayVariantKey = replyTo.platform;
 	} else if (activeTab !== 'base') {
 		// For a specific tab, use that account
 		displayAccount = findAccountById(activeTab);
+		displayVariantKey = activeTab;
 	} else {
 		// For the 'base' tab, use the first selected account
 		if (previewPlatforms.length > 0) {
 			displayAccount = previewPlatforms[0].account;
+			displayVariantKey = previewPlatforms[0].id;
+		} else {
+			displayVariantKey = 'base';
 		}
 	}
 
 	// Fallback to a dummy account object if no accounts exist at all
 	if (!displayAccount) {
 		displayAccount = { platform: 'x', name: 'User', username: 'user', displayName: 'User', avatar: '' };
+		if (!displayVariantKey) {
+			displayVariantKey = 'base';
+		}
 	}
 
 	// Thread navigation handlers
@@ -264,7 +302,7 @@ export const PreviewModal = ({
 								content={content}
 								account={displayAccount}
 								timestamp={new Date()}
-								media={media}
+								media={getVariantMedia(displayVariantKey, displayAccount.platform, activeTab)}
 								isReply={isReply}
 								isQuote={isQuote}
 								replyTo={replyTo}
@@ -310,7 +348,7 @@ export const PreviewModal = ({
 											content={content}
 											account={accountInfo}
 											timestamp={new Date()}
-											media={media}
+											media={getVariantMedia(id, accountInfo.platform)}
 											isReply={isReply}
 											isQuote={isQuote}
 											replyTo={replyTo}
