@@ -18,6 +18,7 @@ import {
   validateAccountGroupAccess,
 } from "@/utils/apiKeyManager";
 import { findExistingPost } from "@/utils/postListHelpers";
+import type { PostLike } from "@/utils/postListHelpers";
 // Removed workaround storage imports - using proper Jazz integration
 
 // Force dynamic rendering to prevent build-time static analysis issues
@@ -113,10 +114,14 @@ const TwitterOptionsSchema = zod.object({
   mediaUrls: zod.array(zod.string().url()).optional(),
 });
 
-const RedditOptionsSchema = zod.object({
-  title: zod.string().optional(),
-  subreddit: zod.string().optional(),
-});
+const RedditOptionsSchema = zod
+  .object({
+    title: zod.string().optional(),
+    subreddit: zod.string().optional(),
+    flairId: zod.string().optional(),
+    flairText: zod.string().optional(),
+  })
+  .passthrough();
 
 const PinterestOptionsSchema = zod.object({
   boardId: zod.string().optional(),
@@ -219,6 +224,140 @@ export function getPlatformOptionsKey(platform: string): string {
   if (!platform) return "platformOptions";
   const normalized = platform.toLowerCase();
   return PLATFORM_OPTION_KEYS[normalized] || `${normalized}Options`;
+}
+
+const PLATFORM_MEDIA_LIMITS: Record<string, number> = {
+  reddit: 1,
+  pinterest: 1,
+  x: 4,
+  twitter: 4,
+  bluesky: 4,
+  instagram: 10,
+  threads: 10,
+  facebook: 10,
+  linkedin: 9,
+  default: Number.POSITIVE_INFINITY,
+};
+
+const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
+
+function resolvePublicBaseUrl(): string {
+  const candidates = [
+    process.env.MEDIA_PROXY_BASE_URL,
+    process.env.NEXT_PUBLIC_MEDIA_PROXY_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+    process.env.APP_BASE_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (!trimmed) continue;
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        return trimmed;
+      }
+      return `https://${trimmed}`;
+    }
+  }
+
+  return "http://localhost:3000";
+}
+
+function proxyMediaUrlIfNeeded(url: string): string {
+  if (!url || typeof url !== "string") return url;
+  if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
+    try {
+      const proxyUrl = new URL(
+        "/api/convert-media-url",
+        resolvePublicBaseUrl()
+      );
+      proxyUrl.searchParams.set("url", url);
+      return proxyUrl.toString();
+    } catch (error) {
+      console.warn(
+        "⚠️ Failed to build media proxy URL, using original media:",
+        {
+          url,
+          error,
+        }
+      );
+      return url;
+    }
+  }
+  return url;
+}
+
+function normalizeMediaUrls(urls?: string[]): string[] {
+  if (!urls || urls.length === 0) return [];
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const rawUrl of urls) {
+    if (typeof rawUrl !== "string") continue;
+    const trimmed = rawUrl.trim();
+    if (!trimmed) continue;
+    const proxied = proxyMediaUrlIfNeeded(trimmed);
+    if (seen.has(proxied)) continue;
+    seen.add(proxied);
+    normalized.push(proxied);
+  }
+
+  return normalized;
+}
+
+function getMediaLimitForPlatform(platform: string): number {
+  if (!platform) return PLATFORM_MEDIA_LIMITS.default;
+  const normalized = platform.toLowerCase();
+  const limit = PLATFORM_MEDIA_LIMITS[normalized];
+  if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) {
+    return limit;
+  }
+  return PLATFORM_MEDIA_LIMITS.default;
+}
+
+function clampMediaUrlsForPlatform(platform: string, urls: string[]): string[] {
+  const normalizedUrls = normalizeMediaUrls(urls);
+  const limit = getMediaLimitForPlatform(platform);
+  if (!Number.isFinite(limit)) {
+    return normalizedUrls;
+  }
+  if (normalizedUrls.length > limit) {
+    console.warn(
+      `⚠️ Truncating media for ${platform} from ${normalizedUrls.length} to ${limit}`
+    );
+  }
+  return normalizedUrls.slice(0, limit);
+}
+
+function clampMediaUrlsForPlatforms(
+  platforms: string[],
+  urls: string[]
+): string[] {
+  const normalizedUrls = normalizeMediaUrls(urls);
+  if (platforms.length === 0) {
+    return normalizedUrls;
+  }
+
+  const finiteLimits = platforms
+    .map(getMediaLimitForPlatform)
+    .filter((limit) => Number.isFinite(limit)) as number[];
+
+  if (finiteLimits.length === 0) {
+    return normalizedUrls;
+  }
+
+  const minLimit = Math.min(...finiteLimits);
+  if (normalizedUrls.length > minLimit) {
+    console.warn(
+      `⚠️ Truncating media for grouped platforms (${platforms.join(
+        ", "
+      )}) from ${normalizedUrls.length} to ${minLimit}`
+    );
+  }
+  return normalizedUrls.slice(0, minLimit);
 }
 
 function parsePlatformOptions(options: any): Record<string, any> {
@@ -530,143 +669,81 @@ async function createPostInAccountGroup(
       return mediaList;
     };
 
-    // Create platform variants - use variant overrides if provided
-    for (const platform of request.platforms) {
-      // Check if this platform has variant overrides
-      const variantOverride = request.variants?.[platform] as
-        | VariantOverride
-        | undefined;
-      const variantOverrideObject =
-        variantOverride && typeof variantOverride === "object"
-          ? (variantOverride as Record<string, any>)
-          : undefined;
-
-      // Use variant content if provided, otherwise use base content
-      const variantText = variantOverride?.content
-        ? co.plainText().create(variantOverride.content, { owner: groupOwner })
-        : baseVariant.text;
-
-      // Use variant media if provided, otherwise use base media
-      let variantMediaList = baseMediaList;
-      if (variantOverride?.media && variantOverride.media.length > 0) {
-        variantMediaList = await createMediaListFromUrls(
-          variantOverride.media,
-          request.alt
-        );
-      }
-
-      // Prepare platform options for this variant
-      const variantPlatformOptions: Record<string, any> = parsePlatformOptions(
-        baseVariant.platformOptions
-      );
-      Object.assign(
-        variantPlatformOptions,
-        extractOptionFields(variantOverrideObject)
-      );
-      const optionKey = getPlatformOptionsKey(platform);
-      if (
-        variantPlatformOptions[optionKey] === undefined &&
-        (request as Record<string, any>)[optionKey]
-      ) {
-        variantPlatformOptions[optionKey] = (request as Record<string, any>)[
-          optionKey
-        ];
-      }
-
-      const platformVariant = PostVariant.create(
-        {
-          text: variantText,
-          postDate: baseVariant.postDate,
-          media: variantMediaList,
-          replyTo: baseVariant.replyTo,
-          status: baseVariant.status,
-          scheduledFor: baseVariant.scheduledFor,
-          publishedAt: baseVariant.publishedAt,
-          edited: variantOverride?.content ? true : false,
-          lastModified: variantOverride?.content
-            ? new Date().toISOString()
-            : undefined,
-          performance: baseVariant.performance,
-          ayrsharePostId: baseVariant.ayrsharePostId,
-          socialPostUrl: baseVariant.socialPostUrl,
-          platformOptions:
-            Object.keys(variantPlatformOptions).length > 0
-              ? JSON.stringify(variantPlatformOptions)
-              : undefined,
-        },
-        { owner: groupOwner }
-      );
-      variants[platform] = platformVariant;
-    }
-
-    // Also create variants for platforms specified in variants but not in platforms array
+    // CRITICAL: Only create platform variants for platforms explicitly in request.variants
+    // Platforms in request.platforms WITHOUT variants should use the base variant directly
+    // This matches the UI behavior where variants are only created when explicitly needed
+    // Create variants for platforms specified in variants object
     if (request.variants) {
       for (const [platform, variantData] of Object.entries(request.variants)) {
         const typedVariantData = variantData as VariantOverride;
-        if (
-          !request.platforms.includes(platform as any) &&
-          PlatformNames.includes(platform as any)
-        ) {
-          // Add this platform to the platforms list
-          request.platforms.push(platform as any);
 
-          // Create variant with overrides
-          const variantText = typedVariantData.content
-            ? co
-                .plainText()
-                .create(typedVariantData.content, { owner: groupOwner })
-            : baseVariant.text;
-
-          let variantMediaList = baseMediaList;
-          if (typedVariantData.media && typedVariantData.media.length > 0) {
-            variantMediaList = await createMediaListFromUrls(
-              typedVariantData.media,
-              request.alt
-            );
-          }
-
-          // Prepare platform options for this variant
-          const variantPlatformOptions: Record<string, any> =
-            parsePlatformOptions(baseVariant.platformOptions);
-          Object.assign(
-            variantPlatformOptions,
-            extractOptionFields(typedVariantData)
-          );
-          const optionKey = getPlatformOptionsKey(platform);
-          if (
-            variantPlatformOptions[optionKey] === undefined &&
-            (request as Record<string, any>)[optionKey]
-          ) {
-            variantPlatformOptions[optionKey] = (
-              request as Record<string, any>
-            )[optionKey];
-          }
-
-          const platformVariant = PostVariant.create(
-            {
-              text: variantText,
-              postDate: baseVariant.postDate,
-              media: variantMediaList,
-              replyTo: baseVariant.replyTo,
-              status: baseVariant.status,
-              scheduledFor: baseVariant.scheduledFor,
-              publishedAt: baseVariant.publishedAt,
-              edited: typedVariantData.content ? true : false,
-              lastModified: typedVariantData.content
-                ? new Date().toISOString()
-                : undefined,
-              performance: baseVariant.performance,
-              ayrsharePostId: baseVariant.ayrsharePostId,
-              socialPostUrl: baseVariant.socialPostUrl,
-              platformOptions:
-                Object.keys(variantPlatformOptions).length > 0
-                  ? JSON.stringify(variantPlatformOptions)
-                  : undefined,
-            },
-            { owner: groupOwner }
-          );
-          variants[platform] = platformVariant;
+        // Only create variant if platform is valid
+        if (!PlatformNames.includes(platform as any)) {
+          console.warn(`⚠️ Skipping invalid platform in variants: ${platform}`);
+          continue;
         }
+
+        // Ensure platform is in platforms list if it's not already
+        if (!request.platforms.includes(platform as any)) {
+          request.platforms.push(platform as any);
+        }
+
+        // Create variant with overrides
+        const variantText = typedVariantData.content
+          ? co
+              .plainText()
+              .create(typedVariantData.content, { owner: groupOwner })
+          : baseVariant.text;
+
+        let variantMediaList = baseMediaList;
+        if (typedVariantData.media && typedVariantData.media.length > 0) {
+          variantMediaList = await createMediaListFromUrls(
+            typedVariantData.media,
+            request.alt
+          );
+        }
+
+        // Prepare platform options for this variant
+        const variantPlatformOptions: Record<string, any> =
+          parsePlatformOptions(baseVariant.platformOptions);
+        Object.assign(
+          variantPlatformOptions,
+          extractOptionFields(typedVariantData)
+        );
+        const optionKey = getPlatformOptionsKey(platform);
+        if (
+          variantPlatformOptions[optionKey] === undefined &&
+          (request as Record<string, any>)[optionKey]
+        ) {
+          variantPlatformOptions[optionKey] = (request as Record<string, any>)[
+            optionKey
+          ];
+        }
+
+        const platformVariant = PostVariant.create(
+          {
+            text: variantText,
+            postDate: baseVariant.postDate,
+            media: variantMediaList,
+            replyTo: baseVariant.replyTo,
+            status: baseVariant.status,
+            scheduledFor: baseVariant.scheduledFor,
+            publishedAt: baseVariant.publishedAt,
+            edited: typedVariantData.content ? true : false,
+            lastModified: typedVariantData.content
+              ? new Date().toISOString()
+              : undefined,
+            performance: baseVariant.performance,
+            ayrsharePostId: baseVariant.ayrsharePostId,
+            socialPostUrl: baseVariant.socialPostUrl,
+            platformOptions:
+              Object.keys(variantPlatformOptions).length > 0
+                ? JSON.stringify(variantPlatformOptions)
+                : undefined,
+          },
+          { owner: groupOwner }
+        );
+        variants[platform] = platformVariant;
       }
     }
 
@@ -705,7 +782,8 @@ async function createPostInAccountGroup(
     console.log("📝 [BEFORE ADD] Posts in group before add:", postsBeforeAdd);
 
     // CRITICAL: Check if post already exists to prevent duplicates
-    const existingPost = findExistingPost(accountGroup.posts, post.id);
+    const postsSnapshot = Array.from(accountGroup.posts) as PostLike[];
+    const existingPost = findExistingPost(postsSnapshot, post.id);
     if (existingPost) {
       console.warn(
         "⚠️ [DUPLICATE DETECTED] Post already exists in account group, skipping duplicate add:",
@@ -836,22 +914,57 @@ export async function preparePublishRequests(
     const parsedVariantOptions = parsePlatformOptions(variant?.platformOptions);
 
     // Determine content: variant override > saved variant > base
+    // CRITICAL: If variant override has content, use ONLY that content (don't fall back to base)
     let content = baseContent;
     if (variantOverride?.content) {
+      // Variant override explicitly specifies content - use ONLY that
       content = variantOverride.content;
     } else if (variant?.text) {
+      // Extract from saved variant - this should only contain variant-specific content
       content = variant.text.toString();
     }
+    // Otherwise use baseContent (already set above)
 
     // Determine media: variant override > saved variant > base
-    let mediaUrls: string[] = baseMediaUrls;
+    // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
+    let mediaUrls: string[] = [];
     if (variantOverride?.media && variantOverride.media.length > 0) {
+      // Variant override explicitly specifies media - use ONLY that
       mediaUrls = variantOverride.media;
     } else if (variant) {
+      // Extract from saved variant - this should only contain variant-specific media
       const variantMediaUrls = extractMediaUrlsFromVariant(variant);
       if (variantMediaUrls.length > 0) {
         mediaUrls = variantMediaUrls;
+      } else {
+        // No variant media found, fall back to base
+        mediaUrls = baseMediaUrls;
       }
+    } else {
+      // No variant at all, use base media
+      mediaUrls = baseMediaUrls;
+    }
+
+    // Log media collection for debugging
+    console.log(`📷 [MEDIA COLLECTION] Platform: ${platform}`, {
+      hasVariantOverride: !!variantOverride?.media,
+      variantOverrideCount: variantOverride?.media?.length || 0,
+      hasSavedVariant: !!variant,
+      extractedVariantCount: variant
+        ? extractMediaUrlsFromVariant(variant).length
+        : 0,
+      baseMediaCount: baseMediaUrls.length,
+      collectedMediaCount: mediaUrls.length,
+      collectedMediaUrls: mediaUrls,
+    });
+
+    // Apply platform-specific media limits early to prevent excess media
+    const beforeClamp = mediaUrls.length;
+    mediaUrls = clampMediaUrlsForPlatform(platform, mediaUrls);
+    if (beforeClamp !== mediaUrls.length) {
+      console.log(
+        `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${mediaUrls.length}`
+      );
     }
 
     // Determine platform options: request > saved variant > defaults
@@ -937,13 +1050,15 @@ export async function preparePublishRequests(
           "⚠️ Pinterest boardId is not numeric, converting to boardName:",
           pinterestOptions.boardId
         );
-        pinterestOptions = {
-          boardName: pinterestOptions.boardId,
-          ...(pinterestOptions.boardName && {
-            boardName: pinterestOptions.boardName,
-          }),
-        };
+        const fallbackBoardName = pinterestOptions.boardId;
         delete pinterestOptions.boardId;
+        if (
+          !pinterestOptions.boardName ||
+          (!pinterestOptions.boardName.includes("/") &&
+            fallbackBoardName.includes("/"))
+        ) {
+          pinterestOptions.boardName = fallbackBoardName;
+        }
       }
     }
 
@@ -952,16 +1067,21 @@ export async function preparePublishRequests(
       const ayrsharePlatform =
         INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
 
+      // mediaUrls is already clamped at line 945, no need to clamp again
+      // But ensure it's normalized (deduplicated)
+      const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
+
       // Log media URLs being sent for debugging
-      if (mediaUrls.length > 0) {
-        console.log(`📷 [MEDIA URLs] Platform: ${platform}, URLs:`, mediaUrls);
-      }
+      console.log(
+        `📷 [FINAL MEDIA] Platform: ${platform}, sending ${cleanedMediaUrls.length} URLs:`,
+        cleanedMediaUrls
+      );
 
       requests.push({
         postData: {
           post: content,
           platforms: [ayrsharePlatform],
-          mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+          mediaUrls: cleanedMediaUrls.length > 0 ? cleanedMediaUrls : undefined,
           scheduleDate: requestData.scheduledDate,
           profileKey: profileKey,
           twitterOptions: twitterOptions,
@@ -1052,21 +1172,37 @@ export async function preparePublishRequests(
           "⚠️ Pinterest boardId is not numeric, converting to boardName:",
           pinterestOptions.boardId
         );
-        pinterestOptions = {
-          boardName: pinterestOptions.boardId,
-          ...(pinterestOptions.boardName && {
-            boardName: pinterestOptions.boardName,
-          }),
-        };
+        const fallbackBoardName = pinterestOptions.boardId;
         delete pinterestOptions.boardId;
+        if (
+          !pinterestOptions.boardName ||
+          (!pinterestOptions.boardName.includes("/") &&
+            fallbackBoardName.includes("/"))
+        ) {
+          pinterestOptions.boardName = fallbackBoardName;
+        }
       }
     }
+
+    // Clamp media for platforms without variants (use minimum limit of all platforms)
+    const aggregatedMediaUrls = clampMediaUrlsForPlatforms(
+      platformsWithoutVariants,
+      baseMediaUrls
+    );
+
+    console.log(
+      `📷 [GROUPED MEDIA] Platforms: ${platformsWithoutVariants.join(
+        ", "
+      )}, sending ${aggregatedMediaUrls.length} URLs:`,
+      aggregatedMediaUrls
+    );
 
     requests.push({
       postData: {
         post: baseContent,
         platforms: mappedPlatforms,
-        mediaUrls: baseMediaUrls.length > 0 ? baseMediaUrls : undefined,
+        mediaUrls:
+          aggregatedMediaUrls.length > 0 ? aggregatedMediaUrls : undefined,
         scheduleDate: requestData.scheduledDate,
         profileKey: profileKey,
         twitterOptions: twitterOptions,

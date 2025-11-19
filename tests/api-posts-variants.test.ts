@@ -143,6 +143,155 @@ describe("preparePublishRequests", () => {
       boardName: "lunaryapp/lunary",
     });
   });
+
+  it("routes Lunary OG media through the convert-media-url proxy", async () => {
+    const lunaryUrl = "https://lunary.app/api/og/cosmic/2025-11-19";
+    const proxiedUrl = `https://api.test.com/api/convert-media-url?url=${encodeURIComponent(
+      lunaryUrl
+    )}`;
+
+    const publishRequests = await preparePublishRequests(
+      {
+        ...baseRequest,
+        platforms: ["instagram"],
+        variants: {
+          instagram: {
+            media: [
+              lunaryUrl,
+              "https://lunary.app/api/og/crystal?date=2025-11-19",
+            ],
+          },
+        },
+      },
+      makePostObject(),
+      "profile-key"
+    );
+
+    const instagramRequest = publishRequests.find((req) =>
+      req.platforms.includes("instagram")
+    );
+
+    expect(instagramRequest?.postData.mediaUrls).toEqual([
+      proxiedUrl,
+      "https://api.test.com/api/convert-media-url?url=https%3A%2F%2Flunary.app%2Fapi%2Fog%2Fcrystal%3Fdate%3D2025-11-19",
+    ]);
+  });
+
+  it("limits Bluesky media attachments to four items", async () => {
+    const publishRequests = await preparePublishRequests(
+      {
+        ...baseRequest,
+        platforms: ["bluesky"],
+        variants: {
+          bluesky: {
+            media: [
+              "https://example.com/a.png",
+              "https://example.com/b.png",
+              "https://example.com/c.png",
+              "https://example.com/d.png",
+              "https://example.com/e.png",
+            ],
+          },
+        },
+      },
+      makePostObject(),
+      "profile-key"
+    );
+
+    const blueskyRequest = publishRequests.find((req) =>
+      req.platforms.includes("bluesky")
+    );
+
+    expect(blueskyRequest?.postData.mediaUrls).toHaveLength(4);
+    expect(blueskyRequest?.postData.mediaUrls).toEqual([
+      "https://example.com/a.png",
+      "https://example.com/b.png",
+      "https://example.com/c.png",
+      "https://example.com/d.png",
+    ]);
+  });
+
+  it("uses ONLY variant media when variant override specifies media (no base media)", async () => {
+    const publishRequests = await preparePublishRequests(
+      {
+        ...baseRequest,
+        platforms: ["x"],
+        imageUrls: [
+          "https://base.example/base1.jpg",
+          "https://base.example/base2.jpg",
+          "https://base.example/base3.jpg",
+        ],
+        variants: {
+          x: {
+            content: "X variant content",
+            media: [
+              "https://x.example/x1.jpg",
+              "https://x.example/x2.jpg",
+              "https://x.example/x3.jpg",
+            ],
+          },
+        },
+      },
+      makePostObject(),
+      "profile-key"
+    );
+
+    const xRequest = publishRequests.find((req) =>
+      req.platforms.includes("x")
+    );
+
+    expect(xRequest).toBeDefined();
+    // Should use ONLY variant media, not base media
+    expect(xRequest?.postData.mediaUrls).toEqual([
+      "https://x.example/x1.jpg",
+      "https://x.example/x2.jpg",
+      "https://x.example/x3.jpg",
+    ]);
+    expect(xRequest?.postData.mediaUrls).not.toContain(
+      "https://base.example/base1.jpg"
+    );
+    // Should use ONLY variant content, not base content
+    expect(xRequest?.postData.post).toBe("X variant content");
+    expect(xRequest?.postData.post).not.toBe("Base content");
+  });
+
+  it("limits X/Twitter media attachments to four items", async () => {
+    const publishRequests = await preparePublishRequests(
+      {
+        ...baseRequest,
+        platforms: ["x"],
+        variants: {
+          x: {
+            media: [
+              "https://example.com/a.png",
+              "https://example.com/b.png",
+              "https://example.com/c.png",
+              "https://example.com/d.png",
+              "https://example.com/e.png",
+              "https://example.com/f.png",
+              "https://example.com/g.png",
+              "https://example.com/h.png",
+              "https://example.com/i.png",
+            ],
+          },
+        },
+      },
+      makePostObject(),
+      "profile-key"
+    );
+
+    const xRequest = publishRequests.find((req) =>
+      req.platforms.includes("x")
+    );
+
+    expect(xRequest?.postData.mediaUrls).toHaveLength(4);
+    expect(xRequest?.postData.mediaUrls).toEqual([
+      "https://example.com/a.png",
+      "https://example.com/b.png",
+      "https://example.com/c.png",
+      "https://example.com/d.png",
+    ]);
+  });
 });
 
 describe("getPlatformOptionsKey", () => {
