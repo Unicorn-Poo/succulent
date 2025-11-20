@@ -270,12 +270,13 @@ function proxyMediaUrlIfNeeded(url: string): string {
   if (!url || typeof url !== "string") return url;
   if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
     try {
-      const proxyUrl = new URL(
-        "/api/convert-media-url",
-        resolvePublicBaseUrl()
-      );
-      proxyUrl.searchParams.set("url", url);
-      return proxyUrl.toString();
+      // Instagram requires file extensions in the URL path
+      // Create proxy URL with .png extension for Instagram compatibility
+      const baseUrl = resolvePublicBaseUrl().replace(/\/$/, ""); // Remove trailing slash
+      const encodedUrl = encodeURIComponent(url);
+      // Use path-based URL with extension instead of query param for Instagram compatibility
+      const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
+      return proxyUrl;
     } catch (error) {
       console.warn(
         "⚠️ Failed to build media proxy URL, using original media:",
@@ -1063,6 +1064,7 @@ export async function preparePublishRequests(
     }
 
     // If variant exists (override or saved), create separate request for this platform
+    // CRITICAL: variantOverride should always create a separate request, even without saved variant
     if (variantOverride || variant) {
       const ayrsharePlatform =
         INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
@@ -1070,6 +1072,15 @@ export async function preparePublishRequests(
       // mediaUrls is already clamped at line 945, no need to clamp again
       // But ensure it's normalized (deduplicated)
       const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
+
+      // Log content being sent for debugging
+      console.log(
+        `📝 [FINAL CONTENT] Platform: ${platform}, content length: ${content.length}, hasVariantOverride: ${!!variantOverride}, hasSavedVariant: ${!!variant}`,
+        {
+          contentPreview: content.substring(0, 100),
+          variantOverrideContent: variantOverride?.content?.substring(0, 100),
+        }
+      );
 
       // Log media URLs being sent for debugging
       console.log(
@@ -1096,16 +1107,81 @@ export async function preparePublishRequests(
     }
   }
 
-  // Create single request for platforms without variants
-  if (platformsWithoutVariants.length > 0) {
-    const mappedPlatforms = platformsWithoutVariants.map(
+  // Create requests for platforms without variants
+  // CRITICAL: Check for variant overrides even in platformsWithoutVariants
+  // Platforms with variant overrides should be separated out
+  const trulyWithoutVariants: string[] = [];
+  const platformsWithOverrides: string[] = [];
+
+  for (const platform of platformsWithoutVariants) {
+    const variantOverride = requestData.variants?.[platform];
+    if (variantOverride) {
+      // This platform has a variant override - create separate request
+      platformsWithOverrides.push(platform);
+    } else {
+      // Truly no variant - can be grouped
+      trulyWithoutVariants.push(platform);
+    }
+  }
+
+  // Create separate requests for platforms with variant overrides
+  for (const platform of platformsWithOverrides) {
+    const variantOverride = requestData.variants?.[platform];
+    const variant = post?.variants?.[platform];
+    
+    // Determine content: variant override > saved variant > base
+    let content = baseContent;
+    if (variantOverride?.content) {
+      content = variantOverride.content;
+    } else if (variant?.text) {
+      content = variant.text.toString();
+    }
+
+    // Determine media: variant override > saved variant > base
+    let mediaUrls: string[] = [];
+    if (variantOverride?.media && variantOverride.media.length > 0) {
+      mediaUrls = variantOverride.media;
+    } else if (variant) {
+      const variantMediaUrls = extractMediaUrlsFromVariant(variant);
+      mediaUrls = variantMediaUrls.length > 0 ? variantMediaUrls : baseMediaUrls;
+    } else {
+      mediaUrls = baseMediaUrls;
+    }
+
+    const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+    const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
+    mediaUrls = clampMediaUrlsForPlatform(platform, cleanedMediaUrls);
+
+    console.log(
+      `📝 [VARIANT OVERRIDE REQUEST] Platform: ${platform}, content length: ${content.length}`,
+      {
+        contentPreview: content.substring(0, 100),
+        hasVariantOverride: !!variantOverride,
+      }
+    );
+
+    requests.push({
+      postData: {
+        post: content,
+        platforms: [ayrsharePlatform],
+        mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+        scheduleDate: requestData.scheduledDate,
+        profileKey: profileKey,
+      },
+      platforms: [platform],
+    });
+  }
+
+  // Create single request for platforms truly without variants
+  if (trulyWithoutVariants.length > 0) {
+    const mappedPlatforms = trulyWithoutVariants.map(
       (p) => INTERNAL_TO_AYRSHARE_PLATFORM[p] || p
     );
 
     // Determine platform options for grouped request
-    const hasTwitter = platformsWithoutVariants.includes("x");
-    const hasReddit = platformsWithoutVariants.includes("reddit");
-    const hasPinterest = platformsWithoutVariants.includes("pinterest");
+    const hasTwitter = trulyWithoutVariants.includes("x");
+    const hasReddit = trulyWithoutVariants.includes("reddit");
+    const hasPinterest = trulyWithoutVariants.includes("pinterest");
 
     let twitterOptions: any = undefined;
     let redditOptions: any = undefined;
@@ -1186,12 +1262,12 @@ export async function preparePublishRequests(
 
     // Clamp media for platforms without variants (use minimum limit of all platforms)
     const aggregatedMediaUrls = clampMediaUrlsForPlatforms(
-      platformsWithoutVariants,
+      trulyWithoutVariants,
       baseMediaUrls
     );
 
     console.log(
-      `📷 [GROUPED MEDIA] Platforms: ${platformsWithoutVariants.join(
+      `📷 [GROUPED MEDIA] Platforms: ${trulyWithoutVariants.join(
         ", "
       )}, sending ${aggregatedMediaUrls.length} URLs:`,
       aggregatedMediaUrls
@@ -1209,7 +1285,7 @@ export async function preparePublishRequests(
         redditOptions: redditOptions,
         pinterestOptions: pinterestOptions,
       },
-      platforms: platformsWithoutVariants,
+      platforms: trulyWithoutVariants,
     });
   }
 
