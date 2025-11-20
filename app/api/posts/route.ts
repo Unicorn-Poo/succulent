@@ -931,7 +931,14 @@ export async function preparePublishRequests(
     let mediaUrls: string[] = [];
     if (variantOverride?.media && variantOverride.media.length > 0) {
       // Variant override explicitly specifies media - use ONLY that
-      mediaUrls = variantOverride.media;
+      // Handle both string URLs and media objects with url property
+      mediaUrls = variantOverride.media
+        .map((m: any) => (typeof m === "string" ? m : m?.url))
+        .filter(
+          (url: any): url is string =>
+            typeof url === "string" &&
+            (url.startsWith("http://") || url.startsWith("https://"))
+        );
     } else if (variant) {
       // Extract from saved variant - this should only contain variant-specific media
       const variantMediaUrls = extractMediaUrlsFromVariant(variant);
@@ -948,15 +955,23 @@ export async function preparePublishRequests(
 
     // Log media collection for debugging
     console.log(`📷 [MEDIA COLLECTION] Platform: ${platform}`, {
-      hasVariantOverride: !!variantOverride?.media,
-      variantOverrideCount: variantOverride?.media?.length || 0,
+      hasVariantOverride: !!variantOverride,
+      hasVariantOverrideMedia: !!variantOverride?.media,
+      variantOverrideMediaCount: variantOverride?.media?.length || 0,
+      variantOverrideMedia: variantOverride?.media,
       hasSavedVariant: !!variant,
       extractedVariantCount: variant
         ? extractMediaUrlsFromVariant(variant).length
         : 0,
       baseMediaCount: baseMediaUrls.length,
+      baseMediaUrls: baseMediaUrls,
       collectedMediaCount: mediaUrls.length,
       collectedMediaUrls: mediaUrls,
+      mediaSource: variantOverride?.media
+        ? "variantOverride"
+        : variant && extractMediaUrlsFromVariant(variant).length > 0
+        ? "savedVariant"
+        : "base",
     });
 
     // Apply platform-specific media limits early to prevent excess media
@@ -1075,7 +1090,9 @@ export async function preparePublishRequests(
 
       // Log content being sent for debugging
       console.log(
-        `📝 [FINAL CONTENT] Platform: ${platform}, content length: ${content.length}, hasVariantOverride: ${!!variantOverride}, hasSavedVariant: ${!!variant}`,
+        `📝 [FINAL CONTENT] Platform: ${platform}, content length: ${
+          content.length
+        }, hasVariantOverride: ${!!variantOverride}, hasSavedVariant: ${!!variant}`,
         {
           contentPreview: content.substring(0, 100),
           variantOverrideContent: variantOverride?.content?.substring(0, 100),
@@ -1085,7 +1102,15 @@ export async function preparePublishRequests(
       // Log media URLs being sent for debugging
       console.log(
         `📷 [FINAL MEDIA] Platform: ${platform}, sending ${cleanedMediaUrls.length} URLs:`,
-        cleanedMediaUrls
+        {
+          mediaUrls: cleanedMediaUrls,
+          originalMediaSource: variantOverride?.media
+            ? "variantOverride"
+            : variant && extractMediaUrlsFromVariant(variant).length > 0
+            ? "savedVariant"
+            : "base",
+          variantOverrideMedia: variantOverride?.media,
+        }
       );
 
       requests.push({
@@ -1128,7 +1153,7 @@ export async function preparePublishRequests(
   for (const platform of platformsWithOverrides) {
     const variantOverride = requestData.variants?.[platform];
     const variant = post?.variants?.[platform];
-    
+
     // Determine content: variant override > saved variant > base
     let content = baseContent;
     if (variantOverride?.content) {
@@ -1138,25 +1163,65 @@ export async function preparePublishRequests(
     }
 
     // Determine media: variant override > saved variant > base
+    // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
     let mediaUrls: string[] = [];
     if (variantOverride?.media && variantOverride.media.length > 0) {
-      mediaUrls = variantOverride.media;
+      // Variant override explicitly specifies media - use ONLY that
+      // Handle both string URLs and media objects with url property
+      mediaUrls = variantOverride.media
+        .map((m: any) => (typeof m === "string" ? m : m?.url))
+        .filter(
+          (url: any): url is string =>
+            typeof url === "string" &&
+            (url.startsWith("http://") || url.startsWith("https://"))
+        );
     } else if (variant) {
+      // Extract from saved variant - this should only contain variant-specific media
       const variantMediaUrls = extractMediaUrlsFromVariant(variant);
-      mediaUrls = variantMediaUrls.length > 0 ? variantMediaUrls : baseMediaUrls;
+      if (variantMediaUrls.length > 0) {
+        mediaUrls = variantMediaUrls;
+      } else {
+        // No variant media found, fall back to base
+        mediaUrls = baseMediaUrls;
+      }
     } else {
+      // No variant at all, use base media
       mediaUrls = baseMediaUrls;
     }
 
-    const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+    // Apply platform-specific media limits early to prevent excess media
+    const beforeClamp = mediaUrls.length;
     const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
     mediaUrls = clampMediaUrlsForPlatform(platform, cleanedMediaUrls);
+    if (beforeClamp !== mediaUrls.length) {
+      console.log(
+        `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${mediaUrls.length}`
+      );
+    }
+
+    const ayrsharePlatform =
+      INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+
+    // Log media collection for debugging
+    console.log(`📷 [VARIANT OVERRIDE MEDIA] Platform: ${platform}`, {
+      hasVariantOverride: !!variantOverride,
+      variantOverrideMediaCount: variantOverride?.media?.length || 0,
+      variantOverrideMedia: variantOverride?.media,
+      hasSavedVariant: !!variant,
+      extractedVariantCount: variant
+        ? extractMediaUrlsFromVariant(variant).length
+        : 0,
+      baseMediaCount: baseMediaUrls.length,
+      collectedMediaCount: mediaUrls.length,
+      collectedMediaUrls: mediaUrls,
+    });
 
     console.log(
       `📝 [VARIANT OVERRIDE REQUEST] Platform: ${platform}, content length: ${content.length}`,
       {
         contentPreview: content.substring(0, 100),
         hasVariantOverride: !!variantOverride,
+        variantOverrideContent: variantOverride?.content?.substring(0, 100),
       }
     );
 
