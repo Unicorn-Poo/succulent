@@ -670,33 +670,56 @@ async function createPostInAccountGroup(
       return mediaList;
     };
 
-    // CRITICAL: Only create platform variants for platforms explicitly in request.variants
-    // Platforms in request.platforms WITHOUT variants should use the base variant directly
-    // This matches the UI behavior where variants are only created when explicitly needed
-    // Create variants for platforms specified in variants object
+    // CRITICAL: Create platform variants for ALL platforms in request.platforms AND request.variants
+    // This ensures each platform has its own variant properly connected to the post
+    // For platforms with explicit variant data in request.variants, use that custom content/media (overwrites base)
+    // For platforms without explicit variant data, create variants copying from base variant
+
+    // Collect all platforms: from request.platforms AND from request.variants keys
+    const allPlatforms = new Set<string>(request.platforms);
     if (request.variants) {
-      for (const [platform, variantData] of Object.entries(request.variants)) {
-        const typedVariantData = variantData as VariantOverride;
+      for (const platform of Object.keys(request.variants)) {
+        if (PlatformNames.includes(platform as any)) {
+          allPlatforms.add(platform);
+          // Ensure platform is in platforms list for publishing
+          if (!request.platforms.includes(platform as any)) {
+            request.platforms.push(platform as any);
+          }
+        }
+      }
+    }
 
-        // Only create variant if platform is valid
-        if (!PlatformNames.includes(platform as any)) {
-          console.warn(`⚠️ Skipping invalid platform in variants: ${platform}`);
-          continue;
+    for (const platform of allPlatforms) {
+      // Skip invalid platforms
+      if (!PlatformNames.includes(platform as any)) {
+        console.warn(`⚠️ Skipping invalid platform: ${platform}`);
+        continue;
+      }
+
+      // Check if this platform has explicit variant data
+      const variantOverride = request.variants?.[platform];
+      const typedVariantData = variantOverride as VariantOverride | undefined;
+
+      let variantText = baseVariant.text;
+      let variantMediaList = baseMediaList;
+      const variantPlatformOptions: Record<string, any> = parsePlatformOptions(
+        baseVariant.platformOptions
+      );
+      let edited = false;
+      let lastModified: string | undefined = undefined;
+
+      // If platform has explicit variant data, use it (overwrites base)
+      if (typedVariantData) {
+        // Create variant text from override if provided
+        if (typedVariantData.content) {
+          variantText = co
+            .plainText()
+            .create(typedVariantData.content, { owner: groupOwner });
+          edited = true;
+          lastModified = new Date().toISOString();
         }
 
-        // Ensure platform is in platforms list if it's not already
-        if (!request.platforms.includes(platform as any)) {
-          request.platforms.push(platform as any);
-        }
-
-        // Create variant with overrides
-        const variantText = typedVariantData.content
-          ? co
-              .plainText()
-              .create(typedVariantData.content, { owner: groupOwner })
-          : baseVariant.text;
-
-        let variantMediaList = baseMediaList;
+        // Create variant media from override if provided
         if (typedVariantData.media && typedVariantData.media.length > 0) {
           variantMediaList = await createMediaListFromUrls(
             typedVariantData.media,
@@ -704,48 +727,49 @@ async function createPostInAccountGroup(
           );
         }
 
-        // Prepare platform options for this variant
-        const variantPlatformOptions: Record<string, any> =
-          parsePlatformOptions(baseVariant.platformOptions);
+        // Merge platform options from variant override
         Object.assign(
           variantPlatformOptions,
           extractOptionFields(typedVariantData)
         );
-        const optionKey = getPlatformOptionsKey(platform);
-        if (
-          variantPlatformOptions[optionKey] === undefined &&
-          (request as Record<string, any>)[optionKey]
-        ) {
-          variantPlatformOptions[optionKey] = (request as Record<string, any>)[
-            optionKey
-          ];
-        }
-
-        const platformVariant = PostVariant.create(
-          {
-            text: variantText,
-            postDate: baseVariant.postDate,
-            media: variantMediaList,
-            replyTo: baseVariant.replyTo,
-            status: baseVariant.status,
-            scheduledFor: baseVariant.scheduledFor,
-            publishedAt: baseVariant.publishedAt,
-            edited: typedVariantData.content ? true : false,
-            lastModified: typedVariantData.content
-              ? new Date().toISOString()
-              : undefined,
-            performance: baseVariant.performance,
-            ayrsharePostId: baseVariant.ayrsharePostId,
-            socialPostUrl: baseVariant.socialPostUrl,
-            platformOptions:
-              Object.keys(variantPlatformOptions).length > 0
-                ? JSON.stringify(variantPlatformOptions)
-                : undefined,
-          },
-          { owner: groupOwner }
-        );
-        variants[platform] = platformVariant;
       }
+
+      // Apply platform-specific options from request level if not already set
+      const optionKey = getPlatformOptionsKey(platform);
+      if (
+        variantPlatformOptions[optionKey] === undefined &&
+        (request as Record<string, any>)[optionKey]
+      ) {
+        variantPlatformOptions[optionKey] = (request as Record<string, any>)[
+          optionKey
+        ];
+      }
+
+      // Create the platform variant
+      const platformVariant = PostVariant.create(
+        {
+          text: variantText,
+          postDate: baseVariant.postDate,
+          media: variantMediaList,
+          replyTo: baseVariant.replyTo,
+          status: baseVariant.status,
+          scheduledFor: baseVariant.scheduledFor,
+          publishedAt: baseVariant.publishedAt,
+          edited: edited,
+          lastModified: lastModified,
+          performance: baseVariant.performance,
+          ayrsharePostId: baseVariant.ayrsharePostId,
+          socialPostUrl: baseVariant.socialPostUrl,
+          platformOptions:
+            Object.keys(variantPlatformOptions).length > 0
+              ? JSON.stringify(variantPlatformOptions)
+              : undefined,
+        },
+        { owner: groupOwner }
+      );
+
+      // Add variant to the variants record
+      variants[platform] = platformVariant;
     }
 
     // CRITICAL: Create ONLY ONE post with all variants
