@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../atoms/button';
 import { Input } from '../atoms/input';
+import ContentSuggestionCard from './content-suggestion-card';
 
 interface AutopilotSettings {
   enabled: boolean;
@@ -134,6 +135,29 @@ export default function GrowthAutopilot({
     setIsLoading(true);
 
     try {
+      // Extract brand persona from account group for API
+      const brandPersona = accountGroup?.brandPersona ? {
+        name: accountGroup.brandPersona.name,
+        tone: accountGroup.brandPersona.tone,
+        writingStyle: accountGroup.brandPersona.writingStyle,
+        emojiUsage: accountGroup.brandPersona.emojiUsage,
+        contentPillars: accountGroup.brandPersona.contentPillars,
+        targetAudience: accountGroup.brandPersona.targetAudience,
+        keyMessages: accountGroup.brandPersona.keyMessages,
+        avoidTopics: accountGroup.brandPersona.avoidTopics,
+        samplePosts: accountGroup.brandPersona.samplePosts,
+      } : null;
+
+      // Extract content feedback for learning
+      const contentFeedback = accountGroup?.contentFeedback 
+        ? Array.from(accountGroup.contentFeedback).map((f: any) => ({
+            generatedContent: f.generatedContent,
+            accepted: f.accepted,
+            reason: f.reason,
+            editedVersion: f.editedVersion,
+          }))
+        : [];
+
       // Use the real AI growth engine with brand persona
       const aiResults = await fetch('/api/ai-growth-autopilot', {
         method: 'POST',
@@ -144,7 +168,9 @@ export default function GrowthAutopilot({
           platform,
           profileKey,
           aggressiveness: settings.aggressiveness,
-          accountGroupId: accountGroup?.id
+          accountGroupId: accountGroup?.id,
+          brandPersona,
+          contentFeedback,
         })
       });
 
@@ -184,6 +210,26 @@ export default function GrowthAutopilot({
             createdAt: new Date().toISOString()
           });
         });
+
+        // Add brand-aware content suggestions (prioritized)
+        if (data.brandAwareContent?.suggestions) {
+          data.brandAwareContent.suggestions.forEach((suggestion: any, index: number) => {
+            actions.unshift({
+              id: `brand_content_${index}`,
+              type: 'post',
+              title: `🎯 ${suggestion.contentPillar}: On-Brand Content`,
+              description: suggestion.content.slice(0, 150) + '...',
+              confidence: suggestion.confidenceScore,
+              impact: suggestion.expectedEngagement === 'high' ? 'high' : 
+                      suggestion.expectedEngagement === 'medium' ? 'medium' : 'low',
+              status: 'pending',
+              platform,
+              content: suggestion.content,
+              reason: `Matches your brand voice • Best time: ${suggestion.bestTimeToPost} • Hashtags: ${suggestion.hashtags.slice(0, 3).join(', ')}`,
+              createdAt: new Date().toISOString()
+            });
+          });
+        }
 
         setPendingActions(actions);
         setDashboard(prev => ({
@@ -591,7 +637,35 @@ export default function GrowthAutopilot({
       {/* Actions Tab */}
       {activeTab === 'actions' && (
         <div className="space-y-4">
-          {pendingActions.map(action => (
+          {/* Brand-aware content suggestions with accept/reject */}
+          {pendingActions
+            .filter(action => action.id.startsWith('brand_content_') && action.content)
+            .map(action => (
+              <ContentSuggestionCard
+                key={action.id}
+                id={action.id}
+                content={action.content || ''}
+                contentPillar={action.title.split(':')[0]?.replace('🎯 ', '')}
+                platform={action.platform}
+                confidenceScore={action.confidence}
+                expectedEngagement={action.impact as 'high' | 'medium' | 'low'}
+                accountGroup={accountGroup}
+                onAccept={(content, edited) => {
+                  approveAction(action.id);
+                }}
+                onReject={(reason) => {
+                  rejectAction(action.id);
+                }}
+                onRegenerate={() => {
+                  generateAutopilotActions();
+                }}
+              />
+            ))}
+
+          {/* Regular actions */}
+          {pendingActions
+            .filter(action => !action.id.startsWith('brand_content_'))
+            .map(action => (
             <div key={action.id} className="p-4 border rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start space-x-3">

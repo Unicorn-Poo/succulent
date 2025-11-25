@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeAIGrowthActions } from '../../../utils/aiGrowthEngine';
+import { generateObject } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+// Schema for brand-aware content suggestions
+const ContentSuggestionSchema = z.object({
+  suggestions: z.array(z.object({
+    content: z.string(),
+    contentPillar: z.string(),
+    targetAudience: z.string(),
+    confidenceScore: z.number().min(0).max(100),
+    hashtags: z.array(z.string()),
+    bestTimeToPost: z.string(),
+    expectedEngagement: z.enum(['high', 'medium', 'low']),
+  })),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { platform, profileKey, aggressiveness = 'moderate', executeActions = false, accountGroupId } = await request.json();
-    
-    // TODO: Load account group from Jazz database using accountGroupId
-    // For now, we'll pass null and the AI will use generic recommendations
-    const accountGroup = null;
+    const { 
+      platform, 
+      profileKey, 
+      aggressiveness = 'moderate', 
+      accountGroupId,
+      // Brand persona data passed from frontend (since Jazz is client-side)
+      brandPersona,
+      contentFeedback = [],
+    } = await request.json();
 
     if (!platform) {
       return NextResponse.json(
@@ -16,8 +36,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Build account group context from passed data
+    const accountGroup = brandPersona ? {
+      brandPersona,
+      contentFeedback,
+    } : null;
+
     // Get AI recommendations and execute if requested
     const result = await executeAIGrowthActions(platform, profileKey, aggressiveness, accountGroup);
+
+    // If we have brand persona, generate brand-aware content suggestions
+    let brandAwareContent: z.infer<typeof ContentSuggestionSchema> | null = null;
+    
+    if (brandPersona) {
+      try {
+        // Extract accepted/rejected patterns from feedback
+        const acceptedContent = contentFeedback
+          .filter((f: any) => f.accepted)
+          .slice(-5)
+          .map((f: any) => f.generatedContent);
+        const rejectedReasons = contentFeedback
+          .filter((f: any) => !f.accepted && f.reason)
+          .slice(-5)
+          .map((f: any) => f.reason);
+
+        const brandContext = `
+BRAND VOICE:
+- Name: ${brandPersona.name || 'Brand'}
+- Tone: ${brandPersona.tone || 'friendly'}
+- Writing Style: ${brandPersona.writingStyle || 'conversational'}
+- Emoji Usage: ${brandPersona.emojiUsage || 'moderate'}
+
+CONTENT STRATEGY:
+- Content Pillars: ${(brandPersona.contentPillars || []).join(', ') || 'general content'}
+- Target Audience: ${brandPersona.targetAudience || 'general audience'}
+- Key Messages: ${(brandPersona.keyMessages || []).join(', ') || 'none specified'}
+- Topics to Avoid: ${(brandPersona.avoidTopics || []).join(', ') || 'none specified'}
+
+PLATFORM: ${platform.toUpperCase()}
+
+${acceptedContent.length > 0 ? `
+EXAMPLES OF APPROVED CONTENT:
+${acceptedContent.map((c: string, i: number) => `${i + 1}. "${c.slice(0, 200)}..."`).join('\n')}
+` : ''}
+
+${rejectedReasons.length > 0 ? `
+THINGS TO AVOID (from past rejections):
+${rejectedReasons.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')}
+` : ''}
+`;
+
+        const response = await generateObject({
+          model: openai('gpt-4'),
+          schema: ContentSuggestionSchema,
+          prompt: `${brandContext}
+
+Generate 3 unique content suggestions for ${platform} that match this brand's voice and style.
+
+For each suggestion:
+1. Write engaging content that matches the brand tone
+2. Use the content pillars as themes
+3. Include relevant hashtags for the platform
+4. Suggest optimal posting time
+5. Rate expected engagement
+
+Focus on what has been approved before and avoid patterns that were rejected.`,
+          temperature: 0.7,
+        });
+
+        brandAwareContent = response.object;
+      } catch (aiError) {
+        console.error('Brand-aware content generation error:', aiError);
+        // Continue without brand-aware content
+      }
+    }
 
     // Add timestamp and additional metadata
     const response = {
@@ -25,12 +117,15 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       platform,
       aggressiveness,
+      hasBrandContext: !!brandPersona,
+      brandName: brandPersona?.name,
+      brandAwareContent,
       summary: {
         totalRecommendations: result.recommendations.length,
         highPriorityActions: result.recommendations.filter(r => r.priority === 'high').length,
-        averageConfidence: result.recommendations.reduce((sum, r) => sum + r.confidence, 0) / result.recommendations.length,
+        averageConfidence: result.recommendations.reduce((sum, r) => sum + r.confidence, 0) / (result.recommendations.length || 1),
         executedActions: result.executedActions.executed,
-        contentSuggestions: result.contentSuggestions.length
+        contentSuggestions: result.contentSuggestions.length + (brandAwareContent?.suggestions.length || 0),
       }
     };
 

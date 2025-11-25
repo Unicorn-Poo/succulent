@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { action, accountGroupId, platforms, context, content, topic } = await request.json();
+    const { action, accountGroupId, platforms, context, content, topic, feedback } = await request.json();
 
     if (!action || !accountGroupId) {
       return NextResponse.json(
@@ -133,6 +133,38 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         });
 
+      case 'learn-feedback':
+        // Learn from accept/reject feedback
+        if (!feedback || !Array.isArray(feedback)) {
+          return NextResponse.json(
+            { success: false, error: 'Feedback array is required for learning' },
+            { status: 400 }
+          );
+        }
+
+        try {
+          const feedbackSystem = new AILearningSystem(accountGroupId, platforms || ['instagram', 'x']);
+          const learningResult = await feedbackSystem.learnFromContentFeedback(feedback);
+          const enhancedPrompt = feedbackSystem.getEnhancedPromptFromFeedback();
+
+          return NextResponse.json({
+            success: true,
+            patternsLearned: learningResult.patternsLearned,
+            recommendedAdjustments: learningResult.recommendedAdjustments,
+            enhancedPrompt,
+            timestamp: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Feedback learning error:', error);
+          return NextResponse.json(
+            {
+              success: false,
+              error: error instanceof Error ? error.message : 'Feedback learning failed'
+            },
+            { status: 500 }
+          );
+        }
+
       default:
         return NextResponse.json(
           { success: false, error: `Unknown action: ${action}` },
@@ -164,7 +196,8 @@ export async function GET() {
       'Predict content performance before posting',
       'Continuous learning from new posts',
       'Memory-based strategy optimization',
-      'Pattern recognition across platforms'
+      'Pattern recognition across platforms',
+      'Learn from accept/reject feedback to improve suggestions'
     ],
     actions: [
       {
@@ -191,6 +224,11 @@ export async function GET() {
         name: 'stats',
         description: 'Get learning system statistics and memory info',
         parameters: ['accountGroupId', 'platforms?']
+      },
+      {
+        name: 'learn-feedback',
+        description: 'Learn from accept/reject content feedback to improve future suggestions',
+        parameters: ['accountGroupId', 'feedback[]', 'platforms?']
       }
     ],
     example: {

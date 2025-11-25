@@ -18,6 +18,64 @@ interface BrandPersonaSetupProps {
   onPersonaUpdated?: (persona: BrandPersona) => void;
 }
 
+// Prompt for extracting brand voice from example posts
+const generateExamplePostsPrompt = (posts: string[], brandName: string): string => {
+  return `Analyze these example social media posts and create a detailed brand persona JSON.
+
+EXAMPLE POSTS:
+${posts.map((p, i) => `${i + 1}. "${p}"`).join('\n')}
+
+Brand Name: ${brandName || 'My Brand'}
+
+Based on these posts, analyze:
+1. The tone and voice (professional, casual, friendly, etc.)
+2. Writing style patterns (formal, conversational, witty, etc.)
+3. Emoji usage frequency
+4. Content themes/pillars
+5. Target audience inferred from content
+6. Key messages being communicated
+
+Return a JSON object with this EXACT structure:
+{
+  "name": "${brandName || 'My Brand'}",
+  "description": "Brief description of the brand based on the posts",
+  "voice": {
+    "tone": "professional" | "casual" | "friendly" | "authoritative" | "playful" | "inspirational" | "educational",
+    "personality": ["trait1", "trait2", "trait3"],
+    "writingStyle": "formal" | "conversational" | "witty" | "direct" | "storytelling" | "technical",
+    "emojiUsage": "none" | "minimal" | "moderate" | "frequent",
+    "languageLevel": "simple" | "intermediate" | "advanced" | "expert"
+  },
+  "messaging": {
+    "keyMessages": ["message1", "message2", "message3"],
+    "valueProposition": "The core value this brand provides",
+    "targetAudience": "Description of target audience",
+    "contentPillars": ["pillar1", "pillar2", "pillar3"],
+    "avoidTopics": ["topic1", "topic2"]
+  },
+  "engagement": {
+    "commentStyle": "brief" | "detailed" | "questions" | "supportive" | "expert",
+    "dmApproach": "professional" | "friendly" | "direct" | "collaborative",
+    "hashtagStrategy": "branded" | "trending" | "niche" | "mixed",
+    "mentionStyle": "conservative" | "active" | "strategic"
+  },
+  "contentGuidelines": {
+    "postLength": "short" | "medium" | "long" | "varies",
+    "contentMix": { "educational": 40, "entertainment": 30, "promotional": 20, "personal": 10 },
+    "callToActionStyle": "subtle" | "direct" | "creative" | "none",
+    "questionFrequency": "rare" | "occasional" | "frequent" | "always"
+  },
+  "platformCustomization": {},
+  "examples": {
+    "samplePosts": ${JSON.stringify(posts.slice(0, 3))},
+    "sampleReplies": [],
+    "sampleDMs": []
+  }
+}
+
+IMPORTANT: Return ONLY the JSON object, no additional text.`;
+};
+
 export default function BrandPersonaSetup({
   accountGroup,
   onPersonaUpdated
@@ -42,6 +100,12 @@ export default function BrandPersonaSetup({
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
   const [chatgptResponse, setChatgptResponse] = useState<string>('');
   const [showPrompt, setShowPrompt] = useState(false);
+  
+  // Example posts import states
+  const [examplePosts, setExamplePosts] = useState<string[]>(['', '', '']);
+  const [showExamplePostsPrompt, setShowExamplePostsPrompt] = useState(false);
+  const [examplePostsPrompt, setExamplePostsPrompt] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load existing persona
   useEffect(() => {
@@ -57,14 +121,37 @@ export default function BrandPersonaSetup({
   const handleSavePersona = async () => {
     if (!currentPersona || !accountGroup) return;
 
+    setIsSaving(true);
     try {
       await saveBrandPersona(accountGroup, currentPersona);
       onPersonaUpdated?.(currentPersona);
       setIsEditing(false);
-      alert('Brand persona saved successfully!');
     } catch (error) {
       console.error('Error saving persona:', error);
-      alert('Failed to save brand persona');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Generate prompt from example posts
+  const handleGenerateFromExamples = () => {
+    const filledPosts = examplePosts.filter(p => p.trim().length > 0);
+    if (filledPosts.length < 2) {
+      alert('Please enter at least 2 example posts to analyze');
+      return;
+    }
+
+    const prompt = generateExamplePostsPrompt(filledPosts, promptInput.brandName);
+    setExamplePostsPrompt(prompt);
+    setShowExamplePostsPrompt(true);
+  };
+
+  const copyExamplePostsPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(examplePostsPrompt);
+      alert('Prompt copied! Paste it into ChatGPT or Claude.');
+    } catch (error) {
+      console.error('Failed to copy:', error);
     }
   };
 
@@ -296,7 +383,99 @@ export default function BrandPersonaSetup({
         </Button>
       </div>
 
-      {!showPrompt ? (
+      {/* Quick Import from Example Posts */}
+      {!showPrompt && !showExamplePostsPrompt && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
+          <h4 className="font-medium text-purple-800 mb-2">⚡ Quick Import: Learn from Your Posts</h4>
+          <p className="text-sm text-purple-600 mb-4">
+            Paste 2-5 of your best performing posts and AI will extract your brand voice automatically.
+          </p>
+          
+          <div className="space-y-3">
+            <Input
+              placeholder="Brand name (optional)"
+              value={promptInput.brandName}
+              onChange={(e) => setPromptInput(prev => ({ ...prev, brandName: e.target.value }))}
+            />
+            {examplePosts.map((post, index) => (
+              <textarea
+                key={index}
+                placeholder={`Example post ${index + 1}${index < 2 ? ' (required)' : ' (optional)'}`}
+                value={post}
+                onChange={(e) => {
+                  const newPosts = [...examplePosts];
+                  newPosts[index] = e.target.value;
+                  setExamplePosts(newPosts);
+                }}
+                className="w-full p-3 border rounded-lg h-20 resize-none text-sm"
+              />
+            ))}
+            <Button 
+              onClick={() => setExamplePosts([...examplePosts, ''])}
+              variant="outline"
+              size="1"
+              className="w-full"
+            >
+              + Add Another Post
+            </Button>
+            <Button 
+              onClick={handleGenerateFromExamples}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              🎯 Generate Prompt from My Posts
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Show generated prompt from example posts */}
+      {showExamplePostsPrompt && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-gray-900">📋 Generated Analysis Prompt</h4>
+            <div className="flex gap-2">
+              <Button onClick={copyExamplePostsPrompt} size="1" variant="outline">
+                📋 Copy Prompt
+              </Button>
+              <Button onClick={() => setShowExamplePostsPrompt(false)} size="1" variant="outline">
+                ← Back
+              </Button>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gray-50 border rounded-lg max-h-64 overflow-y-auto">
+            <pre className="text-sm whitespace-pre-wrap text-gray-700">{examplePostsPrompt}</pre>
+          </div>
+          
+          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-700">
+              <strong>Steps:</strong> 1. Copy this prompt → 2. Paste into ChatGPT or Claude → 3. Copy the JSON response → 4. Paste below
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">🤖 Paste AI Response</h4>
+            <textarea
+              placeholder="Paste the complete JSON response here..."
+              value={chatgptResponse}
+              onChange={(e) => setChatgptResponse(e.target.value)}
+              className="w-full p-4 border rounded-lg h-40 resize-none font-mono text-sm"
+            />
+            
+            <div className="flex gap-3 mt-4">
+              <Button 
+                onClick={handleParseChatGPTResponse}
+                disabled={!chatgptResponse.trim()}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                🎯 Import Persona
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!showPrompt && !showExamplePostsPrompt && (
         <div className="space-y-6">
           {/* Quick Examples */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -414,7 +593,9 @@ export default function BrandPersonaSetup({
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {showPrompt && !showExamplePostsPrompt && (
         <div className="space-y-6">
           {/* Generated Prompt Display */}
           <div>
@@ -503,10 +684,14 @@ export default function BrandPersonaSetup({
             
             {isEditing ? (
               <>
-                <Button onClick={handleSavePersona} className="bg-green-600 hover:bg-green-700">
-                  💾 Save Persona
+                <Button 
+                  onClick={handleSavePersona} 
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isSaving}
+                >
+                  {isSaving ? '💾 Saving...' : '💾 Save Persona'}
                 </Button>
-                <Button onClick={() => setIsEditing(false)} variant="outline">
+                <Button onClick={() => setIsEditing(false)} variant="outline" disabled={isSaving}>
                   Cancel
                 </Button>
               </>

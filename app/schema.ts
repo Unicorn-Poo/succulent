@@ -635,6 +635,94 @@ export const ProdigiCredentials = co.map({
 });
 
 // =============================================================================
+// 🎨 BRAND PERSONA SCHEMA (AI-POWERED BRAND VOICE)
+// =============================================================================
+
+export const BrandPersona = co.map({
+	// Basic info
+	name: z.string(),
+	description: z.optional(z.string()),
+
+	// Voice settings
+	tone: z.enum([
+		"professional",
+		"casual",
+		"friendly",
+		"authoritative",
+		"playful",
+		"inspirational",
+		"educational",
+	]),
+	writingStyle: z.enum([
+		"formal",
+		"conversational",
+		"witty",
+		"direct",
+		"storytelling",
+		"technical",
+	]),
+	emojiUsage: z.enum(["none", "minimal", "moderate", "frequent"]),
+	languageLevel: z.enum(["simple", "intermediate", "advanced", "expert"]),
+	personality: z.array(z.string()), // e.g., ["authentic", "helpful", "witty"]
+
+	// Content strategy
+	contentPillars: z.array(z.string()), // Main topics/themes
+	targetAudience: z.string(),
+	keyMessages: z.array(z.string()),
+	valueProposition: z.optional(z.string()),
+	avoidTopics: z.array(z.string()),
+
+	// Engagement style
+	commentStyle: z.optional(
+		z.enum(["brief", "detailed", "questions", "supportive", "expert"])
+	),
+	hashtagStrategy: z.optional(
+		z.enum(["branded", "trending", "niche", "mixed"])
+	),
+	callToActionStyle: z.optional(
+		z.enum(["subtle", "direct", "creative", "none"])
+	),
+
+	// Platform-specific customization (stored as JSON)
+	platformCustomization: z.optional(z.string()), // JSON stringified
+
+	// Examples for few-shot learning
+	samplePosts: z.array(z.string()),
+	sampleReplies: z.optional(z.array(z.string())),
+
+	// Metadata
+	createdAt: z.date(),
+	updatedAt: z.date(),
+});
+
+// =============================================================================
+// 📊 CONTENT FEEDBACK SCHEMA (LEARNING FROM ACCEPT/REJECT)
+// =============================================================================
+
+export const ContentFeedback = co.map({
+	// The generated content
+	generatedContent: z.string(),
+	contentType: z.enum(["post", "reply", "caption", "thread"]),
+	platform: z.optional(z.string()), // Which platform it was generated for
+
+	// User decision
+	accepted: z.boolean(),
+	reason: z.optional(z.string()), // Why rejected/accepted
+	editedVersion: z.optional(z.string()), // If user edited before accepting
+
+	// Context about the generation
+	promptUsed: z.optional(z.string()), // What prompt generated this
+	confidenceScore: z.optional(z.number()), // AI's confidence 0-100
+
+	// Learning metadata
+	contentPillar: z.optional(z.string()), // Which content pillar was targeted
+	toneUsed: z.optional(z.string()), // What tone was used
+
+	// Metadata
+	createdAt: z.date(),
+});
+
+// =============================================================================
 // 🏢 ACCOUNT GROUP SCHEMA (JAZZ INTEGRATED)
 // =============================================================================
 
@@ -700,6 +788,12 @@ export const AccountGroup = co.map({
 			),
 		})
 	),
+
+	// Brand Persona for AI-powered content generation
+	brandPersona: co.optional(BrandPersona),
+
+	// Content feedback for learning from accept/reject decisions
+	contentFeedback: co.list(ContentFeedback),
 });
 
 export type AccountGroupType = co.loaded<
@@ -718,8 +812,14 @@ export type AccountGroupType = co.loaded<
 		externalStore: {
 			postedProducts: { $each: true };
 		};
+		brandPersona: true;
+		contentFeedback: { $each: true };
 	}
 >;
+
+// Export types for the new schemas
+export type BrandPersonaType = co.loaded<typeof BrandPersona>;
+export type ContentFeedbackType = co.loaded<typeof ContentFeedback>;
 
 // =============================================================================
 // 💳 SUBSCRIPTION SCHEMA

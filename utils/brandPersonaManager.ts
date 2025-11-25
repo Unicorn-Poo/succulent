@@ -97,7 +97,7 @@ export class BrandPersonaManager {
     const platformCustomization = this.persona.platformCustomization[platform];
     const contentPillars = this.persona.messaging.contentPillars;
 
-    let hashtags: string[] = [];
+    const hashtags: string[] = [];
 
     // Add platform-specific hashtags
     if (platformCustomization?.specificHashtags) {
@@ -474,7 +474,7 @@ export class BrandPersonaManager {
       none: ['']
     };
 
-    let ctas = baseStyles[style as keyof typeof baseStyles] || baseStyles.direct;
+    const ctas = baseStyles[style as keyof typeof baseStyles] || baseStyles.direct;
 
     const selectedCTA = ctas[Math.floor(Math.random() * ctas.length)];
     
@@ -878,30 +878,128 @@ export const getDefaultBrandPersonas = (): BrandPersona[] => [
 ];
 
 /**
- * Save brand persona to account group
+ * Convert BrandPersona interface to Jazz schema format
+ */
+export const convertPersonaToJazzFormat = (persona: BrandPersona): any => {
+  return {
+    name: persona.name,
+    description: persona.description,
+    tone: persona.voice.tone,
+    writingStyle: persona.voice.writingStyle,
+    emojiUsage: persona.voice.emojiUsage,
+    languageLevel: persona.voice.languageLevel,
+    personality: persona.voice.personality,
+    contentPillars: persona.messaging.contentPillars,
+    targetAudience: persona.messaging.targetAudience,
+    keyMessages: persona.messaging.keyMessages,
+    valueProposition: persona.messaging.valueProposition,
+    avoidTopics: persona.messaging.avoidTopics,
+    commentStyle: persona.engagement.commentStyle,
+    hashtagStrategy: persona.engagement.hashtagStrategy,
+    callToActionStyle: persona.contentGuidelines.callToActionStyle,
+    platformCustomization: JSON.stringify(persona.platformCustomization || {}),
+    samplePosts: persona.examples.samplePosts || [],
+    sampleReplies: persona.examples.sampleReplies || [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+};
+
+/**
+ * Convert Jazz schema format back to BrandPersona interface
+ */
+export const convertJazzToPersonaFormat = (jazzPersona: any): BrandPersona | null => {
+  if (!jazzPersona) return null;
+
+  try {
+    let platformCustomization = {};
+    if (jazzPersona.platformCustomization) {
+      try {
+        platformCustomization = JSON.parse(jazzPersona.platformCustomization);
+      } catch {
+        // Invalid JSON, use empty object
+      }
+    }
+
+    return {
+      id: jazzPersona.id || `persona_${Date.now()}`,
+      name: jazzPersona.name || 'My Brand',
+      description: jazzPersona.description || '',
+      voice: {
+        tone: jazzPersona.tone || 'friendly',
+        personality: jazzPersona.personality || [],
+        writingStyle: jazzPersona.writingStyle || 'conversational',
+        emojiUsage: jazzPersona.emojiUsage || 'moderate',
+        languageLevel: jazzPersona.languageLevel || 'intermediate',
+      },
+      messaging: {
+        keyMessages: jazzPersona.keyMessages || [],
+        valueProposition: jazzPersona.valueProposition || '',
+        targetAudience: jazzPersona.targetAudience || '',
+        contentPillars: jazzPersona.contentPillars || [],
+        avoidTopics: jazzPersona.avoidTopics || [],
+      },
+      engagement: {
+        commentStyle: jazzPersona.commentStyle || 'supportive',
+        dmApproach: 'friendly',
+        hashtagStrategy: jazzPersona.hashtagStrategy || 'mixed',
+        mentionStyle: 'active',
+      },
+      contentGuidelines: {
+        postLength: 'medium',
+        contentMix: { educational: 40, entertainment: 30, promotional: 20, personal: 10 },
+        callToActionStyle: jazzPersona.callToActionStyle || 'direct',
+        questionFrequency: 'frequent',
+      },
+      platformCustomization,
+      examples: {
+        samplePosts: jazzPersona.samplePosts || [],
+        sampleReplies: jazzPersona.sampleReplies || [],
+        sampleDMs: [],
+      },
+    };
+  } catch (error) {
+    console.error('Error converting Jazz persona to interface:', error);
+    return null;
+  }
+};
+
+/**
+ * Save brand persona to account group using new Jazz schema
  */
 export const saveBrandPersona = async (accountGroup: any, persona: BrandPersona): Promise<void> => {
   if (!accountGroup) return;
 
   try {
-    // Save to Jazz collaborative database
-    if (accountGroup.settings) {
-      accountGroup.settings.brandPersona = persona;
+    // Import BrandPersona schema dynamically to avoid circular deps
+    const { BrandPersona: BrandPersonaSchema } = await import('../app/schema');
+    
+    const jazzData = convertPersonaToJazzFormat(persona);
+    
+    // Check if brandPersona already exists
+    if (accountGroup.brandPersona) {
+      // Update existing persona
+      Object.assign(accountGroup.brandPersona, {
+        ...jazzData,
+        updatedAt: new Date(),
+      });
     } else {
-      // Initialize settings if they don't exist
-      accountGroup.settings = { brandPersona: persona };
+      // Create new persona
+      accountGroup.brandPersona = BrandPersonaSchema.create(jazzData);
     }
   } catch (error) {
     console.error('Error saving brand persona:', error);
+    throw error;
   }
 };
 
 /**
- * Load brand persona from account group
+ * Load brand persona from account group using new Jazz schema
  */
 export const loadBrandPersona = (accountGroup: any): BrandPersona | null => {
   try {
-    return accountGroup?.settings?.brandPersona || null;
+    if (!accountGroup?.brandPersona) return null;
+    return convertJazzToPersonaFormat(accountGroup.brandPersona);
   } catch (error) {
     console.error('Error loading brand persona:', error);
     return null;

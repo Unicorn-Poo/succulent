@@ -267,10 +267,141 @@ Be specific about how this content would perform differently on each platform ba
   }
 
   /**
+   * Learn from content feedback (accept/reject decisions)
+   */
+  async learnFromContentFeedback(feedback: {
+    generatedContent: string;
+    accepted: boolean;
+    reason?: string;
+    editedVersion?: string;
+    contentPillar?: string;
+    toneUsed?: string;
+    platform?: string;
+  }[]): Promise<{
+    patternsLearned: string[];
+    recommendedAdjustments: string[];
+  }> {
+    if (feedback.length === 0) {
+      return { patternsLearned: [], recommendedAdjustments: [] };
+    }
+
+    const accepted = feedback.filter(f => f.accepted);
+    const rejected = feedback.filter(f => !f.accepted);
+    const edited = feedback.filter(f => f.accepted && f.editedVersion);
+
+    const result = await generateObject({
+      model: openai('gpt-4'),
+      schema: z.object({
+        patternsLearned: z.array(z.string()),
+        recommendedAdjustments: z.array(z.string()),
+        tonePreferences: z.object({
+          preferred: z.array(z.string()),
+          avoid: z.array(z.string())
+        }),
+        contentPillarPerformance: z.record(z.string(), z.object({
+          acceptanceRate: z.number(),
+          recommendation: z.string()
+        })),
+        lengthPreference: z.enum(['shorter', 'same', 'longer']),
+        emojiPreference: z.enum(['more', 'same', 'fewer', 'none']),
+        styleInsights: z.array(z.string())
+      }),
+      prompt: `Analyze this content feedback to learn user preferences and improve future content generation.
+
+ACCEPTED CONTENT (${accepted.length} items):
+${accepted.slice(-10).map(a => `
+- Content: "${a.generatedContent.slice(0, 200)}..."
+- Pillar: ${a.contentPillar || 'unknown'}
+- Tone: ${a.toneUsed || 'unknown'}
+- Platform: ${a.platform || 'unknown'}
+`).join('\n')}
+
+REJECTED CONTENT (${rejected.length} items):
+${rejected.slice(-10).map(r => `
+- Content: "${r.generatedContent.slice(0, 200)}..."
+- Reason: ${r.reason || 'No reason given'}
+- Pillar: ${r.contentPillar || 'unknown'}
+- Tone: ${r.toneUsed || 'unknown'}
+- Platform: ${r.platform || 'unknown'}
+`).join('\n')}
+
+EDITED BEFORE ACCEPTING (${edited.length} items):
+${edited.slice(-5).map(e => `
+- Original: "${e.generatedContent.slice(0, 100)}..."
+- Edited to: "${e.editedVersion?.slice(0, 100)}..."
+`).join('\n')}
+
+Analyze patterns and determine:
+1. What content styles, tones, and pillars get accepted vs rejected?
+2. What common reasons are given for rejection?
+3. What changes do users typically make when editing?
+4. What adjustments should be made to improve acceptance rate?
+5. Are there platform-specific preferences?`,
+      temperature: 0.3
+    });
+
+    // Update internal memory with learned patterns
+    const learningData = result.object;
+    
+    // Store in memory patterns
+    this.memory.patterns.feedbackLearning = {
+      lastUpdated: new Date().toISOString(),
+      tonePreferences: learningData.tonePreferences,
+      lengthPreference: learningData.lengthPreference,
+      emojiPreference: learningData.emojiPreference,
+      contentPillarPerformance: learningData.contentPillarPerformance,
+      totalFeedbackAnalyzed: feedback.length,
+      acceptanceRate: accepted.length / feedback.length
+    };
+
+    return {
+      patternsLearned: learningData.patternsLearned,
+      recommendedAdjustments: learningData.recommendedAdjustments
+    };
+  }
+
+  /**
+   * Get enhanced content generation prompt based on learned feedback
+   */
+  getEnhancedPromptFromFeedback(): string {
+    const feedbackLearning = this.memory.patterns.feedbackLearning;
+    if (!feedbackLearning) return '';
+
+    let enhancedPrompt = '\n\n## LEARNED PREFERENCES FROM USER FEEDBACK:\n';
+
+    if (feedbackLearning.tonePreferences) {
+      if (feedbackLearning.tonePreferences.preferred.length > 0) {
+        enhancedPrompt += `\n- Preferred tones: ${feedbackLearning.tonePreferences.preferred.join(', ')}`;
+      }
+      if (feedbackLearning.tonePreferences.avoid.length > 0) {
+        enhancedPrompt += `\n- Tones to avoid: ${feedbackLearning.tonePreferences.avoid.join(', ')}`;
+      }
+    }
+
+    if (feedbackLearning.lengthPreference && feedbackLearning.lengthPreference !== 'same') {
+      enhancedPrompt += `\n- User prefers ${feedbackLearning.lengthPreference} content`;
+    }
+
+    if (feedbackLearning.emojiPreference && feedbackLearning.emojiPreference !== 'same') {
+      enhancedPrompt += `\n- Emoji usage: use ${feedbackLearning.emojiPreference} emojis`;
+    }
+
+    if (feedbackLearning.contentPillarPerformance) {
+      const topPillars = Object.entries(feedbackLearning.contentPillarPerformance)
+        .sort((a, b) => (b[1] as any).acceptanceRate - (a[1] as any).acceptanceRate)
+        .slice(0, 3);
+      if (topPillars.length > 0) {
+        enhancedPrompt += `\n- Top performing content pillars: ${topPillars.map(p => p[0]).join(', ')}`;
+      }
+    }
+
+    return enhancedPrompt;
+  }
+
+  /**
    * Continuous learning from new post performance
    */
   async learnFromNewPost(post: any): Promise<void> {
-    console.log(`🧠 AI Learning: Processing new post for learning...`);
 
     const performanceData = this.convertPostToPerformanceData(post);
     
