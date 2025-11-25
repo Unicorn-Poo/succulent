@@ -22,37 +22,6 @@ import {
 const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
 
 /**
- * Resolve the public base URL for media proxying
- */
-function resolvePublicBaseUrl(): string {
-  const candidates = [
-    process.env.MEDIA_PROXY_BASE_URL,
-    process.env.NEXT_PUBLIC_MEDIA_PROXY_URL,
-    process.env.NEXT_PUBLIC_SITE_URL,
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXT_PUBLIC_API_BASE_URL,
-    process.env.APP_BASE_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === "string") {
-      const trimmed = candidate.trim();
-      if (!trimmed) continue;
-      const result =
-        trimmed.startsWith("http://") || trimmed.startsWith("https://")
-          ? trimmed
-          : `https://${trimmed}`;
-      console.log("🌐 [BASE URL RESOLVED]", { result, from: candidate });
-      return result;
-    }
-  }
-
-  console.warn("⚠️ [BASE URL FALLBACK] Using localhost - no env vars found");
-  return "http://localhost:3000";
-}
-
-/**
  * Proxy Lunary OG image URLs for Instagram compatibility
  */
 function proxyMediaUrlIfNeeded(url: string): string {
@@ -61,7 +30,7 @@ function proxyMediaUrlIfNeeded(url: string): string {
     try {
       // Instagram requires file extensions in the URL path
       // Create proxy URL with .png extension for Instagram compatibility
-      const baseUrl = resolvePublicBaseUrl().replace(/\/$/, ""); // Remove trailing slash
+      const baseUrl = "https://app.succulent.social";
       const encodedUrl = encodeURIComponent(url);
       // Use path-based URL with extension instead of query param for Instagram compatibility
       const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
@@ -258,7 +227,7 @@ export const handleStandardPost = async (postData: PostData) => {
   if (cleanedBody.mediaUrls && Array.isArray(cleanedBody.mediaUrls)) {
     // First normalize (proxy Lunary URLs, deduplicate)
     const normalizedUrls = normalizeMediaUrls(cleanedBody.mediaUrls);
-    
+
     // Then validate URLs are properly formatted and accessible
     const validMediaUrls = normalizedUrls.filter((url: string) => {
       if (typeof url !== "string") return false;
