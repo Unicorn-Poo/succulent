@@ -5,6 +5,7 @@ import * as React from "react";
 import { MessageCircle, CheckSquare, Square, Calendar, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { getPostStatus } from "@/utils/postValidation";
+import { platformIcons } from "@/utils/postConstants";
 
 interface PostViewsProps {
   posts: any[];
@@ -199,6 +200,10 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
           const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
           const hasMedia = post.variants?.base?.media && post.variants.base.media.length > 0;
           const isSelected = selectedPosts.has(postId);
+          // Extract platform names from variants (excluding 'base')
+          const postPlatforms = post.variants 
+            ? Object.keys(post.variants).filter((key) => key !== 'base')
+            : (post.platforms || []);
           
           return (
             <div
@@ -260,7 +265,26 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    {/* Platform icons */}
+                    {postPlatforms.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        {postPlatforms.map((platform: string) => {
+                          const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
+                          return (
+                            <Image
+                              key={platform}
+                              src={iconPath}
+                              alt={platform}
+                              width={16}
+                              height={16}
+                              className="opacity-70 hover:opacity-100 transition-opacity"
+                              title={platform}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                     <MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
                     <span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
                   </div>
@@ -427,6 +451,10 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                             post.content || 
                             "";
           const postStatus = getPostStatus(post);
+          // Extract platform names from variants (excluding 'base')
+          const postPlatforms = post.variants 
+            ? Object.keys(post.variants).filter((key) => key !== 'base')
+            : (post.platforms || []);
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
           let mediaItems: any[] = [];
@@ -490,8 +518,8 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                 </div>
               </div>
 
-              {/* Status Badge */}
-              <div className="absolute top-2 left-2 z-30">
+              {/* Status Badge and Platform Icons */}
+              <div className="absolute top-2 left-2 z-30 flex items-center gap-2">
                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                   postStatus === 'published' ? 'bg-green-500 text-white' :
                   postStatus === 'scheduled' ? 'bg-yellow-500 text-white' :
@@ -499,6 +527,25 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                 }`}>
                   {postStatus === 'published' ? '✓' : postStatus === 'scheduled' ? '⏰' : '📝'}
                 </div>
+                {/* Platform icons */}
+                {postPlatforms.length > 0 && (
+                  <div className="flex items-center gap-1 bg-black bg-opacity-70 rounded-full px-2 py-1">
+                    {postPlatforms.map((platform: string) => {
+                      const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
+                      return (
+                        <Image
+                          key={platform}
+                          src={iconPath}
+                          alt={platform}
+                          width={14}
+                          height={14}
+                          className="opacity-90"
+                          title={platform}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Clickable content area */}
@@ -614,6 +661,10 @@ export function PostSuccinctView({ posts, accountGroupId, accountGroupName, post
                             "";
           const postStatus = getPostStatus(post);
           const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
+          // Extract platform names from variants (excluding 'base')
+          const postPlatforms = post.variants 
+            ? Object.keys(post.variants).filter((key) => key !== 'base')
+            : (post.platforms || []);
           
           // Get media items properly using safeArrayAccess
           const safeArrayAccess = (collaborativeArray: any) => {
@@ -707,6 +758,25 @@ export function PostSuccinctView({ posts, accountGroupId, accountGroupName, post
                           <span className="flex items-center gap-1">
                             📎 {mediaCount} media
                           </span>
+                        )}
+                        {/* Platform icons */}
+                        {postPlatforms.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {postPlatforms.map((platform: string) => {
+                              const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
+                              return (
+                                <Image
+                                  key={platform}
+                                  src={iconPath}
+                                  alt={platform}
+                                  width={14}
+                                  height={14}
+                                  className="opacity-70"
+                                  title={platform}
+                                />
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>

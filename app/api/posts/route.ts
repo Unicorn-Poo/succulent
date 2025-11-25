@@ -256,13 +256,16 @@ function resolvePublicBaseUrl(): string {
     if (candidate && typeof candidate === "string") {
       const trimmed = candidate.trim();
       if (!trimmed) continue;
-      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-        return trimmed;
-      }
-      return `https://${trimmed}`;
+      const result =
+        trimmed.startsWith("http://") || trimmed.startsWith("https://")
+          ? trimmed
+          : `https://${trimmed}`;
+      console.log("🌐 [BASE URL RESOLVED]", { result, from: candidate });
+      return result;
     }
   }
 
+  console.warn("⚠️ [BASE URL FALLBACK] Using localhost - no env vars found");
   return "http://localhost:3000";
 }
 
@@ -276,6 +279,11 @@ function proxyMediaUrlIfNeeded(url: string): string {
       const encodedUrl = encodeURIComponent(url);
       // Use path-based URL with extension instead of query param for Instagram compatibility
       const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
+      console.log("✅ [PROXY CREATED]", {
+        original: url,
+        proxy: proxyUrl,
+        baseUrl,
+      });
       return proxyUrl;
     } catch (error) {
       console.warn(
@@ -914,10 +922,14 @@ export async function preparePublishRequests(
 
   // Get base content and media
   const baseContent = requestData.content;
+  // Prioritize requestData.media if it has items, otherwise fall back to imageUrls
+  const mediaUrlsFromMedia = requestData.media
+    ?.map((m) => m.url)
+    .filter(Boolean) as string[] | undefined;
   const baseMediaUrls =
-    (requestData.media?.map((m) => m.url).filter(Boolean) as string[]) ||
-    requestData.imageUrls ||
-    [];
+    mediaUrlsFromMedia && mediaUrlsFromMedia.length > 0
+      ? mediaUrlsFromMedia
+      : requestData.imageUrls || [];
 
   // Collect all platforms to process: from requestData.platforms AND post.variants
   // This ensures variant-only platforms (like Instagram) are included
@@ -950,7 +962,7 @@ export async function preparePublishRequests(
     }
     // Otherwise use baseContent (already set above)
 
-    // Determine media: variant override > saved variant > base
+    // Determine media: variant override > saved variant > base > requestData.imageUrls fallback
     // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
     let mediaUrls: string[] = [];
     if (variantOverride?.media && variantOverride.media.length > 0) {
@@ -977,6 +989,19 @@ export async function preparePublishRequests(
       mediaUrls = baseMediaUrls;
     }
 
+    // Final fallback: if still no media and requestData.imageUrls exists, use it
+    if (
+      mediaUrls.length === 0 &&
+      requestData.imageUrls &&
+      requestData.imageUrls.length > 0
+    ) {
+      mediaUrls = requestData.imageUrls.filter(
+        (url: string) =>
+          typeof url === "string" &&
+          (url.startsWith("http://") || url.startsWith("https://"))
+      );
+    }
+
     // Log media collection for debugging
     console.log(`📷 [MEDIA COLLECTION] Platform: ${platform}`, {
       hasVariantOverride: !!variantOverride,
@@ -998,9 +1023,10 @@ export async function preparePublishRequests(
         : "base",
     });
 
-    // Apply platform-specific media limits early to prevent excess media
-    const beforeClamp = mediaUrls.length;
-    mediaUrls = clampMediaUrlsForPlatform(platform, mediaUrls);
+    // Normalize (proxy) media URLs first, then clamp
+    const normalizedMediaUrls = normalizeMediaUrls(mediaUrls);
+    const beforeClamp = normalizedMediaUrls.length;
+    mediaUrls = clampMediaUrlsForPlatform(platform, normalizedMediaUrls);
     if (beforeClamp !== mediaUrls.length) {
       console.log(
         `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${mediaUrls.length}`
@@ -1186,7 +1212,7 @@ export async function preparePublishRequests(
       content = variant.text.toString();
     }
 
-    // Determine media: variant override > saved variant > base
+    // Determine media: variant override > saved variant > base > requestData.imageUrls fallback
     // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
     let mediaUrls: string[] = [];
     if (variantOverride?.media && variantOverride.media.length > 0) {
@@ -1213,13 +1239,29 @@ export async function preparePublishRequests(
       mediaUrls = baseMediaUrls;
     }
 
-    // Apply platform-specific media limits early to prevent excess media
-    const beforeClamp = mediaUrls.length;
+    // Final fallback: if still no media and requestData.imageUrls exists, use it
+    if (
+      mediaUrls.length === 0 &&
+      requestData.imageUrls &&
+      requestData.imageUrls.length > 0
+    ) {
+      mediaUrls = requestData.imageUrls.filter(
+        (url: string) =>
+          typeof url === "string" &&
+          (url.startsWith("http://") || url.startsWith("https://"))
+      );
+    }
+
+    // Normalize (proxy) media URLs first, then clamp
     const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
-    mediaUrls = clampMediaUrlsForPlatform(platform, cleanedMediaUrls);
-    if (beforeClamp !== mediaUrls.length) {
+    const beforeClamp = cleanedMediaUrls.length;
+    const clampedMediaUrls = clampMediaUrlsForPlatform(
+      platform,
+      cleanedMediaUrls
+    );
+    if (beforeClamp !== clampedMediaUrls.length) {
       console.log(
-        `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${mediaUrls.length}`
+        `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${clampedMediaUrls.length}`
       );
     }
 
@@ -1236,8 +1278,8 @@ export async function preparePublishRequests(
         ? extractMediaUrlsFromVariant(variant).length
         : 0,
       baseMediaCount: baseMediaUrls.length,
-      collectedMediaCount: mediaUrls.length,
-      collectedMediaUrls: mediaUrls,
+      collectedMediaCount: clampedMediaUrls.length,
+      collectedMediaUrls: clampedMediaUrls,
     });
 
     console.log(
@@ -1253,7 +1295,7 @@ export async function preparePublishRequests(
       postData: {
         post: content,
         platforms: [ayrsharePlatform],
-        mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+        mediaUrls: clampedMediaUrls.length > 0 ? clampedMediaUrls : undefined,
         scheduleDate: requestData.scheduledDate,
         profileKey: profileKey,
       },
