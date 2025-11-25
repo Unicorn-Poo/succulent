@@ -252,7 +252,8 @@ export function PostGridView({
           const variantPlatforms = post.variants
             ? Object.keys(post.variants).filter((key) => key !== "base")
             : [];
-          const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+          const postPlatforms =
+            variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
           return (
             <div
@@ -542,7 +543,8 @@ export function PostImageView({
           const variantPlatforms = post.variants
             ? Object.keys(post.variants).filter((key) => key !== "base")
             : [];
-          const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+          const postPlatforms =
+            variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
           let mediaItems: any[] = [];
@@ -797,7 +799,8 @@ export function PostSuccinctView({
         const variantPlatforms = post.variants
           ? Object.keys(post.variants).filter((key) => key !== "base")
           : [];
-        const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+        const postPlatforms =
+          variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
         // Get media items properly using safeArrayAccess
         const safeArrayAccess = (collaborativeArray: any) => {
