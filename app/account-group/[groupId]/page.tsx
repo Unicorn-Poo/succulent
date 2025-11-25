@@ -287,6 +287,12 @@ export default function AccountGroupPage() {
 		status: account.status || "pending",
 	}));
 
+	// Extract connected platforms for post views
+	const connectedPlatforms = accounts
+		.filter((acc: any) => acc.isLinked)
+		.map((acc: any) => acc.platform)
+		.filter((platform: string) => platform && platform !== "unknown");
+
 	const handleCreatePost = () => {
 		if (!newPostTitle.trim()) return;
 
@@ -775,6 +781,7 @@ export default function AccountGroupPage() {
 										postsFilter={postsFilter}
 										selectedPosts={selectedPosts}
 										onPostSelect={handlePostSelect}
+										connectedPlatforms={connectedPlatforms}
 									/>
 								)}
 
@@ -786,6 +793,7 @@ export default function AccountGroupPage() {
 										postsFilter={postsFilter}
 										selectedPosts={selectedPosts}
 										onPostSelect={handlePostSelect}
+										connectedPlatforms={connectedPlatforms}
 									/>
 								)}
 
@@ -798,6 +806,7 @@ export default function AccountGroupPage() {
 										selectedPosts={selectedPosts}
 										onPostSelect={handlePostSelect}
 										onSelectAll={handleSelectAll}
+										connectedPlatforms={connectedPlatforms}
 									/>
 								)}
 

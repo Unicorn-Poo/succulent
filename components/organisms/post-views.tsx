@@ -23,6 +23,7 @@ interface PostViewsProps {
   selectedPosts: Set<string>;
   onPostSelect: (postId: string, selected: boolean) => void;
   onSelectAll?: () => void;
+  connectedPlatforms?: string[];
 }
 
 // Helper function to render media thumbnail
@@ -179,6 +180,7 @@ export function PostGridView({
   postsFilter,
   selectedPosts,
   onPostSelect,
+  connectedPlatforms = [],
 }: PostViewsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -246,10 +248,11 @@ export function PostGridView({
           const hasMedia =
             post.variants?.base?.media && post.variants.base.media.length > 0;
           const isSelected = selectedPosts.has(postId);
-          // Extract platform names from variants (excluding 'base')
-          const postPlatforms = post.variants
+          // Extract platform names from variants (excluding 'base'), fallback to connected platforms
+          const variantPlatforms = post.variants
             ? Object.keys(post.variants).filter((key) => key !== "base")
-            : post.platforms || [];
+            : [];
+          const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
           return (
             <div
@@ -498,6 +501,7 @@ export function PostImageView({
   postsFilter,
   selectedPosts,
   onPostSelect,
+  connectedPlatforms = [],
 }: PostViewsProps) {
   // Sort posts by date (newest first)
   const sortedPosts = [...posts].sort((a: any, b: any) => {
@@ -534,10 +538,11 @@ export function PostImageView({
             post.content ||
             "";
           const postStatus = getPostStatus(post);
-          // Extract platform names from variants (excluding 'base')
-          const postPlatforms = post.variants
+          // Extract platform names from variants (excluding 'base'), fallback to connected platforms
+          const variantPlatforms = post.variants
             ? Object.keys(post.variants).filter((key) => key !== "base")
-            : post.platforms || [];
+            : [];
+          const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
           let mediaItems: any[] = [];
@@ -708,6 +713,7 @@ export function PostSuccinctView({
   selectedPosts,
   onPostSelect,
   onSelectAll,
+  connectedPlatforms = [],
 }: PostViewsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -787,10 +793,11 @@ export function PostSuccinctView({
         const postStatus = getPostStatus(post);
         const postDate =
           post.variants?.base?.postDate || post.createdAt || new Date();
-        // Extract platform names from variants (excluding 'base')
-        const postPlatforms = post.variants
+        // Extract platform names from variants (excluding 'base'), fallback to connected platforms
+        const variantPlatforms = post.variants
           ? Object.keys(post.variants).filter((key) => key !== "base")
-          : post.platforms || [];
+          : [];
+        const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
         // Get media items properly using safeArrayAccess
         const safeArrayAccess = (collaborativeArray: any) => {
