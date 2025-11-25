@@ -20,6 +20,7 @@ interface PostViewsProps {
   accountGroupId: string;
   accountGroupName: string;
   postsFilter: "all" | "draft" | "scheduled" | "published";
+  platformFilter?: string;
   selectedPosts: Set<string>;
   onPostSelect: (postId: string, selected: boolean) => void;
   onSelectAll?: () => void;
@@ -172,12 +173,34 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
   );
 }
 
+// Helper function to check if post matches platform filter
+function postMatchesPlatformFilter(
+  post: any,
+  platformFilter: string,
+  connectedPlatforms: string[]
+): boolean {
+  if (platformFilter === "all") return true;
+
+  const variantPlatforms = post.variants
+    ? Object.keys(post.variants).filter((key) => key !== "base")
+    : [];
+  const postPlatforms =
+    variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+
+  if (platformFilter === "none") {
+    return postPlatforms.length === 0;
+  }
+
+  return postPlatforms.includes(platformFilter);
+}
+
 // Grid View (existing default view)
 export function PostGridView({
   posts,
   accountGroupId,
   accountGroupName,
   postsFilter,
+  platformFilter = "all",
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
@@ -229,9 +252,17 @@ export function PostGridView({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {sortedPosts
         .filter((post) => {
-          if (postsFilter === "all") return true;
-          const postStatus = getPostStatus(post);
-          return postStatus === postsFilter;
+          // Status filter
+          if (postsFilter !== "all") {
+            const postStatus = getPostStatus(post);
+            if (postStatus !== postsFilter) return false;
+          }
+          // Platform filter
+          if (
+            !postMatchesPlatformFilter(post, platformFilter, connectedPlatforms)
+          )
+            return false;
+          return true;
         })
         .map((post: any, index: number) => {
           const postId = post.id || post.variants?.base?.id || index;
@@ -243,8 +274,15 @@ export function PostGridView({
             post.content ||
             "";
           const postStatus = getPostStatus(post);
+          // Prioritize scheduled date, then published date, then created date
           const postDate =
-            post.variants?.base?.postDate || post.createdAt || new Date();
+            post.variants?.base?.scheduledFor ||
+            post.variants?.base?.publishedAt ||
+            post.variants?.base?.postDate ||
+            post.scheduledFor ||
+            post.publishedAt ||
+            post.createdAt ||
+            new Date();
           const hasMedia =
             post.variants?.base?.media && post.variants.base.media.length > 0;
           const isSelected = selectedPosts.has(postId);
@@ -500,6 +538,7 @@ export function PostImageView({
   accountGroupId,
   accountGroupName,
   postsFilter,
+  platformFilter = "all",
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
@@ -525,9 +564,17 @@ export function PostImageView({
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {sortedPosts
         .filter((post) => {
-          if (postsFilter === "all") return true;
-          const postStatus = getPostStatus(post);
-          return postStatus === postsFilter;
+          // Status filter
+          if (postsFilter !== "all") {
+            const postStatus = getPostStatus(post);
+            if (postStatus !== postsFilter) return false;
+          }
+          // Platform filter
+          if (
+            !postMatchesPlatformFilter(post, platformFilter, connectedPlatforms)
+          )
+            return false;
+          return true;
         })
         .map((post: any, index: number) => {
           const postId = post.id || post.variants?.base?.id || index;
@@ -712,6 +759,7 @@ export function PostSuccinctView({
   accountGroupId,
   accountGroupName,
   postsFilter,
+  platformFilter = "all",
   selectedPosts,
   onPostSelect,
   onSelectAll,
@@ -761,9 +809,15 @@ export function PostSuccinctView({
   });
 
   const filteredPosts = sortedPosts.filter((post) => {
-    if (postsFilter === "all") return true;
-    const postStatus = getPostStatus(post);
-    return postStatus === postsFilter;
+    // Status filter
+    if (postsFilter !== "all") {
+      const postStatus = getPostStatus(post);
+      if (postStatus !== postsFilter) return false;
+    }
+    // Platform filter
+    if (!postMatchesPlatformFilter(post, platformFilter, connectedPlatforms))
+      return false;
+    return true;
   });
 
   return (
@@ -793,8 +847,15 @@ export function PostSuccinctView({
           post.content ||
           "";
         const postStatus = getPostStatus(post);
+        // Prioritize scheduled date, then published date, then created date
         const postDate =
-          post.variants?.base?.postDate || post.createdAt || new Date();
+          post.variants?.base?.scheduledFor ||
+          post.variants?.base?.publishedAt ||
+          post.variants?.base?.postDate ||
+          post.scheduledFor ||
+          post.publishedAt ||
+          post.createdAt ||
+          new Date();
         // Extract platform names from variants (excluding 'base'), fallback to connected platforms
         const variantPlatforms = post.variants
           ? Object.keys(post.variants).filter((key) => key !== "base")

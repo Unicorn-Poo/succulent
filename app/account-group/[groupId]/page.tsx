@@ -9,6 +9,7 @@ import {
   Tabs,
   Card,
   Button as RadixButton,
+  Select,
 } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
 import {
@@ -58,6 +59,7 @@ import {
   PlatformAnalyticsDashboard,
 } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
+import { platformLabels } from "@/utils/postConstants";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
 import PostViewSelector, {
   PostViewType,
@@ -128,6 +130,7 @@ export default function AccountGroupPage() {
   const [postsFilter, setPostsFilter] = useState<
     "all" | "draft" | "scheduled" | "published"
   >("all");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -383,12 +386,33 @@ export default function AccountGroupPage() {
     setSelectedPosts(newSelection);
   };
 
+  // Helper function to check if post matches platform filter
+  const postMatchesPlatformFilter = (post: any) => {
+    if (platformFilter === "all") return true;
+    
+    const variantPlatforms = post.variants
+      ? Object.keys(post.variants).filter((key: string) => key !== "base")
+      : [];
+    const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+    
+    if (platformFilter === "none") {
+      return postPlatforms.length === 0;
+    }
+    
+    return postPlatforms.includes(platformFilter);
+  };
+
   // Select all filtered posts
   const handleSelectAll = () => {
     const filteredPosts = posts.filter((post) => {
-      if (postsFilter === "all") return true;
-      const postStatus = getPostStatus(post);
-      return postStatus === postsFilter;
+      // Status filter
+      if (postsFilter !== "all") {
+        const postStatus = getPostStatus(post);
+        if (postStatus !== postsFilter) return false;
+      }
+      // Platform filter
+      if (!postMatchesPlatformFilter(post)) return false;
+      return true;
     });
     const allIds = new Set(
       filteredPosts.map(
@@ -721,6 +745,24 @@ export default function AccountGroupPage() {
                       ))}
                     </div>
 
+                    {/* Platform Filter */}
+                    <Select.Root
+                      value={platformFilter}
+                      onValueChange={setPlatformFilter}
+                    >
+                      <Select.Trigger placeholder="All Platforms" />
+                      <Select.Content>
+                        <Select.Item value="all">All Platforms</Select.Item>
+                        <Select.Item value="none">No Platform</Select.Item>
+                        <Select.Separator />
+                        {connectedPlatforms.map((platform) => (
+                          <Select.Item key={platform} value={platform}>
+                            {platformLabels[platform as keyof typeof platformLabels] || platform}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Root>
+
                     {/* View Selector */}
                     <PostViewSelector
                       currentView={postView}
@@ -774,55 +816,65 @@ export default function AccountGroupPage() {
 
                 {/* Posts Views */}
                 {postView === "grid" && (
-                  <PostGridView
-                    posts={posts}
-                    accountGroupId={accountGroup.id}
-                    accountGroupName={accountGroup.name || "Account Group"}
-                    postsFilter={postsFilter}
-                    selectedPosts={selectedPosts}
-                    onPostSelect={handlePostSelect}
-                    connectedPlatforms={connectedPlatforms}
-                  />
-                )}
+									<PostGridView
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										platformFilter={platformFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+										connectedPlatforms={connectedPlatforms}
+									/>
+								)}
 
-                {postView === "image" && (
-                  <PostImageView
-                    posts={posts}
-                    accountGroupId={accountGroup.id}
-                    accountGroupName={accountGroup.name || "Account Group"}
-                    postsFilter={postsFilter}
-                    selectedPosts={selectedPosts}
-                    onPostSelect={handlePostSelect}
-                    connectedPlatforms={connectedPlatforms}
-                  />
-                )}
+								{postView === "image" && (
+									<PostImageView
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										platformFilter={platformFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+										connectedPlatforms={connectedPlatforms}
+									/>
+								)}
 
-                {postView === "succinct" && (
-                  <PostSuccinctView
-                    posts={posts}
-                    accountGroupId={accountGroup.id}
-                    accountGroupName={accountGroup.name || "Account Group"}
-                    postsFilter={postsFilter}
-                    selectedPosts={selectedPosts}
-                    onPostSelect={handlePostSelect}
-                    onSelectAll={handleSelectAll}
-                    connectedPlatforms={connectedPlatforms}
-                  />
-                )}
+								{postView === "succinct" && (
+									<PostSuccinctView
+										posts={posts}
+										accountGroupId={accountGroup.id}
+										accountGroupName={accountGroup.name || "Account Group"}
+										postsFilter={postsFilter}
+										platformFilter={platformFilter}
+										selectedPosts={selectedPosts}
+										onPostSelect={handlePostSelect}
+										onSelectAll={handleSelectAll}
+										connectedPlatforms={connectedPlatforms}
+									/>
+								)}
 
                 {/* Empty state for filtered results */}
                 {posts.filter((post) => {
-                  if (postsFilter === "all") return true;
-                  const postStatus = getPostStatus(post);
-                  return postStatus === postsFilter;
+                  // Status filter
+                  if (postsFilter !== "all") {
+                    const postStatus = getPostStatus(post);
+                    if (postStatus !== postsFilter) return false;
+                  }
+                  // Platform filter
+                  if (!postMatchesPlatformFilter(post)) return false;
+                  return true;
                 }).length === 0 &&
-                  postsFilter !== "all" && (
+                  (postsFilter !== "all" || platformFilter !== "all") && (
                     <div className="text-center py-8">
                       <div className="text-gray-400 mb-2">
                         <MessageCircle className="w-8 h-8 mx-auto mb-2" />
                       </div>
                       <p className="text-gray-500">
-                        No {postsFilter} posts found
+                        No {postsFilter !== "all" ? postsFilter : ""} posts found
+                        {platformFilter !== "all" && platformFilter !== "none" && ` for ${platformLabels[platformFilter as keyof typeof platformLabels] || platformFilter}`}
+                        {platformFilter === "none" && " without a platform"}
                       </p>
                       <p className="text-sm text-gray-400 mt-1">
                         {postsFilter === "draft" &&
