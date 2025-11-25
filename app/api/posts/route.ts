@@ -141,10 +141,14 @@ const VariantDetailsSchema = zod
 const CreatePostSchema = zod.object({
   // Required fields
   accountGroupId: zod.string().min(1, "Account group ID is required"),
-  content: zod.string().min(1, "Post content is required"),
+  // Content is required for new posts, but optional when publishing an existing post
+  content: zod.string().optional(),
   platforms: zod
     .array(zod.enum(PlatformNames))
     .min(1, "At least one platform is required"),
+
+  // Optional: existing post ID (for publishing an already-created post with variants)
+  postId: zod.string().optional(),
 
   // Optional fields
   title: zod.string().optional(),
@@ -474,6 +478,11 @@ async function createPostInAccountGroup(
   request: CreatePostRequest,
   user: AuthenticatedUser
 ): Promise<any | null> {
+  // Content is required for creating new posts
+  if (!request.content) {
+    throw new Error("Content is required when creating a new post");
+  }
+
   try {
     const { jazzServerWorker } = await import("@/utils/jazzServer");
     const worker = await jazzServerWorker;
@@ -921,7 +930,9 @@ export async function preparePublishRequests(
   const platformsWithoutVariants: string[] = [];
 
   // Get base content and media
-  const baseContent = requestData.content;
+  // When publishing an existing post, content may come from the saved variant
+  const baseContent =
+    requestData.content || post?.variants?.base?.text?.toString() || "";
   // Prioritize requestData.media if it has items, otherwise fall back to imageUrls
   const mediaUrlsFromMedia = requestData.media
     ?.map((m) => m.url)
@@ -1687,33 +1698,96 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🚀 Create the post (ONLY ONE POST, even with variants)
-    console.log(
-      `📝 [POST CREATION START] ${requestId} - Creating SINGLE post with variants:`,
-      {
-        platforms: requestData.platforms,
-        platformCount: requestData.platforms.length,
-        hasVariants: !!requestData.variants,
-        variantPlatforms: requestData.variants
-          ? Object.keys(requestData.variants)
-          : [],
+    // 🚀 Create or Load the post
+    let result: {
+      success: boolean;
+      postId?: string;
+      post?: any;
+      error?: string;
+    };
+
+    if (requestData.postId) {
+      // EXISTING POST: Load the post by ID (for publishing existing posts with variants)
+      try {
+        const { jazzServerWorker } = await import("@/utils/jazzServer");
+        const { Post } = await import("@/app/schema");
+        const worker = await jazzServerWorker;
+
+        if (!worker) {
+          throw new Error("Server worker not available");
+        }
+
+        const existingPost = await Post.load(requestData.postId, {
+          loadAs: worker,
+          resolve: {
+            variants: { $each: true },
+          },
+        });
+
+        if (!existingPost) {
+          throw new Error(`Post ${requestData.postId} not found`);
+        }
+
+        // Extract base content from the post's base variant (for preparePublishRequests)
+        const baseVariant = existingPost.variants?.base;
+        if (!requestData.content && baseVariant?.text) {
+          requestData.content = baseVariant.text.toString();
+        }
+
+        result = {
+          success: true,
+          postId: requestData.postId,
+          post: existingPost,
+        };
+      } catch (loadError) {
+        console.error(`❌ [POST LOAD FAILED] ${requestId}:`, loadError);
+        result = {
+          success: false,
+          error:
+            loadError instanceof Error
+              ? loadError.message
+              : "Failed to load post",
+        };
       }
-    );
+    } else {
+      // NEW POST: Create the post (requires content)
+      if (!requestData.content) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Content is required when creating a new post",
+          },
+          { status: 400 }
+        );
+      }
 
-    const result = await createPost(requestData, user);
-
-    if (result.success && result.post) {
       console.log(
-        `✅ [POST CREATION SUCCESS] ${requestId} - SINGLE post created:`,
+        `📝 [POST CREATION START] ${requestId} - Creating SINGLE post with variants:`,
         {
-          postId: result.postId,
-          variantCount: Object.keys(result.post.variants || {}).length,
-          variantPlatforms: Object.keys(result.post.variants || {}),
-          totalVariantsInPost: Object.keys(result.post.variants || {}).length,
+          platforms: requestData.platforms,
+          platformCount: requestData.platforms.length,
+          hasVariants: !!requestData.variants,
+          variantPlatforms: requestData.variants
+            ? Object.keys(requestData.variants)
+            : [],
         }
       );
-    } else {
-      console.error(`❌ [POST CREATION FAILED] ${requestId}:`, result.error);
+
+      result = await createPost(requestData, user);
+
+      if (result.success && result.post) {
+        console.log(
+          `✅ [POST CREATION SUCCESS] ${requestId} - SINGLE post created:`,
+          {
+            postId: result.postId,
+            variantCount: Object.keys(result.post.variants || {}).length,
+            variantPlatforms: Object.keys(result.post.variants || {}),
+            totalVariantsInPost: Object.keys(result.post.variants || {}).length,
+          }
+        );
+      } else {
+        console.error(`❌ [POST CREATION FAILED] ${requestId}:`, result.error);
+      }
     }
 
     // 🚀 Publish the post (if immediate or scheduled)

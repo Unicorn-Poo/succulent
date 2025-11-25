@@ -293,53 +293,45 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 		// Only include known safe variants to avoid corrupted ones
 		const platforms = ['base']; // Start with just base variant to avoid corruption
 		
-		// Get list of actually connected platforms from accountGroup
-		const connectedPlatforms = new Set<string>();
-		if (accountGroup?.accounts) {
-			if (Array.isArray(accountGroup.accounts)) {
-				// Jazz CoList
-				(accountGroup.accounts as any[]).forEach(acc => {
-					if (acc?.platform && acc?.isLinked !== false) {
-						connectedPlatforms.add(acc.platform);
-					}
-				});
-			} else {
-				// Legacy object
-				Object.entries(accountGroup.accounts).forEach(([key, acc]: [string, any]) => {
-					if (acc?.platform && acc?.isLinked !== false) {
-						connectedPlatforms.add(acc.platform);
-					}
-				});
-			}
-		}
+		// Get list of valid platform names for validation
+		const validPlatformNames = new Set<string>(PlatformNames);
+		
+		// Debug: Log all variant keys to diagnose platform detection issues
+		const allVariantKeys = Object.keys(currentPost.variants || {});
+		console.log('🔍 [VARIANT DETECTION] Post ID:', currentPost.id);
+		console.log('🔍 [VARIANT DETECTION] All variant keys:', allVariantKeys);
+		console.log('🔍 [VARIANT DETECTION] Valid platform names:', Array.from(validPlatformNames));
 		
 		// Safely check for additional variants without triggering Jazz loading errors
+		// IMPORTANT: Do NOT delete variants for unconnected platforms - they may have been
+		// created intentionally via the API for scheduled posts
 		try {
-			Object.keys(currentPost.variants || {}).forEach(key => {
+			allVariantKeys.forEach(key => {
 				if (key !== "title" && key !== "base" && key !== 'co_zerhbvzPjo6yVD4HZ7URSzung3k') {
-					// Only add if it's a valid platform key, not corrupted, AND actually connected
+					// Only add if it's a valid platform key (in PlatformNames) and not corrupted
 					try {
 						const variant = currentPost.variants[key];
-						if (variant && variant.text !== null && variant.text !== undefined) {
-							// Only include if this platform is actually connected
-							if (connectedPlatforms.has(key)) {
-								platforms.push(key);
-							} else {
-								// Remove the variant for unconnected platforms
-								delete currentPost.variants[key];
-							}
+						const isValidPlatform = validPlatformNames.has(key);
+						const hasValidText = variant && variant.text !== null && variant.text !== undefined;
+						
+						console.log(`🔍 [VARIANT CHECK] Key: ${key}, isValidPlatform: ${isValidPlatform}, hasValidText: ${hasValidText}, variant exists: ${!!variant}`);
+						
+						if (hasValidText && isValidPlatform) {
+							platforms.push(key);
+							console.log(`✅ [VARIANT ADDED] Added platform: ${key}`);
 						}
 					} catch (e) {
-						console.warn(`Skipping corrupted variant: ${key}`);
+						console.warn(`Skipping corrupted variant: ${key}`, e);
 					}
 				}
 			});
 		} catch (error) {
-			console.warn('Error accessing variants, using base only:', error);
+			console.error('Error accessing variants, using base only:', error);
 		}
 		
+		console.log('🔍 [VARIANT DETECTION] Final selectedPlatforms:', platforms);
 		setSelectedPlatforms(platforms);
-	}, [currentPost.variants, accountGroup.accounts]);
+	}, [currentPost.variants, currentPost.id]);
 
 	useEffect(() => {
 		setShowSaveButton(hasUnsavedChanges);
@@ -480,224 +472,66 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
 		try {
 			const platforms = selectedPlatforms.filter(p => p !== "base");
-			const postText = post.variants[activeTab]?.text?.toString() || "";
-
-			if (!postText.trim()) {
+			
+			// Validate that the base variant has content
+			const baseContent = post.variants?.base?.text?.toString() || "";
+			if (!baseContent.trim()) {
 				throw new Error("Post content cannot be empty");
 			}
 
 			// =============================================================================
-			// 🆓 FREE ACCOUNT MODE (ACTIVE FOR DEVELOPMENT)
+			// 🚀 UNIFIED PUBLISHING VIA /api/posts (handles variants properly)
 			// =============================================================================
-			if (!isBusinessPlanMode()) {
-				// Debug media extraction
-				// FIXED: Clean media URL extraction
-				const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
-					console.log(`📷 Processing media item ${index}:`, {
-						type: item?.type,
-						hasUrl: !!(item as any)?.url,
-						hasImage: !!(item as any)?.image,
-						hasVideo: !!(item as any)?.video
-					});
-					
-					// Handle URL-based media from API posts
-					if (item?.type === "url-image" || item?.type === "url-video") {
-						const url = (item as any).url;
-						console.log(`📷 Found URL media: ${url}`);
-						return typeof url === 'string' ? url : null;
-					}
-					
-					// Handle uploaded images - convert FileStream to proxy URL
-					if (item?.type === "image" && (item as any).image) {
-						const fileStream = (item as any).image;
-						const fileStreamId = fileStream?.id;
-						
-						if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
-							const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
-							console.log(`📷 Created proxy URL for image: ${proxyUrl}`);
-							return proxyUrl;
-						} else {
-							console.warn(`⚠️ Invalid FileStream ID for image:`, fileStreamId);
-							return null;
-						}
-					}
-					
-					// Handle uploaded videos - convert FileStream to proxy URL
-					if (item?.type === "video" && (item as any).video) {
-						const fileStream = (item as any).video;
-						const fileStreamId = fileStream?.id;
-						
-						if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
-							const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
-							console.log(`📷 Created proxy URL for video: ${proxyUrl}`);
-							return proxyUrl;
-						} else {
-							console.warn(`⚠️ Invalid FileStream ID for video:`, fileStreamId);
-							return null;
-						}
-					}
-					
-					console.log(`📷 No valid media URL for item ${index}`);
-					return null;
-				}).filter((url): url is string => typeof url === 'string') || [];
+			// Instead of calling handleStandardPost directly (which sends the same content
+			// to all platforms), we call /api/posts with the post ID. The server will:
+			// 1. Load the saved post with all variants
+			// 2. Use preparePublishRequests() to create platform-specific requests
+			// 3. Each platform gets its own variant content/media
 
-				// Final validation: ensure all URLs are valid
-				const publicMediaUrls = mediaUrls.filter(url => 
-					url.startsWith('http://') || url.startsWith('https://')
-				);
-				
-				console.log('📷 Final extracted mediaUrls:', publicMediaUrls);
-
-				// Debug platform detection
-				console.log('🔍 Platforms being sent:', platforms);
-				console.log('🔍 Contains twitter:', platforms.includes('twitter'));
-				console.log('🔍 Contains x:', platforms.includes('x'));
-				
-				const hasTwitter = platforms.includes('twitter') || platforms.includes('x');
-				console.log('🔍 Should enable Twitter options:', hasTwitter);
-				
-				const twitterOptions = hasTwitter ? {
-					thread: true,
-					threadNumber: true
-				} : undefined;
-				
-				console.log('🔍 Twitter options created:', twitterOptions);
-
-				const basePostData: PostData = {
-					post: postText,
-					platforms,
-					mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
-					scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined,
-					// Enable auto-threading for Twitter when post is too long
-					twitterOptions
-				};
-				
-				// Debug the final post data being sent to Ayrshare
-				console.log('🚀 Final basePostData being sent to Ayrshare:', JSON.stringify(basePostData, null, 2));
-
-				// Warn user if media was filtered out
-				if (mediaUrls.length > 0 && publicMediaUrls.length === 0) {
-					const hasLunaryUrls = mediaUrls.some(url => url.includes('lunary.app'));
-					if (hasLunaryUrls) {
-						setErrors(["⚠️ Media URLs removed: The Lunary OG image URLs cannot be accessed by Ayrshare. The post will be published without media. Consider uploading the image directly or using a different image source."]);
-						// Continue with posting but without media
-					} else {
-						setErrors(["⚠️ Media URLs removed: Ayrshare cannot access localhost URLs. Deploy your media to a public URL or use external media sources."]);
-						return;
-					}
-				}
-
-				console.log('📷 Final PostData being sent:', {
-					...basePostData,
-					mediaUrls: basePostData.mediaUrls
-				});
-
-				let results;
-
-				if (seriesType === "reply" && replyUrl) {
-					results = await handleReplyPost(basePostData, replyUrl);
-				} else if (seriesType === "thread" && contextText?.trim()) {
-					const threadPosts = generateThreadPreview(contextText);
-					results = await handleMultiPosts(basePostData, threadPosts);
-				} else {
-					results = await handleStandardPost(basePostData);
-				}
-
-				setSuccess("Post published successfully!");
-				// setResults(results); // This state is not defined in the original file
-				return;
-			}
-
-			// =============================================================================
-			// 🚀 BUSINESS PLAN MODE (ACTIVE)
-			// =============================================================================
-			
-			// Business Plan mode - requires profile keys
-			const profileKey = accountGroup.ayrshareProfileKey;
-
-			if (!profileKey) {
-				throw new Error("No Ayrshare profile found for this account group. Please check the account group settings.");
-			}
-
-			const mediaUrls = post.variants[activeTab]?.media?.map((item, index) => {
-				console.log(`📷 Processing media item ${index}:`, {
-					type: item?.type,
-					hasUrl: !!(item as any)?.url,
-					hasImage: !!(item as any)?.image,
-					hasVideo: !!(item as any)?.video
-				});
-				
-				// Handle URL-based media from API posts
-				if (item?.type === "url-image" || item?.type === "url-video") {
-					const url = (item as any).url;
-					console.log(`📷 Found URL media: ${url}`);
-					return typeof url === 'string' ? url : null;
-				}
-				
-				// Handle uploaded images - convert FileStream to proxy URL
-				if (item?.type === "image" && (item as any).image) {
-					const fileStream = (item as any).image;
-					const fileStreamId = fileStream?.id;
-					
-					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
-						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
-						console.log(`📷 Created proxy URL for image: ${proxyUrl}`);
-						return proxyUrl;
-					} else {
-						console.warn(`⚠️ Invalid FileStream ID for image:`, fileStreamId);
-						return null;
-					}
-				}
-				
-				// Handle uploaded videos - convert FileStream to proxy URL
-				if (item?.type === "video" && (item as any).video) {
-					const fileStream = (item as any).video;
-					const fileStreamId = fileStream?.id;
-					
-					if (typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
-						const proxyUrl = `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
-						console.log(`📷 Created proxy URL for video: ${proxyUrl}`);
-						return proxyUrl;
-					} else {
-						console.warn(`⚠️ Invalid FileStream ID for video:`, fileStreamId);
-						return null;
-					}
-				}
-				
-				console.log(`📷 No valid media URL for item ${index}`);
-				return null;
-			}).filter((url): url is string => typeof url === 'string') || [];
-
-			// Final validation: ensure all URLs are valid
-			const publicMediaUrls = mediaUrls.filter(url => 
-				url.startsWith('http://') || url.startsWith('https://')
-			);
-
-			console.log('📷 Original mediaUrls:', mediaUrls);
-			console.log('📷 Media in cleaned body:', publicMediaUrls);
-			console.log('📷 Media array length:', publicMediaUrls.length);
-
-			const basePostData: PostData = {
-				post: postText,
+			const requestBody: {
+				postId: string;
+				accountGroupId: string;
+				platforms: string[];
+				publishImmediately: boolean;
+				scheduledDate?: string;
+				replyTo?: { url: string };
+				isThread?: boolean;
+				threadPosts?: { content: string }[];
+			} = {
+				postId: post.id,
+				accountGroupId: accountGroup.id,
 				platforms,
-				profileKey,
-				mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
-				scheduleDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined
+				publishImmediately: !scheduledDate,
+				scheduledDate: scheduledDate ? new Date(scheduledDate).toISOString() : undefined,
 			};
 
-			let results;
-
+			// Handle reply posts
 			if (seriesType === "reply" && replyUrl) {
-				results = await handleReplyPost(basePostData, replyUrl);
-			} else if (seriesType === "thread" && contextText?.trim()) {
+				requestBody.replyTo = { url: replyUrl };
+			}
+
+			// Handle thread posts
+			if (seriesType === "thread" && contextText?.trim()) {
 				const threadPosts = generateThreadPreview(contextText);
-				results = await handleMultiPosts(basePostData, threadPosts);
-			} else {
-				results = await handleStandardPost(basePostData);
+				requestBody.isThread = true;
+				requestBody.threadPosts = threadPosts.map(tp => ({ content: tp.content }));
+			}
+
+			const response = await fetch('/api/posts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(requestBody),
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || result.message || 'Failed to publish post');
 			}
 
 			setSuccess("Post published successfully!");
-			// setResults(results); // Uncomment when you add results state if needed
 
 		} catch (error) {
 			// Check if this is a platform authorization error
@@ -727,12 +561,11 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 	}, [
 		selectedPlatforms,
 		post,
-		activeTab,
 		scheduledDate,
 		seriesType,
 		replyUrl,
 		contextText,
-		accountGroup.accounts
+		accountGroup.id,
 	]);
 
 	const handleContentChange = useCallback((newContent: string) => {
