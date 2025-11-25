@@ -2,7 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import * as React from "react";
-import { MessageCircle, CheckSquare, Square, Calendar, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  MessageCircle,
+  CheckSquare,
+  Square,
+  Calendar,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { getPostStatus } from "@/utils/postValidation";
 import { platformIcons } from "@/utils/postConstants";
@@ -11,7 +19,7 @@ interface PostViewsProps {
   posts: any[];
   accountGroupId: string;
   accountGroupName: string;
-  postsFilter: 'all' | 'draft' | 'scheduled' | 'published';
+  postsFilter: "all" | "draft" | "scheduled" | "published";
   selectedPosts: Set<string>;
   onPostSelect: (postId: string, selected: boolean) => void;
   onSelectAll?: () => void;
@@ -21,7 +29,7 @@ interface PostViewsProps {
 function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
   const [imageError, setImageError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  
+
   if (!mediaItem) {
     return (
       <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -29,27 +37,34 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       </div>
     );
   }
-  
+
   // Handle URL-based images (API posts use 'url-image' type)
-  if ((mediaItem.type === 'url-image' || mediaItem.type === 'image') && mediaItem.url) {
+  if (
+    (mediaItem.type === "url-image" || mediaItem.type === "image") &&
+    mediaItem.url
+  ) {
     // Use proxy for external images to avoid CORS issues
-    const isExternalUrl = mediaItem.url.startsWith('http') && 
-      (typeof window === 'undefined' || !mediaItem.url.includes(window.location.hostname));
+    const isExternalUrl =
+      mediaItem.url.startsWith("http") &&
+      (typeof window === "undefined" ||
+        !mediaItem.url.includes(window.location.hostname));
     const imageUrl = isExternalUrl
       ? `/api/image-proxy?url=${encodeURIComponent(mediaItem.url)}`
       : mediaItem.url;
-    
+
     if (imageError) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
           <div className="text-center p-2">
             <span className="text-gray-400 text-2xl block mb-1">📷</span>
-            <span className="text-gray-500 text-xs block">Image unavailable</span>
+            <span className="text-gray-500 text-xs block">
+              Image unavailable
+            </span>
           </div>
         </div>
       );
     }
-    
+
     return (
       <div className="relative w-full h-full bg-gray-100">
         {isLoading && (
@@ -64,7 +79,9 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
           src={imageUrl}
           alt={mediaItem.alt?.toString() || mediaItem.alt || "Post media"}
           fill
-          className={`object-cover ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          className={`object-cover ${
+            isLoading ? "opacity-0" : "opacity-100"
+          } transition-opacity duration-200`}
           onLoadingComplete={() => {
             setIsLoading(false);
           }}
@@ -77,11 +94,15 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       </div>
     );
   }
-  
+
   // Handle FileStream images (Jazz collaborative objects)
-  if (mediaItem.type === 'image' && mediaItem.image) {
+  if (mediaItem.type === "image" && mediaItem.image) {
     const fileStreamId = mediaItem.image?.id;
-    if (fileStreamId && typeof fileStreamId === 'string' && fileStreamId.startsWith('co_')) {
+    if (
+      fileStreamId &&
+      typeof fileStreamId === "string" &&
+      fileStreamId.startsWith("co_")
+    ) {
       const proxyUrl = `/api/media-proxy/${fileStreamId}`;
       return (
         <div className="relative w-full h-full">
@@ -91,7 +112,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
             fill
             className="object-cover"
             onError={() => {
-              console.error('❌ Media proxy failed to load:', proxyUrl);
+              console.error("❌ Media proxy failed to load:", proxyUrl);
             }}
             unoptimized
           />
@@ -99,9 +120,12 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       );
     }
   }
-  
+
   // Handle URL-based videos (API posts use 'url-video' type)
-  if ((mediaItem.type === 'url-video' || mediaItem.type === 'video') && mediaItem.url) {
+  if (
+    (mediaItem.type === "url-video" || mediaItem.type === "video") &&
+    mediaItem.url
+  ) {
     return (
       <div className="relative w-full h-full">
         <video
@@ -118,9 +142,9 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       </div>
     );
   }
-  
+
   // Handle video with thumbnail
-  if (mediaItem.type === 'video' && mediaItem.thumbnail) {
+  if (mediaItem.type === "video" && mediaItem.thumbnail) {
     return (
       <div className="relative w-full h-full">
         <Image
@@ -138,7 +162,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       </div>
     );
   }
-  
+
   // Fallback for unknown media types
   return (
     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -148,31 +172,49 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 }
 
 // Grid View (existing default view)
-export function PostGridView({ posts, accountGroupId, accountGroupName, postsFilter, selectedPosts, onPostSelect }: PostViewsProps) {
+export function PostGridView({
+  posts,
+  accountGroupId,
+  accountGroupName,
+  postsFilter,
+  selectedPosts,
+  onPostSelect,
+}: PostViewsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "published":
+        return "bg-green-100 text-green-800";
+      case "scheduled":
+        return "bg-yellow-100 text-yellow-800";
+      case "draft":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
-  
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'published': return '✓';
-      case 'scheduled': return '⏰';
-      case 'draft': return '📝';
-      default: return '📝';
+      case "published":
+        return "✓";
+      case "scheduled":
+        return "⏰";
+      case "draft":
+        return "📝";
+      default:
+        return "📝";
     }
   };
 
   // Sort posts by date (newest first)
   const sortedPosts = [...posts].sort((a: any, b: any) => {
     const getPostDate = (post: any) => {
-      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
-      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
-      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.variants?.base?.publishedAt)
+        return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor)
+        return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate)
+        return new Date(post.variants.base.postDate);
       if (post.publishedAt) return new Date(post.publishedAt);
       if (post.scheduledFor) return new Date(post.scheduledFor);
       if (post.createdAt) return new Date(post.createdAt);
@@ -184,34 +226,40 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {sortedPosts
-        .filter(post => {
-          if (postsFilter === 'all') return true;
+        .filter((post) => {
+          if (postsFilter === "all") return true;
           const postStatus = getPostStatus(post);
           return postStatus === postsFilter;
         })
         .map((post: any, index: number) => {
           const postId = post.id || post.variants?.base?.id || index;
-          const postTitle = post.title?.toString() || post.title || "Untitled Post";
-          const postContent = post.variants?.base?.text?.toString() || 
-                            post.variants?.base?.text || 
-                            post.content || 
-                            "";
+          const postTitle =
+            post.title?.toString() || post.title || "Untitled Post";
+          const postContent =
+            post.variants?.base?.text?.toString() ||
+            post.variants?.base?.text ||
+            post.content ||
+            "";
           const postStatus = getPostStatus(post);
-          const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
-          const hasMedia = post.variants?.base?.media && post.variants.base.media.length > 0;
+          const postDate =
+            post.variants?.base?.postDate || post.createdAt || new Date();
+          const hasMedia =
+            post.variants?.base?.media && post.variants.base.media.length > 0;
           const isSelected = selectedPosts.has(postId);
           // Extract platform names from variants (excluding 'base')
-          const postPlatforms = post.variants 
-            ? Object.keys(post.variants).filter((key) => key !== 'base')
-            : (post.platforms || []);
-          
+          const postPlatforms = post.variants
+            ? Object.keys(post.variants).filter((key) => key !== "base")
+            : post.platforms || [];
+
           return (
             <div
               key={postId}
               className={`bg-white border-2 rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
-                isSelected ? 'border-lime-400 bg-lime-50' : 'border-gray-200 hover:border-lime-300'
+                isSelected
+                  ? "border-lime-400 bg-lime-50"
+                  : "border-gray-200 hover:border-lime-300"
               }`}
-              style={{ minHeight: '200px' }}
+              style={{ minHeight: "200px" }}
             >
               {/* Selection Checkbox */}
               <div
@@ -236,24 +284,29 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
               >
                 {/* Header with status and date */}
                 <div className="flex items-center justify-between mb-3 pr-8">
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(postStatus)}`}>
-                    {getStatusIcon(postStatus)} {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+                  <div
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      postStatus
+                    )}`}
+                  >
+                    {getStatusIcon(postStatus)}{" "}
+                    {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
                   </div>
                   <div className="text-xs text-gray-500">
                     {new Date(postDate).toLocaleDateString()}
                   </div>
                 </div>
-                
+
                 {/* Title */}
                 <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-lime-600 transition-colors">
                   {postTitle}
                 </h3>
-                
+
                 {/* Content Preview */}
                 <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                   {postContent || "No content"}
                 </p>
-                
+
                 {/* Footer with media indicator and platforms */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-2">
@@ -264,13 +317,16 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {/* Platform icons */}
                     {postPlatforms.length > 0 && (
                       <div className="flex items-center gap-1.5">
                         {postPlatforms.map((platform: string) => {
-                          const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
+                          const iconPath =
+                            platformIcons[
+                              platform as keyof typeof platformIcons
+                            ] || platformIcons.base;
                           return (
                             <Image
                               key={platform}
@@ -286,7 +342,9 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
                       </div>
                     )}
                     <MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
-                    <span className="text-xs text-gray-500 group-hover:text-lime-600">Edit</span>
+                    <span className="text-xs text-gray-500 group-hover:text-lime-600">
+                      Edit
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -298,11 +356,17 @@ export function PostGridView({ posts, accountGroupId, accountGroupName, postsFil
 }
 
 // Image Carousel Component for individual posts
-function ImageCarousel({ mediaItems, postId }: { mediaItems: any[]; postId: string }) {
+function ImageCarousel({
+  mediaItems,
+  postId,
+}: {
+  mediaItems: any[];
+  postId: string;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  
+
   if (!mediaItems || mediaItems.length === 0) return null;
   if (mediaItems.length === 1) {
     return <MediaThumbnail mediaItem={mediaItems[0]} />;
@@ -343,17 +407,21 @@ function ImageCarousel({ mediaItems, postId }: { mediaItems: any[]; postId: stri
     const isRightSwipe = distance < -50;
 
     if (isLeftSwipe) {
-      setCurrentIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
+      setCurrentIndex((prev) =>
+        prev === mediaItems.length - 1 ? 0 : prev + 1
+      );
     }
     if (isRightSwipe) {
-      setCurrentIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
+      setCurrentIndex((prev) =>
+        prev === 0 ? mediaItems.length - 1 : prev - 1
+      );
     }
   };
 
   return (
     <div className="relative w-full h-full group bg-transparent">
       {/* Carousel container */}
-      <div 
+      <div
         className="overflow-hidden w-full h-full bg-transparent"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -364,7 +432,10 @@ function ImageCarousel({ mediaItems, postId }: { mediaItems: any[]; postId: stri
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {mediaItems.map((item, index) => (
-            <div key={`${postId}-${index}`} className="flex-shrink-0 w-full h-full bg-transparent">
+            <div
+              key={`${postId}-${index}`}
+              className="flex-shrink-0 w-full h-full bg-transparent"
+            >
               <MediaThumbnail mediaItem={item} />
             </div>
           ))}
@@ -399,9 +470,9 @@ function ImageCarousel({ mediaItems, postId }: { mediaItems: any[]; postId: stri
               key={index}
               onClick={(e) => handleDotClick(index, e)}
               className={`rounded-full transition-all shadow-lg ${
-                currentIndex === index 
-                  ? 'bg-white w-3 h-3' 
-                  : 'bg-white/60 hover:bg-white/80 w-2 h-2'
+                currentIndex === index
+                  ? "bg-white w-3 h-3"
+                  : "bg-white/60 hover:bg-white/80 w-2 h-2"
               }`}
               aria-label={`Go to image ${index + 1}`}
             />
@@ -420,13 +491,23 @@ function ImageCarousel({ mediaItems, postId }: { mediaItems: any[]; postId: stri
 }
 
 // Image View - Focus on media content with carousel
-export function PostImageView({ posts, accountGroupId, accountGroupName, postsFilter, selectedPosts, onPostSelect }: PostViewsProps) {
+export function PostImageView({
+  posts,
+  accountGroupId,
+  accountGroupName,
+  postsFilter,
+  selectedPosts,
+  onPostSelect,
+}: PostViewsProps) {
   // Sort posts by date (newest first)
   const sortedPosts = [...posts].sort((a: any, b: any) => {
     const getPostDate = (post: any) => {
-      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
-      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
-      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.variants?.base?.publishedAt)
+        return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor)
+        return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate)
+        return new Date(post.variants.base.postDate);
       if (post.publishedAt) return new Date(post.publishedAt);
       if (post.scheduledFor) return new Date(post.scheduledFor);
       if (post.createdAt) return new Date(post.createdAt);
@@ -438,23 +519,25 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {sortedPosts
-        .filter(post => {
-          if (postsFilter === 'all') return true;
+        .filter((post) => {
+          if (postsFilter === "all") return true;
           const postStatus = getPostStatus(post);
           return postStatus === postsFilter;
         })
         .map((post: any, index: number) => {
           const postId = post.id || post.variants?.base?.id || index;
-          const postTitle = post.title?.toString() || post.title || "Untitled Post";
-          const postContent = post.variants?.base?.text?.toString() || 
-                            post.variants?.base?.text || 
-                            post.content || 
-                            "";
+          const postTitle =
+            post.title?.toString() || post.title || "Untitled Post";
+          const postContent =
+            post.variants?.base?.text?.toString() ||
+            post.variants?.base?.text ||
+            post.content ||
+            "";
           const postStatus = getPostStatus(post);
           // Extract platform names from variants (excluding 'base')
-          const postPlatforms = post.variants 
-            ? Object.keys(post.variants).filter((key) => key !== 'base')
-            : (post.platforms || []);
+          const postPlatforms = post.variants
+            ? Object.keys(post.variants).filter((key) => key !== "base")
+            : post.platforms || [];
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
           let mediaItems: any[] = [];
@@ -462,16 +545,16 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
             try {
               if (!collaborativeArray) return [];
               if (Array.isArray(collaborativeArray)) {
-                return collaborativeArray.filter(item => item != null);
+                return collaborativeArray.filter((item) => item != null);
               }
               const array = Array.from(collaborativeArray || []);
-              return array.filter(item => item != null);
+              return array.filter((item) => item != null);
             } catch (error) {
-              console.error('Error accessing media array:', error);
+              console.error("Error accessing media array:", error);
               return [];
             }
           };
-          
+
           if (post.variants?.base?.media) {
             mediaItems = safeArrayAccess(post.variants.base.media);
           }
@@ -490,12 +573,14 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
           }
           const hasMedia = mediaItems.length > 0;
           const isSelected = selectedPosts.has(postId);
-          
+
           return (
             <div
               key={postId}
               className={`aspect-square relative group cursor-pointer rounded-lg overflow-hidden ${
-                isSelected ? 'ring-2 ring-lime-400 ring-offset-2' : 'hover:ring-2 hover:ring-lime-300'
+                isSelected
+                  ? "ring-2 ring-lime-400 ring-offset-2"
+                  : "hover:ring-2 hover:ring-lime-300"
               }`}
             >
               {/* Selection Checkbox */}
@@ -507,9 +592,13 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                   onPostSelect(postId, !isSelected);
                 }}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
-                  isSelected ? 'bg-lime-600 border-2 border-white' : 'bg-black bg-opacity-70 border-2 border-white'
-                }`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+                    isSelected
+                      ? "bg-lime-600 border-2 border-white"
+                      : "bg-black bg-opacity-70 border-2 border-white"
+                  }`}
+                >
                   {isSelected ? (
                     <CheckSquare className="w-4 h-4 text-white fill-white" />
                   ) : (
@@ -520,18 +609,28 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
 
               {/* Status Badge and Platform Icons */}
               <div className="absolute top-2 left-2 z-30 flex items-center gap-2">
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  postStatus === 'published' ? 'bg-green-500 text-white' :
-                  postStatus === 'scheduled' ? 'bg-yellow-500 text-white' :
-                  'bg-gray-500 text-white'
-                }`}>
-                  {postStatus === 'published' ? '✓' : postStatus === 'scheduled' ? '⏰' : '📝'}
+                <div
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    postStatus === "published"
+                      ? "bg-green-500 text-white"
+                      : postStatus === "scheduled"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-gray-500 text-white"
+                  }`}
+                >
+                  {postStatus === "published"
+                    ? "✓"
+                    : postStatus === "scheduled"
+                    ? "⏰"
+                    : "📝"}
                 </div>
                 {/* Platform icons */}
                 {postPlatforms.length > 0 && (
                   <div className="flex items-center gap-1 bg-black bg-opacity-70 rounded-full px-2 py-1">
                     {postPlatforms.map((platform: string) => {
-                      const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
+                      const iconPath =
+                        platformIcons[platform as keyof typeof platformIcons] ||
+                        platformIcons.base;
                       return (
                         <Image
                           key={platform}
@@ -576,13 +675,18 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
                 {/* Hover overlay with post info - Only show on hover */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-end pointer-events-none z-20">
                   <div className="w-full p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                    <h4 className="font-medium text-sm line-clamp-2 mb-1">{postTitle}</h4>
+                    <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                      {postTitle}
+                    </h4>
                     {postContent && (
-                      <p className="text-xs text-gray-200 line-clamp-2">{postContent.substring(0, 80)}...</p>
+                      <p className="text-xs text-gray-200 line-clamp-2">
+                        {postContent.substring(0, 80)}...
+                      </p>
                     )}
                     {hasMedia && mediaItems.length > 1 && (
                       <p className="text-xs text-gray-300 mt-1">
-                        {mediaItems.length} image{mediaItems.length !== 1 ? 's' : ''}
+                        {mediaItems.length} image
+                        {mediaItems.length !== 1 ? "s" : ""}
                       </p>
                     )}
                   </div>
@@ -596,31 +700,50 @@ export function PostImageView({ posts, accountGroupId, accountGroupName, postsFi
 }
 
 // Succinct View - Compact list format
-export function PostSuccinctView({ posts, accountGroupId, accountGroupName, postsFilter, selectedPosts, onPostSelect, onSelectAll }: PostViewsProps) {
+export function PostSuccinctView({
+  posts,
+  accountGroupId,
+  accountGroupName,
+  postsFilter,
+  selectedPosts,
+  onPostSelect,
+  onSelectAll,
+}: PostViewsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'text-green-600';
-      case 'scheduled': return 'text-yellow-600';
-      case 'draft': return 'text-gray-600';
-      default: return 'text-gray-600';
+      case "published":
+        return "text-green-600";
+      case "scheduled":
+        return "text-yellow-600";
+      case "draft":
+        return "text-gray-600";
+      default:
+        return "text-gray-600";
     }
   };
-  
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'published': return <Eye className="w-3 h-3" />;
-      case 'scheduled': return <Calendar className="w-3 h-3" />;
-      case 'draft': return <MessageCircle className="w-3 h-3" />;
-      default: return <MessageCircle className="w-3 h-3" />;
+      case "published":
+        return <Eye className="w-3 h-3" />;
+      case "scheduled":
+        return <Calendar className="w-3 h-3" />;
+      case "draft":
+        return <MessageCircle className="w-3 h-3" />;
+      default:
+        return <MessageCircle className="w-3 h-3" />;
     }
   };
 
   // Sort posts by date (newest first)
   const sortedPosts = [...posts].sort((a: any, b: any) => {
     const getPostDate = (post: any) => {
-      if (post.variants?.base?.publishedAt) return new Date(post.variants.base.publishedAt);
-      if (post.variants?.base?.scheduledFor) return new Date(post.variants.base.scheduledFor);
-      if (post.variants?.base?.postDate) return new Date(post.variants.base.postDate);
+      if (post.variants?.base?.publishedAt)
+        return new Date(post.variants.base.publishedAt);
+      if (post.variants?.base?.scheduledFor)
+        return new Date(post.variants.base.scheduledFor);
+      if (post.variants?.base?.postDate)
+        return new Date(post.variants.base.postDate);
       if (post.publishedAt) return new Date(post.publishedAt);
       if (post.scheduledFor) return new Date(post.scheduledFor);
       if (post.createdAt) return new Date(post.createdAt);
@@ -629,8 +752,8 @@ export function PostSuccinctView({ posts, accountGroupId, accountGroupName, post
     return getPostDate(b).getTime() - getPostDate(a).getTime();
   });
 
-  const filteredPosts = sortedPosts.filter(post => {
-    if (postsFilter === 'all') return true;
+  const filteredPosts = sortedPosts.filter((post) => {
+    if (postsFilter === "all") return true;
     const postStatus = getPostStatus(post);
     return postStatus === postsFilter;
   });
@@ -653,141 +776,151 @@ export function PostSuccinctView({ posts, accountGroupId, accountGroupName, post
         </div>
       )}
       {filteredPosts.map((post: any, index: number) => {
-          const postId = post.id || post.variants?.base?.id || index;
-          const postTitle = post.title?.toString() || post.title || "Untitled Post";
-          const postContent = post.variants?.base?.text?.toString() || 
-                            post.variants?.base?.text || 
-                            post.content || 
-                            "";
-          const postStatus = getPostStatus(post);
-          const postDate = post.variants?.base?.postDate || post.createdAt || new Date();
-          // Extract platform names from variants (excluding 'base')
-          const postPlatforms = post.variants 
-            ? Object.keys(post.variants).filter((key) => key !== 'base')
-            : (post.platforms || []);
-          
-          // Get media items properly using safeArrayAccess
-          const safeArrayAccess = (collaborativeArray: any) => {
-            try {
-              if (!collaborativeArray) return [];
-              if (Array.isArray(collaborativeArray)) {
-                return collaborativeArray.filter(item => item != null);
-              }
-              const array = Array.from(collaborativeArray || []);
-              return array.filter(item => item != null);
-            } catch (error) {
-              console.error('Error accessing media array:', error);
-              return [];
-            }
-          };
-          
-          let mediaItems: any[] = [];
-          if (post.variants?.base?.media) {
-            mediaItems = safeArrayAccess(post.variants.base.media);
-          }
-          // Also check platform variants for media
-          if (mediaItems.length === 0 && post.variants) {
-            for (const variant of Object.values(post.variants)) {
-              const v = variant as any;
-              if (v?.media) {
-                const variantMedia = safeArrayAccess(v.media);
-                if (variantMedia.length > 0) {
-                  mediaItems = variantMedia;
-                  break;
-                }
-              }
-            }
-          }
-          
-          const hasMedia = mediaItems.length > 0;
-          const mediaCount = mediaItems.length;
-          const firstMediaItem = mediaItems[0];
-          const isSelected = selectedPosts.has(postId);
-          
-          return (
-            <div
-              key={postId}
-              className={`bg-white border-2 rounded-lg p-4 hover:shadow-sm transition-all duration-200 group ${
-                isSelected ? 'border-lime-400 bg-lime-50' : 'border-gray-200 hover:border-lime-300'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                {/* Selection Checkbox */}
-                <div
-                  className="cursor-pointer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onPostSelect(postId, !isSelected);
-                  }}
-                >
-                  {isSelected ? (
-                    <CheckSquare className="w-5 h-5 text-lime-600" />
-                  ) : (
-                    <Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </div>
+        const postId = post.id || post.variants?.base?.id || index;
+        const postTitle =
+          post.title?.toString() || post.title || "Untitled Post";
+        const postContent =
+          post.variants?.base?.text?.toString() ||
+          post.variants?.base?.text ||
+          post.content ||
+          "";
+        const postStatus = getPostStatus(post);
+        const postDate =
+          post.variants?.base?.postDate || post.createdAt || new Date();
+        // Extract platform names from variants (excluding 'base')
+        const postPlatforms = post.variants
+          ? Object.keys(post.variants).filter((key) => key !== "base")
+          : post.platforms || [];
 
-                {/* Media thumbnail (if available) */}
-                {hasMedia && firstMediaItem && (
-                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                    <MediaThumbnail mediaItem={firstMediaItem} />
-                  </div>
+        // Get media items properly using safeArrayAccess
+        const safeArrayAccess = (collaborativeArray: any) => {
+          try {
+            if (!collaborativeArray) return [];
+            if (Array.isArray(collaborativeArray)) {
+              return collaborativeArray.filter((item) => item != null);
+            }
+            const array = Array.from(collaborativeArray || []);
+            return array.filter((item) => item != null);
+          } catch (error) {
+            console.error("Error accessing media array:", error);
+            return [];
+          }
+        };
+
+        let mediaItems: any[] = [];
+        if (post.variants?.base?.media) {
+          mediaItems = safeArrayAccess(post.variants.base.media);
+        }
+        // Also check platform variants for media
+        if (mediaItems.length === 0 && post.variants) {
+          for (const variant of Object.values(post.variants)) {
+            const v = variant as any;
+            if (v?.media) {
+              const variantMedia = safeArrayAccess(v.media);
+              if (variantMedia.length > 0) {
+                mediaItems = variantMedia;
+                break;
+              }
+            }
+          }
+        }
+
+        const hasMedia = mediaItems.length > 0;
+        const mediaCount = mediaItems.length;
+        const firstMediaItem = mediaItems[0];
+        const isSelected = selectedPosts.has(postId);
+
+        return (
+          <div
+            key={postId}
+            className={`bg-white border-2 rounded-lg p-4 hover:shadow-sm transition-all duration-200 group ${
+              isSelected
+                ? "border-lime-400 bg-lime-50"
+                : "border-gray-200 hover:border-lime-300"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              {/* Selection Checkbox */}
+              <div
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPostSelect(postId, !isSelected);
+                }}
+              >
+                {isSelected ? (
+                  <CheckSquare className="w-5 h-5 text-lime-600" />
+                ) : (
+                  <Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                 )}
+              </div>
 
-                {/* Post content */}
-                <Link
-                  href={`/account-group/${accountGroupId}/post/${postId}`}
-                  className="flex-1 min-w-0 group-hover:text-lime-600 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 group-hover:text-lime-600 line-clamp-1 mb-1">
-                        {postTitle}
-                      </h3>
-                      <p className="text-sm text-gray-600 line-clamp-1 mb-2">
-                        {postContent || "No content"}
-                      </p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <div className={`flex items-center gap-1 ${getStatusColor(postStatus)}`}>
-                          {getStatusIcon(postStatus)}
-                          <span>{postStatus}</span>
-                        </div>
-                        <span>{new Date(postDate).toLocaleDateString()}</span>
-                        {hasMedia && (
-                          <span className="flex items-center gap-1">
-                            📎 {mediaCount} media
-                          </span>
-                        )}
-                        {/* Platform icons */}
-                        {postPlatforms.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            {postPlatforms.map((platform: string) => {
-                              const iconPath = platformIcons[platform as keyof typeof platformIcons] || platformIcons.base;
-                              return (
-                                <Image
-                                  key={platform}
-                                  src={iconPath}
-                                  alt={platform}
-                                  width={14}
-                                  height={14}
-                                  className="opacity-70"
-                                  title={platform}
-                                />
-                              );
-                            })}
-                          </div>
-                        )}
+              {/* Media thumbnail (if available) */}
+              {hasMedia && firstMediaItem && (
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                  <MediaThumbnail mediaItem={firstMediaItem} />
+                </div>
+              )}
+
+              {/* Post content */}
+              <Link
+                href={`/account-group/${accountGroupId}/post/${postId}`}
+                className="flex-1 min-w-0 group-hover:text-lime-600 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 group-hover:text-lime-600 line-clamp-1 mb-1">
+                      {postTitle}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-1 mb-2">
+                      {postContent || "No content"}
+                    </p>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <div
+                        className={`flex items-center gap-1 ${getStatusColor(
+                          postStatus
+                        )}`}
+                      >
+                        {getStatusIcon(postStatus)}
+                        <span>{postStatus}</span>
                       </div>
+                      <span>{new Date(postDate).toLocaleDateString()}</span>
+                      {hasMedia && (
+                        <span className="flex items-center gap-1">
+                          📎 {mediaCount} media
+                        </span>
+                      )}
+                      {/* Platform icons */}
+                      {postPlatforms.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          {postPlatforms.map((platform: string) => {
+                            const iconPath =
+                              platformIcons[
+                                platform as keyof typeof platformIcons
+                              ] || platformIcons.base;
+                            return (
+                              <Image
+                                key={platform}
+                                src={iconPath}
+                                alt={platform}
+                                width={14}
+                                height={14}
+                                className="opacity-70"
+                                title={platform}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Link>
-              </div>
+                </div>
+              </Link>
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
     </div>
   );
 }
-
-

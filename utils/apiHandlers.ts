@@ -19,6 +19,93 @@ import {
 } from "./ayrshareLogger";
 // Removed duplicate handling - Ayrshare handles duplicates appropriately
 
+const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
+
+/**
+ * Resolve the public base URL for media proxying
+ */
+function resolvePublicBaseUrl(): string {
+  const candidates = [
+    process.env.MEDIA_PROXY_BASE_URL,
+    process.env.NEXT_PUBLIC_MEDIA_PROXY_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+    process.env.APP_BASE_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (!trimmed) continue;
+      const result =
+        trimmed.startsWith("http://") || trimmed.startsWith("https://")
+          ? trimmed
+          : `https://${trimmed}`;
+      console.log("🌐 [BASE URL RESOLVED]", { result, from: candidate });
+      return result;
+    }
+  }
+
+  console.warn("⚠️ [BASE URL FALLBACK] Using localhost - no env vars found");
+  return "http://localhost:3000";
+}
+
+/**
+ * Proxy Lunary OG image URLs for Instagram compatibility
+ */
+function proxyMediaUrlIfNeeded(url: string): string {
+  if (!url || typeof url !== "string") return url;
+  if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
+    try {
+      // Instagram requires file extensions in the URL path
+      // Create proxy URL with .png extension for Instagram compatibility
+      const baseUrl = resolvePublicBaseUrl().replace(/\/$/, ""); // Remove trailing slash
+      const encodedUrl = encodeURIComponent(url);
+      // Use path-based URL with extension instead of query param for Instagram compatibility
+      const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
+      console.log("✅ [PROXY CREATED]", {
+        original: url,
+        proxy: proxyUrl,
+        baseUrl,
+      });
+      return proxyUrl;
+    } catch (error) {
+      console.warn(
+        "⚠️ Failed to build media proxy URL, using original media:",
+        {
+          url,
+          error,
+        }
+      );
+      return url;
+    }
+  }
+  return url;
+}
+
+/**
+ * Normalize media URLs (proxy Lunary URLs, deduplicate)
+ */
+function normalizeMediaUrls(urls?: string[]): string[] {
+  if (!urls || urls.length === 0) return [];
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const rawUrl of urls) {
+    if (typeof rawUrl !== "string") continue;
+    const trimmed = rawUrl.trim();
+    if (!trimmed) continue;
+    const proxied = proxyMediaUrlIfNeeded(trimmed);
+    if (seen.has(proxied)) continue;
+    seen.add(proxied);
+    normalized.push(proxied);
+  }
+
+  return normalized;
+}
+
 /**
  * Interface for post data sent to Ayrshare API
  */
@@ -167,9 +254,13 @@ export const handleStandardPost = async (postData: PostData) => {
     })
   );
 
-  // Validate media URLs are properly formatted and accessible
+  // Validate and proxy media URLs
   if (cleanedBody.mediaUrls && Array.isArray(cleanedBody.mediaUrls)) {
-    const validMediaUrls = cleanedBody.mediaUrls.filter((url: string) => {
+    // First normalize (proxy Lunary URLs, deduplicate)
+    const normalizedUrls = normalizeMediaUrls(cleanedBody.mediaUrls);
+    
+    // Then validate URLs are properly formatted and accessible
+    const validMediaUrls = normalizedUrls.filter((url: string) => {
       if (typeof url !== "string") return false;
       if (!url.startsWith("http://") && !url.startsWith("https://"))
         return false;
@@ -185,8 +276,9 @@ export const handleStandardPost = async (postData: PostData) => {
     if (validMediaUrls.length !== cleanedBody.mediaUrls.length) {
       console.warn("⚠️ Some media URLs were filtered out as invalid:", {
         original: cleanedBody.mediaUrls.length,
+        normalized: normalizedUrls.length,
         valid: validMediaUrls.length,
-        invalid: cleanedBody.mediaUrls.filter(
+        invalid: normalizedUrls.filter(
           (url: string) => !validMediaUrls.includes(url)
         ),
       });
