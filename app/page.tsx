@@ -349,7 +349,7 @@ export default function HomePage() {
                 alt="Succulent"
                 width={280}
                 height={64}
-                className="h-12 sm:h-14 w-auto mb-2 dark:brightness-150 dark:contrast-125"
+                className="h-12 sm:h-14 w-auto mb-2"
                 priority
               />
               <p className="text-gray-600 dark:text-gray-400">
