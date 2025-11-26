@@ -249,6 +249,51 @@ export default function AccountGroupPage() {
       postsArray = safeArrayAccess(jazzAccountGroup.posts);
     }
 
+    // Filter out corrupted/unavailable posts before sorting
+    // This prevents page crashes when a post has invalid Jazz references
+    postsArray = postsArray.filter((post: any, index: number) => {
+      try {
+        // Check if the post exists and has variants
+        if (!post) {
+          console.warn(`⚠️ Skipping null post at index ${index}`);
+          return false;
+        }
+        if (!post.variants) {
+          console.warn(
+            `⚠️ Skipping post without variants at index ${index}:`,
+            post.id
+          );
+          return false;
+        }
+        // Try to access base variant to verify it's loadable
+        const baseVariant = post.variants.base;
+        if (!baseVariant) {
+          console.warn(
+            `⚠️ Skipping post without base variant at index ${index}:`,
+            post.id
+          );
+          return false;
+        }
+        // Try to access text to ensure the variant is fully loaded
+        const text = baseVariant.text;
+        if (text === undefined) {
+          console.warn(
+            `⚠️ Skipping post with unavailable text at index ${index}:`,
+            post.id
+          );
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn(
+          `⚠️ Skipping corrupted post at index ${index}:`,
+          post?.id,
+          e
+        );
+        return false;
+      }
+    });
+
     // Sort by newest first - prioritize publishedAt, then scheduledFor, then createdAt/postDate
     return [...postsArray].sort((a: any, b: any) => {
       const getPostDate = (post: any) => {

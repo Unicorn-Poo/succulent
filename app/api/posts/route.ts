@@ -717,31 +717,49 @@ async function createPostInAccountGroup(
       const variantOverride = request.variants?.[platform];
       const typedVariantData = variantOverride as VariantOverride | undefined;
 
-      let variantText = baseVariant.text;
-      let variantMediaList = baseMediaList;
+      // CRITICAL: Always create SEPARATE Jazz objects for each platform variant
+      // DO NOT share references with base variant - this causes Jazz sync issues
+      // and results in only the first item being saved or "unavailable" errors
+      let variantText: any;
+      let variantMediaList: any;
       const variantPlatformOptions: Record<string, any> = parsePlatformOptions(
         baseVariant.platformOptions
       );
       let edited = false;
       let lastModified: string | undefined = undefined;
 
-      // If platform has explicit variant data, use it (overwrites base)
+      // If platform has explicit variant data, use it
       if (typedVariantData) {
-        // Create variant text from override if provided
+        // Create variant text: use override content if provided, otherwise copy from base
         if (typedVariantData.content) {
           variantText = co
             .plainText()
             .create(typedVariantData.content, { owner: groupOwner });
           edited = true;
           lastModified = new Date().toISOString();
+        } else {
+          // Create a fresh copy of base text for this variant
+          variantText = co
+            .plainText()
+            .create(baseVariant.text?.toString() || request.content, {
+              owner: groupOwner,
+            });
         }
 
-        // Create variant media from override if provided
+        // Create variant media: use override media if provided, otherwise copy from base
         if (typedVariantData.media && typedVariantData.media.length > 0) {
           variantMediaList = await createMediaListFromUrls(
             typedVariantData.media,
             request.alt
           );
+        } else {
+          // Create a fresh media list and copy items from base
+          variantMediaList = co
+            .list(MediaItem)
+            .create([], { owner: groupOwner });
+          for (const item of Array.from(baseMediaList)) {
+            if (item) variantMediaList.push(item);
+          }
         }
 
         // Merge platform options from variant override
@@ -749,6 +767,17 @@ async function createPostInAccountGroup(
           variantPlatformOptions,
           extractOptionFields(typedVariantData)
         );
+      } else {
+        // No explicit variant data - create fresh copies of base content
+        variantText = co
+          .plainText()
+          .create(baseVariant.text?.toString() || request.content, {
+            owner: groupOwner,
+          });
+        variantMediaList = co.list(MediaItem).create([], { owner: groupOwner });
+        for (const item of Array.from(baseMediaList)) {
+          if (item) variantMediaList.push(item);
+        }
       }
 
       // Apply platform-specific options from request level if not already set

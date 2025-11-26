@@ -567,69 +567,93 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
     try {
       const platforms = selectedPlatforms.filter((p) => p !== "base");
+      const postText = post.variants[activeTab]?.text?.toString() || "";
 
-      // Validate that the base variant has content
-      const baseContent = post.variants?.base?.text?.toString() || "";
-      if (!baseContent.trim()) {
+      if (!postText.trim()) {
         throw new Error("Post content cannot be empty");
       }
 
-      // =============================================================================
-      // 🚀 UNIFIED PUBLISHING VIA /api/posts (handles variants properly)
-      // =============================================================================
-      // Instead of calling handleStandardPost directly (which sends the same content
-      // to all platforms), we call /api/posts with the post ID. The server will:
-      // 1. Load the saved post with all variants
-      // 2. Use preparePublishRequests() to create platform-specific requests
-      // 3. Each platform gets its own variant content/media
+      // Extract media URLs from the active variant
+      const mediaUrls =
+        post.variants[activeTab]?.media
+          ?.map((item: any, index: number) => {
+            // Handle URL-based media from API posts
+            if (item?.type === "url-image" || item?.type === "url-video") {
+              const url = item.url;
+              return typeof url === "string" ? url : null;
+            }
 
-      const requestBody: {
-        postId: string;
-        accountGroupId: string;
-        platforms: string[];
-        publishImmediately: boolean;
-        scheduledDate?: string;
-        replyTo?: { url: string };
-        isThread?: boolean;
-        threadPosts?: { content: string }[];
-      } = {
-        postId: post.id,
-        accountGroupId: accountGroup.id,
+            // Handle uploaded images - convert FileStream to proxy URL
+            if (item?.type === "image" && item.image) {
+              const fileStream = item.image;
+              const fileStreamId = fileStream?.id;
+
+              if (
+                typeof fileStreamId === "string" &&
+                fileStreamId.startsWith("co_")
+              ) {
+                return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+              }
+              return null;
+            }
+
+            // Handle uploaded videos - convert FileStream to proxy URL
+            if (item?.type === "video" && item.video) {
+              const fileStream = item.video;
+              const fileStreamId = fileStream?.id;
+
+              if (
+                typeof fileStreamId === "string" &&
+                fileStreamId.startsWith("co_")
+              ) {
+                return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+              }
+              return null;
+            }
+
+            return null;
+          })
+          .filter(
+            (url: string | null): url is string => typeof url === "string"
+          ) || [];
+
+      // Final validation: ensure all URLs are valid
+      const publicMediaUrls = mediaUrls.filter(
+        (url: string) => url.startsWith("http://") || url.startsWith("https://")
+      );
+
+      // Check for Twitter/X and set auto-threading options
+      const hasTwitter =
+        platforms.includes("twitter") || platforms.includes("x");
+      const twitterOptions = hasTwitter
+        ? { thread: true, threadNumber: true }
+        : undefined;
+
+      // Get profile key for Business Plan mode
+      const profileKey = isBusinessPlanMode()
+        ? accountGroup.ayrshareProfileKey
+        : undefined;
+
+      const basePostData: PostData = {
+        post: postText,
         platforms,
-        publishImmediately: !scheduledDate,
-        scheduledDate: scheduledDate
+        profileKey,
+        mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
+        scheduleDate: scheduledDate
           ? new Date(scheduledDate).toISOString()
           : undefined,
+        twitterOptions,
       };
 
-      // Handle reply posts
+      let results;
+
       if (seriesType === "reply" && replyUrl) {
-        requestBody.replyTo = { url: replyUrl };
-      }
-
-      // Handle thread posts
-      if (seriesType === "thread" && contextText?.trim()) {
+        results = await handleReplyPost(basePostData, replyUrl);
+      } else if (seriesType === "thread" && contextText?.trim()) {
         const threadPosts = generateThreadPreview(contextText);
-        requestBody.isThread = true;
-        requestBody.threadPosts = threadPosts.map((tp) => ({
-          content: tp.content,
-        }));
-      }
-
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.error || result.message || "Failed to publish post"
-        );
+        results = await handleMultiPosts(basePostData, threadPosts);
+      } else {
+        results = await handleStandardPost(basePostData);
       }
 
       setSuccess("Post published successfully!");
@@ -665,11 +689,12 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
   }, [
     selectedPlatforms,
     post,
+    activeTab,
     scheduledDate,
     seriesType,
     replyUrl,
     contextText,
-    accountGroup.id,
+    accountGroup.ayrshareProfileKey,
   ]);
 
   const handleContentChange = useCallback((newContent: string) => {
