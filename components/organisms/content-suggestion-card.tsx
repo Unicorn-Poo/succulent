@@ -1,9 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from '../atoms/button';
-import { Check, X, Edit2, RefreshCw, Copy, Calendar, Sparkles } from 'lucide-react';
-import { ContentFeedback } from '../../app/schema';
+import React, { useState } from "react";
+import Image from "next/image";
+import { Button } from "../atoms/button";
+import {
+  Check,
+  X,
+  Edit2,
+  RefreshCw,
+  Copy,
+  Calendar,
+  Sparkles,
+  ImageIcon,
+  Download,
+} from "lucide-react";
+import { ContentFeedback } from "../../app/schema";
 
 interface ContentSuggestionCardProps {
   id: string;
@@ -13,7 +24,7 @@ interface ContentSuggestionCardProps {
   confidenceScore: number;
   hashtags?: string[];
   bestTimeToPost?: string;
-  expectedEngagement?: 'high' | 'medium' | 'low';
+  expectedEngagement?: "high" | "medium" | "low";
   toneUsed?: string;
   accountGroup?: any;
   onAccept?: (content: string, edited?: string) => void;
@@ -30,7 +41,7 @@ export default function ContentSuggestionCard({
   confidenceScore,
   hashtags = [],
   bestTimeToPost,
-  expectedEngagement = 'medium',
+  expectedEngagement = "medium",
   toneUsed,
   accountGroup,
   onAccept,
@@ -41,33 +52,79 @@ export default function ContentSuggestionCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [showRejectReason, setShowRejectReason] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReason, setRejectReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending');
+  const [status, setStatus] = useState<"pending" | "accepted" | "rejected">(
+    "pending"
+  );
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    "quote" | "tip" | "stat" | "announcement"
+  >("quote");
+
+  // Generate OG image URL
+  const getImageUrl = () => {
+    const params = new URLSearchParams({
+      text: editedContent.slice(0, 300), // Limit text length
+      template: selectedTemplate,
+      brand: accountGroup?.brandPersona?.name || "Succulent",
+      color: "#84cc16",
+      platform: platform,
+    });
+    if (contentPillar) params.set("headline", contentPillar);
+    return `/api/og-image?${params.toString()}`;
+  };
+
+  // Download image
+  const handleDownloadImage = async () => {
+    const imageUrl = getImageUrl();
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${contentPillar || "content"}-${platform}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      // Error downloading image
+    }
+  };
 
   const getEngagementColor = (level: string) => {
     switch (level) {
-      case 'high': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800';
-      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
-      case 'low': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
-      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
+      case "high":
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800";
+      case "medium":
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800";
+      case "low":
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800";
+      default:
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700";
     }
   };
 
   const getConfidenceColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 dark:text-green-400';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 80) return "text-green-600 dark:text-green-400";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600 dark:text-red-400";
   };
 
-  const saveFeedback = async (accepted: boolean, reason?: string, edited?: string) => {
+  const saveFeedback = async (
+    accepted: boolean,
+    reason?: string,
+    edited?: string
+  ) => {
     if (!accountGroup) return;
 
     try {
       // Create feedback entry in Jazz
       const feedback = ContentFeedback.create({
         generatedContent: content,
-        contentType: 'post',
+        contentType: "post",
         platform,
         accepted,
         reason: reason || undefined,
@@ -83,7 +140,7 @@ export default function ContentSuggestionCard({
         accountGroup.contentFeedback.push(feedback);
       }
     } catch (error) {
-      console.error('Error saving feedback:', error);
+      console.error("Error saving feedback:", error);
     }
   };
 
@@ -91,9 +148,9 @@ export default function ContentSuggestionCard({
     setIsSubmitting(true);
     const finalContent = isEditing ? editedContent : content;
     const wasEdited = isEditing && editedContent !== content;
-    
+
     await saveFeedback(true, undefined, wasEdited ? editedContent : undefined);
-    setStatus('accepted');
+    setStatus("accepted");
     onAccept?.(finalContent, wasEdited ? editedContent : undefined);
     setIsSubmitting(false);
   };
@@ -105,8 +162,8 @@ export default function ContentSuggestionCard({
     }
 
     setIsSubmitting(true);
-    await saveFeedback(false, rejectReason || 'No reason provided');
-    setStatus('rejected');
+    await saveFeedback(false, rejectReason || "No reason provided");
+    setStatus("rejected");
     onReject?.(rejectReason);
     setIsSubmitting(false);
     setShowRejectReason(false);
@@ -116,7 +173,7 @@ export default function ContentSuggestionCard({
     try {
       await navigator.clipboard.writeText(isEditing ? editedContent : content);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error("Failed to copy:", error);
     }
   };
 
@@ -125,12 +182,14 @@ export default function ContentSuggestionCard({
     onSchedule?.(finalContent);
   };
 
-  if (status === 'accepted') {
+  if (status === "accepted") {
     return (
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
           <Check className="w-5 h-5" />
-          <span className="font-medium text-gray-900 dark:text-gray-100">Content accepted!</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">
+            Content accepted!
+          </span>
         </div>
         <p className="text-sm text-green-600 dark:text-green-400 mt-1">
           This feedback will help improve future suggestions.
@@ -139,13 +198,15 @@ export default function ContentSuggestionCard({
     );
   }
 
-  if (status === 'rejected') {
+  if (status === "rejected") {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
             <X className="w-5 h-5" />
-            <span className="font-medium text-gray-900 dark:text-gray-100">Content rejected</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Content rejected
+            </span>
           </div>
           {onRegenerate && (
             <Button onClick={onRegenerate} variant="outline" size="1">
@@ -155,7 +216,9 @@ export default function ContentSuggestionCard({
           )}
         </div>
         {rejectReason && (
-          <p className="text-sm text-red-600 dark:text-red-400 mt-1">Reason: {rejectReason}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+            Reason: {rejectReason}
+          </p>
         )}
       </div>
     );
@@ -169,17 +232,25 @@ export default function ContentSuggestionCard({
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
             <span className="font-medium text-gray-900 dark:text-gray-100">
-              {contentPillar ? `${contentPillar}` : 'AI Generated Content'}
+              {contentPillar ? `${contentPillar}` : "AI Generated Content"}
             </span>
             <span className="text-xs px-2 py-0.5 bg-white dark:bg-gray-900 rounded-full text-gray-600 dark:text-gray-400 capitalize">
               {platform}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-semibold ${getConfidenceColor(confidenceScore)}`}>
+            <span
+              className={`text-sm font-semibold ${getConfidenceColor(
+                confidenceScore
+              )}`}
+            >
               {confidenceScore}% match
             </span>
-            <span className={`text-xs px-2 py-1 rounded-full border ${getEngagementColor(expectedEngagement)}`}>
+            <span
+              className={`text-xs px-2 py-1 rounded-full border ${getEngagementColor(
+                expectedEngagement
+              )}`}
+            >
               {expectedEngagement} engagement
             </span>
           </div>
@@ -240,23 +311,67 @@ export default function ContentSuggestionCard({
               placeholder="e.g., Too formal, wrong topic, doesn't match our voice..."
             />
             <div className="flex gap-2 mt-2">
-              <Button 
-                onClick={handleReject} 
-                size="1" 
+              <Button
+                onClick={handleReject}
+                size="1"
                 className="bg-red-600 hover:bg-red-700"
                 disabled={isSubmitting}
               >
                 Confirm Reject
               </Button>
-              <Button 
-                onClick={() => setShowRejectReason(false)} 
-                variant="outline" 
+              <Button
+                onClick={() => setShowRejectReason(false)}
+                variant="outline"
                 size="1"
               >
                 Cancel
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Preview */}
+      {showImagePreview && (
+        <div className="p-4 bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Template:
+              </span>
+              <select
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value as any)}
+                className="text-sm bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white"
+              >
+                <option value="quote">Quote Card</option>
+                <option value="tip">Tip Card</option>
+                <option value="stat">Stat Card</option>
+                <option value="announcement">Announcement</option>
+              </select>
+            </div>
+            <Button
+              onClick={handleDownloadImage}
+              variant="outline"
+              size="1"
+              className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download
+            </Button>
+          </div>
+          <div className="relative aspect-square max-w-md mx-auto rounded-lg overflow-hidden">
+            <Image
+              src={getImageUrl()}
+              alt="Generated image preview"
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+          <p className="text-xs text-gray-400 text-center mt-2">
+            Image sized for {platform} • Click download to save
+          </p>
         </div>
       )}
 
@@ -272,7 +387,7 @@ export default function ContentSuggestionCard({
                 className="text-gray-600 dark:text-gray-400"
               >
                 <Edit2 className="w-4 h-4 mr-1" />
-                {isEditing ? 'Preview' : 'Edit'}
+                {isEditing ? "Preview" : "Edit"}
               </Button>
               <Button
                 onClick={handleCopy}
@@ -294,6 +409,19 @@ export default function ContentSuggestionCard({
                   Regenerate
                 </Button>
               )}
+              <Button
+                onClick={() => setShowImagePreview(!showImagePreview)}
+                variant="outline"
+                size="1"
+                className={
+                  showImagePreview
+                    ? "text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                    : "text-gray-600 dark:text-gray-400"
+                }
+              >
+                <ImageIcon className="w-4 h-4 mr-1" />
+                Image
+              </Button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -334,4 +462,3 @@ export default function ContentSuggestionCard({
     </div>
   );
 }
-
