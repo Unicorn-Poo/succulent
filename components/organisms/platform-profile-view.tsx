@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button, Badge, Tabs, Text } from "@radix-ui/themes";
 import { Grid, List, Filter, ArrowLeft, Layout, BarChart3, Users } from "lucide-react";
 import InstagramPreview from "./platform-previews/instagram-preview";
@@ -125,10 +126,13 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (mediaItem?.type === 'image') {
 		return (
-			<img
+			<Image
 				src={imageUrl}
 				alt={mediaItem.alt?.toString() || "Post image"}
-				className="w-full h-full object-cover"
+				className="object-cover"
+				fill
+				sizes="(max-width: 768px) 100vw, 300px"
+				unoptimized
 			/>
 		);
 	} else if (mediaItem?.type === 'video') {

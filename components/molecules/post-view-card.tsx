@@ -1,6 +1,7 @@
 import { Card } from "@radix-ui/themes";
 import { FlowerIcon as Butterfly, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import { memo, useMemo } from "react";
+import Image from "next/image";
 import type { BaseComponentProps } from "@/types";
 
 interface PostViewCardProps extends BaseComponentProps {
@@ -34,11 +35,13 @@ export const PostViewCard = memo(function PostViewCard({
   const imageComponent = useMemo(() => {
     if (imageUrl) {
       return (
-        <img
+        <Image
           src={imageUrl}
           alt="Post image"
+          width={128}
+          height={128}
           className="w-32 h-32 rounded-2xl object-cover"
-          loading="lazy"
+          unoptimized
         />
       );
     }

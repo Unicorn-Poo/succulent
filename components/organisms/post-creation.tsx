@@ -2371,7 +2371,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			{/* Delete Confirmation Dialog */}
 			{showDeleteDialog && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white dark:bg-gray-900 dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+					<div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
 						<div className="flex items-center gap-3 mb-4">
 							<div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center">
 								<AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -2380,13 +2380,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white">
 									Delete Post
 								</h3>
-								<p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
+								<p className="text-sm text-gray-600 dark:text-gray-400">
 									This action cannot be undone
 								</p>
 							</div>
 						</div>
 						
-						<p className="text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-6">
+						<p className="text-gray-700 dark:text-gray-300 mb-6">
 							Are you sure you want to delete &quot;{title || 'Untitled Post'}&quot;? This will permanently remove the post and all its content.
 						</p>
 						

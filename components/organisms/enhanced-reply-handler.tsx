@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button, Card, Text, TextField, Badge } from "@radix-ui/themes";
 import { 
   MessageCircle, 
@@ -194,10 +195,13 @@ export default function EnhancedReplyHandler({
     >
       <div className="flex items-start gap-3">
         {comment.authorAvatar && (
-          <img 
+          <Image 
             src={comment.authorAvatar} 
             alt={comment.author}
-            className="w-8 h-8 rounded-full"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full object-cover"
+            unoptimized
           />
         )}
         <div className="flex-1 min-w-0">

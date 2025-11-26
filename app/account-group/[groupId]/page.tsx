@@ -520,22 +520,22 @@ export default function AccountGroupPage() {
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:h-16 gap-3 sm:gap-0">
             <div className="flex items-center">
-              <Link href="/" className="text-gray-500 hover:text-gray-700 mr-4">
+              <Link href="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mr-3 sm:mr-4 min-w-[44px] min-h-[44px] flex items-center justify-center">
                 <Home className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[200px] sm:max-w-none">
                   {accountGroup.name || "Account Group"}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {accounts.length} account{accounts.length !== 1 ? "s" : ""} •{" "}
                   {posts.length} post{posts.length !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               <GrowthQuickAccess
                 platform={
                   accounts.find((acc) => acc.isLinked)?.platform || "instagram"
@@ -615,34 +615,42 @@ export default function AccountGroupPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
-          <Tabs.List>
-            <Tabs.Trigger value="posts">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Posts
-            </Tabs.Trigger>
-            <Tabs.Trigger value="analytics">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
-            </Tabs.Trigger>
-            <Tabs.Trigger value="tools">
-              <Settings className="w-4 h-4 mr-2" />
-              Enhanced Tools
-            </Tabs.Trigger>
-            <Tabs.Trigger value="accounts">
-              <Users className="w-4 h-4 mr-2" />
-              Accounts
-            </Tabs.Trigger>
-            <Tabs.Trigger value="calendar">
-              <Calendar className="w-4 h-4 mr-2" />
-              Calendar
-            </Tabs.Trigger>
-            <Tabs.Trigger value="settings">
-              <Cog className="w-4 h-4 mr-2" />
-              Settings
-            </Tabs.Trigger>
-          </Tabs.List>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <Tabs.List className="min-w-max">
+              <Tabs.Trigger value="posts" className="min-h-[44px]">
+                <MessageCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Posts</span>
+                <span className="sm:hidden">Posts</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="analytics" className="min-h-[44px]">
+                <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Analytics</span>
+                <span className="sm:hidden">Stats</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="tools" className="min-h-[44px]">
+                <Settings className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Enhanced Tools</span>
+                <span className="sm:hidden">Tools</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="accounts" className="min-h-[44px]">
+                <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Accounts</span>
+                <span className="sm:hidden">Accts</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="calendar" className="min-h-[44px]">
+                <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Calendar</span>
+                <span className="sm:hidden">Cal</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="settings" className="min-h-[44px]">
+                <Cog className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Settings</span>
+                <span className="sm:hidden">Set</span>
+              </Tabs.Trigger>
+            </Tabs.List>
+          </div>
 
           {/* Settings Tab - Delete Account Group */}
           <Tabs.Content value="settings" className="mt-6">
@@ -737,12 +745,12 @@ export default function AccountGroupPage() {
             ) : (
               <div className="space-y-6">
                 {/* Posts Header with Filters and View Selector */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                       Posts
                     </h2>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       {(() => {
                         const filterCounts = {
                           all: posts.length,
@@ -764,9 +772,9 @@ export default function AccountGroupPage() {
                   </div>
 
                   {/* Filter Controls and View Selector */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                     {/* Filter Controls */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
                       {[
                         { key: "all", label: "All", icon: List },
                         { key: "draft", label: "Drafts", icon: MessageCircle },

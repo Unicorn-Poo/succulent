@@ -304,7 +304,7 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 						<div className="w-full h-full flex items-center justify-center">
 							<div className="text-center">
 								<div className="w-12 h-12 border-4 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-								<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm font-medium">Loading media...</p>
+								<p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Loading media...</p>
 								<div className="mt-2 w-24 h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
 									<div className="h-full bg-lime-500 rounded-full animate-pulse" style={{ width: '60%' }} />
 								</div>
@@ -320,8 +320,8 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 								<div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 mx-auto">
 									<X className="w-8 h-8 text-red-500" />
 								</div>
-								<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 font-medium">Failed to load media</p>
-								<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2">
+								<p className="text-gray-600 dark:text-gray-400 font-medium">Failed to load media</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-2">
 									{(mediaItem?.type === 'image' || mediaItem?.type === 'url-image') ? 'Image' : 'Video'} unavailable
 								</p>
 
@@ -408,8 +408,8 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 							<div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 mx-auto">
 								<X className="w-8 h-8 text-gray-500 dark:text-gray-400" />
 							</div>
-							<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 font-medium">Unsupported media type</p>
-							<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
+							<p className="text-gray-600 dark:text-gray-400 font-medium">Unsupported media type</p>
+							<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
 							<p className="text-xs text-red-500 mt-1">Check console for debug info</p>
 						</div>
 					</div>

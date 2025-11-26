@@ -186,10 +186,13 @@ export const InstagramPreview = ({
 					{/* Profile Picture with Story Ring */}
 					<div className="relative mr-3">
 						<div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
-							<img
+							<Image
 								src={authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&fit=crop&crop=face"}
 								alt={authorName}
+								width={32}
+								height={32}
 								className="w-full h-full rounded-full object-cover bg-white dark:bg-gray-900 p-0.5"
+								unoptimized
 							/>
 						</div>
 					</div>
@@ -831,10 +834,14 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 	}
 
 	return (
-		<img
+		<Image
 			src={dataUrl}
 			alt={alt}
 			className={className}
+			width={400}
+			height={400}
+			style={{ objectFit: 'cover' }}
+			unoptimized
 		/>
 	);
 };
@@ -926,15 +933,13 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		
 		return (
 			<div className="relative w-full h-full">
-				<img
+				<Image
 					src={imageUrl}
 					alt={item.alt || ""}
 					className={commonClass}
-					style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-					onError={(e) => {
-						console.error('Image failed to load:', imageUrl, e);
-					}}
-					crossOrigin="anonymous"
+					fill
+					style={{ objectFit: 'cover' }}
+					unoptimized
 				/>
 			</div>
 		);

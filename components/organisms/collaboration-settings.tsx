@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Dialog, TextField, Button, Select, Badge, Card, Text, Heading, Box, Flex } from "@radix-ui/themes";
 import { Plus, UserPlus, Settings, Mail, Copy, Check, X, Crown, Shield, Edit, Eye } from "lucide-react";
 import { AccountGroup, CollaboratorRole } from "@/app/schema";
@@ -188,10 +189,13 @@ export function CollaborationSettings({ accountGroup, onClose }: CollaborationSe
                 {collaborators.map((collaborator) => (
                   <Flex key={collaborator.id} justify="between" align="center" py="2">
                     <Flex align="center" gap="3">
-                      <img
+                      <Image
                         src={collaborator.avatar}
                         alt={collaborator.name}
-                        className="w-8 h-8 rounded-full"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover"
+                        unoptimized
                       />
                       <Box>
                         <Text size="2" weight="medium">

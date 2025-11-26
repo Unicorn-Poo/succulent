@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from '../atoms/button';
 import { Input } from '../atoms/input';
 
@@ -340,10 +341,13 @@ export default function CompetitorAnalysisDashboard({
                         {/* Profile Info */}
                         <div className="p-4 border rounded-lg">
                           <div className="flex items-center space-x-4 mb-4">
-                            <img
+                            <Image
                               src={comp.competitor.avatar}
                               alt={comp.competitor.username}
-                              className="w-16 h-16 rounded-full"
+                              width={64}
+                              height={64}
+                              className="w-16 h-16 rounded-full object-cover"
+                              unoptimized
                             />
                             <div>
                               <h4 className="font-bold text-lg">

@@ -147,17 +147,15 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 									{/* Handle different media types - both uploaded and URL-based */}
 									{((mediaItem as any)?.type === 'url-image' && (mediaItem as any)?.url) ? (
 										<>
-											<img
+											<Image
 												src={(mediaItem as any).url}
 												alt={(mediaItem as any).alt?.toString?.() || (mediaItem as any).alt || "API image"}
-												className="w-full h-full object-cover"
-												onLoad={() => {}}
-												onError={(e) => {
-													console.error('❌ Image failed to load:', (mediaItem as any).url);
-													(e.target as HTMLImageElement).style.display = 'none';
-												}}
+												className="object-cover"
+												fill
+												sizes="(max-width: 768px) 100vw, 300px"
+												unoptimized
 											/>
-											<div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-1 rounded">
+											<div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-1 rounded z-10">
 												URL: {(mediaItem as any).url}
 											</div>
 										</>
@@ -192,7 +190,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 							variant="outline"
 							size="2"
 							onClick={handleImageUpload}
-							className="flex items-center gap-2 text-gray-700 dark:text-gray-300 dark:text-gray-300 hover:text-lime-600 dark:text-lime-400 hover:border-lime-500 transition-colors duration-200"
+							className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-lime-600 dark:text-lime-400 hover:border-lime-500 transition-colors duration-200"
 						>
 							<Plus className="w-4 h-4" />
 							Add More
@@ -204,13 +202,13 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 			{/* Simplified Delete Confirmation Modal */}
 			{showDeleteConfirm && (
 				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-					<div className="bg-white dark:bg-gray-900 dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
+					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
 						<div className="text-center">
 							<div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
 								<Trash2 className="w-6 h-6 text-red-500" />
 							</div>
 							<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white mb-2">Delete Media</h3>
-							<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-6">
+							<p className="text-gray-600 dark:text-gray-400 mb-6">
 								Are you sure you want to delete this media?
 							</p>
 							
@@ -288,7 +286,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 			<div className="w-full h-[400px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
 				<div className="text-center">
 					<div className="w-8 h-8 border-2 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-					<p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-sm">Loading...</p>
+					<p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
 				</div>
 			</div>
 		);

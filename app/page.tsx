@@ -5,6 +5,7 @@ import { Dialog, TextField, TextArea } from "@radix-ui/themes";
 import { Button } from "@/components/atoms/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
 import {
   AccountGroup,
@@ -343,9 +344,14 @@ export default function HomePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Succulent 🌱
-              </h1>
+              <Image
+                src="/succulent-namemark.png"
+                alt="Succulent"
+                width={280}
+                height={64}
+                className="h-12 sm:h-14 w-auto mb-2 dark:brightness-150 dark:contrast-125"
+                priority
+              />
               <p className="text-gray-600 dark:text-gray-400">
                 Your social media management platform
               </p>
@@ -413,9 +419,13 @@ export default function HomePage() {
                       }
                     >
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-lg black dark:white">
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
                           {group.name}
                         </h3>
+                        <div
+                          className="w-2 h-2 bg-lime-500 rounded-full"
+                          title="Jazz Collaborative"
+                        ></div>
                       </div>
 
                       <div className="space-y-2">
@@ -464,7 +474,7 @@ export default function HomePage() {
               <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
                 Create Account Group
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {me?.root?.accountGroups
                   ? "Connect your social media accounts"
                   : "Loading Jazz system..."}

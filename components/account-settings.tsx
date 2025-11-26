@@ -18,7 +18,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-									<div className="flex items-center justify-center w-10 h-10 bg-lime-100 dark:bg-lime-900/30 dark:bg-lime-900/30 rounded-lg">
+									<div className="flex items-center justify-center w-10 h-10 bg-lime-100 dark:bg-lime-900/30 rounded-lg">
 					<Settings className="w-5 h-5 text-lime-600 dark:text-lime-400" />
 					</div>
 					<div>
@@ -61,7 +61,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 					<Card>
 						<div className="p-6">
 							<div className="flex items-center gap-3 mb-6">
-								<User className="w-5 h-5 text-gray-600 dark:text-gray-400 dark:text-gray-400" />
+								<User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
 								<Heading size="4">Profile Information</Heading>
 							</div>
 							
@@ -78,7 +78,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 												account.profile.name = e.target.value;
 											}
 										}}
-										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-white dark:bg-gray-800 dark:text-gray-100"
 										placeholder="Enter your display name"
 									/>
 								</div>
