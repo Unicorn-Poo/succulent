@@ -86,7 +86,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <Clock className="w-4 h-4" />,
 					label: 'Gelato Created',
-					color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
+					color: 'text-muted-foreground bg-gray-100 dark:bg-gray-700'
 				};
 			case 'syncing':
 				return {
@@ -110,7 +110,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <Package className="w-4 h-4" />,
 					label: 'Unknown',
-					color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
+					color: 'text-muted-foreground bg-gray-100 dark:bg-gray-700'
 				};
 		}
 	};
@@ -120,7 +120,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 			<Card>
 				<div className="p-6">
 					<div className="flex items-center gap-2 mb-4">
-						<Package className="w-5 h-5 text-gray-400" />
+						<Package className="w-5 h-5 text-muted-foreground" />
 						<Text weight="medium" size="3">Gelato Products</Text>
 					</div>
 					<div className="text-center py-6">
@@ -175,7 +175,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 						const isRetrying = retryingProducts.has(product?.productId);
 
 						return (
-							<div key={product?.productId || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
+							<div key={product?.productId || index} className="bg-muted p-4 rounded-lg border">
 								<div className="flex items-start justify-between">
 									<div className="flex-1">
 										<div className="flex items-center gap-2 mb-2">
@@ -188,7 +188,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 											</span>
 										</div>
 										
-										<div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+										<div className="text-sm text-muted-foreground space-y-1">
 											<div>Product ID: {product?.productId || 'Unknown'}</div>
 											<div>
 												Created: {product?.createdAt ? new Date(product.createdAt).toLocaleString() : 'Unknown'}
@@ -203,7 +203,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 
 										{/* Status Message */}
 										{product?.shopifyMessage && (
-											<div className="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 p-2 rounded border">
+											<div className="mt-2 text-sm text-muted-foreground bg-card p-2 rounded border">
 												{product.shopifyMessage}
 											</div>
 										)}
@@ -245,10 +245,10 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				</div>
 
 				{/* Summary Stats */}
-				<div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+				<div className="mt-6 pt-4 border-t border-border">
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
 						<div>
-							<Text weight="medium" size="2" className="block text-gray-900 dark:text-gray-100">
+							<Text weight="medium" size="2" className="block text-foreground">
 								{createdProducts.length}
 							</Text>
 							<Text size="1" color="gray">Total Products</Text>

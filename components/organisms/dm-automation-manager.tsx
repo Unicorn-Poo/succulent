@@ -260,7 +260,7 @@ export default function DMAutomationManager({
     switch (sentiment) {
       case 'positive': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
       case 'negative': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800';
+      default: return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -273,9 +273,9 @@ export default function DMAutomationManager({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">DM Automation Manager</h3>
+        <h3 className="text-lg font-semibold text-foreground">DM Automation Manager</h3>
         <Button onClick={loadConversations} disabled={isLoading} size="sm">
           {isLoading ? 'Loading...' : 'Refresh'}
         </Button>
@@ -296,7 +296,7 @@ export default function DMAutomationManager({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -311,7 +311,7 @@ export default function DMAutomationManager({
           {selectedConversations.length > 0 && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedConversations.length} conversations selected</span>
+                <span className="font-medium text-foreground">{selectedConversations.length} conversations selected</span>
                 <div className="flex items-center space-x-2">
                   <select
                     value={selectedTemplate}
@@ -338,7 +338,7 @@ export default function DMAutomationManager({
               <div
                 key={conversation.id}
                 className={`p-4 border rounded-lg ${
-                  selectedConversations.includes(conversation.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'
+                  selectedConversations.includes(conversation.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border'
                 }`}
               >
                 <div className="flex items-start space-x-3">
@@ -351,7 +351,7 @@ export default function DMAutomationManager({
                   
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{conversation.participantUsername}</span>
+                      <span className="font-medium text-foreground">{conversation.participantUsername}</span>
                       <span className={`px-2 py-1 rounded-full text-xs ${getSentimentColor(conversation.sentiment)}`}>
                         {getSentimentIcon(conversation.sentiment)}
                       </span>
@@ -369,7 +369,7 @@ export default function DMAutomationManager({
                     
                     <p className="text-gray-800 dark:text-gray-200 mb-2">{conversation.lastMessage}</p>
                     
-                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                       <span>{new Date(conversation.lastMessageAt).toLocaleDateString()}</span>
                       <span>{conversation.messageCount} messages</span>
                       <span>{conversation.platform}</span>
@@ -381,7 +381,7 @@ export default function DMAutomationManager({
           </div>
 
           {conversations.length === 0 && !isLoading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No DM conversations found
             </div>
           )}
@@ -392,7 +392,7 @@ export default function DMAutomationManager({
       {activeTab === 'templates' && (
         <div>
           {/* Create New Template */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="mb-6 p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-3">Create New Template</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
@@ -422,9 +422,9 @@ export default function DMAutomationManager({
           {/* Existing Templates */}
           <div className="space-y-4">
             {templates.map(template => (
-              <div key={template.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={template.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h4>
+                  <h4 className="font-medium text-foreground">{template.name}</h4>
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -443,14 +443,14 @@ export default function DMAutomationManager({
                 </div>
                 
                 {template.subject && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     <strong>Subject:</strong> {template.subject}
                   </p>
                 )}
                 
                 <p className="text-gray-800 dark:text-gray-200 mb-2">{template.message}</p>
                 
-                <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                   <span>Platform: {template.platform}</span>
                   <span>Triggers: {template.triggers.join(', ') || 'Manual'}</span>
                 </div>
@@ -465,9 +465,9 @@ export default function DMAutomationManager({
         <div>
           <div className="space-y-4">
             {campaigns.map(campaign => (
-              <div key={campaign.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={campaign.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{campaign.name}</h4>
+                  <h4 className="font-medium text-foreground">{campaign.name}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     campaign.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
                     campaign.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
@@ -481,25 +481,25 @@ export default function DMAutomationManager({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{campaign.targets.length}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Targets</p>
+                    <p className="text-xs text-muted-foreground">Targets</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">{campaign.sentCount}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Sent</p>
+                    <p className="text-xs text-muted-foreground">Sent</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{campaign.responseCount}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Responses</p>
+                    <p className="text-xs text-muted-foreground">Responses</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                    <p className="text-2xl font-bold text-muted-foreground">
                       {campaign.sentCount > 0 ? ((campaign.responseCount / campaign.sentCount) * 100).toFixed(1) : 0}%
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Response Rate</p>
+                    <p className="text-xs text-muted-foreground">Response Rate</p>
                   </div>
                 </div>
                 
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-muted-foreground">
                   <span>Created: {new Date(campaign.createdAt).toLocaleDateString()}</span>
                   <span className="ml-4">Template: {campaign.template.name}</span>
                 </div>
@@ -508,7 +508,7 @@ export default function DMAutomationManager({
           </div>
 
           {campaigns.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No campaigns created yet
             </div>
           )}
@@ -526,12 +526,12 @@ export default function DMAutomationManager({
                   <div
                     key={template.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedTemplate === template.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
+                      selectedTemplate === template.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-gray-300 dark:border-gray-600'
                     }`}
                     onClick={() => setSelectedTemplate(template.id)}
                   >
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h5>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{template.message.substring(0, 100)}...</p>
+                    <h5 className="font-medium text-foreground">{template.name}</h5>
+                    <p className="text-sm text-muted-foreground mt-1">{template.message.substring(0, 100)}...</p>
                   </div>
                 ))}
               </div>
@@ -547,7 +547,7 @@ export default function DMAutomationManager({
               />
               
               <div className="mt-4 flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-muted-foreground">
                   {outreachTargets.split('\n').filter(t => t.trim()).length} targets
                 </span>
                 <Button 

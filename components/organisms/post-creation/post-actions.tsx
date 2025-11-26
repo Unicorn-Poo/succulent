@@ -74,7 +74,7 @@ export const PostActions = ({
                         {/* Quote Tweet Toggle */}
                         {seriesType === 'reply' && detectedPlatform === 'x' && (
                             <div className="flex items-center gap-2">
-                                <Label.Root htmlFor="quote-tweet-toggle" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                <Label.Root htmlFor="quote-tweet-toggle" className="text-sm font-medium text-foreground">
                                     Quote Tweet
                                 </Label.Root>
                                 <Switch
@@ -90,7 +90,7 @@ export const PostActions = ({
                     <div className="flex items-center justify-end gap-4">
                         {/* Thread Toggle */}
                         <div className="flex items-center gap-2">
-                            <Label.Root htmlFor="thread-toggle" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <Label.Root htmlFor="thread-toggle" className="text-sm font-medium text-foreground">
                                 Create Thread
                             </Label.Root>
                             <Switch
@@ -113,7 +113,7 @@ export const PostActions = ({
                                                 disabled={!hasSelectedAccounts}
                                                 className={hasSelectedAccounts 
                                                     ? "border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50" 
-                                                    : "border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed"
+                                                    : "border-gray-300 dark:border-gray-600 text-muted-foreground cursor-not-allowed"
                                                 }
                                             >
                                                 <Eye className="w-4 h-4 mr-2" />

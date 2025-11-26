@@ -89,7 +89,7 @@ const GelatoTemplateSelector = ({
 }) => {
 	if (loading) {
 		return (
-			<div className={`flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
+			<div className={`flex items-center gap-2 p-3 bg-muted rounded-lg ${className}`}>
 				<Loader2 className="w-4 h-4 animate-spin" />
 				<Text size="2" color="gray">Loading templates from your Gelato store...</Text>
 			</div>
@@ -185,13 +185,13 @@ const GelatoTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900">
+			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-card">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-gray-100 last:border-b-0 ${
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-border last:border-b-0 ${
 								isSelected ? 'bg-lime-50' : ''
 							}`}
 						>
@@ -239,7 +239,7 @@ const ProdigiTemplateSelector = ({
 }) => {
 	if (loading) {
 		return (
-			<div className={`flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
+			<div className={`flex items-center gap-2 p-3 bg-muted rounded-lg ${className}`}>
 				<Loader2 className="w-4 h-4 animate-spin" />
 				<Text size="2" color="gray">Loading templates from your Prodigi account...</Text>
 			</div>
@@ -284,13 +284,13 @@ const ProdigiTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900">
+			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-card">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-gray-100 last:border-b-0 ${
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-border last:border-b-0 ${
 								isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
 							}`}
 						>
@@ -1422,23 +1422,23 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						
 						<div className="space-y-3">
 							{createdProducts.filter(Boolean).map((product: any, index: number) => (
-								<div key={product?.productId || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
+								<div key={product?.productId || index} className="bg-muted p-4 rounded-lg border">
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
-											<div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+											<div className="font-medium text-foreground mb-1">
 												{product?.title || product?.sourcePost?.title || 'Untitled Product'}
 											</div>
-											<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+											<div className="text-sm text-muted-foreground mb-2">
 												Product ID: {product?.productId || 'Unknown'}
 											</div>
-											<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+											<div className="text-sm text-muted-foreground mb-2">
 												Created: {product?.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Unknown'} at {product?.createdAt ? new Date(product.createdAt).toLocaleTimeString() : 'Unknown'}
 											</div>
 											
 											{/* Status Display */}
 											<div className="flex items-center gap-2 mb-2">
 												{product?.shopifyStatus === 'pending' && (
-													<span className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
 														⏳ Gelato Created
 													</span>
 												)}
@@ -1466,7 +1466,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											
 											{/* Status Message */}
 											{product?.shopifyMessage && (
-												<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+												<div className="text-sm text-muted-foreground mb-2">
 													{product.shopifyMessage}
 												</div>
 											)}
@@ -1486,7 +1486,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											)}
 											
 											{/* Template and Publishing Info */}
-											<div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+											<div className="text-xs text-muted-foreground space-y-1">
 												{product?.templateName && (
 													<div>Template: {product.templateName}</div>
 												)}
@@ -1551,7 +1551,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															shopifyMessage: 'Sync cancelled by user - product may take longer to appear in Shopify'
 														});
 													}}
-													className="text-xs bg-gray-50 dark:bg-gray-8000 hover:bg-gray-600 text-white px-3 py-1 rounded"
+													className="text-xs bg-muted0 hover:bg-gray-600 text-white px-3 py-1 rounded"
 												>
 													Cancel Sync
 												</button>
@@ -1578,7 +1578,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</span>
 							)}
 							{!hasImages && (
-								<span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full">
+								<span className="text-xs bg-gray-100 dark:bg-gray-700 text-muted-foreground px-2 py-1 rounded-full">
 									No images
 								</span>
 							)}
@@ -1592,11 +1592,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<button
 								onClick={handleAutoCreateToggle}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 ${
-									autoCreateOnPublish ? 'bg-lime-600' : 'bg-gray-200'
+									autoCreateOnPublish ? 'bg-lime-600' : 'bg-muted'
 								}`}
 							>
 								<span
-									className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
+									className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
 										autoCreateOnPublish ? 'translate-x-6' : 'translate-x-1'
 									}`}
 								/>
@@ -1606,13 +1606,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					
 					{/* Auto-Create Status */}
 					<div className="space-y-3">
-											<div className="text-sm text-gray-600 dark:text-gray-400">
+											<div className="text-sm text-muted-foreground">
 						{autoCreateOnPublish ? (
 							<div className="flex items-start gap-2">
 								<div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
 								<div>
 									<div className="font-medium text-green-700 dark:text-green-300 mb-1">Auto-create enabled</div>
-									<div className="text-xs text-gray-600 dark:text-gray-400">
+									<div className="text-xs text-muted-foreground">
 										Products will be created automatically when you publish this post
 									</div>
 									{hasImages && isGelatoConfigured && selectedTemplates.length > 0 && (
@@ -1626,8 +1626,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<div className="flex items-start gap-2">
 								<div className="w-2 h-2 bg-gray-400 rounded-full mt-1.5 flex-shrink-0"></div>
 								<div>
-									<div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Auto-create disabled</div>
-									<div className="text-xs text-gray-600 dark:text-gray-400">
+									<div className="font-medium text-foreground mb-1">Auto-create disabled</div>
+									<div className="text-xs text-muted-foreground">
 										No products will be created automatically
 									</div>
 								</div>
@@ -1638,7 +1638,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						{/* Configuration Status */}
 						<div className="grid grid-cols-2 gap-4 text-sm">
 							<div className="flex items-center justify-between">
-								<span className="text-gray-600 dark:text-gray-400">Gelato:</span>
+								<span className="text-muted-foreground">Gelato:</span>
 								<span className={`font-medium ${
 									isGelatoConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 								}`}>
@@ -1646,7 +1646,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-gray-600 dark:text-gray-400">Shopify:</span>
+								<span className="text-muted-foreground">Shopify:</span>
 								<span className={`font-medium ${
 									isShopifyConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 								}`}>
@@ -1657,8 +1657,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						
 						{selectedTemplates.length > 0 && (
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-gray-600 dark:text-gray-400">Templates:</span>
-								<span className="font-medium text-gray-900 dark:text-gray-100">{selectedTemplates.length} selected</span>
+								<span className="text-muted-foreground">Templates:</span>
+								<span className="font-medium text-foreground">{selectedTemplates.length} selected</span>
 							</div>
 						)}
 						
@@ -1680,7 +1680,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						)}
 						
 						{/* Manual Create Button */}
-						<div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+						<div className="flex items-center justify-between pt-2 border-t border-border">
 							<Text size="1" color="gray">
 								Or create manually:
 							</Text>
@@ -1751,17 +1751,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Enhanced Template Information */}
 										{selectedTemplates.length > 0 && (
-											<div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+											<div className="mt-3 p-3 bg-muted border border-border rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
 													Selected Templates ({selectedTemplates.length}):
 												</Text>
 												<div className="space-y-3">
 													{selectedTemplates.map((template, index) => (
-														<div key={template.id} className="p-2 bg-white dark:bg-gray-900 rounded border">
+														<div key={template.id} className="p-2 bg-card rounded border">
 															<Text size="2" weight="medium" className="block mb-1">
 																{template.displayName || template.name}
 															</Text>
-															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+															<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
 																<div>
 																	<strong>Type:</strong> {template.productType}
 																</div>
@@ -1794,7 +1794,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											</Text>
 											<div className="space-y-3">
 												{selectedTemplates.map((template) => (
-													<div key={template.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+													<div key={template.id} className="p-3 bg-muted rounded-lg">
 														<Text size="1" weight="medium" className="block mb-2">
 															{template.displayName || template.name}:
 														</Text>
@@ -1917,7 +1917,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									<GelatoButton
 										disabled={selectedTemplates.length === 0 || !hasImages}
 										onClick={createRealGelatoProducts}
-										className="w-full bg-lime-600 hover:bg-lime-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+										className="w-full bg-lime-600 hover:bg-lime-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-muted-foreground/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 									>
 										<Package className="w-4 h-4" />
 										Create {selectedTemplates.length === 1 ? selectedTemplates[0]?.displayName || selectedTemplates[0]?.name || 'Product' : `${selectedTemplates.length} Products`}
@@ -1981,7 +1981,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Text size="2" className={
 								isProdigiConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 							}>
-								<span className="text-gray-600 dark:text-gray-400">Prodigi:</span>
+								<span className="text-muted-foreground">Prodigi:</span>
 							</Text>
 							<Text size="2" className={
 								isProdigiConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
@@ -1995,7 +1995,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								currentPost.variants[activeTab]?.media?.some((m: any) => m?.type === 'image') ? 'bg-green-500' : 'bg-gray-400'
 							}`}></div>
 							<Text size="2">
-								<span className="text-gray-600 dark:text-gray-400">Images:</span>
+								<span className="text-muted-foreground">Images:</span>
 							</Text>
 							<Text size="2">
 								{currentPost.variants[activeTab]?.media?.filter((m: any) => m?.type === 'image')?.length || 0} found
@@ -2027,7 +2027,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						{showProdigiSection && (
 							<div className="space-y-4">
 								{!isProdigiConfigured && (
-									<div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="p-3 bg-muted border border-border rounded-lg">
 										<Text size="2" weight="medium" className="block mb-2">
 											🔧 Prodigi Store Setup Required
 										</Text>
@@ -2076,11 +2076,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 												</Text>
 												<div className="space-y-3">
 													{selectedProdigiTemplates.map((template) => (
-														<div key={template.id} className="p-2 bg-white dark:bg-gray-900 rounded border">
+														<div key={template.id} className="p-2 bg-card rounded border">
 															<Text size="2" weight="medium" className="block mb-1">
 																{template.displayName || template.name}
 															</Text>
-															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+															<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
 																<div>
 																	<strong>Type:</strong> {template.productType}
 																</div>
@@ -2150,7 +2150,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										<button
 											disabled={selectedProdigiTemplates.length === 0 || !hasImages}
 											onClick={createRealProdigiProducts}
-											className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+											className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-muted-foreground/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 										>
 											<Package className="w-4 h-4" />
 											Create {selectedProdigiTemplates.length === 1 ? selectedProdigiTemplates[0]?.displayName || selectedProdigiTemplates[0]?.name || 'Product' : `${selectedProdigiTemplates.length} Products`}
@@ -2234,7 +2234,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 													</Text>
 													<div className="grid grid-cols-2 md:grid-cols-4 gap-2">
 														{optimalTimes.times?.slice(0, 8).map((time: string, index: number) => (
-															<div key={index} className="bg-white dark:bg-gray-900 p-2 rounded text-center border">
+															<div key={index} className="bg-card p-2 rounded text-center border">
 																<Text size="1" weight="medium">{time}</Text>
 															</div>
 														))}
@@ -2260,7 +2260,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											</div>
 										) : (
 											<div className="text-center py-8">
-												<Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+												<Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
 												<Text size="2" color="gray">
 													{isLoadingTimes ? 'Analyzing your posting patterns...' : 'Click refresh to get optimal posting times'}
 												</Text>
@@ -2278,7 +2278,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			{!analyticsAvailable && (
 				<Card>
 					<div className="p-4 text-center space-y-3">
-						<BarChart3 className="w-8 h-8 text-gray-400 mx-auto" />
+						<BarChart3 className="w-8 h-8 text-muted-foreground mx-auto" />
 						<div>
 							<Text size="3" weight="medium" className="block">Content Optimization Features</Text>
 							<Text size="2" color="gray" className="block mt-1">
@@ -2371,22 +2371,22 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			{/* Delete Confirmation Dialog */}
 			{showDeleteDialog && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+					<div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
 						<div className="flex items-center gap-3 mb-4">
 							<div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center">
 								<AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white">
+								<h3 className="text-lg font-semibold text-foreground dark:text-white">
 									Delete Post
 								</h3>
-								<p className="text-sm text-gray-600 dark:text-gray-400">
+								<p className="text-sm text-muted-foreground">
 									This action cannot be undone
 								</p>
 							</div>
 						</div>
 						
-						<p className="text-gray-700 dark:text-gray-300 mb-6">
+						<p className="text-foreground mb-6">
 							Are you sure you want to delete &quot;{title || 'Untitled Post'}&quot;? This will permanently remove the post and all its content.
 						</p>
 						

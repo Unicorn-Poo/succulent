@@ -108,11 +108,11 @@ export const PostContent = ({
 									</div>
 								</div>
 								
-								<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white mb-2">
+								<h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
 									{isDragOver ? 'Drop your media here' : 'Add Media to Your Post'}
 								</h3>
 								
-								<p className="text-gray-600 dark:text-gray-400 mb-6">
+								<p className="text-muted-foreground mb-6">
 									{isDragOver 
 										? 'Release to upload your files' 
 										: 'Drag & drop images or videos, or click to browse'
@@ -130,7 +130,7 @@ export const PostContent = ({
 										Choose Files
 									</Button>
 
-									<div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+									<div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
 										<div className="flex items-center">
 											<ImageIcon className="w-4 h-4 mr-1" />
 											Images
@@ -169,7 +169,7 @@ export const PostContent = ({
 						value={contextText || post.variants[activeTab]?.text?.toString() || ""}
 						onChange={(e) => handleContentChange(e.target.value)}
 						placeholder={`What's happening? Use double line breaks for threads.`}
-						className="w-full min-h-[150px] p-4 border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+						className="w-full min-h-[150px] p-4 border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-card text-foreground placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
 						rows={6}
 					/>
 					
@@ -181,7 +181,7 @@ export const PostContent = ({
 								Thread
 							</div>
 						)}
-						<div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 px-2 py-1 rounded-full">
+						<div className="text-xs text-muted-foreground bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 px-2 py-1 rounded-full">
 							{(contextText || post.variants[activeTab]?.text?.toString() || "").length}
 						</div>
 					</div>

@@ -191,7 +191,7 @@ export default function InstagramProfileView({
             </>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <div className="text-center text-gray-400">
+              <div className="text-center text-muted-foreground">
                 <Camera className="w-8 h-8 mx-auto mb-2" />
                 <Text size="1">No media</Text>
               </div>
@@ -203,9 +203,9 @@ export default function InstagramProfileView({
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900">
+    <div className="max-w-4xl mx-auto bg-card">
       {/* Profile Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-6 border-b border-border">
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function InstagramProfileView({
           {/* Profile Picture */}
           <div className="flex-shrink-0">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 p-1">
-              <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-900 p-1">
+              <div className="w-full h-full rounded-full overflow-hidden bg-card p-1">
                 {account.avatar ? (
                   <Image
                     src={account.avatar}
@@ -251,8 +251,8 @@ export default function InstagramProfileView({
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                    <Camera className="w-8 h-8 text-gray-400" />
+                  <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
+                    <Camera className="w-8 h-8 text-muted-foreground" />
                   </div>
                 )}
               </div>
@@ -338,12 +338,12 @@ export default function InstagramProfileView({
       </div>
 
       {/* Highlights Row */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-4 overflow-x-auto">
           {/* New Highlight */}
           <div className="flex-shrink-0 text-center">
             <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-1">
-              <Plus className="w-6 h-6 text-gray-400" />
+              <Plus className="w-6 h-6 text-muted-foreground" />
             </div>
             <Text size="1" color="gray">New</Text>
           </div>
@@ -352,7 +352,7 @@ export default function InstagramProfileView({
           {['Travel', 'Food', 'Work'].map((highlight, index) => (
             <div key={highlight} className="flex-shrink-0 text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 p-0.5 mb-1">
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
                   <Text size="2">✨</Text>
                 </div>
               </div>
@@ -363,14 +363,14 @@ export default function InstagramProfileView({
       </div>
 
       {/* Content Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-border">
         <div className="flex">
           <button
             onClick={() => setActiveTab('posts')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'posts' 
-                ? 'border-black text-gray-900 dark:text-gray-100' 
-                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
+                ? 'border-black text-foreground' 
+                : 'border-transparent text-muted-foreground hover:text-muted-foreground'
             }`}
           >
             <Grid3X3 className="w-5 h-5 mr-2" />
@@ -380,8 +380,8 @@ export default function InstagramProfileView({
             onClick={() => setActiveTab('reels')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'reels' 
-                ? 'border-black text-gray-900 dark:text-gray-100' 
-                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
+                ? 'border-black text-foreground' 
+                : 'border-transparent text-muted-foreground hover:text-muted-foreground'
             }`}
           >
             <PlayCircle className="w-5 h-5 mr-2" />
@@ -391,8 +391,8 @@ export default function InstagramProfileView({
             onClick={() => setActiveTab('tagged')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'tagged' 
-                ? 'border-black text-gray-900 dark:text-gray-100' 
-                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
+                ? 'border-black text-foreground' 
+                : 'border-transparent text-muted-foreground hover:text-muted-foreground'
             }`}
           >
             <Bookmark className="w-5 h-5 mr-2" />
@@ -413,7 +413,7 @@ export default function InstagramProfileView({
               </div>
             ) : (
               <div className="text-center py-12">
-                <Camera className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <Text size="4" weight="medium" className="mb-2 block">
                   No Posts Yet
                 </Text>
@@ -435,7 +435,7 @@ export default function InstagramProfileView({
 
         {activeTab === 'reels' && (
           <div className="text-center py-12">
-            <PlayCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <PlayCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <Text size="4" weight="medium" className="mb-2 block">
               No Reels Yet
             </Text>
@@ -447,7 +447,7 @@ export default function InstagramProfileView({
 
         {activeTab === 'tagged' && (
           <div className="text-center py-12">
-            <Bookmark className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Bookmark className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <Text size="4" weight="medium" className="mb-2 block">
               No Tagged Posts
             </Text>

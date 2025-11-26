@@ -246,7 +246,7 @@ export default function AyrshareAccountLinking({
             </div>
             
             {/* Instructions */}
-            <div className="mb-4 p-3 bg-white dark:bg-gray-900 border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
+            <div className="mb-4 p-3 bg-card border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
               <strong>To connect your accounts:</strong>
               <ol className="list-decimal list-inside mt-1 space-y-1">
                 <li>Click "Open Ayrshare Dashboard" below</li>
@@ -289,7 +289,7 @@ export default function AyrshareAccountLinking({
             
             {/* Status messages */}
             {linkingStatus && (
-              <div className="mt-3 p-3 bg-white dark:bg-gray-900 border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
+              <div className="mt-3 p-3 bg-card border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
                 <pre className="whitespace-pre-wrap font-mono text-xs">{linkingStatus}</pre>
               </div>
             )}

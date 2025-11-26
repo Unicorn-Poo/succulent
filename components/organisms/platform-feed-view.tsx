@@ -670,7 +670,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
 
       {/* Feed Info */}
       {/* {allPosts.length > 0 && (
-        <div className="text-center py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-center py-4 border-t border-border">
                      <Text size="1" color="gray">
              Showing {transformedLocalPosts.length} Jazz posts
              {historicalPosts.length > 0 && ` and ${historicalPosts.length} from Ayrshare`} for {account.platform}

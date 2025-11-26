@@ -273,7 +273,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
       <Card>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Settings className="w-5 h-5 text-muted-foreground" />
             <Heading size="4">Autopilot Configuration</Heading>
           </div>
           
@@ -367,7 +367,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Brain className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Brain className="w-5 h-5 text-muted-foreground" />
               <Heading size="4">AI Recommendations</Heading>
             </div>
             <Button variant="soft" onClick={handleGetAnalysis} disabled={isLoading}>
@@ -379,7 +379,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
           {recentDecisions.length > 0 ? (
             <div className="space-y-3">
               {recentDecisions.slice(0, 5).map((decision, index) => (
-                <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div key={index} className="p-4 border border-border rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <Text size="2" weight="medium">{decision.action}</Text>
                     <div className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
             </div>
           ) : (
             <div className="text-center py-8">
-              <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <AlertCircle className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <Text size="2" color="gray">
                 No AI recommendations yet. Click "Get Analysis" to start.
               </Text>
@@ -416,7 +416,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <BookOpen className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <BookOpen className="w-5 h-5 text-muted-foreground" />
               <Heading size="4">AI Learning System</Heading>
             </div>
             <Button 
@@ -457,7 +457,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
             </div>
           ) : (
             <div className="text-center py-8">
-              <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <BookOpen className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <Text size="2" color="gray">
                 No learning data yet. Click "Analyze All Posts" to start learning from your content.
               </Text>
@@ -471,7 +471,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Zap className="w-5 h-5 text-muted-foreground" />
               <Heading size="4">AI Content Generator</Heading>
               {learningStats && learningStats.totalInsights > 0 && (
                 <Badge color="green" variant="soft">Learning-Enhanced</Badge>
@@ -487,7 +487,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
           </div>
 
           {streamingContent && (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="p-4 bg-muted rounded-lg">
               <Text size="2" className="whitespace-pre-wrap">
                 {streamingContent}
               </Text>

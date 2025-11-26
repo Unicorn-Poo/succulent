@@ -274,7 +274,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			{!isConnected ? (
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
+						<label className="block text-sm font-medium text-foreground mb-2">API Key</label>
 						<TextField.Root
 							value={formData.apiKey}
 							onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -383,7 +383,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 							{accountGroup.prodigiCredentials?.createdProducts && accountGroup.prodigiCredentials.createdProducts.length > 0 ? (
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 									{accountGroup.prodigiCredentials.createdProducts.map((product: any) => (
-										<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+										<div key={product.id} className="bg-card border border-border rounded-lg p-4">
 											<div className="flex items-center justify-between mb-2">
 												<Text size="2" weight="bold" className="line-clamp-1">
 													{product.name}
@@ -430,7 +430,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 												)}
 											</div>
 											
-											<div className="mt-3 pt-3 border-t border-gray-100">
+											<div className="mt-3 pt-3 border-t border-border">
 												<Text size="1" color="gray">
 													Created: {new Date(product.createdAt).toLocaleDateString()}
 												</Text>
@@ -439,8 +439,8 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 									))}
 								</div>
 							) : (
-								<div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
-									<Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+								<div className="text-center py-6 bg-muted rounded-lg mb-4">
+									<Package className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
 									<Text size="2" color="gray">No product designs created yet</Text>
 									<Text size="1" color="gray">
 										Create products from your social media posts using the Enhanced Tools
@@ -465,7 +465,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 
 						{templates.length === 0 ? (
 							<div className="text-center py-12">
-								<Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+								<Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
 								<Text size="4" weight="medium" className="mb-2 block">No Products Available</Text>
 								<Text size="2" color="gray" className="mb-6 block">
 									Fetch your Prodigi catalog to see available products for print-on-demand.
@@ -484,7 +484,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 								<Text size="2" weight="medium" className="mb-3 block">Base Products Catalog</Text>
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 									{templates.map((product: any) => (
-										<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+										<div key={product.id} className="bg-card border border-border rounded-lg p-4">
 											<div className="flex items-center justify-between mb-3">
 												<Text size="2" weight="bold" className="line-clamp-1">
 													{product.displayName}
@@ -518,7 +518,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 												</div>
 											</div>
 											
-											<div className="mt-3 pt-3 border-t border-gray-100">
+											<div className="mt-3 pt-3 border-t border-border">
 												<Text size="1" color="blue" className="cursor-pointer hover:underline">
 													Use for Product Creation →
 												</Text>
@@ -542,7 +542,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 
 					<div className="space-y-4 mt-4">
 						<div>
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
+							<label className="block text-sm font-medium text-foreground mb-2">API Key</label>
 							<TextField.Root
 								value={formData.apiKey}
 								onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -581,7 +581,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 
 					<div className="space-y-4 mt-4">
 						<div>
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Product ID</label>
+							<label className="block text-sm font-medium text-foreground mb-2">Product ID</label>
 							<TextField.Root
 								value={productIdToImport}
 								onChange={(e) => setProductIdToImport(e.target.value)}

@@ -61,7 +61,7 @@ export function PlatformAccountGuard({
       </div>
       
       <div className="space-y-3 mb-4">
-        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
               <Text size="1" weight="bold" className="text-lime-700">
@@ -185,7 +185,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
                   ? 'bg-amber-50 border-amber-200' 
                   : count > 0 
                     ? 'bg-lime-50 border-lime-200'
-                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                    : 'bg-muted border-border'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -194,7 +194,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
                     ? 'bg-amber-500' 
                     : count > 0 
                       ? 'bg-lime-500'
-                      : 'bg-gray-300'
+                      : 'bg-muted-foreground/30'
                 }`}></div>
                 <Text size="1" weight="medium" className="capitalize">
                   {platform}

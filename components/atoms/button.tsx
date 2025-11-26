@@ -19,10 +19,10 @@ const intentStyles = {
     ghost: 'text-lime-600 dark:text-lime-400 hover:bg-lime-50 bg-transparent border-transparent dark:text-lime-400 dark:hover:bg-lime-900/30'
   },
   secondary: {
-    solid: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white border-gray-600 dark:bg-gray-50 dark:bg-gray-8000 dark:hover:bg-gray-600',
-    soft: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-800 dark:text-gray-200 border-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-800',
-    outline: 'border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-400 dark:text-gray-300 dark:hover:bg-gray-800',
-    ghost: 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-300 dark:hover:bg-gray-800'
+    solid: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white border-gray-600 dark:bg-muted0 dark:hover:bg-gray-600',
+    soft: 'bg-gray-100 dark:bg-gray-700 hover:bg-muted text-gray-800 dark:text-gray-200 border-border dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-800',
+    outline: 'border-gray-600 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-400 dark:text-muted-foreground dark:hover:bg-gray-800',
+    ghost: 'text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-muted-foreground dark:hover:bg-gray-800'
   },
   success: {
     solid: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white border-green-600 dark:bg-green-500 dark:hover:bg-green-600',
@@ -49,16 +49,16 @@ const intentStyles = {
     ghost: 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900/20 bg-transparent border-transparent dark:text-blue-400 dark:hover:bg-blue-900/30'
   },
   light: {
-    solid: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 active:bg-gray-300 text-gray-800 dark:text-gray-200 border-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:active:bg-gray-600 dark:text-gray-200 dark:border-gray-800',
-    soft: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-900',
-    outline: 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800',
-    ghost: 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-300 dark:hover:bg-gray-800'
+    solid: 'bg-gray-100 dark:bg-gray-700 hover:bg-muted active:bg-muted-foreground/30 text-gray-800 dark:text-gray-200 border-border dark:bg-gray-800 dark:hover:bg-gray-700 dark:active:bg-gray-600 dark:text-gray-200 dark:border-gray-800',
+    soft: 'bg-muted hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 text-foreground border-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-muted-foreground dark:border-gray-900',
+    outline: 'border-gray-300 dark:border-gray-600 text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-600 dark:text-muted-foreground dark:hover:bg-gray-800',
+    ghost: 'text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-muted-foreground dark:hover:bg-gray-800'
   },
   dark: {
-    solid: 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white border-gray-900 dark:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-200 dark:active:bg-gray-300 dark:text-gray-900 dark:text-gray-100 dark:border-gray-100',
-    soft: 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-800 dark:bg-gray-200 dark:hover:bg-gray-300 dark:text-gray-800 dark:text-gray-200 dark:border-gray-200 dark:border-gray-700',
-    outline: 'border-gray-900 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-100 dark:text-gray-100 dark:hover:bg-gray-800',
-    ghost: 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-100 dark:hover:bg-gray-800'
+    solid: 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white border-gray-900 dark:bg-gray-100 dark:bg-gray-700 dark:hover:bg-muted dark:active:bg-muted-foreground/30 dark:text-foreground dark:border-border',
+    soft: 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-800 dark:bg-muted dark:hover:bg-muted-foreground/30 dark:text-gray-800 dark:text-gray-200 dark:border-border',
+    outline: 'border-gray-900 text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-border dark:text-gray-100 dark:hover:bg-gray-800',
+    ghost: 'text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-100 dark:hover:bg-gray-800'
   }
 };
 

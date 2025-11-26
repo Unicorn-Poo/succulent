@@ -185,7 +185,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
           {/* Group Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Group Name</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Group Name</label>
             <Input
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
@@ -301,7 +301,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
             {accounts.length === 0 && !showAddAccountForm && (
               <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <Text size="2" color="gray">No accounts added yet</Text>
                 <Text size="1" color="gray" className="block mt-1">
                   Add social media accounts to manage with this group

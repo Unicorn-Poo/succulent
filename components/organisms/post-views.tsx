@@ -34,8 +34,8 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 
   if (!mediaItem) {
     return (
-      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-        <span className="text-gray-500 dark:text-gray-400 text-xs">No media</span>
+      <div className="w-full h-full bg-muted flex items-center justify-center">
+        <span className="text-muted-foreground text-xs">No media</span>
       </div>
     );
   }
@@ -58,8 +58,8 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
           <div className="text-center p-2">
-            <span className="text-gray-400 text-2xl block mb-1">📷</span>
-            <span className="text-gray-500 dark:text-gray-400 text-xs block">
+            <span className="text-muted-foreground text-2xl block mb-1">📷</span>
+            <span className="text-muted-foreground text-xs block">
               Image unavailable
             </span>
           </div>
@@ -70,10 +70,10 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
     return (
       <div className="relative w-full h-full bg-gray-100 dark:bg-gray-700">
         {isLoading && (
-          <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center z-10">
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <span className="text-gray-400 text-xs">Loading...</span>
+              <span className="text-muted-foreground text-xs">Loading...</span>
             </div>
           </div>
         )}
@@ -137,7 +137,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
           playsInline
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center pointer-events-none">
-          <div className="w-8 h-8 bg-white dark:bg-gray-900 bg-opacity-90 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-card bg-opacity-90 rounded-full flex items-center justify-center">
             <div className="w-0 h-0 border-l-2 border-l-gray-800 border-y-2 border-y-transparent ml-0.5" />
           </div>
         </div>
@@ -157,7 +157,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
           unoptimized
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center pointer-events-none">
-          <div className="w-8 h-8 bg-white dark:bg-gray-900 bg-opacity-90 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-card bg-opacity-90 rounded-full flex items-center justify-center">
             <div className="w-0 h-0 border-l-2 border-l-gray-800 border-y-2 border-y-transparent ml-0.5" />
           </div>
         </div>
@@ -167,8 +167,8 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 
   // Fallback for unknown media types
   return (
-    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-      <span className="text-gray-500 dark:text-gray-400 text-xs">📎 Media</span>
+    <div className="w-full h-full bg-muted flex items-center justify-center">
+      <span className="text-muted-foreground text-xs">📎 Media</span>
     </div>
   );
 }
@@ -296,10 +296,10 @@ export function PostGridView({
           return (
             <div
               key={postId}
-              className={`bg-white dark:bg-gray-900 border-2 rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
+              className={`bg-card border-2 rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
                 isSelected
                   ? "border-lime-400 bg-lime-50"
-                  : "border-gray-200 dark:border-gray-700 hover:border-lime-300"
+                  : "border-border hover:border-lime-300"
               }`}
               style={{ minHeight: "200px" }}
             >
@@ -315,7 +315,7 @@ export function PostGridView({
                 {isSelected ? (
                   <CheckSquare className="w-5 h-5 text-lime-600 dark:text-lime-400" />
                 ) : (
-                  <Square className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-400" />
+                  <Square className="w-5 h-5 text-muted-foreground hover:text-muted-foreground" />
                 )}
               </div>
 
@@ -334,26 +334,26 @@ export function PostGridView({
                     {getStatusIcon(postStatus)}{" "}
                     {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {new Date(postDate).toLocaleDateString()}
                   </div>
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-lime-600 dark:text-lime-400 transition-colors">
+                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-lime-600 dark:text-lime-400 transition-colors">
                   {postTitle}
                 </h3>
 
                 {/* Content Preview */}
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
                   {postContent || "No content"}
                 </p>
 
                 {/* Footer with media indicator and platforms */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div className="flex items-center gap-2">
                     {hasMedia && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span>📎</span>
                         <span>{post.variants.base.media.length} media</span>
                       </div>
@@ -383,8 +383,8 @@ export function PostGridView({
                         })}
                       </div>
                     )}
-                    <MessageCircle className="w-3 h-3 text-gray-400 group-hover:text-lime-500 transition-colors" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-lime-600 dark:text-lime-400">
+                    <MessageCircle className="w-3 h-3 text-muted-foreground group-hover:text-lime-500 transition-colors" />
+                    <span className="text-xs text-muted-foreground group-hover:text-lime-600 dark:text-lime-400">
                       Edit
                     </span>
                   </div>
@@ -513,8 +513,8 @@ function ImageCarousel({
               onClick={(e) => handleDotClick(index, e)}
               className={`rounded-full transition-all shadow-lg ${
                 currentIndex === index
-                  ? "bg-white dark:bg-gray-900 w-3 h-3"
-                  : "bg-white dark:bg-gray-900/60 hover:bg-white dark:bg-gray-900/80 w-2 h-2"
+                  ? "bg-card w-3 h-3"
+                  : "bg-card/60 hover:bg-card/80 w-2 h-2"
               }`}
               aria-label={`Go to image ${index + 1}`}
             />
@@ -669,7 +669,7 @@ export function PostImageView({
                       ? "bg-green-500 text-white"
                       : postStatus === "scheduled"
                       ? "bg-yellow-500 text-white"
-                      : "bg-gray-50 dark:bg-gray-8000 text-white"
+                      : "bg-muted0 text-white"
                   }`}
                 >
                   {postStatus === "published"
@@ -712,13 +712,13 @@ export function PostImageView({
                     <ImageCarousel mediaItems={mediaItems} postId={postId} />
                   ) : (
                     // Text preview when no media
-                    <div className="text-center text-gray-600 dark:text-gray-400 p-3 flex flex-col items-center justify-center h-full">
+                    <div className="text-center text-muted-foreground p-3 flex flex-col items-center justify-center h-full">
                       <div className="text-2xl mb-2">📝</div>
                       <div className="text-xs leading-tight line-clamp-4 max-w-full px-2">
                         {postTitle}
                       </div>
                       {postContent && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 max-w-full px-2">
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2 max-w-full px-2">
                           {postContent.substring(0, 60)}...
                         </div>
                       )}
@@ -738,7 +738,7 @@ export function PostImageView({
                       </p>
                     )}
                     {hasMedia && mediaItems.length > 1 && (
-                      <p className="text-xs text-gray-300 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {mediaItems.length} image
                         {mediaItems.length !== 1 ? "s" : ""}
                       </p>
@@ -772,9 +772,9 @@ export function PostSuccinctView({
       case "scheduled":
         return "text-yellow-600 dark:text-yellow-400";
       case "draft":
-        return "text-gray-600 dark:text-gray-400";
+        return "text-muted-foreground";
       default:
-        return "text-gray-600 dark:text-gray-400";
+        return "text-muted-foreground";
     }
   };
 
@@ -904,10 +904,10 @@ export function PostSuccinctView({
         return (
           <div
             key={postId}
-            className={`bg-white dark:bg-gray-900 border-2 rounded-lg p-4 hover:shadow-sm transition-all duration-200 group ${
+            className={`bg-card border-2 rounded-lg p-4 hover:shadow-sm transition-all duration-200 group ${
               isSelected
                 ? "border-lime-400 bg-lime-50"
-                : "border-gray-200 dark:border-gray-700 hover:border-lime-300"
+                : "border-border hover:border-lime-300"
             }`}
           >
             <div className="flex items-center gap-4">
@@ -923,7 +923,7 @@ export function PostSuccinctView({
                 {isSelected ? (
                   <CheckSquare className="w-5 h-5 text-lime-600 dark:text-lime-400" />
                 ) : (
-                  <Square className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-400" />
+                  <Square className="w-5 h-5 text-muted-foreground hover:text-muted-foreground" />
                 )}
               </div>
 
@@ -941,13 +941,13 @@ export function PostSuccinctView({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-lime-600 dark:text-lime-400 line-clamp-1 mb-1">
+                    <h3 className="font-medium text-foreground group-hover:text-lime-600 dark:text-lime-400 line-clamp-1 mb-1">
                       {postTitle}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
                       {postContent || "No content"}
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <div
                         className={`flex items-center gap-1 ${getStatusColor(
                           postStatus

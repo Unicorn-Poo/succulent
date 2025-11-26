@@ -179,8 +179,8 @@ export default function GrowthToolsDropdown({
             ← Back to Growth Tools
           </Button>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{selectedToolData.name}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{selectedToolData.description}</p>
+            <h3 className="font-semibold text-foreground">{selectedToolData.name}</h3>
+            <p className="text-sm text-muted-foreground">{selectedToolData.description}</p>
           </div>
         </div>
 
@@ -203,23 +203,23 @@ export default function GrowthToolsDropdown({
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🚀 Social Media Growth Engine</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered automation tools to accelerate your follower growth</p>
+            <h3 className="text-lg font-semibold text-foreground">🚀 Social Media Growth Engine</h3>
+            <p className="text-sm text-muted-foreground">AI-powered automation tools to accelerate your follower growth</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">+25-50%</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Engagement Increase</p>
+            <p className="text-sm text-muted-foreground">Engagement Increase</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">2-5x</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Faster Growth Rate</p>
+            <p className="text-sm text-muted-foreground">Faster Growth Rate</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">90%</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Time Saved</p>
+            <p className="text-sm text-muted-foreground">Time Saved</p>
           </div>
         </div>
 
@@ -248,26 +248,26 @@ export default function GrowthToolsDropdown({
           return (
             <div
               key={tool.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-gray-300 dark:border-gray-600 transition-colors cursor-pointer"
+              className="bg-card border border-border rounded-lg p-4 hover:border-gray-300 dark:border-gray-600 transition-colors cursor-pointer"
               onClick={() => onToolSelect?.(tool.id)}
             >
               <div className="flex items-start space-x-3">
                 <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <IconComponent className="w-5 h-5 text-muted-foreground" />
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{tool.name}</h4>
+                    <h4 className="font-medium text-foreground">{tool.name}</h4>
                     <span className="text-xs">{getCategoryIcon(tool.category)}</span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{tool.description}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{tool.description}</p>
                   
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-1 rounded-full text-xs ${getImpactColor(tool.impact)}`}>
                       {tool.impact} impact
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{tool.category}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{tool.category}</span>
                   </div>
                 </div>
               </div>
@@ -278,8 +278,8 @@ export default function GrowthToolsDropdown({
 
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">🎯 Quick Start Recommendations</h4>
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h4 className="font-medium text-foreground mb-3">🎯 Quick Start Recommendations</h4>
           <div className="space-y-3">
             <div 
               className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:bg-blue-900/30 transition-colors"
@@ -329,18 +329,18 @@ export default function GrowthToolsDropdown({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">📈 Growth Categories</h4>
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h4 className="font-medium text-foreground mb-3">📈 Growth Categories</h4>
           <div className="space-y-3">
             {['automation', 'analytics', 'optimization'].map(category => {
               const categoryTools = growthTools.filter(tool => tool.category === category);
               return (
-                <div key={category} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div key={category} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">{getCategoryIcon(category)}</span>
                     <span className="font-medium capitalize">{category}</span>
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{categoryTools.length} tools</span>
+                  <span className="text-sm text-muted-foreground">{categoryTools.length} tools</span>
                 </div>
               );
             })}

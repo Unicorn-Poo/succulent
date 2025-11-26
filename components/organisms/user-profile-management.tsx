@@ -165,7 +165,7 @@ export default function UserProfileManagement({
     return (
       <Card className="p-6">
         <div className="text-center space-y-4">
-          <Users className="w-12 h-12 text-gray-400 mx-auto" />
+          <Users className="w-12 h-12 text-muted-foreground mx-auto" />
           <div>
             <Text size="4" weight="bold" className="block mb-2">User Profile Management</Text>
             <Text size="2" color="gray" className="block mb-4">
@@ -250,11 +250,11 @@ export default function UserProfileManagement({
                 {/* Profile Details */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                    <span className="text-muted-foreground">Created:</span>
                     <span>{new Date(profile.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Accounts:</span>
+                    <span className="text-muted-foreground">Accounts:</span>
                     <span>{profile.connectedAccounts?.length || 0} connected</span>
                   </div>
                 </div>
@@ -282,7 +282,7 @@ export default function UserProfileManagement({
                     </code>
                     <button
                       onClick={() => handleCopyKey(profile.profileKey)}
-                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200"
+                      className="p-1 text-muted-foreground hover:text-gray-800 dark:text-gray-200"
                     >
                       {copiedKey === profile.profileKey ? (
                         <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -319,7 +319,7 @@ export default function UserProfileManagement({
       ) : (
         <Card>
           <div className="p-8 text-center space-y-4">
-            <Users className="w-12 h-12 text-gray-400 mx-auto" />
+            <Users className="w-12 h-12 text-muted-foreground mx-auto" />
             <div>
               <Text size="3" weight="medium" className="block mb-2">No Profiles Created</Text>
               <Text size="2" color="gray" className="block mb-4">
@@ -344,7 +344,7 @@ export default function UserProfileManagement({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Profile Title
               </label>
               <input

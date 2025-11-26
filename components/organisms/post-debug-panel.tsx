@@ -93,17 +93,17 @@ export default function PostDebugPanel() {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div className="space-y-6 p-6 bg-muted rounded-lg">
       <div className="flex items-center gap-4">
         <h2 className="text-2xl font-bold">Post Debug Panel</h2>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           Debug API and bulk post issues
         </div>
       </div>
 
       {/* Platform Selection */}
       <div className="flex items-center gap-4">
-        <label className="font-medium text-gray-900 dark:text-gray-100">Platform:</label>
+        <label className="font-medium text-foreground">Platform:</label>
         <select 
           value={selectedPlatform} 
           onChange={(e) => setSelectedPlatform(e.target.value)}
@@ -155,9 +155,9 @@ export default function PostDebugPanel() {
 
       {/* Debug Results */}
       {debugResult && (
-        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
+        <div className="bg-card p-4 rounded-lg border">
           <h3 className="text-lg font-semibold mb-3">Debug Results</h3>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          <div className="text-xs text-muted-foreground mb-3">
             {debugResult.timestamp} | Type: {debugResult.debugType}
           </div>
 
@@ -237,9 +237,9 @@ export default function PostDebugPanel() {
 
       {/* Test Results */}
       {testResult && (
-        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
+        <div className="bg-card p-4 rounded-lg border">
           <h3 className="text-lg font-semibold mb-3">Test Results</h3>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          <div className="text-xs text-muted-foreground mb-3">
             {testResult.timestamp} | Success: {testResult.success ? '✅' : '❌'}
           </div>
 
@@ -254,7 +254,7 @@ export default function PostDebugPanel() {
                   </span>
                   <span>{step.step}</span>
                   {step.data && (
-                    <span className="text-gray-500 dark:text-gray-400 text-xs">
+                    <span className="text-muted-foreground text-xs">
                       {JSON.stringify(step.data).substring(0, 100)}...
                     </span>
                   )}

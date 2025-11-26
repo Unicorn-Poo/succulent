@@ -142,16 +142,16 @@ export default function CompetitorAnalysisDashboard({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Competitor Analysis Dashboard</h3>
+        <h3 className="text-lg font-semibold text-foreground">Competitor Analysis Dashboard</h3>
         <Button onClick={analyzeCompetitors} disabled={isLoading || competitors.length === 0}>
           {isLoading ? 'Analyzing...' : 'Analyze Competitors'}
         </Button>
       </div>
 
       {/* Add Competitors Section */}
-      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="mb-6 p-4 bg-muted rounded-lg">
         <h4 className="font-medium mb-3">Add Competitors to Analyze</h4>
         <div className="flex items-center space-x-2 mb-3">
           <Input
@@ -189,7 +189,7 @@ export default function CompetitorAnalysisDashboard({
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Analyzing competitors...</span>
+          <span className="ml-2 text-muted-foreground">Analyzing competitors...</span>
         </div>
       )}
 
@@ -210,7 +210,7 @@ export default function CompetitorAnalysisDashboard({
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {tab.label}
@@ -279,7 +279,7 @@ export default function CompetitorAnalysisDashboard({
 
               {/* Key Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="p-4 border border-border rounded-lg">
                   <h4 className="font-medium mb-3">Common Strategies</h4>
                   <ul className="space-y-2">
                     {analysis.insights.commonStrategies.map((strategy, index) => (
@@ -291,7 +291,7 @@ export default function CompetitorAnalysisDashboard({
                   </ul>
                 </div>
 
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="p-4 border border-border rounded-lg">
                   <h4 className="font-medium mb-3">Recommendations</h4>
                   <ul className="space-y-2">
                     {analysis.insights.recommendations.map((rec, index) => (
@@ -320,7 +320,7 @@ export default function CompetitorAnalysisDashboard({
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       selectedCompetitor === comp.competitor.username
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
+                        : 'border-border hover:border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     @{comp.competitor.username}
@@ -339,7 +339,7 @@ export default function CompetitorAnalysisDashboard({
                     return (
                       <>
                         {/* Profile Info */}
-                        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="p-4 border border-border rounded-lg">
                           <div className="flex items-center space-x-4 mb-4">
                             <Image
                               src={comp.competitor.avatar}
@@ -354,8 +354,8 @@ export default function CompetitorAnalysisDashboard({
                                 {comp.competitor.displayName}
                                 {comp.competitor.verified && <span className="ml-2 text-blue-500">✓</span>}
                               </h4>
-                              <p className="text-gray-600 dark:text-gray-400">@{comp.competitor.username}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{comp.competitor.bio}</p>
+                              <p className="text-muted-foreground">@{comp.competitor.username}</p>
+                              <p className="text-sm text-muted-foreground mt-1">{comp.competitor.bio}</p>
                             </div>
                           </div>
 
@@ -364,19 +364,19 @@ export default function CompetitorAnalysisDashboard({
                               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {formatNumber(comp.competitor.followersCount)}
                               </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Followers</p>
+                              <p className="text-sm text-muted-foreground">Followers</p>
                             </div>
                             <div>
                               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {formatNumber(comp.competitor.followingCount)}
                               </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Following</p>
+                              <p className="text-sm text-muted-foreground">Following</p>
                             </div>
                             <div>
                               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {formatNumber(comp.competitor.postsCount)}
                               </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Posts</p>
+                              <p className="text-sm text-muted-foreground">Posts</p>
                             </div>
                           </div>
                         </div>
@@ -402,7 +402,7 @@ export default function CompetitorAnalysisDashboard({
                         </div>
 
                         {/* Top Hashtags */}
-                        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="p-4 border border-border rounded-lg">
                           <h4 className="font-medium mb-3">Top Performing Hashtags</h4>
                           <div className="flex flex-wrap gap-2">
                             {comp.metrics.topHashtags.slice(0, 10).map(hashtag => (
@@ -420,7 +420,7 @@ export default function CompetitorAnalysisDashboard({
                   })()}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-muted-foreground">
                   Select a competitor above to view detailed analysis
                 </div>
               )}
@@ -460,7 +460,7 @@ export default function CompetitorAnalysisDashboard({
               </div>
 
               {/* Underutilized Hashtags */}
-              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="p-4 border border-border rounded-lg">
                 <h4 className="font-medium mb-3">Underutilized Hashtags with High Potential</h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.competitors
@@ -484,7 +484,7 @@ export default function CompetitorAnalysisDashboard({
           {activeTab === 'content' && (
             <div className="space-y-6">
               {analysis.competitors.map(comp => (
-                <div key={comp.competitor.username} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div key={comp.competitor.username} className="p-4 border border-border rounded-lg">
                   <h4 className="font-medium mb-4">@{comp.competitor.username} Content Strategy</h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -518,7 +518,7 @@ export default function CompetitorAnalysisDashboard({
                       <h5 className="font-medium mb-2">Engagement Tactics</h5>
                       <div className="space-y-1">
                         {comp.contentStrategy.engagementTactics.map((tactic, index) => (
-                          <div key={index} className="text-sm text-gray-700 dark:text-gray-300">
+                          <div key={index} className="text-sm text-foreground">
                             • {tactic}
                           </div>
                         ))}
@@ -541,14 +541,14 @@ export default function CompetitorAnalysisDashboard({
             </div>
           )}
 
-          <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
+          <div className="mt-6 text-xs text-muted-foreground text-center">
             Last updated: {new Date(analysis.lastUpdated).toLocaleString()}
           </div>
         </>
       )}
 
       {!analysis && !isLoading && competitors.length === 0 && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-muted-foreground">
           Add competitors above to start analyzing their strategies and find growth opportunities
         </div>
       )}

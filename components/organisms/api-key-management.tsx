@@ -495,7 +495,7 @@ export default function APIKeyManagement() {
             </div>
           ) : apiKeys.length === 0 ? (
             <div className="text-center py-8">
-              <Key className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <Key className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <Text size="3" weight="medium" className="mb-2 block">No API keys yet</Text>
               <Text size="2" color="gray" className="mb-4 block">
                 Create your first API key to start using the Succulent API
@@ -512,7 +512,7 @@ export default function APIKeyManagement() {
                 const rateLimitInfo = getRateLimitInfo(key.rateLimitTier);
                 
                 return (
-                  <div key={key.keyId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div key={key.keyId} className="border border-border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -525,7 +525,7 @@ export default function APIKeyManagement() {
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center gap-4 mb-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-4 mb-2 text-sm text-muted-foreground">
                           <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                             {key.keyPrefix}
                           </span>
@@ -541,7 +541,7 @@ export default function APIKeyManagement() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>{key.usageCount} total requests</span>
                           <span>{key.monthlyUsageCount} this month</span>
                           <span>{key.permissions.length} permissions</span>
@@ -623,7 +623,7 @@ export default function APIKeyManagement() {
 
           <div className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Name *</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Name *</label>
               <TextField.Root
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
@@ -632,7 +632,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Description</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Description</label>
               <TextArea
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
@@ -642,7 +642,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Permissions</label>
+              <label className="block text-sm font-medium text-foreground mb-3">Permissions</label>
               <div className="space-y-2">
                 {availablePermissions.map((permission) => (
                   <label key={permission.id} className="flex items-start gap-3 cursor-pointer">
@@ -672,7 +672,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Rate Limit Tier</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Rate Limit Tier</label>
               <select
                 value={createForm.rateLimitTier}
                 onChange={(e) => setCreateForm({ ...createForm, rateLimitTier: e.target.value as any })}
@@ -706,7 +706,7 @@ export default function APIKeyManagement() {
 
           {newApiKey && (
             <div className="mt-6">
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="p-4 bg-muted border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <Text size="2" weight="medium">API Key</Text>
                   <Button
@@ -727,7 +727,7 @@ export default function APIKeyManagement() {
                     )}
                   </Button>
                 </div>
-                <code className="block font-mono text-sm break-all bg-white dark:bg-gray-900 p-2 rounded border">
+                <code className="block font-mono text-sm break-all bg-card p-2 rounded border">
                   {newApiKey}
                 </code>
               </div>
@@ -773,7 +773,7 @@ export default function APIKeyManagement() {
           {editingKey && (
             <div className="space-y-4 mt-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Name *</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Name *</label>
                 <TextField.Root
                   value={editingKey.name}
                   onChange={(e) => setEditingKey({ ...editingKey, name: e.target.value })}
@@ -782,7 +782,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Description</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Description</label>
                 <TextArea
                   value={editingKey.description || ''}
                   onChange={(e) => setEditingKey({ ...editingKey, description: e.target.value })}
@@ -792,7 +792,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Permissions</label>
+                <label className="block text-sm font-medium text-foreground mb-3">Permissions</label>
                 <div className="space-y-2">
                   {availablePermissions.map((permission) => (
                     <label key={permission.id} className="flex items-start gap-3 cursor-pointer">
@@ -822,7 +822,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Status</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Status</label>
                 <select
                   value={editingKey.status}
                   onChange={(e) => setEditingKey({ ...editingKey, status: e.target.value as any })}
@@ -837,9 +837,9 @@ export default function APIKeyManagement() {
               </div>
 
               {/* Key Information */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="p-4 bg-muted border border-border rounded-lg">
                 <Text size="2" weight="medium" className="mb-2 block">Key Information</Text>
-                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                <div className="space-y-1 text-sm text-muted-foreground">
                   <div><strong>Key ID:</strong> {editingKey.keyId}</div>
                   <div><strong>Created:</strong> {formatDate(editingKey.createdAt)}</div>
                   <div><strong>Usage:</strong> {editingKey.usageCount} total requests, {editingKey.monthlyUsageCount} this month</div>

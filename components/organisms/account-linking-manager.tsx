@@ -597,7 +597,7 @@ export default function AccountLinkingManager({
     return (
       <Card className="p-4">
         <div className="text-center space-y-3">
-          <Users className="w-8 h-8 text-gray-400 mx-auto" />
+          <Users className="w-8 h-8 text-muted-foreground mx-auto" />
           <div>
             <Text size="3" weight="medium" className="block">Account Linking</Text>
             <Text size="2" color="gray" className="block mt-1">
@@ -927,7 +927,7 @@ export default function AccountLinkingManager({
               } else if (!showAddAccountForm && accountGroup?.accounts !== undefined) {
                 return (
                   <div className="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                    <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                     <Text size="2" color="gray" className="block mb-3">
                       No accounts found
                     </Text>
@@ -994,7 +994,7 @@ export default function AccountLinkingManager({
           
           {accountToRemove && (
             <div className="space-y-4 mt-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                 <Image 
                   src={platformIcons[accountToRemove.account.platform as keyof typeof platformIcons]} 
                   alt={accountToRemove.account.platform} 

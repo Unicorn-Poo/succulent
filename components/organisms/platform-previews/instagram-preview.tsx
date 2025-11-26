@@ -57,9 +57,9 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
   };
 
   return (
-    <div className="max-w-sm mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="max-w-sm mx-auto bg-card border border-border rounded-lg overflow-hidden">
       {/* Status Badge */}
-      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b">
+      <div className="px-4 py-2 bg-muted border-b">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor()}`}>
           {post.status.toUpperCase()}
         </span>
@@ -74,17 +74,17 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
             </span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{getStatusDisplay()}</p>
+            <p className="text-sm font-semibold text-foreground">{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</p>
+            <p className="text-xs text-muted-foreground">{getStatusDisplay()}</p>
           </div>
         </div>
-        <MoreHorizontal className="w-5 h-5 text-gray-400" />
+        <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
       </div>
       
       {/* Image Placeholder */}
       <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 rounded-lg flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <div className="w-12 h-12 mx-auto mb-2 bg-muted-foreground/30 rounded-lg flex items-center justify-center">
             <span className="text-lg">📷</span>
           </div>
           <p className="text-sm">Photo/Video</p>
@@ -95,17 +95,17 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
       <div className="p-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-4">
-            <Heart className={`w-6 h-6 ${post.status === 'published' ? 'text-red-500 fill-current' : 'text-gray-700 dark:text-gray-300'}`} />
-            <MessageCircle className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-            <Send className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <Heart className={`w-6 h-6 ${post.status === 'published' ? 'text-red-500 fill-current' : 'text-foreground'}`} />
+            <MessageCircle className="w-6 h-6 text-foreground" />
+            <Send className="w-6 h-6 text-foreground" />
           </div>
-          <Bookmark className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          <Bookmark className="w-6 h-6 text-foreground" />
         </div>
         
         {/* Engagement */}
         {post.engagement && post.status === 'published' && (
           <div className="mb-2">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-semibold text-foreground">
               {post.engagement.likes.toLocaleString()} likes
             </p>
           </div>
@@ -113,14 +113,14 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
         
         {/* Caption */}
         <div className="text-sm">
-          <span className="font-semibold text-gray-900 dark:text-gray-100">{account.username || account.name.toLowerCase().replace(/\s+/g, '')} </span>
-          <span className="text-gray-900 dark:text-gray-100">{post.content}</span>
+          <span className="font-semibold text-foreground">{account.username || account.name.toLowerCase().replace(/\s+/g, '')} </span>
+          <span className="text-foreground">{post.content}</span>
         </div>
         
         {/* Comments */}
         {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
           <div className="mt-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               View all {post.engagement.comments} comments
             </p>
           </div>

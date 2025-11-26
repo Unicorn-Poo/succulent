@@ -103,7 +103,7 @@ export default function ContentSuggestionCard({
       case "low":
         return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800";
       default:
-        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-border";
     }
   };
 
@@ -187,7 +187,7 @@ export default function ContentSuggestionCard({
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
           <Check className="w-5 h-5" />
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+          <span className="font-medium text-foreground">
             Content accepted!
           </span>
         </div>
@@ -204,7 +204,7 @@ export default function ContentSuggestionCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
             <X className="w-5 h-5" />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-foreground">
               Content rejected
             </span>
           </div>
@@ -225,16 +225,16 @@ export default function ContentSuggestionCard({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-border dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-foreground">
               {contentPillar ? `${contentPillar}` : "AI Generated Content"}
             </span>
-            <span className="text-xs px-2 py-0.5 bg-white dark:bg-gray-900 rounded-full text-gray-600 dark:text-gray-400 capitalize">
+            <span className="text-xs px-2 py-0.5 bg-card rounded-full text-muted-foreground capitalize">
               {platform}
             </span>
           </div>
@@ -263,7 +263,7 @@ export default function ContentSuggestionCard({
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={6}
             placeholder="Edit the content..."
           />
@@ -289,7 +289,7 @@ export default function ContentSuggestionCard({
 
         {/* Meta info */}
         {bestTimeToPost && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             <span>Best time to post: {bestTimeToPost}</span>
           </div>
@@ -333,10 +333,10 @@ export default function ContentSuggestionCard({
 
       {/* Image Preview */}
       {showImagePreview && (
-        <div className="p-4 bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 bg-gray-900 border-t border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-medium text-foreground">
                 Template:
               </span>
               <select
@@ -369,7 +369,7 @@ export default function ContentSuggestionCard({
               unoptimized
             />
           </div>
-          <p className="text-xs text-gray-400 text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-2">
             Image sized for {platform} • Click download to save
           </p>
         </div>
@@ -377,14 +377,14 @@ export default function ContentSuggestionCard({
 
       {/* Actions */}
       {!showRejectReason && (
-        <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-t border-gray-100">
+        <div className="bg-muted px-4 py-3 border-t border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
                 size="1"
-                className="text-gray-600 dark:text-gray-400"
+                className="text-muted-foreground"
               >
                 <Edit2 className="w-4 h-4 mr-1" />
                 {isEditing ? "Preview" : "Edit"}
@@ -393,7 +393,7 @@ export default function ContentSuggestionCard({
                 onClick={handleCopy}
                 variant="outline"
                 size="1"
-                className="text-gray-600 dark:text-gray-400"
+                className="text-muted-foreground"
               >
                 <Copy className="w-4 h-4 mr-1" />
                 Copy
@@ -403,7 +403,7 @@ export default function ContentSuggestionCard({
                   onClick={onRegenerate}
                   variant="outline"
                   size="1"
-                  className="text-gray-600 dark:text-gray-400"
+                  className="text-muted-foreground"
                 >
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Regenerate
@@ -416,7 +416,7 @@ export default function ContentSuggestionCard({
                 className={
                   showImagePreview
                     ? "text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800"
-                    : "text-gray-600 dark:text-gray-400"
+                    : "text-muted-foreground"
                 }
               >
                 <ImageIcon className="w-4 h-4 mr-1" />

@@ -127,8 +127,8 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
     switch (status) {
       case 'published': return 'bg-green-500 border-green-600';
       case 'scheduled': return 'bg-lime-500 border-lime-600';
-      case 'draft': return 'bg-gray-50 dark:bg-gray-8000 border-gray-600';
-      default: return 'bg-gray-50 dark:bg-gray-8000 border-gray-600';
+      case 'draft': return 'bg-muted0 border-gray-600';
+      default: return 'bg-muted0 border-gray-600';
     }
   };
   
@@ -165,23 +165,23 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Content Calendar</h2>
+          <h2 className="text-xl font-semibold text-foreground">Content Calendar</h2>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Published</span>
+              <span className="text-sm text-muted-foreground">Published</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Scheduled</span>
+              <span className="text-sm text-muted-foreground">Scheduled</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-gray-50 dark:bg-gray-8000 rounded-full"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Draft</span>
+              <div className="w-3 h-3 bg-muted0 rounded-full"></div>
+              <span className="text-sm text-muted-foreground">Draft</span>
             </div>
           </div>
         </div>
@@ -200,11 +200,11 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
       </div>
       
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
         {/* Day headers */}
         {daysOfWeek.map(day => (
-          <div key={day} className="bg-gray-50 dark:bg-gray-800 p-3 text-center">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{day}</span>
+          <div key={day} className="bg-muted p-3 text-center">
+            <span className="text-sm font-medium text-muted-foreground">{day}</span>
           </div>
         ))}
         
@@ -216,13 +216,13 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
           return (
             <div
               key={index}
-              className={`bg-white dark:bg-gray-900 p-2 min-h-[120px] ${
+              className={`bg-card p-2 min-h-[120px] ${
                 !calendarDay.isCurrentMonth ? 'opacity-30' : ''
               } ${isToday ? 'ring-2 ring-lime-500 ring-inset' : ''}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className={`text-sm ${
-                  calendarDay.isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'
+                  calendarDay.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'
                 }`}>
                   {calendarDay.day}
                 </span>
@@ -306,7 +306,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
                   );
                 })}
                 {dayPosts.length > 2 && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 text-center bg-gray-50 dark:bg-gray-800 rounded px-2 py-1">
+                  <div className="text-xs text-muted-foreground text-center bg-muted rounded px-2 py-1">
                     +{dayPosts.length - 2} more
                   </div>
                 )}
@@ -317,7 +317,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
       </div>
       
       {/* Legend */}
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-xs text-muted-foreground">
         Click on any post to view or edit it. Today is highlighted with a lime border. 
         Platform emojis: 📷 Instagram, 🐦 X/Twitter, 📹 YouTube
       </div>

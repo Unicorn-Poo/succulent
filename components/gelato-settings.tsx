@@ -757,13 +757,13 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 						{/* Template Status */}
 						<div className="grid grid-cols-2 gap-4 mb-4">
-							<div className="text-center p-3 bg-white dark:bg-gray-900 rounded border">
+							<div className="text-center p-3 bg-card rounded border">
 								<Text size="3" weight="bold" className="block">
 									{cachedTemplatesCount}
 								</Text>
 								<Text size="1" color="gray">Cached Templates</Text>
 							</div>
-							<div className="text-center p-3 bg-white dark:bg-gray-900 rounded border">
+							<div className="text-center p-3 bg-card rounded border">
 								<Text size="1" color="gray" className="block">
 									Last Fetched
 								</Text>
@@ -791,7 +791,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										const currentTags = template.tags || [];
 										
 										return (
-											<div key={templateId} className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+											<div key={templateId} className="p-3 bg-card border border-border rounded-lg">
 												<div className="flex items-center justify-between">
 													<div className="flex-1 min-w-0">
 														<Text size="2" weight="medium" className="block truncate">
@@ -830,7 +830,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 												</div>
 												
 												{/* Tags Section */}
-												<div className="mt-3 pt-3 border-t border-gray-100">
+												<div className="mt-3 pt-3 border-t border-border">
 													<div className="flex items-center justify-between mb-2">
 														<Text size="1" weight="medium" color="gray">
 															🏷️ Product Tags
@@ -900,7 +900,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								</div>
 							</div>
 						) : (
-							<div className="mb-4 p-4 bg-white dark:bg-gray-900 border rounded-lg text-center">
+							<div className="mb-4 p-4 bg-card border rounded-lg text-center">
 								<Text size="2" color="gray" className="block mb-2">
 									📄 No templates imported yet
 								</Text>
@@ -1130,7 +1130,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				</Text>
 				<div className="space-y-2">
 					{publishingChannels.map((channel: any) => (
-						<div key={channel.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 border rounded">
+						<div key={channel.id} className="flex items-center justify-between p-3 bg-card border rounded">
 							<div className="flex items-center gap-3">
 								<input
 									type="checkbox"
@@ -1233,7 +1233,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				)}
 
 				{/* Security Notice */}
-				<div className="mt-6 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+				<div className="mt-6 p-3 bg-muted border border-border rounded-lg">
 					<Text size="1" color="gray">
 						🔐 <strong>Security:</strong> Your API credentials are encrypted using Jazz's built-in encryption 
 						and stored securely for this account group. They are never shared or exposed to other users.
@@ -1255,7 +1255,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 						<div className="space-y-4 mt-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+								<label className="block text-sm font-medium text-foreground mb-2">
 									<Package className="w-4 h-4 inline mr-1" />
 									Template ID
 								</label>

@@ -296,7 +296,7 @@ export default function ContentDiscoveryManager({
     switch (sentiment) {
       case 'positive': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
       case 'negative': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800';
+      default: return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -315,9 +315,9 @@ export default function ContentDiscoveryManager({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Content Discovery Manager</h3>
+        <h3 className="text-lg font-semibold text-foreground">Content Discovery Manager</h3>
         <Button onClick={discoverContent} disabled={isLoading}>
           {isLoading ? 'Discovering...' : 'Refresh Content'}
         </Button>
@@ -338,7 +338,7 @@ export default function ContentDiscoveryManager({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -353,7 +353,7 @@ export default function ContentDiscoveryManager({
           {selectedContent.length > 0 && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedContent.length} content items selected</span>
+                <span className="font-medium text-foreground">{selectedContent.length} content items selected</span>
                 <Button onClick={scheduleSelectedContent} size="sm">
                   Schedule Selected
                 </Button>
@@ -368,7 +368,7 @@ export default function ContentDiscoveryManager({
                 <div
                   key={item.id}
                   className={`p-4 border rounded-lg ${
-                    selectedContent.includes(item.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'
+                    selectedContent.includes(item.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border'
                   }`}
                 >
                   <div className="flex items-start space-x-3">
@@ -381,7 +381,7 @@ export default function ContentDiscoveryManager({
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
+                        <h4 className="font-medium text-foreground">{item.title}</h4>
                         <span className={`px-2 py-1 rounded-full text-xs ${getSentimentColor(item.sentiment)}`}>
                           {item.sentiment}
                         </span>
@@ -390,10 +390,10 @@ export default function ContentDiscoveryManager({
                         </span>
                       </div>
                       
-                      <p className="text-gray-700 dark:text-gray-300 mb-3">{item.content}</p>
+                      <p className="text-foreground mb-3">{item.content}</p>
                       
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <span>{item.source}</span>
                           <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
                           <a 
@@ -409,7 +409,7 @@ export default function ContentDiscoveryManager({
                       
                       <div className="flex flex-wrap gap-1 mt-2">
                         {item.tags.map(tag => (
-                          <span key={tag} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
+                          <span key={tag} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-foreground rounded text-xs">
                             #{tag}
                           </span>
                         ))}
@@ -421,7 +421,7 @@ export default function ContentDiscoveryManager({
           </div>
 
           {discoveredContent.filter(item => !item.isScheduled).length === 0 && !isLoading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No new content discovered. Try refreshing or adding more RSS feeds.
             </div>
           )}
@@ -432,11 +432,11 @@ export default function ContentDiscoveryManager({
       {activeTab === 'trending' && (
         <div className="space-y-6">
           {trendingTopics.map(topic => (
-            <div key={topic.topic} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div key={topic.topic} className="p-4 border border-border rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-lg">{topic.topic}</h4>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     {getTrendIcon(topic.trend)} {topic.volume.toLocaleString()} mentions
                   </span>
                 </div>
@@ -457,7 +457,7 @@ export default function ContentDiscoveryManager({
                   <h5 className="font-medium mb-2">Related Content</h5>
                   <div className="space-y-2">
                     {topic.relatedContent.map(content => (
-                      <div key={content.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                      <div key={content.id} className="flex items-center justify-between p-2 bg-muted rounded">
                         <span className="text-sm">{content.title}</span>
                         <span className={`text-xs ${getEngagementColor(content.engagementPotential)}`}>
                           {content.engagementPotential}%
@@ -476,7 +476,7 @@ export default function ContentDiscoveryManager({
       {activeTab === 'feeds' && (
         <div className="space-y-6">
           {/* Add New Feed */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-3">Add RSS Feed</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
@@ -515,9 +515,9 @@ export default function ContentDiscoveryManager({
           {/* Existing Feeds */}
           <div className="space-y-4">
             {feeds.map(feed => (
-              <div key={feed.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={feed.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{feed.title}</h4>
+                  <h4 className="font-medium text-foreground">{feed.title}</h4>
                   <div className="flex items-center space-x-2">
                     {feed.autoPost && (
                       <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs">
@@ -536,10 +536,10 @@ export default function ContentDiscoveryManager({
                   </div>
                 </div>
                 
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{feed.url}</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{feed.description}</p>
+                <p className="text-sm text-muted-foreground mb-2">{feed.url}</p>
+                <p className="text-sm text-foreground mb-3">{feed.description}</p>
                 
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Platforms: {feed.platforms.join(', ')}</span>
                   <span>Posts: {feed.postsCount}</span>
                   <span>Last checked: {new Date(feed.lastChecked).toLocaleDateString()}</span>
@@ -558,16 +558,16 @@ export default function ContentDiscoveryManager({
             .map(item => (
               <div key={item.id} className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
+                  <h4 className="font-medium text-foreground">{item.title}</h4>
                   <span className="text-sm text-blue-600 dark:text-blue-400">
                     Scheduled for {item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : 'Unknown'}
                   </span>
                 </div>
                 
-                <p className="text-gray-700 dark:text-gray-300 mb-2">{item.content}</p>
+                <p className="text-foreground mb-2">{item.content}</p>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     Platforms: {item.platforms?.join(', ') || 'None'}
                   </span>
                   <span className={`text-sm ${getEngagementColor(item.engagementPotential)}`}>
@@ -578,7 +578,7 @@ export default function ContentDiscoveryManager({
             ))}
 
           {discoveredContent.filter(item => item.isScheduled).length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No content scheduled yet
             </div>
           )}

@@ -286,19 +286,19 @@ export default function BrandManagementDashboard({
 
   if (!brandSettings) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+      <div className="bg-card rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading brand settings...</span>
+          <span className="ml-2 text-muted-foreground">Loading brand settings...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Brand Management Dashboard</h3>
+        <h3 className="text-lg font-semibold text-foreground">Brand Management Dashboard</h3>
         <Button 
           onClick={() => brandSettings && generateConsistencyReport(brandSettings)} 
           disabled={isLoading}
@@ -322,7 +322,7 @@ export default function BrandManagementDashboard({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -337,7 +337,7 @@ export default function BrandManagementDashboard({
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Brand Name</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Brand Name</label>
               <Input
                 value={brandSettings.name}
                 onChange={(e) => updateBrandSettings({ name: e.target.value })}
@@ -345,13 +345,13 @@ export default function BrandManagementDashboard({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Brand Voice Tone</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Brand Voice Tone</label>
               <select
                 value={brandSettings.voice.tone}
                 onChange={(e) => updateBrandSettings({
                   voice: { ...brandSettings.voice, tone: e.target.value as any }
                 })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="w-full px-3 py-2 border border-border rounded-lg"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -365,7 +365,7 @@ export default function BrandManagementDashboard({
           {/* Colors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Primary Color</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Primary Color</label>
               <div className="flex items-center space-x-2">
                 <input
                   type="color"
@@ -381,7 +381,7 @@ export default function BrandManagementDashboard({
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Secondary Color</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Secondary Color</label>
               <div className="flex items-center space-x-2">
                 <input
                   type="color"
@@ -400,10 +400,10 @@ export default function BrandManagementDashboard({
 
           {/* Hashtags */}
           <div className="space-y-4">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100">Brand Hashtags</h4>
+            <h4 className="font-medium text-foreground">Brand Hashtags</h4>
             
             {(['primary', 'secondary', 'forbidden'] as const).map(category => (
-              <div key={category} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={category} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="font-medium capitalize">{category} Hashtags</h5>
                   <Button
@@ -449,7 +449,7 @@ export default function BrandManagementDashboard({
       {activeTab === 'templates' && (
         <div className="space-y-6">
           {/* Add New Template */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-3">Create New Template</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
@@ -460,7 +460,7 @@ export default function BrandManagementDashboard({
               <select
                 value={newTemplate.category}
                 onChange={(e) => setNewTemplate(prev => ({ ...prev, category: e.target.value }))}
-                className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="px-3 py-2 border border-border rounded-lg"
               >
                 <option value="general">General</option>
                 <option value="educational">Educational</option>
@@ -485,10 +485,10 @@ export default function BrandManagementDashboard({
           {/* Existing Templates */}
           <div className="space-y-4">
             {brandSettings.templates.map(template => (
-              <div key={template.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={template.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h4>
+                    <h4 className="font-medium text-foreground">{template.name}</h4>
                     <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs">
                       {template.category}
                     </span>
@@ -504,7 +504,7 @@ export default function BrandManagementDashboard({
                 
                 <p className="text-gray-800 dark:text-gray-200 mb-3 whitespace-pre-wrap">{template.content}</p>
                 
-                <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <span>Platforms: {template.platforms.join(', ')}</span>
                 </div>
               </div>
@@ -517,33 +517,33 @@ export default function BrandManagementDashboard({
       {activeTab === 'guidelines' && (
         <div className="space-y-6">
           {/* Posting Frequency */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Posting Frequency (per week)</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(brandSettings.guidelines.postingFrequency).map(([platform, frequency]) => (
                 <div key={platform} className="text-center">
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{frequency}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{platform}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{platform}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Content Mix */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Content Mix Distribution</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(brandSettings.guidelines.contentMix).map(([type, percentage]) => (
                 <div key={type} className="text-center">
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">{percentage}%</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{type}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{type}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Engagement Rules */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Engagement Rules</h4>
             <ul className="space-y-2">
               {brandSettings.guidelines.engagementRules.map((rule, index) => (
@@ -602,7 +602,7 @@ export default function BrandManagementDashboard({
           </div>
 
           {/* Violations */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Brand Violations</h4>
             <div className="space-y-3">
               {consistencyReport.violations.map((violation, index) => (
@@ -611,7 +611,7 @@ export default function BrandManagementDashboard({
                   className={`p-3 border rounded-lg ${getSeverityColor(violation.severity)}`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{violation.type}</h5>
+                    <h5 className="font-medium text-foreground">{violation.type}</h5>
                     <span className="text-xs uppercase font-medium">{violation.severity}</span>
                   </div>
                   <p className="text-sm">{violation.description}</p>

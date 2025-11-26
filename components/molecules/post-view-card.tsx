@@ -27,7 +27,7 @@ export const PostViewCard = memo(function PostViewCard({
   
   const platformIcons = useMemo(() => 
     PLATFORM_ICONS.map(({ Icon, key }) => (
-      <Icon key={key} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+      <Icon key={key} className="w-5 h-5 text-foreground" />
     )),
     []
   );
@@ -48,13 +48,13 @@ export const PostViewCard = memo(function PostViewCard({
     
     return (
       <div className="w-32 h-32 bg-pink-300 rounded-2xl flex items-center justify-center">
-        <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">IMAGE</span>
+        <span className="text-foreground font-medium text-sm">IMAGE</span>
       </div>
     );
   }, [imageUrl]);
 
   return (
-    <Card className={`w-full max-w-2xl bg-gray-200 border-0 rounded-3xl ${className || ''}`}>
+    <Card className={`w-full max-w-2xl bg-muted border-0 rounded-3xl ${className || ''}`}>
       <div className="p-6">
         <div className="flex gap-6 items-start">
           {/* Image placeholder */}
@@ -70,10 +70,10 @@ export const PostViewCard = memo(function PostViewCard({
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">{title}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-3">{title}</h2>
 
             {/* Body text */}
-            <p className="text-gray-900 dark:text-gray-100 text-sm leading-relaxed">{bodyText}</p>
+            <p className="text-foreground text-sm leading-relaxed">{bodyText}</p>
           </div>
         </div>
       </div>

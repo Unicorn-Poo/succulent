@@ -448,7 +448,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
         <div className="flex items-center justify-between mb-4">
           <Text size="4" weight="bold">Recent Posts</Text>
           <div className="flex items-center gap-2">
-            <Grid3X3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <Grid3X3 className="w-4 h-4 text-muted-foreground" />
             <Text size="2" color="gray">{recentPosts.length} posts</Text>
           </div>
         </div>
@@ -456,7 +456,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
         {recentPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentPosts.slice(0, 6).map((post) => (
-              <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+              <div key={post.id} className="border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                 {/* Post Image Placeholder */}
                 <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                   {post.mediaUrls && post.mediaUrls.length > 0 ? (
@@ -468,7 +468,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Grid3X3 className="w-8 h-8 text-gray-400" />
+                    <Grid3X3 className="w-8 h-8 text-muted-foreground" />
                   )}
                 </div>
                 
@@ -478,7 +478,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
                     {post.post}
                   </Text>
                   
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
                     <div className="flex items-center gap-3">
                       {post.likes !== undefined && (
@@ -500,7 +500,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-muted-foreground">
             <Grid3X3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <Text size="2">No recent posts found</Text>
             <Text size="1" className="block mt-1">Posts will appear here once they're published</Text>
@@ -528,7 +528,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
           <div className="space-y-4 mt-6">
             <div>
               <Text size="2" weight="medium" className="block mb-2">Account Information</Text>
-              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
+              <div className="bg-muted p-3 rounded">
                 <Text size="1" color="gray">Account Name: {account.name}</Text><br />
                 <Text size="1" color="gray">Platform: Instagram</Text><br />
                 <Text size="1" color="gray">Status: {account.isLinked ? 'Linked' : 'Not Linked'}</Text>
@@ -538,17 +538,17 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
             <div>
               <Text size="2" weight="medium" className="block mb-2">Available Features</Text>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div className="flex items-center justify-between p-2 bg-muted rounded">
                   <Text size="1">Analytics</Text>
                   <Badge color={analyticsAvailable ? "green" : "gray"}>
                     {analyticsAvailable ? "Available" : "Premium Only"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div className="flex items-center justify-between p-2 bg-muted rounded">
                   <Text size="1">Post History</Text>
                   <Badge color="green">Available</Badge>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div className="flex items-center justify-between p-2 bg-muted rounded">
                   <Text size="1">Profile Information</Text>
                   <Badge color="green">Available</Badge>
                 </div>

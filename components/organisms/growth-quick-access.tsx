@@ -86,10 +86,10 @@ export default function GrowthQuickAccess({
           />
           
           {/* Dropdown Content */}
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-20">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">🚀 Growth Automation</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered tools to accelerate your growth</p>
+          <div className="absolute top-full right-0 mt-2 w-80 bg-card rounded-lg shadow-xl border border-border z-20">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-semibold text-foreground">🚀 Growth Automation</h3>
+              <p className="text-sm text-muted-foreground">AI-powered tools to accelerate your growth</p>
             </div>
 
             <div className="p-2 max-h-96 overflow-y-auto">
@@ -109,8 +109,8 @@ export default function GrowthQuickAccess({
                         <IconComponent className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{action.name}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{action.description}</p>
+                        <p className="font-medium text-foreground">{action.name}</p>
+                        <p className="text-sm text-muted-foreground">{action.description}</p>
                       </div>
                     </div>
                   </button>
@@ -118,7 +118,7 @@ export default function GrowthQuickAccess({
               })}
             </div>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
+            <div className="p-4 border-t border-border bg-muted rounded-b-lg">
               <button
                 onClick={() => {
                   onToolSelect('tools-overview');

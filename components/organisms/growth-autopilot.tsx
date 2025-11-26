@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../atoms/button";
 import { Input } from "../atoms/input";
 import ContentSuggestionCard from "./content-suggestion-card";
+import PostQueue from "./post-queue";
 
 interface AutopilotSettings {
   enabled: boolean;
@@ -555,15 +556,15 @@ export default function GrowthAutopilot({
       case "success":
         return "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20";
       default:
-        return "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800";
+        return "border-border bg-muted";
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-lg font-semibold text-foreground">
             🤖 Growth Autopilot
           </h3>
           <span
@@ -593,7 +594,7 @@ export default function GrowthAutopilot({
               }
               className="rounded"
             />
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-sm font-medium text-foreground">
               Enable Autopilot
             </span>
           </label>
@@ -672,7 +673,7 @@ export default function GrowthAutopilot({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
+                  : "border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
               }`}
             >
               {tab.label}
@@ -693,17 +694,17 @@ export default function GrowthAutopilot({
               {dashboard.nextActions.slice(0, 3).map((action) => (
                 <div
                   key={action.id}
-                  className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-card rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">
                       {getActionIcon(action.type)}
                     </span>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-foreground">
                         {action.title}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {action.description}
                       </p>
                     </div>
@@ -729,15 +730,18 @@ export default function GrowthAutopilot({
             </div>
           </div>
 
+          {/* Post Queue Widget */}
+          <PostQueue accountGroup={accountGroup} compact={true} />
+
           {/* Performance Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
+            <div className="p-4 border border-border rounded-lg">
+              <h4 className="font-medium mb-3 text-foreground">
                 Today's Automation Performance
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Posts Scheduled
                   </span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">
@@ -745,7 +749,7 @@ export default function GrowthAutopilot({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Comments Replied
                   </span>
                   <span className="font-bold text-green-600 dark:text-green-400">
@@ -753,15 +757,13 @@ export default function GrowthAutopilot({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    DMs Sent
-                  </span>
+                  <span className="text-sm text-foreground">DMs Sent</span>
                   <span className="font-bold text-purple-600 dark:text-purple-400">
                     {dashboard.performance.dmssSent}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Hashtags Optimized
                   </span>
                   <span className="font-bold text-yellow-600 dark:text-yellow-400">
@@ -771,13 +773,13 @@ export default function GrowthAutopilot({
               </div>
             </div>
 
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
+            <div className="p-4 border border-border rounded-lg">
+              <h4 className="font-medium mb-3 text-foreground">
                 Growth Trajectory
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Current Growth Rate
                   </span>
                   <span className="font-bold text-green-600 dark:text-green-400">
@@ -785,7 +787,7 @@ export default function GrowthAutopilot({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Target Growth Rate
                   </span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">
@@ -793,14 +795,14 @@ export default function GrowthAutopilot({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground">
                     Projected Followers (30 days)
                   </span>
                   <span className="font-bold text-purple-600 dark:text-purple-400">
                     +{Math.round(2500 * (dashboard.growthRate / 100))}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className="bg-green-600 h-2 rounded-full"
                     style={{
@@ -856,7 +858,7 @@ export default function GrowthAutopilot({
             .map((action) => (
               <div
                 key={action.id}
-                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="p-4 border border-border rounded-lg"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start space-x-3">
@@ -864,21 +866,21 @@ export default function GrowthAutopilot({
                       {getActionIcon(action.type)}
                     </span>
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                      <h4 className="font-medium text-foreground">
                         {action.title}
                       </h4>
-                      <p className="text-gray-700 dark:text-gray-300 mt-1">
+                      <p className="text-foreground mt-1">
                         {action.description}
                       </p>
                       <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
                         💡 {action.reason}
                       </p>
                       {action.content && (
-                        <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">
+                        <div className="mt-3 p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-medium mb-1 text-foreground">
                             Suggested Content:
                           </p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          <p className="text-sm text-foreground whitespace-pre-wrap">
                             {action.content}
                           </p>
                         </div>
@@ -937,7 +939,7 @@ export default function GrowthAutopilot({
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
                   <span>Platform: {action.platform}</span>
                   <span>
                     Created: {new Date(action.createdAt).toLocaleString()}
@@ -967,12 +969,10 @@ export default function GrowthAutopilot({
               <div className="flex items-start space-x-3">
                 <span className="text-2xl">{getInsightIcon(insight.type)}</span>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                  <h4 className="font-medium text-foreground">
                     {insight.title}
                   </h4>
-                  <p className="text-gray-700 dark:text-gray-300 mt-1">
-                    {insight.description}
-                  </p>
+                  <p className="text-foreground mt-1">{insight.description}</p>
                   {insight.action && (
                     <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
                       Recommended Action: {insight.action}
@@ -1005,8 +1005,8 @@ export default function GrowthAutopilot({
       {activeTab === "settings" && (
         <div className="space-y-6">
           {/* Aggressiveness Level */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
+          <div className="p-4 border border-border rounded-lg">
+            <h4 className="font-medium mb-3 text-foreground">
               Automation Aggressiveness
             </h4>
             <div className="flex space-x-4">
@@ -1026,14 +1026,12 @@ export default function GrowthAutopilot({
                       }
                       className="rounded"
                     />
-                    <span className="capitalize text-gray-900 dark:text-gray-100">
-                      {level}
-                    </span>
+                    <span className="capitalize text-foreground">{level}</span>
                   </label>
                 )
               )}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               {settings.aggressiveness === "conservative" &&
                 "Minimal automation, requires approval for most actions"}
               {settings.aggressiveness === "moderate" &&
@@ -1044,13 +1042,11 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Growth Goals */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
-              Growth Goals
-            </h4>
+          <div className="p-4 border border-border rounded-lg">
+            <h4 className="font-medium mb-3 text-foreground">Growth Goals</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Monthly Follower Growth Target (%)
                 </label>
                 <Input
@@ -1068,7 +1064,7 @@ export default function GrowthAutopilot({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Engagement Rate Target (%)
                 </label>
                 <Input
@@ -1087,7 +1083,7 @@ export default function GrowthAutopilot({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Posts Per Week
                 </label>
                 <Input
@@ -1108,8 +1104,8 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Automation Toggles */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
+          <div className="p-4 border border-border rounded-lg">
+            <h4 className="font-medium mb-3 text-foreground">
               Automation Features
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1129,7 +1125,7 @@ export default function GrowthAutopilot({
                     }
                     className="rounded"
                   />
-                  <span className="capitalize text-gray-900 dark:text-gray-100">
+                  <span className="capitalize text-foreground">
                     {key.replace(/([A-Z])/g, " $1").toLowerCase()}
                   </span>
                 </label>
@@ -1138,7 +1134,7 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Approval Settings */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Approval Requirements</h4>
             <div className="space-y-3">
               {Object.entries(settings.approvals).map(([key, value]) => (

@@ -410,7 +410,7 @@ export const PreviewModal = ({
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-4 pt-4 border-t">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Text size="1">
               {previewMode === "current" || previewPlatforms.length === 1
                 ? `Previewing for ${

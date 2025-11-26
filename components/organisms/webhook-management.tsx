@@ -136,7 +136,7 @@ export default function WebhookManagement() {
     return (
       <Card className="p-6">
         <div className="text-center space-y-4">
-          <Webhook className="w-12 h-12 text-gray-400 mx-auto" />
+          <Webhook className="w-12 h-12 text-muted-foreground mx-auto" />
           <div>
             <Text size="4" weight="bold" className="block mb-2">Webhook Management</Text>
             <Text size="2" color="gray" className="block mb-4">
@@ -204,7 +204,7 @@ export default function WebhookManagement() {
               <Text size="3" weight="medium">Create New Webhook</Text>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -212,7 +212,7 @@ export default function WebhookManagement() {
 
             {/* URL Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Webhook URL
               </label>
               <input
@@ -226,7 +226,7 @@ export default function WebhookManagement() {
 
             {/* Secret Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Secret (Optional)
               </label>
               <input
@@ -243,7 +243,7 @@ export default function WebhookManagement() {
 
             {/* Events Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+              <label className="block text-sm font-medium text-foreground mb-3">
                 Events to Subscribe ({newWebhook.events.length} selected)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -253,7 +253,7 @@ export default function WebhookManagement() {
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                       newWebhook.events.includes(event.id)
                         ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
+                        : 'border-border hover:border-gray-300 dark:border-gray-600'
                     }`}
                     onClick={() => toggleEvent(event.id)}
                   >
@@ -333,15 +333,15 @@ export default function WebhookManagement() {
                   </div>
 
                   {/* Metadata */}
-                  <div className="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex gap-6 text-sm text-muted-foreground">
                     {webhook.createdAt && (
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">Created:</span> {new Date(webhook.createdAt).toLocaleDateString()}
+                        <span className="font-medium text-foreground">Created:</span> {new Date(webhook.createdAt).toLocaleDateString()}
                       </div>
                     )}
                     {webhook.lastTriggered && (
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">Last Triggered:</span> {new Date(webhook.lastTriggered).toLocaleDateString()}
+                        <span className="font-medium text-foreground">Last Triggered:</span> {new Date(webhook.lastTriggered).toLocaleDateString()}
                       </div>
                     )}
                   </div>
@@ -351,7 +351,7 @@ export default function WebhookManagement() {
                 <div className="flex gap-2 ml-4">
                   <button
                     onClick={() => {/* TODO: Implement edit */}}
-                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
+                    className="p-2 text-muted-foreground hover:text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
                     title="Edit webhook"
                   >
                     <Edit className="w-4 h-4" />
@@ -371,7 +371,7 @@ export default function WebhookManagement() {
       ) : !showCreateForm && !isLoading && (
         <Card>
           <div className="p-8 text-center space-y-4">
-            <Webhook className="w-12 h-12 text-gray-400 mx-auto" />
+            <Webhook className="w-12 h-12 text-muted-foreground mx-auto" />
             <div>
               <Text size="3" weight="medium" className="block mb-2">No Webhooks Configured</Text>
               <Text size="2" color="gray" className="block mb-4">

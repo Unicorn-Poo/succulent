@@ -200,11 +200,11 @@ export default function AccountGroupPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
         <div className="text-center">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Account Group Not Found
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-gray-600 dark:text-muted-foreground mb-6">
             The account group you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/">
@@ -434,16 +434,17 @@ export default function AccountGroupPage() {
   // Helper function to check if post matches platform filter
   const postMatchesPlatformFilter = (post: any) => {
     if (platformFilter === "all") return true;
-    
+
     const variantPlatforms = post.variants
       ? Object.keys(post.variants).filter((key: string) => key !== "base")
       : [];
-    const postPlatforms = variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
-    
+    const postPlatforms =
+      variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+
     if (platformFilter === "none") {
       return postPlatforms.length === 0;
     }
-    
+
     return postPlatforms.includes(platformFilter);
   };
 
@@ -522,14 +523,17 @@ export default function AccountGroupPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:h-16 gap-3 sm:gap-0">
             <div className="flex items-center">
-              <Link href="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mr-3 sm:mr-4 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <Link
+                href="/"
+                className="text-muted-foreground hover:text-gray-700 dark:text-muted-foreground dark:hover:text-muted-foreground mr-3 sm:mr-4 min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
                 <Home className="w-5 h-5" />
               </Link>
               <div>
                 <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[200px] sm:max-w-none">
                   {accountGroup.name || "Account Group"}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
                   {accounts.length} account{accounts.length !== 1 ? "s" : ""} •{" "}
                   {posts.length} post{posts.length !== 1 ? "s" : ""}
                 </p>
@@ -663,7 +667,7 @@ export default function AccountGroupPage() {
                 <h3 className="text-lg font-medium text-red-600 mb-2">
                   Danger Zone
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-gray-600 dark:text-muted-foreground mb-4">
                   Deleting this account group will permanently remove all posts,
                   accounts, and settings associated with it. This action cannot
                   be undone.
@@ -727,7 +731,7 @@ export default function AccountGroupPage() {
           <Tabs.Content value="posts" className="mt-6">
             {posts.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-gray-500 mb-4">
+                <div className="text-muted-foreground mb-4">
                   <p className="text-lg mb-2">No posts yet</p>
                   <p className="text-sm">
                     Create your first post to get started!
@@ -750,7 +754,7 @@ export default function AccountGroupPage() {
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                       Posts
                     </h2>
-                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <div className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
                       {(() => {
                         const filterCounts = {
                           all: posts.length,
@@ -810,7 +814,9 @@ export default function AccountGroupPage() {
                         <Select.Separator />
                         {connectedPlatforms.map((platform) => (
                           <Select.Item key={platform} value={platform}>
-                            {platformLabels[platform as keyof typeof platformLabels] || platform}
+                            {platformLabels[
+                              platform as keyof typeof platformLabels
+                            ] || platform}
                           </Select.Item>
                         ))}
                       </Select.Content>
@@ -869,44 +875,44 @@ export default function AccountGroupPage() {
 
                 {/* Posts Views */}
                 {postView === "grid" && (
-									<PostGridView
-										posts={posts}
-										accountGroupId={accountGroup.id}
-										accountGroupName={accountGroup.name || "Account Group"}
-										postsFilter={postsFilter}
-										platformFilter={platformFilter}
-										selectedPosts={selectedPosts}
-										onPostSelect={handlePostSelect}
-										connectedPlatforms={connectedPlatforms}
-									/>
-								)}
+                  <PostGridView
+                    posts={posts}
+                    accountGroupId={accountGroup.id}
+                    accountGroupName={accountGroup.name || "Account Group"}
+                    postsFilter={postsFilter}
+                    platformFilter={platformFilter}
+                    selectedPosts={selectedPosts}
+                    onPostSelect={handlePostSelect}
+                    connectedPlatforms={connectedPlatforms}
+                  />
+                )}
 
-								{postView === "image" && (
-									<PostImageView
-										posts={posts}
-										accountGroupId={accountGroup.id}
-										accountGroupName={accountGroup.name || "Account Group"}
-										postsFilter={postsFilter}
-										platformFilter={platformFilter}
-										selectedPosts={selectedPosts}
-										onPostSelect={handlePostSelect}
-										connectedPlatforms={connectedPlatforms}
-									/>
-								)}
+                {postView === "image" && (
+                  <PostImageView
+                    posts={posts}
+                    accountGroupId={accountGroup.id}
+                    accountGroupName={accountGroup.name || "Account Group"}
+                    postsFilter={postsFilter}
+                    platformFilter={platformFilter}
+                    selectedPosts={selectedPosts}
+                    onPostSelect={handlePostSelect}
+                    connectedPlatforms={connectedPlatforms}
+                  />
+                )}
 
-								{postView === "succinct" && (
-									<PostSuccinctView
-										posts={posts}
-										accountGroupId={accountGroup.id}
-										accountGroupName={accountGroup.name || "Account Group"}
-										postsFilter={postsFilter}
-										platformFilter={platformFilter}
-										selectedPosts={selectedPosts}
-										onPostSelect={handlePostSelect}
-										onSelectAll={handleSelectAll}
-										connectedPlatforms={connectedPlatforms}
-									/>
-								)}
+                {postView === "succinct" && (
+                  <PostSuccinctView
+                    posts={posts}
+                    accountGroupId={accountGroup.id}
+                    accountGroupName={accountGroup.name || "Account Group"}
+                    postsFilter={postsFilter}
+                    platformFilter={platformFilter}
+                    selectedPosts={selectedPosts}
+                    onPostSelect={handlePostSelect}
+                    onSelectAll={handleSelectAll}
+                    connectedPlatforms={connectedPlatforms}
+                  />
+                )}
 
                 {/* Empty state for filtered results */}
                 {posts.filter((post) => {
@@ -921,15 +927,22 @@ export default function AccountGroupPage() {
                 }).length === 0 &&
                   (postsFilter !== "all" || platformFilter !== "all") && (
                     <div className="text-center py-8">
-                      <div className="text-gray-400 mb-2">
+                      <div className="text-muted-foreground mb-2">
                         <MessageCircle className="w-8 h-8 mx-auto mb-2" />
                       </div>
-                      <p className="text-gray-500">
-                        No {postsFilter !== "all" ? postsFilter : ""} posts found
-                        {platformFilter !== "all" && platformFilter !== "none" && ` for ${platformLabels[platformFilter as keyof typeof platformLabels] || platformFilter}`}
+                      <p className="text-muted-foreground">
+                        No {postsFilter !== "all" ? postsFilter : ""} posts
+                        found
+                        {platformFilter !== "all" &&
+                          platformFilter !== "none" &&
+                          ` for ${
+                            platformLabels[
+                              platformFilter as keyof typeof platformLabels
+                            ] || platformFilter
+                          }`}
                         {platformFilter === "none" && " without a platform"}
                       </p>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {postsFilter === "draft" &&
                           "Create a new post to get started"}
                         {postsFilter === "scheduled" &&
@@ -966,7 +979,7 @@ export default function AccountGroupPage() {
               if (linkedAccounts.length === 0) {
                 return (
                   <div className="text-center py-12">
-                    <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                     <Text size="4" weight="medium" className="mb-2 block">
                       No Connected Accounts
                     </Text>
@@ -991,7 +1004,7 @@ export default function AccountGroupPage() {
               if (supportedPlatforms.length === 0) {
                 return (
                   <div className="text-center py-12">
-                    <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                     <Text size="4" weight="medium" className="mb-2 block">
                       Unsupported Platforms
                     </Text>
@@ -1049,7 +1062,7 @@ export default function AccountGroupPage() {
               {/* Original Tools Section */}
               <div>
                 <div className="flex items-center space-x-2 mb-4">
-                  <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <Settings className="w-5 h-5 text-gray-600 dark:text-muted-foreground" />
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                     Account Management Tools
                   </h2>
@@ -1087,7 +1100,7 @@ export default function AccountGroupPage() {
 
               {accounts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <Text size="4" weight="medium" className="mb-2 block">
                     No Accounts Connected
                   </Text>
@@ -1133,7 +1146,9 @@ export default function AccountGroupPage() {
                       <div className="flex items-center gap-2 mb-4">
                         <div
                           className={`w-2 h-2 rounded-full ${
-                            account.isLinked ? "bg-green-500" : "bg-gray-300"
+                            account.isLinked
+                              ? "bg-green-500"
+                              : "bg-muted-foreground/30"
                           }`}
                         />
                         <Text
@@ -1192,7 +1207,7 @@ export default function AccountGroupPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Cog className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <Cog className="w-5 h-5 text-gray-600 dark:text-muted-foreground" />
                   <Text size="5" weight="bold">
                     Account Group Settings
                   </Text>
@@ -1202,7 +1217,7 @@ export default function AccountGroupPage() {
                 <div className="flex items-center gap-3">
                   {/* Jazz ID Display (for reference) */}
                   {jazzAccountGroup && (
-                    <div className="text-xs text-gray-500 font-mono">
+                    <div className="text-xs text-muted-foreground font-mono">
                       Jazz ID: {jazzAccountGroup.id}
                     </div>
                   )}
@@ -1222,13 +1237,16 @@ export default function AccountGroupPage() {
                     }}
                     title="Click to copy the API-friendly Account Group ID"
                   >
-                    <Text size="1" className="font-mono text-gray-600 dark:text-gray-400">
+                    <Text
+                      size="1"
+                      className="font-mono text-gray-600 dark:text-muted-foreground"
+                    >
                       API ID: {accountGroupId}
                     </Text>
                     {copiedAccountGroupId ? (
                       <Check className="w-3 h-3 text-green-600" />
                     ) : (
-                      <Copy className="w-3 h-3 text-gray-400" />
+                      <Copy className="w-3 h-3 text-muted-foreground" />
                     )}
                   </div>
                 </div>
@@ -1425,7 +1443,9 @@ export default function AccountGroupPage() {
 							</div> */}
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Content</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Content
+              </label>
               <TextArea
                 value={newPostText}
                 onChange={(e) => setNewPostText(e.target.value)}

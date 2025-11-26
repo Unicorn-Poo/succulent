@@ -193,7 +193,7 @@ export default function ProfileMigrationManager({
     return (
       <Card className="p-4">
         <div className="text-center space-y-3">
-          <Users className="w-8 h-8 text-gray-400 mx-auto" />
+          <Users className="w-8 h-8 text-muted-foreground mx-auto" />
           <div>
             <Text size="3" weight="medium" className="block">Profile Migration</Text>
             <Text size="2" color="gray" className="block mt-1">
@@ -219,7 +219,7 @@ export default function ProfileMigrationManager({
               All your account groups have Ayrshare user profiles
             </Text>
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-muted-foreground">
             {groupsAlreadyMigrated.length} account group{groupsAlreadyMigrated.length !== 1 ? 's' : ''} ready for Business Plan features
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function ProfileMigrationManager({
                 const status = migrationResults[group.id];
                 
                 return (
-                  <div key={group.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div key={group.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex-1">
                       <Text size="2" weight="medium">{group.name || `Group ${group.id}`}</Text>
                       <Text size="1" color="gray" className="block">
@@ -300,7 +300,7 @@ export default function ProfileMigrationManager({
                         </div>
                       )}
                       {!status && (
-                        <ArrowRight className="w-4 h-4 text-gray-400" />
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                   </div>
@@ -311,14 +311,14 @@ export default function ProfileMigrationManager({
 
           {/* Already Migrated Groups */}
           {groupsAlreadyMigrated.length > 0 && (
-            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-3 pt-4 border-t border-border">
               <Text size="2" weight="medium" className="text-green-600 dark:text-green-400">
                 ✓ Already Migrated ({groupsAlreadyMigrated.length})
               </Text>
               
               <div className="space-y-1">
                 {groupsAlreadyMigrated.slice(0, 3).map((group) => (
-                  <div key={group.id} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div key={group.id} className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Check className="w-3 h-3 text-green-500" />
                     <span>{group.name || `Group ${group.id}`}</span>
                   </div>
@@ -333,7 +333,7 @@ export default function ProfileMigrationManager({
           )}
 
           {/* Migration Button */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center pt-4 border-t border-border">
             <Text size="2" color="gray">
               This will create {groupsNeedingMigration.length} Ayrshare user profile{groupsNeedingMigration.length !== 1 ? 's' : ''}
             </Text>
@@ -433,7 +433,7 @@ export default function ProfileMigrationManager({
                     const status = cleanupResults[profile.profileKey];
                     
                     return (
-                      <div key={profile.profileKey} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div key={profile.profileKey} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div>
                           <Text size="2" weight="medium">
                             {profile.title || 'Untitled Profile'}

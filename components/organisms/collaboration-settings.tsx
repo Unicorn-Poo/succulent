@@ -256,8 +256,8 @@ export function CollaborationSettings({ accountGroup, onClose }: CollaborationSe
                   {pendingInvites.map((invite, index) => (
                     <Flex key={index} justify="between" align="center" py="2">
                       <Flex align="center" gap="3">
-                        <Box className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <Box className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <Mail className="w-4 h-4 text-muted-foreground" />
                         </Box>
                         <Box>
                           <Text size="2" weight="medium">

@@ -34,7 +34,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
       case 'trending': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
       case 'relevant': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
       case 'competitive': return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
-      default: return 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -60,7 +60,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-gray-100">#{hashtag}</span>
+          <span className="font-medium text-foreground">#{hashtag}</span>
           {selected && <Check className="w-4 h-4 text-lime-600 dark:text-lime-400" />}
         </div>
         <div className="flex items-center gap-1 text-xs">
@@ -72,16 +72,16 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
       {performance && (
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="text-center">
-            <div className="font-medium text-gray-900 dark:text-gray-100">{performance.usage.toLocaleString()}</div>
-            <div className="text-gray-500 dark:text-gray-400">Uses</div>
+            <div className="font-medium text-foreground">{performance.usage.toLocaleString()}</div>
+            <div className="text-muted-foreground">Uses</div>
           </div>
           <div className="text-center">
-            <div className="font-medium text-gray-900 dark:text-gray-100">{performance.engagement.toFixed(1)}%</div>
-            <div className="text-gray-500 dark:text-gray-400">Engagement</div>
+            <div className="font-medium text-foreground">{performance.engagement.toFixed(1)}%</div>
+            <div className="text-muted-foreground">Engagement</div>
           </div>
           <div className="text-center">
-            <div className="font-medium text-gray-900 dark:text-gray-100">{(performance.reach / 1000).toFixed(1)}K</div>
-            <div className="text-gray-500 dark:text-gray-400">Reach</div>
+            <div className="font-medium text-foreground">{(performance.reach / 1000).toFixed(1)}K</div>
+            <div className="text-muted-foreground">Reach</div>
           </div>
         </div>
       )}
@@ -209,7 +209,7 @@ export default function HashtagSuggestions({
     return (
       <Card className="p-4">
         <div className="text-center space-y-3">
-          <Hash className="w-8 h-8 text-gray-400 mx-auto" />
+          <Hash className="w-8 h-8 text-muted-foreground mx-auto" />
           <div>
             <Text size="3" weight="medium" className="block">Hashtag Suggestions</Text>
             <Text size="2" color="gray" className="block mt-1">
@@ -228,7 +228,7 @@ export default function HashtagSuggestions({
     return (
       <Card className="p-4">
         <div className="text-center space-y-2">
-          <Hash className="w-8 h-8 text-gray-400 mx-auto" />
+          <Hash className="w-8 h-8 text-muted-foreground mx-auto" />
           <Text size="3" color="gray">Start typing your post content to get hashtag suggestions</Text>
         </div>
       </Card>
@@ -308,10 +308,10 @@ export default function HashtagSuggestions({
         {isLoading && (
           <div className="space-y-4">
             <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+              <div className="h-4 bg-muted rounded w-1/4 mb-3"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-20 bg-gray-200 rounded"></div>
+                  <div key={i} className="h-20 bg-muted rounded"></div>
                 ))}
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function HashtagSuggestions({
          !suggestions.relevant?.length && 
          !suggestions.competitive?.length && (
           <div className="text-center py-8">
-            <Hash className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <Hash className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <Text size="3" color="gray">No hashtag suggestions found</Text>
             <Text size="2" color="gray" className="block mt-1">
               Try different content or check back later

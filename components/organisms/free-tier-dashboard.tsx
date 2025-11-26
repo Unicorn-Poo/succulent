@@ -114,19 +114,19 @@ export default function FreeTierDashboard({
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-center p-3 bg-muted rounded-lg">
             <Text size="3" weight="bold" className="block text-lime-600 dark:text-lime-400">
               {strategy.dailyBudget}
             </Text>
             <Text size="1" color="gray">Daily Budget</Text>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-center p-3 bg-muted rounded-lg">
             <Text size="3" weight="bold" className="block text-green-600 dark:text-green-400">
               {strategy.weeklyBudget}
             </Text>
             <Text size="1" color="gray">Weekly Budget</Text>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-center p-3 bg-muted rounded-lg">
             <Text size="3" weight="bold" className="block text-purple-600 dark:text-purple-400">
               {Math.ceil((new Date(usage.resetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
             </Text>

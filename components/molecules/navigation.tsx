@@ -35,7 +35,7 @@ export function Navigation() {
 
   if (!me) {
     return (
-      <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-white dark:bg-gray-900 border-b dark:border-gray-800">
+      <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-card border-b dark:border-gray-800">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center">
             <Image
@@ -60,7 +60,7 @@ export function Navigation() {
   }
 
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b dark:border-gray-800">
+    <nav className="bg-card border-b dark:border-gray-800">
       <div className="flex items-center justify-between px-4 py-3 sm:p-4">
         <div className="flex items-center space-x-2 sm:space-x-4">
           <Link href="/" className="flex items-center">
@@ -76,7 +76,7 @@ export function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/account"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+              className="text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-gray-100"
             >
               Account
             </Link>
@@ -88,7 +88,7 @@ export function Navigation() {
           <div
             className={`hidden sm:block px-2 py-1 rounded-full text-xs font-medium ${
               currentTier === "free"
-                ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                ? "bg-gray-100 dark:bg-gray-800 text-foreground"
                 : currentTier === "premium"
                 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                 : currentTier === "business"
@@ -128,20 +128,20 @@ export function Navigation() {
             </Button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-card rounded-md shadow-lg border border-border z-50">
                 <div className="py-1">
-                  <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <div className="px-4 py-3 border-b border-border dark:border-gray-800">
+                    <p className="text-sm font-medium text-foreground">
                       {me.profile?.name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {me.profile?.email}
                     </p>
                     {/* Show plan badge in dropdown on mobile */}
                     <div
                       className={`sm:hidden mt-2 inline-block px-2 py-1 rounded-full text-xs font-medium ${
                         currentTier === "free"
-                          ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                          ? "bg-gray-100 dark:bg-gray-800 text-foreground"
                           : currentTier === "premium"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                           : currentTier === "business"
@@ -155,7 +155,7 @@ export function Navigation() {
 
                   <Link
                     href="/account"
-                    className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <User size={16} className="mr-3" />
                     Account Settings
@@ -163,7 +163,7 @@ export function Navigation() {
 
                   <Link
                     href="/account?tab=subscription"
-                    className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Settings size={16} className="mr-3" />
                     Subscription
@@ -182,7 +182,7 @@ export function Navigation() {
 
                   <button
                     onClick={logOut}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center w-full px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <LogOut size={16} className="mr-3" />
                     Sign Out

@@ -37,13 +37,13 @@ export const AddAccountDialog = ({ open, onOpenChange, availableAccounts, handle
                             />
                             <div className="text-left flex-1">
                                 <div className="font-medium text-base">{account.name || account.displayName || 'Unknown Account'}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{account.platform || 'unknown'}</div>
+                                <div className="text-sm text-muted-foreground capitalize">{account.platform || 'unknown'}</div>
                             </div>
                         </Button>
                     ))}
                     
                     {availableAccounts.length === 0 && (
-                        <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                        <div className="text-center py-4 text-muted-foreground">
                             <p>No additional accounts available</p>
                             <p className="text-xs mt-1">All accounts are already added to this post</p>
                         </div>

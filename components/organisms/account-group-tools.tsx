@@ -140,7 +140,7 @@ export default function AccountGroupTools({
     return (
       <Card className="p-6">
         <div className="text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <Text size="4" weight="medium" className="mb-2 block">
             No Linked Accounts
           </Text>
@@ -160,7 +160,7 @@ export default function AccountGroupTools({
     return (
       <Card className="p-6">
         <div className="text-center">
-          <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <Text size="4" weight="medium" className="mb-2 block">
             Premium Tools Available
           </Text>
@@ -289,20 +289,20 @@ function RSSFeedManager({ profileKey, onUpdate }: { profileKey?: string; onUpdat
       {feeds.length > 0 ? (
         <div className="space-y-3">
           {feeds.map((feed) => (
-            <div key={feed.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div key={feed.id} className="p-3 bg-muted rounded-lg">
               <Text size="2" weight="medium" className="block">{feed.title || feed.url}</Text>
               <Text size="1" color="gray">{feed.platforms?.join(', ')}</Text>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-muted-foreground">
           <Rss className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <Text size="2">No RSS feeds configured</Text>
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="mt-4 pt-4 border-t border-border">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/feeds/overview', '_blank')}
           variant="soft" 
@@ -347,7 +347,7 @@ function BrandManager({ profileKey, onUpdate }: { profileKey?: string; onUpdate?
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="mt-4 pt-4 border-t border-border">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/brand/overview', '_blank')}
           variant="soft" 
@@ -379,7 +379,7 @@ function AutoScheduleManager({
 
       <div className="space-y-4">
         {accounts.map((account) => (
-          <div key={account.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div key={account.id} className="p-3 bg-muted rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <Text size="2" weight="medium" className="block">{account.name}</Text>
@@ -393,7 +393,7 @@ function AutoScheduleManager({
         ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="mt-4 pt-4 border-t border-border">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/auto-schedule/overview', '_blank')}
           variant="soft" 

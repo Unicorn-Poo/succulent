@@ -493,7 +493,7 @@ export default function CSVPostUpload({
                   placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate,mediaUrls&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;,&quot;&quot;"
                   className="w-full h-48 p-3 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
                 />
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-4">
                     <span>{csvText.length} characters</span>
                     <span>{csvText.split('\n').length} lines</span>
@@ -530,7 +530,7 @@ export default function CSVPostUpload({
                     id="csv-upload"
                   />
                   <label htmlFor="csv-upload" className="cursor-pointer">
-                    <FileUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <FileUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <Text size="3" className="block mb-2">
                       Click to upload CSV file
                     </Text>
@@ -541,7 +541,7 @@ export default function CSVPostUpload({
                 </div>
                 
                 {file && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                     <FileText className="w-4 h-4" />
                     <span>{file.name}</span>
                     <Button
@@ -618,7 +618,7 @@ export default function CSVPostUpload({
                         <Text size="1" color="gray" className="block mb-2 truncate">
                           {post.content.substring(0, 100)}...
                         </Text>
-                        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>Platforms: {post.platforms.join(', ')}</span>
                           {post.scheduledDate && (
                             <span>• Scheduled: {new Date(post.scheduledDate).toLocaleDateString()}</span>

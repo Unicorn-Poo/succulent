@@ -131,7 +131,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Bell className="w-5 h-5 text-muted-foreground" />
             <div>
               <Heading size="4">Push Notifications</Heading>
               <Text size="2" color="gray">

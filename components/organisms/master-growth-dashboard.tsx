@@ -119,32 +119,32 @@ export default function MasterGrowthDashboard({
   const ActiveComponent = components.find(c => c.id === activeComponent)?.component || GrowthAutopilot;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
+    <div className="min-h-screen bg-muted">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">🚀 Social Media Growth Engine</h1>
-            <p className="text-gray-600 dark:text-gray-400">Complete automation suite for {platform} growth</p>
+            <h1 className="text-2xl font-bold text-foreground">🚀 Social Media Growth Engine</h1>
+            <p className="text-muted-foreground">Complete automation suite for {platform} growth</p>
           </div>
           
           {/* Quick Stats */}
           <div className="flex items-center space-x-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">{quickStats.followersGrowth.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Growth Rate</p>
+              <p className="text-xs text-muted-foreground">Growth Rate</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{quickStats.engagementRate.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Engagement</p>
+              <p className="text-xs text-muted-foreground">Engagement</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{quickStats.postsScheduled}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Scheduled</p>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-orange-600">{quickStats.commentsReplied}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Replied</p>
+              <p className="text-xs text-muted-foreground">Replied</p>
             </div>
           </div>
         </div>
@@ -152,9 +152,9 @@ export default function MasterGrowthDashboard({
 
       <div className="flex">
         {/* Sidebar Navigation */}
-        <div className="w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 min-h-screen">
+        <div className="w-80 bg-card border-r border-border min-h-screen">
           <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Growth Tools</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Growth Tools</h2>
             <div className="space-y-2">
               {components.map(component => (
                 <button
@@ -163,19 +163,19 @@ export default function MasterGrowthDashboard({
                   className={`w-full text-left p-4 rounded-lg border transition-colors ${
                     activeComponent === component.id
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'
+                      : 'border-border hover:border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'
                   }`}
                 >
-                  <div className="font-medium text-gray-900 dark:text-gray-100">{component.name}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{component.description}</div>
+                  <div className="font-medium text-foreground">{component.name}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{component.description}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quick Actions</h3>
+          <div className="p-4 border-t border-border">
+            <h3 className="font-medium text-foreground mb-3">Quick Actions</h3>
             <div className="space-y-2">
               <Button 
                 onClick={() => setActiveComponent('autopilot')} 
@@ -204,8 +204,8 @@ export default function MasterGrowthDashboard({
           </div>
 
           {/* System Status */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">System Status</h3>
+          <div className="p-4 border-t border-border">
+            <h3 className="font-medium text-foreground mb-3">System Status</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span>Auto-Replies</span>

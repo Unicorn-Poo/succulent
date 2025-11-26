@@ -64,9 +64,9 @@ export default function XPreview({ post, account }: XPreviewProps) {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="max-w-xl mx-auto bg-card border border-border rounded-lg overflow-hidden">
       {/* Status Badge */}
-      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b">
+      <div className="px-4 py-2 bg-muted border-b">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor()}`}>
           {post.status.toUpperCase()}
         </span>
@@ -88,27 +88,27 @@ export default function XPreview({ post, account }: XPreviewProps) {
           <div className="flex-1 min-w-0">
             {/* Header */}
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{account.name}</h3>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <h3 className="text-sm font-bold text-foreground truncate">{account.name}</h3>
+              <span className="text-sm text-muted-foreground">
                 @{account.username || account.name.toLowerCase().replace(/\s+/g, '')}
               </span>
-              <span className="text-gray-500 dark:text-gray-400">·</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">{getStatusDisplay()}</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-sm text-muted-foreground">{getStatusDisplay()}</span>
               <div className="flex-1"></div>
-              <MoreHorizontal className="w-5 h-5 text-gray-400" />
+              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
             </div>
             
             {/* Tweet Text */}
             <div className="mt-1">
-              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{post.content}</p>
+              <p className="text-foreground whitespace-pre-wrap">{post.content}</p>
             </div>
             
             {/* Media Placeholder */}
             {post.content.includes('http') && (
-              <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <div className="mt-3 border border-border rounded-lg overflow-hidden">
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <div className="text-center text-gray-500 dark:text-gray-400">
-                    <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-muted-foreground/30 rounded-lg flex items-center justify-center">
                       <span className="text-lg">🖼️</span>
                     </div>
                     <p className="text-sm">Media Preview</p>
@@ -121,10 +121,10 @@ export default function XPreview({ post, account }: XPreviewProps) {
             <div className="flex items-center justify-between mt-3 max-w-md">
               <div className="flex items-center space-x-1 group cursor-pointer">
                 <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <MessageCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-lime-500" />
+                  <MessageCircle className="w-4 h-4 text-muted-foreground group-hover:text-lime-500" />
                 </div>
                 {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-lime-500">
+                  <span className="text-sm text-muted-foreground group-hover:text-lime-500">
                     {formatEngagement(post.engagement.comments)}
                   </span>
                 )}
@@ -132,10 +132,10 @@ export default function XPreview({ post, account }: XPreviewProps) {
               
               <div className="flex items-center space-x-1 group cursor-pointer">
                 <div className="p-2 rounded-full group-hover:bg-green-50 dark:bg-green-900/20 transition-colors">
-                  <Repeat2 className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-500" />
+                  <Repeat2 className="w-4 h-4 text-muted-foreground group-hover:text-green-500" />
                 </div>
                 {post.engagement && post.engagement.shares > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-green-500">
+                  <span className="text-sm text-muted-foreground group-hover:text-green-500">
                     {formatEngagement(post.engagement.shares)}
                   </span>
                 )}
@@ -146,11 +146,11 @@ export default function XPreview({ post, account }: XPreviewProps) {
                   <Heart className={`w-4 h-4 ${
                     post.status === 'published' && post.engagement?.likes 
                       ? 'text-red-500 fill-current' 
-                      : 'text-gray-500 dark:text-gray-400 group-hover:text-red-500'
+                      : 'text-muted-foreground group-hover:text-red-500'
                   }`} />
                 </div>
                 {post.engagement && post.engagement.likes > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-red-500">
+                  <span className="text-sm text-muted-foreground group-hover:text-red-500">
                     {formatEngagement(post.engagement.likes)}
                   </span>
                 )}
@@ -158,7 +158,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
               
               <div className="flex items-center space-x-1 group cursor-pointer">
                 <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <Share className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-lime-500" />
+                  <Share className="w-4 h-4 text-muted-foreground group-hover:text-lime-500" />
                 </div>
               </div>
             </div>

@@ -199,7 +199,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 			{!isConnected ? (
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Store Name</label>
+						<label className="block text-sm font-medium text-foreground mb-2">Store Name</label>
 						<TextField.Root
 							value={formData.name}
 							onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -208,7 +208,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Store Type</label>
+						<label className="block text-sm font-medium text-foreground mb-2">Store Type</label>
 						<Select.Root value={formData.storeType} onValueChange={(value) => setFormData(prev => ({ ...prev, storeType: value }))}>
 							<Select.Trigger placeholder="Select store type" />
 							<Select.Content>
@@ -225,7 +225,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API URL</label>
+						<label className="block text-sm font-medium text-foreground mb-2">API URL</label>
 						<TextField.Root
 							value={formData.apiUrl}
 							onChange={(e) => setFormData(prev => ({ ...prev, apiUrl: e.target.value }))}
@@ -234,7 +234,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
+						<label className="block text-sm font-medium text-foreground mb-2">API Key</label>
 						<TextField.Root
 							value={formData.apiKey}
 							onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -244,7 +244,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Webhook Secret (Optional)</label>
+						<label className="block text-sm font-medium text-foreground mb-2">Webhook Secret (Optional)</label>
 						<TextField.Root
 							value={formData.webhookSecret}
 							onChange={(e) => setFormData(prev => ({ ...prev, webhookSecret: e.target.value }))}
@@ -259,7 +259,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Currency</label>
+								<label className="block text-sm font-medium text-foreground mb-2">Currency</label>
 								<Select.Root value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
 									<Select.Trigger placeholder="Select currency" />
 									<Select.Content>
@@ -273,7 +273,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 							</div>
 
 							<div>
-								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Markup Percentage</label>
+								<label className="block text-sm font-medium text-foreground mb-2">Markup Percentage</label>
 								<TextField.Root
 									value={formData.markupPercentage.toString()}
 									onChange={(e) => setFormData(prev => ({ ...prev, markupPercentage: parseInt(e.target.value) || 0 }))}
@@ -302,7 +302,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						</div>
 
 						<div className="mt-4">
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Default Category</label>
+							<label className="block text-sm font-medium text-foreground mb-2">Default Category</label>
 							<TextField.Root
 								value={formData.defaultCategory}
 								onChange={(e) => setFormData(prev => ({ ...prev, defaultCategory: e.target.value }))}
@@ -377,8 +377,8 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						</div>
 
 						{postedProducts.length === 0 ? (
-							<div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-								<Store className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+							<div className="text-center py-6 bg-muted rounded-lg">
+								<Store className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
 								<Text size="2" color="gray">No products posted yet</Text>
 								<Text size="1" color="gray">
 									Create products using Prodigi templates and they'll appear here
@@ -387,7 +387,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						) : (
 							<div className="space-y-3">
 								{postedProducts.map((product: any) => (
-									<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+									<div key={product.id} className="bg-card border border-border rounded-lg p-4">
 										<div className="flex items-center justify-between mb-2">
 											<Text size="2" weight="bold" className="line-clamp-1">
 												{product.name}
@@ -416,7 +416,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 										</div>
 
 										{product.externalProductUrl && (
-											<div className="mt-3 pt-3 border-t border-gray-100">
+											<div className="mt-3 pt-3 border-t border-border">
 												<a 
 													href={product.externalProductUrl} 
 													target="_blank" 
@@ -446,7 +446,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 
 					<div className="space-y-4 mt-4 max-h-96 overflow-y-auto">
 						<div>
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Store Name</label>
+							<label className="block text-sm font-medium text-foreground mb-2">Store Name</label>
 							<TextField.Root
 								value={formData.name}
 								onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -455,7 +455,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API URL</label>
+							<label className="block text-sm font-medium text-foreground mb-2">API URL</label>
 							<TextField.Root
 								value={formData.apiUrl}
 								onChange={(e) => setFormData(prev => ({ ...prev, apiUrl: e.target.value }))}
@@ -464,7 +464,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
+							<label className="block text-sm font-medium text-foreground mb-2">API Key</label>
 							<TextField.Root
 								value={formData.apiKey}
 								onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -475,7 +475,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 
 						<div className="grid grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Currency</label>
+								<label className="block text-sm font-medium text-foreground mb-2">Currency</label>
 								<Select.Root value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
 									<Select.Trigger />
 									<Select.Content>
@@ -487,7 +487,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 							</div>
 
 							<div>
-								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Markup %</label>
+								<label className="block text-sm font-medium text-foreground mb-2">Markup %</label>
 								<TextField.Root
 									value={formData.markupPercentage.toString()}
 									onChange={(e) => setFormData(prev => ({ ...prev, markupPercentage: parseInt(e.target.value) || 0 }))}

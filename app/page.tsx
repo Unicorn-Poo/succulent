@@ -352,7 +352,7 @@ export default function HomePage() {
                 className="h-12 sm:h-14 w-auto mb-2"
                 priority
               />
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-muted-foreground">
                 Your social media management platform
               </p>
             </div>
@@ -429,10 +429,10 @@ export default function HomePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 dark:text-muted-foreground">
                           {group.accounts?.length || 0} accounts connected
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 dark:text-muted-foreground">
                           {group.posts?.length || 0} posts created
                         </p>
                       </div>
@@ -474,7 +474,7 @@ export default function HomePage() {
               <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
                 Create Account Group
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500 dark:text-muted-foreground">
                 {me?.root?.accountGroups
                   ? "Connect your social media accounts"
                   : "Loading Jazz system..."}

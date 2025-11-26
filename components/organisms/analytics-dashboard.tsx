@@ -54,7 +54,7 @@ const MetricCard = ({ title, value, change, icon, trend = 'neutral', loading }: 
     switch (trend) {
       case 'up': return 'text-green-600 dark:text-green-400';
       case 'down': return 'text-red-600 dark:text-red-400';
-      default: return 'text-gray-600 dark:text-gray-400';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -83,7 +83,7 @@ const MetricCard = ({ title, value, change, icon, trend = 'neutral', loading }: 
         <Text size="1" color="gray" className="uppercase tracking-wide">{title}</Text>
         <Text size="5" weight="bold">
           {loading ? (
-            <div className="w-16 h-6 bg-gray-200 animate-pulse rounded"></div>
+            <div className="w-16 h-6 bg-muted animate-pulse rounded"></div>
           ) : (
             typeof value === 'number' ? value.toLocaleString() : value
           )}
@@ -110,7 +110,7 @@ const PostPerformanceChart = ({ posts, loading }: { posts: HistoricalPost[], loa
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="flex items-center gap-3">
-            <div className="w-full h-8 bg-gray-200 animate-pulse rounded"></div>
+            <div className="w-full h-8 bg-muted animate-pulse rounded"></div>
           </div>
         ))}
       </div>
@@ -125,16 +125,16 @@ const PostPerformanceChart = ({ posts, loading }: { posts: HistoricalPost[], loa
         <div key={index} className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="font-medium truncate flex-1 mr-2">{item.title}</span>
-            <span className="text-gray-500 dark:text-gray-400 text-xs">{item.date}</span>
+            <span className="text-muted-foreground text-xs">{item.date}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-200 rounded-full h-2">
+            <div className="flex-1 bg-muted rounded-full h-2">
               <div 
                 className="bg-lime-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(item.engagement / maxEngagement) * 100}%` }}
               ></div>
             </div>
-            <div className="flex gap-3 text-xs text-gray-600 dark:text-gray-400">
+            <div className="flex gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Heart className="w-3 h-3" />
                 {item.likes}
@@ -160,7 +160,7 @@ const OptimalTimesDisplay = ({ optimalTimes, loading }: { optimalTimes: any, loa
     return (
       <div className="grid grid-cols-7 gap-2">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="h-12 bg-gray-200 animate-pulse rounded"></div>
+          <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
         ))}
       </div>
     );
@@ -174,7 +174,7 @@ const OptimalTimesDisplay = ({ optimalTimes, loading }: { optimalTimes: any, loa
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, index) => (
           <div key={day} className="text-center">
-            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{day}</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">{day}</div>
             <div className="space-y-1">
               {times.slice(index * 2, (index + 1) * 2).map((time: string, timeIndex: number) => (
                 <div 
@@ -188,7 +188,7 @@ const OptimalTimesDisplay = ({ optimalTimes, loading }: { optimalTimes: any, loa
           </div>
         ))}
       </div>
-      <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+      <div className="text-xs text-muted-foreground text-center">
         Times shown in your local timezone
       </div>
     </div>
@@ -572,7 +572,7 @@ export default function AnalyticsDashboard({
     return (
       <Card className="p-6">
         <div className="text-center space-y-4">
-          <BarChart3 className="w-12 h-12 text-gray-400 mx-auto" />
+          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto" />
           <div>
             <Text size="4" weight="bold" className="block mb-2">Analytics Dashboard</Text>
             <Text size="2" color="gray" className="block mb-4">
@@ -632,7 +632,7 @@ export default function AnalyticsDashboard({
         </div>
         <div className="flex gap-2">
           {lastUpdated && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mr-2 flex items-center">
+            <div className="text-xs text-muted-foreground mr-2 flex items-center">
               <Clock className="w-3 h-3 mr-1" />
               Updated {new Date(lastUpdated).toLocaleTimeString()}
             </div>
@@ -721,33 +721,33 @@ export default function AnalyticsDashboard({
                   
                   {isLoading ? (
                     <div className="space-y-3">
-                      <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                      <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2"></div>
+                      <div className="h-4 bg-muted animate-pulse rounded"></div>
+                      <div className="h-4 bg-muted animate-pulse rounded w-3/4"></div>
+                      <div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Engagement Rate:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-muted-foreground">Engagement Rate:</span>
+                        <span className="font-medium text-foreground">
                           {data.insights[platform]?.engagementRate?.toFixed(1) || 0}%
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Total Posts:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-muted-foreground">Total Posts:</span>
+                        <span className="font-medium text-foreground">
                           {data.overview[platform]?.profile?.postsCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Following:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-muted-foreground">Following:</span>
+                        <span className="font-medium text-foreground">
                           {data.overview[platform]?.profile?.followingCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Recent Posts:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-muted-foreground">Recent Posts:</span>
+                        <span className="font-medium text-foreground">
                           {data.posts[platform]?.length || 0}
                         </span>
                       </div>
@@ -803,8 +803,8 @@ export default function AnalyticsDashboard({
                   
                   {isLoading ? (
                     <div className="space-y-4">
-                      <div className="h-32 bg-gray-200 animate-pulse rounded"></div>
-                      <div className="h-24 bg-gray-200 animate-pulse rounded"></div>
+                      <div className="h-32 bg-muted animate-pulse rounded"></div>
+                      <div className="h-24 bg-muted animate-pulse rounded"></div>
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -813,11 +813,11 @@ export default function AnalyticsDashboard({
                         <Text size="2" weight="medium" className="mb-3 block">Best Performing Posts</Text>
                         <div className="space-y-2">
                           {data.insights[platform]?.bestPerformingPosts?.slice(0, 3).map((post, index) => (
-                            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <Text size="1" className="block text-gray-900 dark:text-gray-100 mb-1">
+                            <div key={index} className="p-3 bg-muted rounded-lg">
+                              <Text size="1" className="block text-foreground mb-1">
                                 {post.post.substring(0, 100)}...
                               </Text>
-                              <div className="flex gap-3 text-xs text-gray-600 dark:text-gray-400">
+                              <div className="flex gap-3 text-xs text-muted-foreground">
                                 <span>{post.likes || 0} likes</span>
                                 <span>{post.comments || 0} comments</span>
                                 <span>{post.shares || 0} shares</span>
@@ -836,8 +836,8 @@ export default function AnalyticsDashboard({
                           <div className="space-y-2">
                             {Object.entries(data.insights[platform].audienceInsights.demographics || {}).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400 capitalize">{key.replace('_', ' ')}:</span>
-                                <span className="font-medium text-gray-900 dark:text-gray-100">{String(value)}</span>
+                                <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}:</span>
+                                <span className="font-medium text-foreground">{String(value)}</span>
                               </div>
                             ))}
                           </div>

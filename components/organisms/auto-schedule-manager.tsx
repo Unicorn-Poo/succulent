@@ -357,9 +357,9 @@ export default function AutoScheduleManager({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
+    <div className="bg-card rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Auto-Schedule Manager</h3>
+        <h3 className="text-lg font-semibold text-foreground">Auto-Schedule Manager</h3>
         <div className="flex items-center space-x-2">
           <span className={`px-3 py-1 rounded-full text-sm ${
             metrics?.activeRules && metrics.activeRules > 0 
@@ -386,7 +386,7 @@ export default function AutoScheduleManager({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -399,7 +399,7 @@ export default function AutoScheduleManager({
       {activeTab === 'rules' && (
         <div className="space-y-6">
           {/* Create New Rule */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-3">Create Auto-Schedule Rule</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -414,7 +414,7 @@ export default function AutoScheduleManager({
                   ...prev,
                   schedule: { ...prev.schedule!, frequency: e.target.value as any }
                 }))}
-                className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="px-3 py-2 border border-border rounded-lg"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -424,7 +424,7 @@ export default function AutoScheduleManager({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Posting Times</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Posting Times</label>
                 <div className="flex flex-wrap gap-2">
                   {optimalTimes.map(time => (
                     <label key={time} className="flex items-center space-x-1">
@@ -450,7 +450,7 @@ export default function AutoScheduleManager({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Max Posts Per Day</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Max Posts Per Day</label>
                 <Input
                   type="number"
                   value={newRule.postingLimits?.maxPerDay || 2}
@@ -473,10 +473,10 @@ export default function AutoScheduleManager({
           {/* Existing Rules */}
           <div className="space-y-4">
             {rules.map(rule => (
-              <div key={rule.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={rule.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{rule.name}</h4>
+                    <h4 className="font-medium text-foreground">{rule.name}</h4>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       rule.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                     }`}>
@@ -504,28 +504,28 @@ export default function AutoScheduleManager({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Schedule</p>
+                    <p className="font-medium text-foreground">Schedule</p>
                     <p>Frequency: {rule.schedule.frequency}</p>
                     <p>Times: {rule.schedule.times.join(', ')}</p>
                     <p>Days: {rule.schedule.days.length} selected</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Content Filters</p>
+                    <p className="font-medium text-foreground">Content Filters</p>
                     <p>Min Engagement: {rule.contentFilters.minEngagementPotential}%</p>
                     <p>Categories: {rule.contentFilters.categories.join(', ')}</p>
                     <p>Approval: {rule.contentFilters.requiresApproval ? 'Required' : 'Not required'}</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Limits</p>
+                    <p className="font-medium text-foreground">Limits</p>
                     <p>Max/Day: {rule.postingLimits.maxPerDay}</p>
                     <p>Max/Week: {rule.postingLimits.maxPerWeek}</p>
                     <p>Min Interval: {rule.postingLimits.minInterval}m</p>
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Created: {formatDateTime(rule.createdAt)}</span>
                   <span>Posts Scheduled: {rule.postsScheduled}</span>
                   {rule.lastTriggered && (
@@ -545,11 +545,11 @@ export default function AutoScheduleManager({
             .filter(post => post.status === 'pending')
             .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
             .map(post => (
-              <div key={post.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={post.id} className="p-4 border border-border rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{post.title}</h4>
-                    <p className="text-gray-700 dark:text-gray-300 mt-1">{post.content}</p>
+                    <h4 className="font-medium text-foreground">{post.title}</h4>
+                    <p className="text-foreground mt-1">{post.content}</p>
                   </div>
                   
                   <div className="flex items-center space-x-2 ml-4">
@@ -578,7 +578,7 @@ export default function AutoScheduleManager({
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <span className="text-gray-500 dark:text-gray-400">Rule: {post.rule}</span>
+                    <span className="text-muted-foreground">Rule: {post.rule}</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(post.status)}`}>
                       {post.status}
                     </span>
@@ -588,7 +588,7 @@ export default function AutoScheduleManager({
             ))}
 
           {scheduledPosts.filter(post => post.status === 'pending').length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No posts scheduled
             </div>
           )}
@@ -624,7 +624,7 @@ export default function AutoScheduleManager({
               <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Next Scheduled Post</h4>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{metrics.nextScheduledPost.title}</p>
+                  <p className="font-medium text-foreground">{metrics.nextScheduledPost.title}</p>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     {formatDateTime(metrics.nextScheduledPost.scheduledDate)}
                   </p>
@@ -642,13 +642,13 @@ export default function AutoScheduleManager({
           )}
 
           {/* Upcoming Posts */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Upcoming Posts</h4>
             <div className="space-y-2">
               {metrics.upcomingPosts.slice(0, 5).map(post => (
-                <div key={post.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div key={post.id} className="flex items-center justify-between p-2 bg-muted rounded">
                   <span className="text-sm">{post.title}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-muted-foreground">
                     {new Date(post.scheduledDate).toLocaleDateString()}
                   </span>
                 </div>
@@ -661,7 +661,7 @@ export default function AutoScheduleManager({
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Global Settings</h4>
             <div className="space-y-4">
               <label className="flex items-center space-x-2">
@@ -679,7 +679,7 @@ export default function AutoScheduleManager({
             </div>
           </div>
 
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="p-4 border border-border rounded-lg">
             <h4 className="font-medium mb-3">Optimal Times for {platform}</h4>
             <div className="flex flex-wrap gap-2">
               {optimalTimes.map(time => (
@@ -688,7 +688,7 @@ export default function AutoScheduleManager({
                 </span>
               ))}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               These times are automatically calculated based on your audience engagement patterns.
             </p>
           </div>

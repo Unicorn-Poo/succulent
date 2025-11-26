@@ -46,14 +46,14 @@ export function PlatformVariantsGuard({
       customUpgradeAction={onUpgrade}
     >
       <div className="space-y-4">
-        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Platform Variants Usage</h4>
+        <div className="bg-muted p-4 rounded-lg">
+          <h4 className="font-medium text-foreground mb-2">Platform Variants Usage</h4>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Used this month:</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">{variantsUsage?.used || 0} / {variantsUsage?.limit || 0}</span>
+              <span className="font-medium text-foreground">{variantsUsage?.used || 0} / {variantsUsage?.limit || 0}</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div 
                 className="bg-red-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${variantsUsage?.percentage || 0}%` }}
@@ -62,7 +62,7 @@ export function PlatformVariantsGuard({
           </div>
         </div>
 
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           <p className="mb-2">
             <strong>Platform variants</strong> allow you to customize your content for different social media platforms automatically.
           </p>

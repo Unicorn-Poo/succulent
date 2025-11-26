@@ -189,7 +189,7 @@ export default function EnhancedReplyHandler({
       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
         selectedComment?.id === comment.id 
           ? 'border-lime-500 bg-lime-50' 
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
+          : 'border-border hover:border-gray-300 dark:border-gray-600'
       }`}
       onClick={() => setSelectedComment(selectedComment?.id === comment.id ? null : comment)}
     >
@@ -248,7 +248,7 @@ export default function EnhancedReplyHandler({
 
         {/* URL Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Post URL</label>
+          <label className="block text-sm font-medium text-foreground mb-2">Post URL</label>
           <TextField.Root
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -283,7 +283,7 @@ export default function EnhancedReplyHandler({
 
         {/* Platform Info */}
         {currentPlatform && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <currentPlatform.icon className="w-5 h-5" />
               <Text size="3" weight="medium">{currentPlatform.name}</Text>
@@ -324,7 +324,7 @@ export default function EnhancedReplyHandler({
                 {comments.map(formatComment)}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <Text size="2">No comments found</Text>
                 <Text size="1" className="block mt-1">

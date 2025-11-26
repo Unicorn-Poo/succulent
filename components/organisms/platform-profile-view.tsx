@@ -107,7 +107,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	if (loading) {
 		return (
 			<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-				<div className="text-center text-gray-400">
+				<div className="text-center text-muted-foreground">
 					<span className="text-sm">Loading...</span>
 				</div>
 			</div>
@@ -117,7 +117,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	if (error || !imageUrl) {
 		return (
 			<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-				<div className="text-center text-gray-400">
+				<div className="text-center text-muted-foreground">
 					<span className="text-2xl">📝</span>
 				</div>
 			</div>
@@ -147,7 +147,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	return (
 		<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-			<div className="text-center text-gray-400">
+			<div className="text-center text-muted-foreground">
 				<span className="text-2xl">📝</span>
 			</div>
 		</div>
@@ -308,7 +308,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               onClick={() => onCreatePost?.(account.platform)}
             >
               <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg">
-                <div className="text-center text-gray-400 group-hover:text-gray-600 dark:text-gray-400">
+                <div className="text-center text-muted-foreground group-hover:text-muted-foreground">
                   <span className="text-3xl font-light">+</span>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                         <GridMediaComponent mediaItem={firstMediaItem} />
                       ) : (
                         // Text preview when no media
-                        <div className="text-center text-gray-600 dark:text-gray-400 p-2 flex flex-col items-center justify-center">
+                        <div className="text-center text-muted-foreground p-2 flex flex-col items-center justify-center">
                           <div className="text-2xl mb-2">📝</div>
                           <div className="text-xs leading-tight line-clamp-3 max-w-20">
                             {postContent.substring(0, 50)}...
@@ -349,7 +349,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                       postStatus === 'published' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
                       postStatus === 'scheduled' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                      'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      'bg-gray-100 dark:bg-gray-700 text-foreground'
                     }`}>
                       {postStatus}
                     </div>
@@ -373,7 +373,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               Array.from({ length: 8 }, (_, index) => (
                 <div key={`sample-${index}`} className="aspect-square relative">
                   <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-lg">
-                    <div className="text-center text-gray-300">
+                    <div className="text-center text-muted-foreground">
                       <span className="text-lg">📷</span>
                     </div>
                   </div>
@@ -382,7 +382,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
             )}
           </div>
           
-          <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {sortedPosts.length > 0 
               ? `${sortedPosts.length} posts • Click any post to edit it` 
               : "Create your first post to see it in the grid"}
@@ -414,7 +414,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
           <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-r ${getPlatformColor(account.platform)} text-white`}>
             <Users className="w-5 h-5" />
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{account.name}</h1>
+              <h1 className="text-lg font-semibold text-foreground">{account.name}</h1>
               <p className="text-sm opacity-90 capitalize">{account.platform} Account</p>
             </div>
           </div>
@@ -449,25 +449,25 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
 
       {/* Stats Overview */}
       {viewMode !== 'analytics' && (
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{statusCounts.published}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Published</p>
+                <p className="text-2xl font-bold text-foreground">{statusCounts.published}</p>
+                <p className="text-sm text-muted-foreground">Published</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">{statusCounts.scheduled}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Scheduled</p>
+                <p className="text-sm text-muted-foreground">Scheduled</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{statusCounts.draft}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Drafts</p>
+                <p className="text-2xl font-bold text-muted-foreground">{statusCounts.draft}</p>
+                <p className="text-sm text-muted-foreground">Drafts</p>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <Filter className="w-4 h-4 text-muted-foreground" />
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}

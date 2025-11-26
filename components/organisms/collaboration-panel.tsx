@@ -137,7 +137,7 @@ export function CollaborationPanel({ account, postId }: CollaborationPanelProps)
         <Card>
           <Box p="8">
             <div className="text-center">
-              <Users size={48} className="text-gray-400 mx-auto mb-4" />
+              <Users size={48} className="text-muted-foreground mx-auto mb-4" />
               <Heading size="4" className="mb-2">No Collaboration Groups</Heading>
               <Text size="2" color="gray" className="mb-4">
                 Create your first group to start collaborating with others
@@ -191,8 +191,8 @@ function GroupCard({ group, isOwner, onInvite, onShare }: GroupCardProps) {
     switch (userMember?.role) {
       case 'admin': return <Settings size={14} className="text-purple-500" />;
       case 'editor': return <Edit3 size={14} className="text-blue-500" />;
-      case 'viewer': return <Eye size={14} className="text-gray-500 dark:text-gray-400" />;
-      default: return <Users size={14} className="text-gray-500 dark:text-gray-400" />;
+      case 'viewer': return <Eye size={14} className="text-muted-foreground" />;
+      default: return <Users size={14} className="text-muted-foreground" />;
     }
   };
 
@@ -210,11 +210,11 @@ function GroupCard({ group, isOwner, onInvite, onShare }: GroupCardProps) {
           <Text size="2" color="gray">{group.description}</Text>
           <div className="flex items-center gap-3 mt-1">
             <div className="flex items-center gap-1">
-              <Users size={12} className="text-gray-400" />
+              <Users size={12} className="text-muted-foreground" />
               <Text size="1" color="gray">{memberCount} members</Text>
             </div>
             <div className="flex items-center gap-1">
-              <Share2 size={12} className="text-gray-400" />
+              <Share2 size={12} className="text-muted-foreground" />
               <Text size="1" color="gray">{sharedPostsCount} posts</Text>
             </div>
           </div>

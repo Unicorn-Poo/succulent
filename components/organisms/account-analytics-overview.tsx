@@ -197,7 +197,7 @@ export default function AccountAnalyticsOverview({
     return (
       <Card className="p-6">
         <div className="text-center">
-          <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <Text size="4" weight="medium" className="mb-2 block">
             No Linked Accounts
           </Text>
@@ -322,7 +322,7 @@ export default function AccountAnalyticsOverview({
             const platformColor = getPlatformColor(account.platform);
 
             return (
-              <div key={account.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div key={account.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 bg-${platformColor}-100 rounded-lg`}>
                     <PlatformIcon className={`w-5 h-5 text-${platformColor}-500`} />

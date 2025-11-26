@@ -165,7 +165,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
   if (!account.isLinked) {
     return (
       <div className="mt-6 text-center py-12">
-        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
         <Text size="4" weight="medium" className="mb-2 block">
           Account Not Linked
         </Text>
@@ -222,7 +222,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
   if (!analytics || analytics.posts.length === 0) {
     return (
       <div className="mt-6 text-center py-12">
-        <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
         <Text size="4" weight="medium" className="mb-2 block">
           No Recent Posts
         </Text>
@@ -310,14 +310,14 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
             const platformPost = post.postIds.find(p => p.platform === account.platform);
             
             return (
-              <div key={post.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={post.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <Text size="2" className="block mb-2 line-clamp-2">
                       {post.content.substring(0, 120)}
                       {post.content.length > 120 ? '...' : ''}
                     </Text>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.created)}
@@ -356,7 +356,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
                 </div>
 
                 {/* Engagement metrics placeholder - would be real data in full implementation */}
-                <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-6 text-sm text-muted-foreground pt-3 border-t border-border">
                   <span className="flex items-center gap-1">
                     <Heart className="w-3 h-3" />
                     {Math.floor(Math.random() * 50)} likes
@@ -386,7 +386,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
 
       {/* Last Updated */}
       {lastRefresh && (
-        <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-center pt-4 border-t border-border">
           <Text size="1" color="gray">
             Last updated: {lastRefresh.toLocaleTimeString()}
           </Text>

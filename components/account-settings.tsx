@@ -61,7 +61,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 					<Card>
 						<div className="p-6">
 							<div className="flex items-center gap-3 mb-6">
-								<User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+								<User className="w-5 h-5 text-muted-foreground" />
 								<Heading size="4">Profile Information</Heading>
 							</div>
 							
@@ -78,7 +78,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 												account.profile.name = e.target.value;
 											}
 										}}
-										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-white dark:bg-gray-800 dark:text-gray-100"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-card dark:text-gray-100"
 										placeholder="Enter your display name"
 									/>
 								</div>
@@ -100,7 +100,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 				<Tabs.Content value="integrations" className="mt-6">
 					<div className="space-y-6">
 						<div className="flex items-center gap-3 mb-6">
-							<Store className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+							<Store className="w-5 h-5 text-muted-foreground" />
 							<Heading size="4">Third-Party Integrations</Heading>
 						</div>
 
@@ -112,7 +112,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 							<div className="p-6">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg">
-										<Key className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+										<Key className="w-5 h-5 text-muted-foreground" />
 									</div>
 									<div>
 										<Text weight="medium" size="4">More Integrations</Text>
@@ -122,17 +122,17 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 									</div>
 								</div>
 								<div className="space-y-3">
-									<div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="p-3 bg-muted border border-border rounded-lg">
 										<Text size="2" color="gray">
 											🔜 <strong>Printful Integration</strong> - Print-on-demand products
 										</Text>
 									</div>
-									<div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="p-3 bg-muted border border-border rounded-lg">
 										<Text size="2" color="gray">
 											🔜 <strong>Shopify Integration</strong> - E-commerce store connection
 										</Text>
 									</div>
-									<div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="p-3 bg-muted border border-border rounded-lg">
 										<Text size="2" color="gray">
 											🔜 <strong>Etsy Integration</strong> - Marketplace integration
 										</Text>
@@ -153,12 +153,12 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 						<Card>
 							<div className="p-6">
 								<div className="flex items-center gap-3 mb-6">
-									<Store className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+									<Store className="w-5 h-5 text-muted-foreground" />
 									<Heading size="4">Product Creation Preferences</Heading>
 								</div>
 								
 								<div className="space-y-4">
-									<div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="flex items-center justify-between p-3 border border-border rounded-lg">
 										<div>
 											<Text size="2" weight="medium" className="block">
 												Product Creation Notifications
@@ -186,7 +186,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 										/>
 									</div>
 
-									<div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+									<div className="flex items-center justify-between p-3 border border-border rounded-lg">
 										<div>
 											<Text size="2" weight="medium" className="block">
 												Auto-Create Products
@@ -224,7 +224,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 					<Card>
 						<div className="p-6">
 							<div className="flex items-center gap-3 mb-6">
-								<Shield className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+								<Shield className="w-5 h-5 text-muted-foreground" />
 								<Heading size="4">Security & Privacy</Heading>
 							</div>
 							
@@ -247,11 +247,11 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 									</Text>
 								</div>
 
-								<div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+								<div className="p-4 bg-muted border border-border rounded-lg">
 									<Text size="2" className="text-gray-800 dark:text-gray-200">
 										📱 <strong>Device Access</strong>
 									</Text>
-									<Text size="2" className="text-gray-700 dark:text-gray-300 block mt-1">
+									<Text size="2" className="text-foreground block mt-1">
 										Manage which devices can access your account (coming soon).
 									</Text>
 								</div>
