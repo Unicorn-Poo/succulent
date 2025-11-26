@@ -166,18 +166,18 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
         <div className="space-y-6 mt-6">
           {/* Error/Status Messages */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600" />
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <Text size="2" color="red">{error}</Text>
               </div>
             </div>
           )}
 
           {linkingStatus && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
                 <Text size="2" color="blue">{linkingStatus}</Text>
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
             {/* Add Account Form */}
             {showAddAccountForm && (
-              <Card className="p-4 mb-4 border-dashed border-2 border-gray-300">
+              <Card className="p-4 mb-4 border-dashed border-2 border-gray-300 dark:border-gray-600">
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <label className="block text-xs font-medium mb-1">Platform</label>
@@ -288,7 +288,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
                           size="1" 
                           variant="ghost" 
                           onClick={() => handleRemoveAccount(index)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 dark:text-red-300"
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -300,7 +300,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             )}
 
             {accounts.length === 0 && !showAddAccountForm && (
-              <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+              <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                 <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <Text size="2" color="gray">No accounts added yet</Text>
                 <Text size="1" color="gray" className="block mt-1">
@@ -312,10 +312,10 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
           {/* Business Plan Features Info */}
           {businessPlanMode && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-600 mt-0.5" />
-                <div className="text-sm text-green-800">
+                <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
+                <div className="text-sm text-green-800 dark:text-green-300">
                   <Text size="2" weight="medium" className="block mb-1">Business Plan Active</Text>
                   <Text size="2">
                     After creating the group, you can link accounts via the Settings tab using Ayrshare's secure authentication.

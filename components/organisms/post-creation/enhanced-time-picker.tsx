@@ -118,7 +118,7 @@ export function EnhancedTimePicker({
     <div className={`space-y-3 ${className}`}>
       <div className="flex gap-2">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">
             Date
           </label>
           <div className="relative">
@@ -134,7 +134,7 @@ export function EnhancedTimePicker({
         </div>
         
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">
             Time
           </label>
           <div className="relative">
@@ -152,7 +152,7 @@ export function EnhancedTimePicker({
       {/* Time adjustment controls */}
       {value && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">Quick adjust:</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">Quick adjust:</span>
           <Button
             variant="outline"
             size="1"
@@ -186,7 +186,7 @@ export function EnhancedTimePicker({
       {/* Quick presets */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick presets:</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">Quick presets:</span>
           <Button
             variant="ghost"
             size="1"
@@ -216,11 +216,11 @@ export function EnhancedTimePicker({
 
       {/* Current selection display */}
       {value && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+        <div className="bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/20 rounded-lg p-3">
           <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
             Scheduled for:
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-200">
+          <div className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-200">
             {value.toLocaleDateString('en-US', {
               weekday: 'long',
               year: 'numeric',
@@ -228,7 +228,7 @@ export function EnhancedTimePicker({
               day: 'numeric'
             })}
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-200">
+          <div className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-200">
             at {value.toLocaleTimeString('en-US', {
               hour: 'numeric',
               minute: '2-digit',
@@ -244,7 +244,7 @@ export function EnhancedTimePicker({
           variant="outline"
           size="1"
           onClick={onClear}
-          className="w-full text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+          className="w-full text-red-600 dark:text-red-400 border-red-300 hover:bg-red-50 dark:bg-red-900/20 dark:hover:bg-red-900/20"
         >
           Clear Schedule
         </Button>

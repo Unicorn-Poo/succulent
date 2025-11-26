@@ -317,7 +317,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
       {/* Sync Results Display */}
       {syncResults && (
         <Card>
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-blue-500" />
               <Text size="2" color="blue">{syncResults}</Text>
@@ -329,7 +329,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
       {/* Error Display */}
       {error && (
         <Card>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text size="2" color="red">{error}</Text>
@@ -398,7 +398,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value as '7' | '30' | '90')}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
+                className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm"
               >
                 <option value="7">7 days</option>
                 <option value="30">30 days</option>
@@ -416,7 +416,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
               <Text size="1" color="gray">Impressions</Text>
             </div>
             
-            <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <Users className="w-6 h-6 text-green-500 mx-auto mb-2" />
               <Text size="3" weight="bold" className="block">
                 {formatNumber(analytics.reach)}
@@ -424,7 +424,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
               <Text size="1" color="gray">Reach</Text>
             </div>
             
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <TrendingUp className="w-6 h-6 text-purple-500 mx-auto mb-2" />
               <Text size="3" weight="bold" className="block">
                 {calculateEngagementRate().toFixed(1)}%
@@ -432,7 +432,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
               <Text size="1" color="gray">Engagement Rate</Text>
             </div>
             
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
+            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
               <BarChart3 className="w-6 h-6 text-orange-500 mx-auto mb-2" />
               <Text size="3" weight="bold" className="block">
                 {formatNumber(analytics.profileViews)}
@@ -448,7 +448,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
         <div className="flex items-center justify-between mb-4">
           <Text size="4" weight="bold">Recent Posts</Text>
           <div className="flex items-center gap-2">
-            <Grid3X3 className="w-4 h-4 text-gray-500" />
+            <Grid3X3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <Text size="2" color="gray">{recentPosts.length} posts</Text>
           </div>
         </div>
@@ -456,7 +456,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
         {recentPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentPosts.slice(0, 6).map((post) => (
-              <div key={post.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+              <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                 {/* Post Image Placeholder */}
                 <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                   {post.mediaUrls && post.mediaUrls.length > 0 ? (
@@ -478,7 +478,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
                     {post.post}
                   </Text>
                   
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                     <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
                     <div className="flex items-center gap-3">
                       {post.likes !== undefined && (
@@ -500,7 +500,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <Grid3X3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <Text size="2">No recent posts found</Text>
             <Text size="1" className="block mt-1">Posts will appear here once they're published</Text>
@@ -528,7 +528,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
           <div className="space-y-4 mt-6">
             <div>
               <Text size="2" weight="medium" className="block mb-2">Account Information</Text>
-              <div className="bg-gray-50 p-3 rounded">
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
                 <Text size="1" color="gray">Account Name: {account.name}</Text><br />
                 <Text size="1" color="gray">Platform: Instagram</Text><br />
                 <Text size="1" color="gray">Status: {account.isLinked ? 'Linked' : 'Not Linked'}</Text>
@@ -538,17 +538,17 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
             <div>
               <Text size="2" weight="medium" className="block mb-2">Available Features</Text>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <Text size="1">Analytics</Text>
                   <Badge color={analyticsAvailable ? "green" : "gray"}>
                     {analyticsAvailable ? "Available" : "Premium Only"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <Text size="1">Post History</Text>
                   <Badge color="green">Available</Badge>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <Text size="1">Profile Information</Text>
                   <Badge color="green">Available</Badge>
                 </div>

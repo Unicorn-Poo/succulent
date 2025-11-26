@@ -13,52 +13,52 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Bas
 
 const intentStyles = {
   primary: {
-    solid: 'bg-lime-600 hover:bg-lime-700 active:bg-lime-800 text-white border-lime-600',
-    soft: 'bg-lime-100 hover:bg-lime-200 text-lime-800 border-lime-100',
-    outline: 'border-lime-600 text-lime-600 hover:bg-lime-50 bg-transparent',
-    ghost: 'text-lime-600 hover:bg-lime-50 bg-transparent border-transparent'
+    solid: 'bg-lime-600 hover:bg-lime-700 active:bg-lime-800 text-white border-lime-600 dark:bg-lime-500 dark:hover:bg-lime-600 dark:active:bg-lime-700',
+    soft: 'bg-lime-100 dark:bg-lime-900/30 hover:bg-lime-200 text-lime-800 dark:text-lime-300 border-lime-100 dark:bg-lime-900/30 dark:hover:bg-lime-900/50 dark:text-lime-300 dark:border-lime-900/30',
+    outline: 'border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50 bg-transparent dark:border-lime-400 dark:text-lime-400 dark:hover:bg-lime-900/30',
+    ghost: 'text-lime-600 dark:text-lime-400 hover:bg-lime-50 bg-transparent border-transparent dark:text-lime-400 dark:hover:bg-lime-900/30'
   },
   secondary: {
-    solid: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white border-gray-600',
-    soft: 'bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-100',
-    outline: 'border-gray-600 text-gray-600 hover:bg-gray-50 bg-transparent',
-    ghost: 'text-gray-600 hover:bg-gray-50 bg-transparent border-transparent'
+    solid: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white border-gray-600 dark:bg-gray-50 dark:bg-gray-8000 dark:hover:bg-gray-600',
+    soft: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-800 dark:text-gray-200 border-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-800',
+    outline: 'border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-400 dark:text-gray-300 dark:hover:bg-gray-800',
+    ghost: 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-300 dark:hover:bg-gray-800'
   },
   success: {
-    solid: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white border-green-600',
-    soft: 'bg-green-100 hover:bg-green-200 text-green-800 border-green-100',
-    outline: 'border-green-600 text-green-600 hover:bg-green-50 bg-transparent',
-    ghost: 'text-green-600 hover:bg-green-50 bg-transparent border-transparent'
+    solid: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white border-green-600 dark:bg-green-500 dark:hover:bg-green-600',
+    soft: 'bg-green-100 dark:bg-green-900/30 hover:bg-green-200 text-green-800 dark:text-green-300 border-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-300 dark:border-green-900/30',
+    outline: 'border-green-600 text-green-600 dark:text-green-400 hover:bg-green-50 dark:bg-green-900/20 bg-transparent dark:border-green-400 dark:text-green-400 dark:hover:bg-green-900/30',
+    ghost: 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:bg-green-900/20 bg-transparent border-transparent dark:text-green-400 dark:hover:bg-green-900/30'
   },
   danger: {
-    solid: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white border-red-600',
-    soft: 'bg-red-100 hover:bg-red-200 text-red-800 border-red-100',
-    outline: 'border-red-600 text-red-600 hover:bg-red-50 bg-transparent',
-    ghost: 'text-red-600 hover:bg-red-50 bg-transparent border-transparent'
+    solid: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white border-red-600 dark:bg-red-500 dark:hover:bg-red-600',
+    soft: 'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 text-red-800 dark:text-red-300 border-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300 dark:border-red-900/30',
+    outline: 'border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:bg-red-900/20 bg-transparent dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900/30',
+    ghost: 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:bg-red-900/20 bg-transparent border-transparent dark:text-red-400 dark:hover:bg-red-900/30'
   },
   warning: {
-    solid: 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white border-amber-600',
-    soft: 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-100',
-    outline: 'border-amber-600 text-amber-600 hover:bg-amber-50 bg-transparent',
-    ghost: 'text-amber-600 hover:bg-amber-50 bg-transparent border-transparent'
+    solid: 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white border-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600',
+    soft: 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-100 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-300 dark:border-amber-900/30',
+    outline: 'border-amber-600 text-amber-600 hover:bg-amber-50 bg-transparent dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-900/30',
+    ghost: 'text-amber-600 hover:bg-amber-50 bg-transparent border-transparent dark:text-amber-400 dark:hover:bg-amber-900/30'
   },
   info: {
-    solid: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white border-blue-600',
-    soft: 'bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-100',
-    outline: 'border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent',
-    ghost: 'text-blue-600 hover:bg-blue-50 bg-transparent border-transparent'
+    solid: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white border-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600',
+    soft: 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 text-blue-800 dark:text-blue-300 border-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-900/30',
+    outline: 'border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900/20 bg-transparent dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/30',
+    ghost: 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900/20 bg-transparent border-transparent dark:text-blue-400 dark:hover:bg-blue-900/30'
   },
   light: {
-    solid: 'bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 border-gray-100',
-    soft: 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-50',
-    outline: 'border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent',
-    ghost: 'text-gray-700 hover:bg-gray-50 bg-transparent border-transparent'
+    solid: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 active:bg-gray-300 text-gray-800 dark:text-gray-200 border-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:active:bg-gray-600 dark:text-gray-200 dark:border-gray-800',
+    soft: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-900',
+    outline: 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800',
+    ghost: 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-300 dark:hover:bg-gray-800'
   },
   dark: {
-    solid: 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white border-gray-900',
-    soft: 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-800',
-    outline: 'border-gray-900 text-gray-900 hover:bg-gray-50 bg-transparent',
-    ghost: 'text-gray-900 hover:bg-gray-50 bg-transparent border-transparent'
+    solid: 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white border-gray-900 dark:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-200 dark:active:bg-gray-300 dark:text-gray-900 dark:text-gray-100 dark:border-gray-100',
+    soft: 'bg-gray-800 hover:bg-gray-700 text-gray-100 border-gray-800 dark:bg-gray-200 dark:hover:bg-gray-300 dark:text-gray-800 dark:text-gray-200 dark:border-gray-200 dark:border-gray-700',
+    outline: 'border-gray-900 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent dark:border-gray-100 dark:text-gray-100 dark:hover:bg-gray-800',
+    ghost: 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 bg-transparent border-transparent dark:text-gray-100 dark:hover:bg-gray-800'
   }
 };
 

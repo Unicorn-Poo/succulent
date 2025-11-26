@@ -233,7 +233,7 @@ export const PreviewModal = ({
           <div className="flex items-center gap-2">
             {/* Preview Mode Toggle - Hide for replies or if only one platform selected */}
             {!isReply && previewPlatforms.length > 1 && (
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <Button
                   variant={previewMode === "current" ? "solid" : "ghost"}
                   size="1"
@@ -410,7 +410,7 @@ export const PreviewModal = ({
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-4 pt-4 border-t">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Text size="1">
               {previewMode === "current" || previewPlatforms.length === 1
                 ? `Previewing for ${

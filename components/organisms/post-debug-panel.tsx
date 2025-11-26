@@ -93,10 +93,10 @@ export default function PostDebugPanel() {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 rounded-lg">
+    <div className="space-y-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
       <div className="flex items-center gap-4">
         <h2 className="text-2xl font-bold">Post Debug Panel</h2>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           Debug API and bulk post issues
         </div>
       </div>
@@ -155,16 +155,16 @@ export default function PostDebugPanel() {
 
       {/* Debug Results */}
       {debugResult && (
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
           <h3 className="text-lg font-semibold mb-3">Debug Results</h3>
-          <div className="text-xs text-gray-500 mb-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {debugResult.timestamp} | Type: {debugResult.debugType}
           </div>
 
           {/* Environment Info */}
           <div className="mb-4">
             <h4 className="font-medium mb-2">Environment</h4>
-            <div className="bg-gray-100 p-2 rounded text-sm">
+            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
               <div>API Key: {debugResult.environment.hasAyrshareApiKey ? '✅ Present' : '❌ Missing'}</div>
               <div>Business Plan: {debugResult.environment.businessPlanMode ? '✅ Enabled' : '❌ Disabled'}</div>
               <div>Region: {debugResult.environment.vercelRegion}</div>
@@ -175,11 +175,11 @@ export default function PostDebugPanel() {
           {debugResult.ayrshareConnection && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Ayrshare Connection</h4>
-              <div className="bg-gray-100 p-2 rounded text-sm">
+              <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
                 <div>Status: {debugResult.ayrshareConnection.success ? '✅ Connected' : '❌ Failed'}</div>
                 <div>Connected Platforms: {debugResult.ayrshareConnection.connectedPlatforms?.join(', ') || 'None'}</div>
                 {debugResult.ayrshareConnection.error && (
-                  <div className="text-red-600">Error: {debugResult.ayrshareConnection.error}</div>
+                  <div className="text-red-600 dark:text-red-400">Error: {debugResult.ayrshareConnection.error}</div>
                 )}
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function PostDebugPanel() {
           {debugResult.recentPosts && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Recent Posts</h4>
-              <div className="bg-gray-100 p-2 rounded text-sm">
+              <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
                 <div>Total Posts: {debugResult.recentPosts.totalPosts || 0}</div>
                 <div>Platforms: {debugResult.recentPosts.platforms?.join(', ') || 'None'}</div>
                 <div>Failed Posts: {debugResult.recentPosts.failedPosts?.length || 0}</div>
@@ -200,10 +200,10 @@ export default function PostDebugPanel() {
           {/* Errors */}
           {debugResult.errors.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-red-600">Errors</h4>
-              <ul className="bg-red-50 p-2 rounded text-sm space-y-1">
+              <h4 className="font-medium mb-2 text-red-600 dark:text-red-400">Errors</h4>
+              <ul className="bg-red-50 dark:bg-red-900/20 p-2 rounded text-sm space-y-1">
                 {debugResult.errors.map((error, i) => (
-                  <li key={i} className="text-red-700">• {error}</li>
+                  <li key={i} className="text-red-700 dark:text-red-300">• {error}</li>
                 ))}
               </ul>
             </div>
@@ -213,9 +213,9 @@ export default function PostDebugPanel() {
           {debugResult.warnings.length > 0 && (
             <div className="mb-4">
               <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
-              <ul className="bg-yellow-50 p-2 rounded text-sm space-y-1">
+              <ul className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded text-sm space-y-1">
                 {debugResult.warnings.map((warning, i) => (
-                  <li key={i} className="text-yellow-700">• {warning}</li>
+                  <li key={i} className="text-yellow-700 dark:text-yellow-300">• {warning}</li>
                 ))}
               </ul>
             </div>
@@ -224,10 +224,10 @@ export default function PostDebugPanel() {
           {/* Recommendations */}
           {debugResult.recommendations.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-blue-600">Recommendations</h4>
-              <ul className="bg-blue-50 p-2 rounded text-sm space-y-1">
+              <h4 className="font-medium mb-2 text-blue-600 dark:text-blue-400">Recommendations</h4>
+              <ul className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm space-y-1">
                 {debugResult.recommendations.map((rec, i) => (
-                  <li key={i} className="text-blue-700">• {rec}</li>
+                  <li key={i} className="text-blue-700 dark:text-blue-300">• {rec}</li>
                 ))}
               </ul>
             </div>
@@ -237,9 +237,9 @@ export default function PostDebugPanel() {
 
       {/* Test Results */}
       {testResult && (
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
           <h3 className="text-lg font-semibold mb-3">Test Results</h3>
-          <div className="text-xs text-gray-500 mb-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {testResult.timestamp} | Success: {testResult.success ? '✅' : '❌'}
           </div>
 
@@ -249,12 +249,12 @@ export default function PostDebugPanel() {
             <div className="space-y-2">
               {testResult.steps.map((step, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className={step.status === 'success' ? 'text-green-600' : 'text-red-600'}>
+                  <span className={step.status === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                     {step.status === 'success' ? '✅' : '❌'}
                   </span>
                   <span>{step.step}</span>
                   {step.data && (
-                    <span className="text-gray-500 text-xs">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">
                       {JSON.stringify(step.data).substring(0, 100)}...
                     </span>
                   )}
@@ -266,8 +266,8 @@ export default function PostDebugPanel() {
           {/* Error */}
           {testResult.error && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-red-600">Error</h4>
-              <div className="bg-red-50 p-2 rounded text-sm text-red-700">
+              <h4 className="font-medium mb-2 text-red-600 dark:text-red-400">Error</h4>
+              <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded text-sm text-red-700 dark:text-red-300">
                 {testResult.error}
               </div>
             </div>
@@ -277,7 +277,7 @@ export default function PostDebugPanel() {
           {testResult.ayrshareResponse && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Ayrshare Response</h4>
-              <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
+              <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-xs overflow-auto max-h-40">
                 {JSON.stringify(testResult.ayrshareResponse, null, 2)}
               </pre>
             </div>
@@ -286,10 +286,10 @@ export default function PostDebugPanel() {
           {/* Recommendations */}
           {testResult.recommendations.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-blue-600">Recommendations</h4>
-              <ul className="bg-blue-50 p-2 rounded text-sm space-y-1">
+              <h4 className="font-medium mb-2 text-blue-600 dark:text-blue-400">Recommendations</h4>
+              <ul className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm space-y-1">
                 {testResult.recommendations.map((rec, i) => (
-                  <li key={i} className="text-blue-700">• {rec}</li>
+                  <li key={i} className="text-blue-700 dark:text-blue-300">• {rec}</li>
                 ))}
               </ul>
             </div>
@@ -298,9 +298,9 @@ export default function PostDebugPanel() {
       )}
 
       {/* Instructions */}
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h4 className="font-medium mb-2 text-blue-800">How to Use This Panel</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+        <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-300">How to Use This Panel</h4>
+        <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
           <li>• <strong>Full Debug Check:</strong> Comprehensive analysis of Ayrshare connection and recent posts</li>
           <li>• <strong>Ayrshare Only:</strong> Tests API connectivity and connected accounts</li>
           <li>• <strong>Platform Specific:</strong> Debug issues with a specific social media platform</li>

@@ -141,7 +141,7 @@ export default function CompetitorAnalysisDashboard({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Competitor Analysis Dashboard</h3>
         <Button onClick={analyzeCompetitors} disabled={isLoading || competitors.length === 0}>
@@ -150,7 +150,7 @@ export default function CompetitorAnalysisDashboard({
       </div>
 
       {/* Add Competitors Section */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <h4 className="font-medium mb-3">Add Competitors to Analyze</h4>
         <div className="flex items-center space-x-2 mb-3">
           <Input
@@ -170,12 +170,12 @@ export default function CompetitorAnalysisDashboard({
             {competitors.map(competitor => (
               <span
                 key={competitor}
-                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center space-x-1"
+                className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center space-x-1"
               >
                 <span>@{competitor}</span>
                 <button
                   onClick={() => removeCompetitor(competitor)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300"
                 >
                   ✕
                 </button>
@@ -188,7 +188,7 @@ export default function CompetitorAnalysisDashboard({
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Analyzing competitors...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Analyzing competitors...</span>
         </div>
       )}
 
@@ -208,8 +208,8 @@ export default function CompetitorAnalysisDashboard({
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {tab.label}
@@ -223,53 +223,53 @@ export default function CompetitorAnalysisDashboard({
             <div className="space-y-6">
               {/* Your Performance vs Competitors */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-800 mb-2">Your Engagement Rate</h4>
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Your Engagement Rate</h4>
                   <p className="text-2xl font-bold text-blue-900">
                     {analysis.yourMetrics.engagementRate}%
                   </p>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
                     vs {(analysis.competitors.reduce((sum, c) => sum + c.metrics.engagementRate, 0) / analysis.competitors.length).toFixed(1)}% avg
                   </p>
                 </div>
 
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-medium text-green-800 mb-2">Your Followers</h4>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Your Followers</h4>
                   <p className="text-2xl font-bold text-green-900">
                     {formatNumber(analysis.yourMetrics.followerCount)}
                   </p>
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-green-700 dark:text-green-300">
                     vs {formatNumber(analysis.competitors.reduce((sum, c) => sum + c.competitor.followersCount, 0) / analysis.competitors.length)} avg
                   </p>
                 </div>
 
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <h4 className="font-medium text-purple-800 mb-2">Your Avg Likes</h4>
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Your Avg Likes</h4>
                   <p className="text-2xl font-bold text-purple-900">
                     {formatNumber(analysis.yourMetrics.avgLikes)}
                   </p>
-                  <p className="text-sm text-purple-700">
+                  <p className="text-sm text-purple-700 dark:text-purple-300">
                     vs {formatNumber(analysis.competitors.reduce((sum, c) => sum + c.metrics.avgLikes, 0) / analysis.competitors.length)} avg
                   </p>
                 </div>
 
-                <div className="p-4 bg-yellow-50 rounded-lg">
-                  <h4 className="font-medium text-yellow-800 mb-2">Your Post Frequency</h4>
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Your Post Frequency</h4>
                   <p className="text-2xl font-bold text-yellow-900">
                     {analysis.yourMetrics.postFrequency}/week
                   </p>
-                  <p className="text-sm text-yellow-700">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
                     vs {(analysis.competitors.reduce((sum, c) => sum + c.metrics.postFrequency, 0) / analysis.competitors.length).toFixed(1)}/week avg
                   </p>
                 </div>
               </div>
 
               {/* Top Performers */}
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h4 className="font-medium text-green-800 mb-3">Top Performers</h4>
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <h4 className="font-medium text-green-800 dark:text-green-300 mb-3">Top Performers</h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.insights.topPerformers.map(performer => (
-                    <span key={performer} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span key={performer} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm">
                       🏆 @{performer}
                     </span>
                   ))}
@@ -318,8 +318,8 @@ export default function CompetitorAnalysisDashboard({
                     )}
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       selectedCompetitor === comp.competitor.username
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     @{comp.competitor.username}
@@ -350,50 +350,50 @@ export default function CompetitorAnalysisDashboard({
                                 {comp.competitor.displayName}
                                 {comp.competitor.verified && <span className="ml-2 text-blue-500">✓</span>}
                               </h4>
-                              <p className="text-gray-600">@{comp.competitor.username}</p>
-                              <p className="text-sm text-gray-500 mt-1">{comp.competitor.bio}</p>
+                              <p className="text-gray-600 dark:text-gray-400">@{comp.competitor.username}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{comp.competitor.bio}</p>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                              <p className="text-2xl font-bold text-blue-600">
+                              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {formatNumber(comp.competitor.followersCount)}
                               </p>
-                              <p className="text-sm text-gray-600">Followers</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Followers</p>
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-green-600">
+                              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {formatNumber(comp.competitor.followingCount)}
                               </p>
-                              <p className="text-sm text-gray-600">Following</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Following</p>
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-purple-600">
+                              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {formatNumber(comp.competitor.postsCount)}
                               </p>
-                              <p className="text-sm text-gray-600">Posts</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Posts</p>
                             </div>
                           </div>
                         </div>
 
                         {/* Metrics */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="p-4 bg-blue-50 rounded-lg text-center">
+                          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
                             <p className="text-2xl font-bold text-blue-900">{comp.metrics.engagementRate}%</p>
-                            <p className="text-sm text-blue-700">Engagement Rate</p>
+                            <p className="text-sm text-blue-700 dark:text-blue-300">Engagement Rate</p>
                           </div>
-                          <div className="p-4 bg-green-50 rounded-lg text-center">
+                          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                             <p className="text-2xl font-bold text-green-900">{formatNumber(comp.metrics.avgLikes)}</p>
-                            <p className="text-sm text-green-700">Avg Likes</p>
+                            <p className="text-sm text-green-700 dark:text-green-300">Avg Likes</p>
                           </div>
-                          <div className="p-4 bg-purple-50 rounded-lg text-center">
+                          <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
                             <p className="text-2xl font-bold text-purple-900">{formatNumber(comp.metrics.avgComments)}</p>
-                            <p className="text-sm text-purple-700">Avg Comments</p>
+                            <p className="text-sm text-purple-700 dark:text-purple-300">Avg Comments</p>
                           </div>
-                          <div className="p-4 bg-yellow-50 rounded-lg text-center">
+                          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
                             <p className="text-2xl font-bold text-yellow-900">{comp.metrics.postFrequency}</p>
-                            <p className="text-sm text-yellow-700">Posts/Week</p>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300">Posts/Week</p>
                           </div>
                         </div>
 
@@ -404,7 +404,7 @@ export default function CompetitorAnalysisDashboard({
                             {comp.metrics.topHashtags.slice(0, 10).map(hashtag => (
                               <span
                                 key={hashtag.hashtag}
-                                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                                className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm"
                               >
                                 #{hashtag.hashtag} ({formatNumber(hashtag.avgEngagement)} avg)
                               </span>
@@ -416,7 +416,7 @@ export default function CompetitorAnalysisDashboard({
                   })()}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   Select a competitor above to view detailed analysis
                 </div>
               )}
@@ -427,11 +427,11 @@ export default function CompetitorAnalysisDashboard({
           {activeTab === 'opportunities' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h4 className="font-medium text-yellow-800 mb-3">Unique Opportunities</h4>
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-3">Unique Opportunities</h4>
                   <ul className="space-y-2">
                     {analysis.insights.uniqueOpportunities.map((opportunity, index) => (
-                      <li key={index} className="flex items-start space-x-2 text-sm text-yellow-700">
+                      <li key={index} className="flex items-start space-x-2 text-sm text-yellow-700 dark:text-yellow-300">
                         <span className="text-yellow-500 mt-1">💡</span>
                         <span>{opportunity}</span>
                       </li>
@@ -439,14 +439,14 @@ export default function CompetitorAnalysisDashboard({
                   </ul>
                 </div>
 
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-medium text-green-800 mb-3">Content Gaps to Exploit</h4>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <h4 className="font-medium text-green-800 dark:text-green-300 mb-3">Content Gaps to Exploit</h4>
                   <ul className="space-y-2">
                     {analysis.competitors.flatMap(c => c.opportunities.contentGaps)
                       .filter((gap, index, arr) => arr.indexOf(gap) === index)
                       .slice(0, 5)
                       .map((gap, index) => (
-                        <li key={index} className="flex items-start space-x-2 text-sm text-green-700">
+                        <li key={index} className="flex items-start space-x-2 text-sm text-green-700 dark:text-green-300">
                           <span className="text-green-500 mt-1">🎯</span>
                           <span>{gap}</span>
                         </li>
@@ -466,7 +466,7 @@ export default function CompetitorAnalysisDashboard({
                     .map(hashtag => (
                       <span
                         key={hashtag}
-                        className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                        className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm"
                       >
                         #{hashtag}
                       </span>
@@ -514,7 +514,7 @@ export default function CompetitorAnalysisDashboard({
                       <h5 className="font-medium mb-2">Engagement Tactics</h5>
                       <div className="space-y-1">
                         {comp.contentStrategy.engagementTactics.map((tactic, index) => (
-                          <div key={index} className="text-sm text-gray-700">
+                          <div key={index} className="text-sm text-gray-700 dark:text-gray-300">
                             • {tactic}
                           </div>
                         ))}
@@ -526,7 +526,7 @@ export default function CompetitorAnalysisDashboard({
                     <h5 className="font-medium mb-2">Best Posting Times</h5>
                     <div className="flex flex-wrap gap-2">
                       {comp.metrics.bestPostingTimes.map(time => (
-                        <span key={time} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                        <span key={time} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-sm">
                           {time}
                         </span>
                       ))}
@@ -537,14 +537,14 @@ export default function CompetitorAnalysisDashboard({
             </div>
           )}
 
-          <div className="mt-6 text-xs text-gray-500 text-center">
+          <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
             Last updated: {new Date(analysis.lastUpdated).toLocaleString()}
           </div>
         </>
       )}
 
       {!analysis && !isLoading && competitors.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           Add competitors above to start analyzing their strategies and find growth opportunities
         </div>
       )}

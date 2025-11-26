@@ -57,7 +57,7 @@ export default function PostStatusSync({ accountGroupId }: PostStatusSyncProps) 
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-gray-50">
+    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium">Post Status Sync</h3>
         <Button
@@ -69,12 +69,12 @@ export default function PostStatusSync({ accountGroupId }: PostStatusSyncProps) 
         </Button>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         Sync post statuses from Ayrshare to ensure scheduled posts are marked as published when they go live.
       </p>
 
       {lastSync && (
-        <p className="text-xs text-gray-500 mb-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           Last sync: {lastSync.toLocaleString()}
         </p>
       )}
@@ -82,16 +82,16 @@ export default function PostStatusSync({ accountGroupId }: PostStatusSyncProps) 
       {syncResult && (
         <div className={`p-3 rounded ${
           syncResult.success 
-            ? 'bg-green-100 border border-green-300' 
-            : 'bg-red-100 border border-red-300'
+            ? 'bg-green-100 dark:bg-green-900/30 border border-green-300' 
+            : 'bg-red-100 dark:bg-red-900/30 border border-red-300'
         }`}>
           {syncResult.success ? (
-            <div className="text-green-800">
+            <div className="text-green-800 dark:text-green-300">
               <p className="font-medium">✅ Sync completed successfully</p>
               <p className="text-sm">Updated {syncResult.updated} posts</p>
             </div>
           ) : (
-            <div className="text-red-800">
+            <div className="text-red-800 dark:text-red-300">
               <p className="font-medium">❌ Sync failed</p>
               {syncResult.errors.map((error, index) => (
                 <p key={index} className="text-sm">{error}</p>

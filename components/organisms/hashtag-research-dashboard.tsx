@@ -129,8 +129,8 @@ export default function HashtagResearchDashboard({
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'low': return 'text-green-600';
-      case 'high': return 'text-red-600';
+      case 'low': return 'text-green-600 dark:text-green-400';
+      case 'high': return 'text-red-600 dark:text-red-400';
       default: return 'text-yellow-600';
     }
   };
@@ -142,8 +142,8 @@ export default function HashtagResearchDashboard({
           key={index}
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag.hashtag)
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
           }`}
           onClick={() => handleHashtagToggle(hashtag.hashtag)}
         >
@@ -153,19 +153,19 @@ export default function HashtagResearchDashboard({
               {showMetrics && (
                 <>
                   <span className="text-sm">{getTrendIcon(hashtag.trend)}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(hashtag.difficulty)} bg-gray-100`}>
+                  <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(hashtag.difficulty)} bg-gray-100 dark:bg-gray-700`}>
                     {hashtag.difficulty}
                   </span>
                 </>
               )}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {Math.round(hashtag.relevanceScore * 100)}% relevance
             </div>
           </div>
           
           {showMetrics && (
-            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600 dark:text-gray-400">
               <div>
                 <span className="font-medium">Usage:</span> {hashtag.usage.toLocaleString()}
               </div>
@@ -189,8 +189,8 @@ export default function HashtagResearchDashboard({
           key={index}
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag)
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
           }`}
           onClick={() => handleHashtagToggle(hashtag)}
         >
@@ -201,7 +201,7 @@ export default function HashtagResearchDashboard({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Hashtag Research & Analysis</h3>
         <div className="flex items-center space-x-2">
@@ -225,13 +225,13 @@ export default function HashtagResearchDashboard({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
 
       {selectedHashtags.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium">Selected Hashtags ({selectedHashtags.length})</span>
             <Button onClick={handleCopyHashtags} size="sm" variant="outline">
@@ -242,7 +242,7 @@ export default function HashtagResearchDashboard({
             {selectedHashtags.map(hashtag => (
               <span
                 key={hashtag}
-                className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm cursor-pointer"
+                className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-sm cursor-pointer"
                 onClick={() => handleHashtagToggle(hashtag)}
               >
                 #{hashtag} ✕
@@ -256,29 +256,29 @@ export default function HashtagResearchDashboard({
         <>
           {/* Insights Panel */}
           <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-medium text-green-800 mb-2">Best Performing</h4>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Best Performing</h4>
               <div className="space-y-1">
                 {researchData.insights.bestPerformingTags.map(tag => (
-                  <span key={tag} className="block text-sm text-green-700">#{tag}</span>
+                  <span key={tag} className="block text-sm text-green-700 dark:text-green-300">#{tag}</span>
                 ))}
               </div>
             </div>
             
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-medium text-yellow-800 mb-2">Underutilized</h4>
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Underutilized</h4>
               <div className="space-y-1">
                 {researchData.insights.underutilizedTags.map(tag => (
-                  <span key={tag} className="block text-sm text-yellow-700">#{tag}</span>
+                  <span key={tag} className="block text-sm text-yellow-700 dark:text-yellow-300">#{tag}</span>
                 ))}
               </div>
             </div>
             
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <h4 className="font-medium text-purple-800 mb-2">Competitor Tags</h4>
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Competitor Tags</h4>
               <div className="space-y-1">
                 {researchData.insights.competitorTags.map(tag => (
-                  <span key={tag} className="block text-sm text-purple-700">#{tag}</span>
+                  <span key={tag} className="block text-sm text-purple-700 dark:text-purple-300">#{tag}</span>
                 ))}
               </div>
             </div>
@@ -298,8 +298,8 @@ export default function HashtagResearchDashboard({
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {tab.label}
@@ -321,12 +321,12 @@ export default function HashtagResearchDashboard({
       {isLoading && (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Researching hashtags...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Researching hashtags...</span>
         </div>
       )}
 
       {!researchData && !isLoading && !error && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           Enter at least 10 characters of content to research hashtags
         </div>
       )}

@@ -105,7 +105,7 @@ export const PostCreationHeader = ({
                                             size="1" 
                                             variant="ghost" 
                                             onClick={onDeletePost}
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:text-red-300 hover:bg-red-50 dark:bg-red-900/20"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
@@ -186,7 +186,7 @@ export const PostCreationHeader = ({
                                                     e.stopPropagation(); // Prevent tab switch
                                                     handleRemoveAccount(platform);
                                                 }}
-                                                className="ml-1 p-0.5 rounded-full hover:bg-gray-500/20"
+                                                className="ml-1 p-0.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000/20"
                                             >
                                                 <X className="w-3 h-3" />
                                             </span>

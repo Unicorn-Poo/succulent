@@ -88,7 +88,7 @@ export const PostContent = ({
 							className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 ${
 								isDragOver 
 									? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 scale-105' 
-									: 'border-gray-300 dark:border-gray-600 hover:border-lime-400 dark:hover:border-lime-500'
+									: 'border-gray-300 dark:border-gray-600 dark:border-gray-600 hover:border-lime-400 dark:hover:border-lime-500'
 							}`}
 							onDragEnter={handleDragEnter}
 							onDragLeave={handleDragLeave}
@@ -101,18 +101,18 @@ export const PostContent = ({
 								}`}>
 									<div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-lime-100 to-green-100 dark:from-lime-900/30 dark:to-green-900/30 rounded-full flex items-center justify-center">
 										{isDragOver ? (
-											<Upload className="w-10 h-10 text-lime-600 dark:text-lime-400 animate-bounce" />
+											<Upload className="w-10 h-10 text-lime-600 dark:text-lime-400 dark:text-lime-400 animate-bounce" />
 										) : (
-											<ImageIcon className="w-10 h-10 text-lime-600 dark:text-lime-400" />
+											<ImageIcon className="w-10 h-10 text-lime-600 dark:text-lime-400 dark:text-lime-400" />
 										)}
 									</div>
 								</div>
 								
-								<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+								<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white mb-2">
 									{isDragOver ? 'Drop your media here' : 'Add Media to Your Post'}
 								</h3>
 								
-								<p className="text-gray-600 dark:text-gray-400 mb-6">
+								<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-6">
 									{isDragOver 
 										? 'Release to upload your files' 
 										: 'Drag & drop images or videos, or click to browse'
@@ -130,7 +130,7 @@ export const PostContent = ({
 										Choose Files
 									</Button>
 
-									<div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+									<div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
 										<div className="flex items-center">
 											<ImageIcon className="w-4 h-4 mr-1" />
 											Images
@@ -151,7 +151,7 @@ export const PostContent = ({
 							{isDragOver && (
 								<div className="absolute inset-0 bg-lime-500/10 border-2 border-lime-500 rounded-2xl flex items-center justify-center">
 									<div className="text-center">
-										<Upload className="w-12 h-12 text-lime-600 dark:text-lime-400 mx-auto mb-2 animate-bounce" />
+										<Upload className="w-12 h-12 text-lime-600 dark:text-lime-400 dark:text-lime-400 mx-auto mb-2 animate-bounce" />
 										<p className="text-lime-700 dark:text-lime-300 font-medium">Drop files to upload</p>
 									</div>
 								</div>
@@ -169,19 +169,19 @@ export const PostContent = ({
 						value={contextText || post.variants[activeTab]?.text?.toString() || ""}
 						onChange={(e) => handleContentChange(e.target.value)}
 						placeholder={`What's happening? Use double line breaks for threads.`}
-						className="w-full min-h-[150px] p-4 border border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+						className="w-full min-h-[150px] p-4 border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-white dark:bg-gray-900 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
 						rows={6}
 					/>
 					
 					{/* Character count and thread indicator */}
 					<div className="absolute bottom-3 right-3 flex items-center space-x-2">
 						{(isImplicitThread || isExplicitThread) && (
-							<div className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full text-xs">
+							<div className="flex items-center bg-blue-100 dark:bg-blue-900/30 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 dark:text-blue-400 px-2 py-1 rounded-full text-xs">
 								<FileText className="w-3 h-3 mr-1" />
 								Thread
 							</div>
 						)}
-						<div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+						<div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 px-2 py-1 rounded-full">
 							{(contextText || post.variants[activeTab]?.text?.toString() || "").length}
 						</div>
 					</div>

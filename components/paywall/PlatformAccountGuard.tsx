@@ -61,9 +61,9 @@ export function PlatformAccountGuard({
       </div>
       
       <div className="space-y-3 mb-4">
-        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-lime-100 flex items-center justify-center">
+            <div className="w-6 h-6 rounded bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
               <Text size="1" weight="bold" className="text-lime-700">
                 {platform.charAt(0).toUpperCase()}
               </Text>
@@ -89,11 +89,11 @@ export function PlatformAccountGuard({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <Text size="2" weight="medium" className="text-blue-800 block mb-1">
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <Text size="2" weight="medium" className="text-blue-800 dark:text-blue-300 block mb-1">
             💡 What you can do:
           </Text>
-          <ul className="text-sm text-blue-700 space-y-1">
+          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>• Connect accounts on different platforms</li>
             <li>• Upgrade to Business plan for unlimited accounts per platform</li>
             <li>• Remove an existing {platform} account to add a new one</li>
@@ -185,7 +185,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
                   ? 'bg-amber-50 border-amber-200' 
                   : count > 0 
                     ? 'bg-lime-50 border-lime-200'
-                    : 'bg-gray-50 border-gray-200'
+                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -208,11 +208,11 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
         })}
       </div>
 
-      <div className="p-3 bg-blue-50 rounded-lg mb-4">
-        <Text size="2" weight="medium" className="text-blue-800 block mb-1">
+      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+        <Text size="2" weight="medium" className="text-blue-800 dark:text-blue-300 block mb-1">
           💡 Platform Strategy Tips
         </Text>
-        <Text size="1" className="text-blue-700">
+        <Text size="1" className="text-blue-700 dark:text-blue-300">
           Focus on 3-5 platforms where your audience is most active. 
           Quality engagement beats quantity every time!
         </Text>

@@ -49,7 +49,7 @@ export const SettingsDialog = ({
                             <Label.Root htmlFor="interval">
                                 Posting Interval (minutes)
                             </Label.Root>
-                            <div className="text-sm text-gray-500 mb-1">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                                 Time between posts for multi-post sequences
                             </div>
                             <Input

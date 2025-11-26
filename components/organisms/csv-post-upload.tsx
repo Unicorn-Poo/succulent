@@ -429,7 +429,7 @@ export default function CSVPostUpload({
 
         <div className="space-y-6 mt-4">
           {/* Template Section */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <Text size="3" weight="medium" className="block mb-1">
@@ -491,9 +491,9 @@ export default function CSVPostUpload({
                   value={csvText}
                   onChange={(e) => handleTextChange(e.target.value)}
                   placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate,mediaUrls&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;,&quot;&quot;"
-                  className="w-full h-48 p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
+                  className="w-full h-48 p-3 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
                 />
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-4">
                     <span>{csvText.length} characters</span>
                     <span>{csvText.split('\n').length} lines</span>
@@ -521,7 +521,7 @@ export default function CSVPostUpload({
                 <Text size="3" weight="medium" className="block mb-2">
                   Upload CSV File
                 </Text>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
                   <input
                     type="file"
                     accept=".csv"
@@ -541,7 +541,7 @@ export default function CSVPostUpload({
                 </div>
                 
                 {file && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <FileText className="w-4 h-4" />
                     <span>{file.name}</span>
                     <Button
@@ -564,9 +564,9 @@ export default function CSVPostUpload({
 
           {/* Parse Errors */}
           {parseErrors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-red-600" />
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <Text size="3" weight="medium" color="red">
                   CSV Parsing Errors
                 </Text>
@@ -588,13 +588,13 @@ export default function CSVPostUpload({
                 </Text>
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span className="text-green-700">{validPosts.length} valid</span>
+                    <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <span className="text-green-700 dark:text-green-300">{validPosts.length} valid</span>
                   </div>
                   {invalidPosts.length > 0 && (
                     <div className="flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                      <span className="text-red-700">{invalidPosts.length} with errors</span>
+                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      <span className="text-red-700 dark:text-red-300">{invalidPosts.length} with errors</span>
                     </div>
                   )}
                 </div>
@@ -606,8 +606,8 @@ export default function CSVPostUpload({
                     key={index}
                     className={`border rounded-lg p-3 ${
                       post.errors && post.errors.length > 0 
-                        ? 'border-red-200 bg-red-50' 
-                        : 'border-green-200 bg-green-50'
+                        ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20' 
+                        : 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -618,7 +618,7 @@ export default function CSVPostUpload({
                         <Text size="1" color="gray" className="block mb-2 truncate">
                           {post.content.substring(0, 100)}...
                         </Text>
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                           <span>Platforms: {post.platforms.join(', ')}</span>
                           {post.scheduledDate && (
                             <span>• Scheduled: {new Date(post.scheduledDate).toLocaleDateString()}</span>
@@ -631,16 +631,16 @@ export default function CSVPostUpload({
                       
                       <div className="ml-3">
                         {post.errors && post.errors.length > 0 ? (
-                          <AlertCircle className="w-5 h-5 text-red-600" />
+                          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                         ) : (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                         )}
                       </div>
                     </div>
                     
                     {/* Show errors */}
                     {post.errors && post.errors.length > 0 && (
-                      <div className="mt-2 text-xs text-red-700">
+                      <div className="mt-2 text-xs text-red-700 dark:text-red-300">
                         {post.errors.map((error, errorIndex) => (
                           <div key={errorIndex}>• {error}</div>
                         ))}
@@ -655,13 +655,13 @@ export default function CSVPostUpload({
           {/* Upload Results */}
           {uploadResults && (
             <div className={`border rounded-lg p-4 ${
-              uploadResults.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+              uploadResults.success ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 {uploadResults.success ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-red-600" />
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                 )}
                 <Text size="3" weight="medium" color={uploadResults.success ? "green" : "red"}>
                   {uploadResults.success ? 'Upload Successful' : 'Upload Failed'}
@@ -669,7 +669,7 @@ export default function CSVPostUpload({
               </div>
               
               {uploadResults.success && (
-                <div className="text-sm text-green-700">
+                <div className="text-sm text-green-700 dark:text-green-300">
                   <div>✅ Created {uploadResults.created} posts</div>
                   {uploadResults.scheduled > 0 && (
                     <div>📅 {uploadResults.scheduled} posts scheduled</div>

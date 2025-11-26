@@ -463,7 +463,7 @@ export default function APIKeyManagement() {
       {/* Status Messages */}
       {error && (
         <Card>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text color="red">{error}</Text>
@@ -474,7 +474,7 @@ export default function APIKeyManagement() {
 
       {success && (
         <Card>
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
               <Text color="green">{success}</Text>
@@ -512,7 +512,7 @@ export default function APIKeyManagement() {
                 const rateLimitInfo = getRateLimitInfo(key.rateLimitTier);
                 
                 return (
-                  <div key={key.keyId} className="border border-gray-200 rounded-lg p-4">
+                  <div key={key.keyId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -525,8 +525,8 @@ export default function APIKeyManagement() {
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center gap-4 mb-2 text-sm text-gray-600">
-                          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                        <div className="flex items-center gap-4 mb-2 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                             {key.keyPrefix}
                           </span>
                           <span className="flex items-center gap-1">
@@ -541,7 +541,7 @@ export default function APIKeyManagement() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                           <span>{key.usageCount} total requests</span>
                           <span>{key.monthlyUsageCount} this month</span>
                           <span>{key.permissions.length} permissions</span>
@@ -579,7 +579,7 @@ export default function APIKeyManagement() {
                       {key.permissions.map((permission) => (
                         <span
                           key={permission}
-                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
+                          className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-md"
                         >
                           {permission}
                         </span>
@@ -706,7 +706,7 @@ export default function APIKeyManagement() {
 
           {newApiKey && (
             <div className="mt-6">
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <Text size="2" weight="medium">API Key</Text>
                   <Button
@@ -727,19 +727,19 @@ export default function APIKeyManagement() {
                     )}
                   </Button>
                 </div>
-                <code className="block font-mono text-sm break-all bg-white p-2 rounded border">
+                <code className="block font-mono text-sm break-all bg-white dark:bg-gray-900 p-2 rounded border">
                   {newApiKey}
                 </code>
               </div>
 
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <Text size="2" weight="medium" className="text-yellow-800 block">
+                    <Text size="2" weight="medium" className="text-yellow-800 dark:text-yellow-300 block">
                       Important Security Notice
                     </Text>
-                    <Text size="1" className="text-yellow-700">
+                    <Text size="1" className="text-yellow-700 dark:text-yellow-300">
                       This is the only time you'll see this API key. Store it securely and never share it publicly.
                     </Text>
                   </div>
@@ -837,9 +837,9 @@ export default function APIKeyManagement() {
               </div>
 
               {/* Key Information */}
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <Text size="2" weight="medium" className="mb-2 block">Key Information</Text>
-                <div className="space-y-1 text-sm text-gray-600">
+                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <div><strong>Key ID:</strong> {editingKey.keyId}</div>
                   <div><strong>Created:</strong> {formatDate(editingKey.createdAt)}</div>
                   <div><strong>Usage:</strong> {editingKey.usageCount} total requests, {editingKey.monthlyUsageCount} this month</div>

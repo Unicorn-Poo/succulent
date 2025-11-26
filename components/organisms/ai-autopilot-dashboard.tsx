@@ -187,11 +187,11 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800';
+      case 'critical': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
       case 'high': return 'bg-orange-100 text-orange-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -200,8 +200,8 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
-            <Bot className="w-6 h-6 text-purple-600" />
+          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+            <Bot className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
             <Heading size="5">AI Autopilot</Heading>
@@ -273,7 +273,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
       <Card>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Settings className="w-5 h-5 text-gray-600" />
+            <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <Heading size="4">Autopilot Configuration</Heading>
           </div>
           
@@ -289,7 +289,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
                     ...prev, 
                     aggressiveness: e.target.value as any 
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                 >
                   <option value="conservative">Conservative</option>
                   <option value="moderate">Moderate</option>
@@ -310,7 +310,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
                     ...prev, 
                     maxPostsPerDay: parseInt(e.target.value) 
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                 />
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Brain className="w-5 h-5 text-gray-600" />
+              <Brain className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <Heading size="4">AI Recommendations</Heading>
             </div>
             <Button variant="soft" onClick={handleGetAnalysis} disabled={isLoading}>
@@ -379,7 +379,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
           {recentDecisions.length > 0 ? (
             <div className="space-y-3">
               {recentDecisions.slice(0, 5).map((decision, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <Text size="2" weight="medium">{decision.action}</Text>
                     <div className="flex items-center gap-2">
@@ -416,7 +416,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <BookOpen className="w-5 h-5 text-gray-600" />
+              <BookOpen className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <Heading size="4">AI Learning System</Heading>
             </div>
             <Button 
@@ -430,25 +430,25 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
 
           {learningStats ? (
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <Text size="3" weight="bold" className="block">
                   {learningStats.totalInsights}
                 </Text>
                 <Text size="2" color="gray">Learning Insights</Text>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg">
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <Text size="3" weight="bold" className="block">
                   {learningStats.postsAnalyzed}
                 </Text>
                 <Text size="2" color="gray">Posts Analyzed</Text>
               </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <Text size="3" weight="bold" className="block">
                   {Math.round(learningStats.avgConfidence)}%
                 </Text>
                 <Text size="2" color="gray">Avg Confidence</Text>
               </div>
-              <div className="p-3 bg-orange-50 rounded-lg">
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                 <Text size="3" weight="bold" className="block">
                   {learningStats.topCategories?.[0] || 'None'}
                 </Text>
@@ -471,7 +471,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-gray-600" />
+              <Zap className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <Heading size="4">AI Content Generator</Heading>
               {learningStats && learningStats.totalInsights > 0 && (
                 <Badge color="green" variant="soft">Learning-Enhanced</Badge>
@@ -487,7 +487,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
           </div>
 
           {streamingContent && (
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <Text size="2" className="whitespace-pre-wrap">
                 {streamingContent}
               </Text>

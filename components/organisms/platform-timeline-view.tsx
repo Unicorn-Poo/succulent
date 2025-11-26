@@ -92,9 +92,9 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
   // Instagram Grid View
   if (account.platform === 'instagram') {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Profile Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-semibold">
@@ -102,9 +102,9 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</h2>
-              <p className="text-gray-600">{account.name}</p>
-              <p className="text-sm text-gray-500 mt-1">{platformPosts.length} posts</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</h2>
+              <p className="text-gray-600 dark:text-gray-400">{account.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{platformPosts.length} posts</p>
             </div>
           </div>
         </div>
@@ -116,8 +116,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
             className="aspect-square relative cursor-pointer group"
             onClick={() => onCreatePost?.(account.platform)}
           >
-            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-lg">
-              <div className="text-center text-gray-400 group-hover:text-gray-600">
+            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg">
+              <div className="text-center text-gray-400 group-hover:text-gray-600 dark:text-gray-400">
                 <span className="text-3xl font-light">+</span>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                   <div className="aspect-square relative group cursor-pointer">
                     {/* Post Image Placeholder */}
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors">
-                      <div className="text-center text-gray-500">
+                      <div className="text-center text-gray-500 dark:text-gray-400">
                         <span className="text-2xl">📷</span>
                       </div>
                     </div>
@@ -167,7 +167,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                     {/* Post Type Indicator */}
                     {index % 4 === 0 && (
                       <div className="absolute top-2 right-2">
-                        <div className="w-6 h-6 bg-white bg-opacity-80 rounded flex items-center justify-center">
+                        <div className="w-6 h-6 bg-white dark:bg-gray-900 bg-opacity-80 rounded flex items-center justify-center">
                           <span className="text-xs">📹</span>
                         </div>
                       </div>
@@ -191,13 +191,13 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
           
           {/* Empty slots to show grid structure */}
           {platformPosts.length % 3 !== 0 && Array.from({ length: 3 - (platformPosts.length % 3) }).map((_, index) => (
-            <div key={`empty-${index}`} className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
+            <div key={`empty-${index}`} className="aspect-square bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center">
               <span className="text-gray-400 text-sm">Future post</span>
             </div>
           ))}
         </div>
         
-        <div className="p-4 text-center text-sm text-gray-500">
+        <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
           This preview shows how your Instagram grid will look. Click any post to edit it. Posts are arranged chronologically from newest to oldest.
         </div>
       </div>
@@ -207,9 +207,9 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
   // X/Twitter Timeline View
   if (account.platform === 'x') {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         {/* Profile Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xl font-semibold">
@@ -217,9 +217,9 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{account.name}</h2>
-              <p className="text-gray-500">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</p>
-              <p className="text-sm text-gray-500 mt-1">{platformPosts.length} posts</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{account.name}</h2>
+              <p className="text-gray-500 dark:text-gray-400">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{platformPosts.length} posts</p>
             </div>
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
               
               return (
                 <Link key={post.id} href={getPostUrl(post.id)} className="block">
-                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors relative cursor-pointer">
+                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 transition-colors relative cursor-pointer">
                     <div className="flex space-x-3">
                       {/* Avatar */}
                       <div className="w-10 h-10 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -250,21 +250,21 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-bold text-gray-900">{account.name}</span>
-                          <span className="text-gray-500">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</span>
-                          <span className="text-gray-500">·</span>
-                          <span className="text-sm text-gray-500">
+                          <span className="font-bold text-gray-900 dark:text-gray-100">{account.name}</span>
+                          <span className="text-gray-500 dark:text-gray-400">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</span>
+                          <span className="text-gray-500 dark:text-gray-400">·</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {getPostStatus(post)}
                           </span>
                         </div>
                         
-                        <div className="text-gray-900 mb-3">
+                        <div className="text-gray-900 dark:text-gray-100 mb-3">
                           {postContent}
                         </div>
                         
                         {/* Engagement */}
                         {post.engagement && getPostStatus(post) === 'published' && (
-                          <div className="flex items-center space-x-6 text-sm text-gray-500">
+                          <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center space-x-1">
                               <MessageCircle className="w-4 h-4" />
                               <span>{formatNumber(post.engagement.comments)}</span>
@@ -287,7 +287,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                       const postStatus = getPostStatus(post);
                       return (postStatus === 'draft' || postStatus === 'scheduled') && (
                         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                          postStatus === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-lime-100 text-lime-700'
+                          postStatus === 'draft' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-lime-100 dark:bg-lime-900/30 text-lime-700'
                         }`}>
                           {postStatus.toUpperCase()}
                         </div>
@@ -309,10 +309,10 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-bold text-gray-900">{account.name}</span>
-                      <span className="text-gray-500">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</span>
-                      <span className="text-gray-500">·</span>
-                      <span className="text-sm text-gray-500">draft</span>
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{account.name}</span>
+                      <span className="text-gray-500 dark:text-gray-400">@{account.username || account.name.toLowerCase().replace(/\s+/g, '')}</span>
+                      <span className="text-gray-500 dark:text-gray-400">·</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">draft</span>
                     </div>
                     <div className="text-gray-400 italic">
                       {index === 0 ? "🌱 Create your first post to see it here!" : 
@@ -326,7 +326,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
           )}
         </div>
         
-        <div className="p-4 text-center text-sm text-gray-500">
+        <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
           This preview shows how your X timeline will look to visitors. Click any post to edit it.
         </div>
       </div>
@@ -336,9 +336,9 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
   // YouTube Channel View
   if (account.platform === 'youtube') {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         {/* Channel Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-semibold">
@@ -346,15 +346,15 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
               </span>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{account.name}</h2>
-              <p className="text-gray-600">{platformPosts.length} videos</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{account.name}</h2>
+              <p className="text-gray-600 dark:text-gray-400">{platformPosts.length} videos</p>
             </div>
           </div>
         </div>
         
         {/* Videos Grid */}
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Videos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Videos</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {platformPosts.length > 0 ? (
               platformPosts.map((post) => {
@@ -367,7 +367,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                       <div className="relative mb-2">
                         {/* Video Thumbnail */}
                         <div className="aspect-video bg-gradient-to-br from-red-100 to-red-200 rounded-lg flex items-center justify-center relative overflow-hidden hover:from-red-200 hover:to-red-300 transition-colors">
-                          <div className="text-center text-red-600">
+                          <div className="text-center text-red-600 dark:text-red-400">
                             <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
                               <Play className="w-6 h-6 text-white fill-current ml-1" />
                             </div>
@@ -391,11 +391,11 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-red-600 dark:text-red-400 transition-colors">
                             {postTitle}
                           </h4>
-                          <p className="text-sm text-gray-500">{account.name}</p>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{account.name}</p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                             {post.engagement && getPostStatus(post) === 'published' && (
                               <>
                                 <span>{formatNumber(post.engagement.likes * 20)} views</span>
@@ -444,7 +444,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                          index === 1 ? "Create engaging content for your audience" : 
                          "Share your story with the world"}
                       </h4>
-                      <p className="text-sm text-gray-500">{account.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{account.name}</p>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         <span>draft</span>
                       </div>
@@ -456,7 +456,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
           </div>
         </div>
         
-        <div className="p-4 text-center text-sm text-gray-500">
+        <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
           This preview shows how your YouTube channel will look to visitors. Click any video to edit it.
         </div>
       </div>
@@ -464,8 +464,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="text-center text-gray-500">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="text-center text-gray-500 dark:text-gray-400">
         Timeline view not available for this platform.
       </div>
     </div>

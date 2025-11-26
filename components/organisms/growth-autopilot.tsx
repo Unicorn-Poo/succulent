@@ -444,9 +444,9 @@ export default function GrowthAutopilot({
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
-      default: return 'text-blue-600 bg-blue-50';
+      case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
+      default: return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
     }
   };
 
@@ -461,22 +461,22 @@ export default function GrowthAutopilot({
 
   const getInsightColor = (type: string) => {
     switch (type) {
-      case 'opportunity': return 'border-blue-200 bg-blue-50';
-      case 'warning': return 'border-yellow-200 bg-yellow-50';
-      case 'success': return 'border-green-200 bg-green-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'opportunity': return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20';
+      case 'warning': return 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20';
+      case 'success': return 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20';
+      default: return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <h3 className="text-lg font-semibold">🤖 Growth Autopilot</h3>
           <span className={`px-3 py-1 rounded-full text-sm ${
-            dashboard.status === 'active' ? 'bg-green-100 text-green-800' :
-            dashboard.status === 'learning' ? 'bg-blue-100 text-blue-800' :
-            'bg-gray-100 text-gray-800'
+            dashboard.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+            dashboard.status === 'learning' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+            'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
           }`}>
             {dashboard.status === 'active' ? '🟢 Active' : 
              dashboard.status === 'learning' ? '🔄 Learning' : '⏸️ Paused'}
@@ -508,21 +508,21 @@ export default function GrowthAutopilot({
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-blue-50 rounded-lg text-center">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
           <p className="text-2xl font-bold text-blue-900">{dashboard.actionsToday}</p>
-          <p className="text-sm text-blue-700">Actions Today</p>
+          <p className="text-sm text-blue-700 dark:text-blue-300">Actions Today</p>
         </div>
-        <div className="p-4 bg-green-50 rounded-lg text-center">
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
           <p className="text-2xl font-bold text-green-900">{dashboard.growthRate}%</p>
-          <p className="text-sm text-green-700">Growth Rate</p>
+          <p className="text-sm text-green-700 dark:text-green-300">Growth Rate</p>
         </div>
-        <div className="p-4 bg-purple-50 rounded-lg text-center">
+        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
           <p className="text-2xl font-bold text-purple-900">{dashboard.engagementRate}%</p>
-          <p className="text-sm text-purple-700">Engagement Rate</p>
+          <p className="text-sm text-purple-700 dark:text-purple-300">Engagement Rate</p>
         </div>
-        <div className="p-4 bg-yellow-50 rounded-lg text-center">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
           <p className="text-2xl font-bold text-yellow-900">{pendingActions.filter(a => a.status === 'pending').length}</p>
-          <p className="text-sm text-yellow-700">Pending Actions</p>
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending Actions</p>
         </div>
       </div>
 
@@ -540,8 +540,8 @@ export default function GrowthAutopilot({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
               }`}
             >
               {tab.label}
@@ -554,16 +554,16 @@ export default function GrowthAutopilot({
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           {/* Next Recommended Actions */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-3">🎯 Next Recommended Actions</h4>
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">🎯 Next Recommended Actions</h4>
             <div className="space-y-3">
               {dashboard.nextActions.slice(0, 3).map(action => (
-                <div key={action.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                <div key={action.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{getActionIcon(action.type)}</span>
                     <div>
                       <p className="font-medium">{action.title}</p>
-                      <p className="text-sm text-gray-600">{action.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{action.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -590,15 +590,15 @@ export default function GrowthAutopilot({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Posts Scheduled</span>
-                  <span className="font-bold text-blue-600">{dashboard.performance.postsScheduled}</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">{dashboard.performance.postsScheduled}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Comments Replied</span>
-                  <span className="font-bold text-green-600">{dashboard.performance.commentsReplied}</span>
+                  <span className="font-bold text-green-600 dark:text-green-400">{dashboard.performance.commentsReplied}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">DMs Sent</span>
-                  <span className="font-bold text-purple-600">{dashboard.performance.dmssSent}</span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{dashboard.performance.dmssSent}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Hashtags Optimized</span>
@@ -612,15 +612,15 @@ export default function GrowthAutopilot({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Current Growth Rate</span>
-                  <span className="font-bold text-green-600">{dashboard.growthRate}%/month</span>
+                  <span className="font-bold text-green-600 dark:text-green-400">{dashboard.growthRate}%/month</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Target Growth Rate</span>
-                  <span className="font-bold text-blue-600">{settings.goals.followerGrowthTarget}%/month</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">{settings.goals.followerGrowthTarget}%/month</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Projected Followers (30 days)</span>
-                  <span className="font-bold text-purple-600">+{Math.round(2500 * (dashboard.growthRate / 100))}</span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">+{Math.round(2500 * (dashboard.growthRate / 100))}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
@@ -672,12 +672,12 @@ export default function GrowthAutopilot({
                   <span className="text-2xl mt-1">{getActionIcon(action.type)}</span>
                   <div>
                     <h4 className="font-medium">{action.title}</h4>
-                    <p className="text-gray-700 mt-1">{action.description}</p>
-                    <p className="text-sm text-blue-600 mt-2">💡 {action.reason}</p>
+                    <p className="text-gray-700 dark:text-gray-300 mt-1">{action.description}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">💡 {action.reason}</p>
                     {action.content && (
-                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <p className="text-sm font-medium mb-1">Suggested Content:</p>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{action.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{action.content}</p>
                       </div>
                     )}
                   </div>
@@ -688,10 +688,10 @@ export default function GrowthAutopilot({
                     {action.confidence}% confidence
                   </span>
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    action.status === 'executed' ? 'bg-green-100 text-green-800' :
-                    action.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                    action.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
+                    action.status === 'executed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                    action.status === 'approved' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                    action.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                   }`}>
                     {action.status}
                   </span>
@@ -725,7 +725,7 @@ export default function GrowthAutopilot({
                 </div>
               )}
 
-              <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+              <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span>Platform: {action.platform}</span>
                 <span>Created: {new Date(action.createdAt).toLocaleString()}</span>
                 {action.scheduledFor && (
@@ -746,21 +746,21 @@ export default function GrowthAutopilot({
                 <span className="text-2xl">{getInsightIcon(insight.type)}</span>
                 <div className="flex-1">
                   <h4 className="font-medium">{insight.title}</h4>
-                  <p className="text-gray-700 mt-1">{insight.description}</p>
+                  <p className="text-gray-700 dark:text-gray-300 mt-1">{insight.description}</p>
                   {insight.action && (
-                    <p className="text-sm font-medium text-blue-600 mt-2">
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
                       Recommended Action: {insight.action}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-3">
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      insight.priority === 'high' ? 'bg-red-100 text-red-800' :
-                      insight.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
+                      insight.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                      insight.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                      'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                     }`}>
                       {insight.priority} priority
                     </span>
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
                       {insight.estimatedImpact}
                     </span>
                   </div>
@@ -792,7 +792,7 @@ export default function GrowthAutopilot({
                 </label>
               ))}
             </div>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               {settings.aggressiveness === 'conservative' && 'Minimal automation, requires approval for most actions'}
               {settings.aggressiveness === 'moderate' && 'Balanced automation with smart decision making'}
               {settings.aggressiveness === 'aggressive' && 'Maximum automation for rapid growth'}

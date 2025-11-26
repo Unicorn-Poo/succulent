@@ -188,7 +188,7 @@ export default function EnhancedReplyHandler({
       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
         selectedComment?.id === comment.id 
           ? 'border-lime-500 bg-lime-50' 
-          : 'border-gray-200 hover:border-gray-300'
+          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
       }`}
       onClick={() => setSelectedComment(selectedComment?.id === comment.id ? null : comment)}
     >
@@ -279,7 +279,7 @@ export default function EnhancedReplyHandler({
 
         {/* Platform Info */}
         {currentPlatform && (
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <currentPlatform.icon className="w-5 h-5" />
               <Text size="3" weight="medium">{currentPlatform.name}</Text>
@@ -320,7 +320,7 @@ export default function EnhancedReplyHandler({
                 {comments.map(formatComment)}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <Text size="2">No comments found</Text>
                 <Text size="1" className="block mt-1">
@@ -394,7 +394,7 @@ export default function EnhancedReplyHandler({
 
         {/* Status Messages */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text size="2" color="red">{error}</Text>
@@ -403,7 +403,7 @@ export default function EnhancedReplyHandler({
         )}
 
         {success && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
               <Text size="2" color="green">{success}</Text>
@@ -413,7 +413,7 @@ export default function EnhancedReplyHandler({
 
         {/* Feature Availability Notice */}
         {!isFeatureAvailable('advanced-comments') && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <Text size="2" color="orange">
               ℹ️ Enhanced comment features require a premium Ayrshare plan. 
               Basic commenting is available on the free plan.

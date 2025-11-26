@@ -228,7 +228,7 @@ export default function AccountAnalyticsOverview({
           <select 
             value={selectedTimeframe}
             onChange={(e) => setSelectedTimeframe(e.target.value as '7' | '30' | '90')}
-            className="border border-gray-300 rounded px-3 py-1 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-sm"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -250,7 +250,7 @@ export default function AccountAnalyticsOverview({
       {/* Error Display */}
       {error && (
         <Card>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text size="2" color="red">{error}</Text>
@@ -322,7 +322,7 @@ export default function AccountAnalyticsOverview({
             const platformColor = getPlatformColor(account.platform);
 
             return (
-              <div key={account.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={account.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 bg-${platformColor}-100 rounded-lg`}>
                     <PlatformIcon className={`w-5 h-5 text-${platformColor}-500`} />

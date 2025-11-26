@@ -1005,3 +1005,18 @@ export const loadBrandPersona = (accountGroup: any): BrandPersona | null => {
     return null;
   }
 };
+
+/**
+ * Delete brand persona from account group
+ */
+export const deleteBrandPersona = async (accountGroup: any): Promise<void> => {
+  if (!accountGroup) return;
+  
+  try {
+    // Set the brandPersona to null/undefined to delete it
+    accountGroup.brandPersona = undefined;
+  } catch (error) {
+    console.error('Error deleting brand persona:', error);
+    throw error;
+  }
+};

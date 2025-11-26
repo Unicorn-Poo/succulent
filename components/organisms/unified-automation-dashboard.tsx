@@ -168,19 +168,19 @@ export default function UnifiedAutomationDashboard({
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'post_scheduled': return 'bg-blue-100 text-blue-600';
-      case 'comment_replied': return 'bg-green-100 text-green-600';
-      case 'dm_sent': return 'bg-purple-100 text-purple-600';
-      case 'hashtag_optimized': return 'bg-yellow-100 text-yellow-600';
+      case 'post_scheduled': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
+      case 'comment_replied': return 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400';
+      case 'dm_sent': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+      case 'hashtag_optimized': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600';
       case 'content_discovered': return 'bg-indigo-100 text-indigo-600';
-      default: return 'bg-gray-100 text-gray-600';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'failed': return <AlertCircle className="w-4 h-4 text-red-600" />;
+      case 'success': return <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />;
+      case 'failed': return <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />;
       default: return <Clock className="w-4 h-4 text-yellow-600" />;
     }
   };
@@ -208,25 +208,25 @@ export default function UnifiedAutomationDashboard({
 
   if (isLoading && !metrics) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading automation dashboard...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading automation dashboard...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
             <Activity className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">🤖 Automation Dashboard</h3>
-            <p className="text-sm text-gray-600">Monitor all automated growth activities in real-time</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🤖 Automation Dashboard</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Monitor all automated growth activities in real-time</p>
           </div>
         </div>
         
@@ -251,36 +251,36 @@ export default function UnifiedAutomationDashboard({
         <>
           {/* Today's Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
               <div className="flex items-center justify-center mb-2">
-                <Clock className="w-5 h-5 text-blue-600" />
+                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <p className="text-2xl font-bold text-blue-900">{metrics.today.postsScheduled}</p>
-              <p className="text-sm text-blue-700">Posts Scheduled</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">Posts Scheduled</p>
             </div>
             
-            <div className="bg-green-50 p-4 rounded-lg text-center">
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">
               <div className="flex items-center justify-center mb-2">
-                <MessageCircle className="w-5 h-5 text-green-600" />
+                <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <p className="text-2xl font-bold text-green-900">{metrics.today.commentsReplied}</p>
-              <p className="text-sm text-green-700">Comments Replied</p>
+              <p className="text-sm text-green-700 dark:text-green-300">Comments Replied</p>
             </div>
             
-            <div className="bg-purple-50 p-4 rounded-lg text-center">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-center">
               <div className="flex items-center justify-center mb-2">
-                <Mail className="w-5 h-5 text-purple-600" />
+                <Mail className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <p className="text-2xl font-bold text-purple-900">{metrics.today.dmsSent}</p>
-              <p className="text-sm text-purple-700">DMs Sent</p>
+              <p className="text-sm text-purple-700 dark:text-purple-300">DMs Sent</p>
             </div>
             
-            <div className="bg-yellow-50 p-4 rounded-lg text-center">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center">
               <div className="flex items-center justify-center mb-2">
                 <Search className="w-5 h-5 text-yellow-600" />
               </div>
               <p className="text-2xl font-bold text-yellow-900">{metrics.today.hashtagsOptimized}</p>
-              <p className="text-sm text-yellow-700">Hashtags Optimized</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">Hashtags Optimized</p>
             </div>
             
             <div className="bg-indigo-50 p-4 rounded-lg text-center">
@@ -291,45 +291,45 @@ export default function UnifiedAutomationDashboard({
               <p className="text-sm text-indigo-700">Content Discovered</p>
             </div>
             
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg text-center border border-blue-200">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg text-center border border-blue-200 dark:border-blue-800">
               <div className="flex items-center justify-center mb-2">
-                <Activity className="w-5 h-5 text-blue-600" />
+                <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <p className="text-2xl font-bold text-blue-900">{metrics.today.totalActions}</p>
-              <p className="text-sm text-blue-700">Total Actions</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">Total Actions</p>
             </div>
           </div>
 
           {/* Weekly Performance */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white border border-green-200 p-4 rounded-lg">
-              <h4 className="font-medium text-green-800 mb-2">Follower Growth</h4>
+            <div className="bg-white dark:bg-gray-900 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Follower Growth</h4>
               <p className="text-3xl font-bold text-green-900">{metrics.thisWeek.followerGrowth.toFixed(1)}%</p>
-              <p className="text-sm text-green-600">This week</p>
+              <p className="text-sm text-green-600 dark:text-green-400">This week</p>
             </div>
             
-            <div className="bg-white border border-blue-200 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-800 mb-2">Engagement Boost</h4>
+            <div className="bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Engagement Boost</h4>
               <p className="text-3xl font-bold text-blue-900">{metrics.thisWeek.engagementIncrease.toFixed(1)}%</p>
-              <p className="text-sm text-blue-600">vs last week</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400">vs last week</p>
             </div>
             
-            <div className="bg-white border border-purple-200 p-4 rounded-lg">
-              <h4 className="font-medium text-purple-800 mb-2">Time Saved</h4>
+            <div className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Time Saved</h4>
               <p className="text-3xl font-bold text-purple-900">{metrics.thisWeek.timesSaved.toFixed(1)}h</p>
-              <p className="text-sm text-purple-600">This week</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">This week</p>
             </div>
             
-            <div className="bg-white border border-yellow-200 p-4 rounded-lg">
-              <h4 className="font-medium text-yellow-800 mb-2">Success Rate</h4>
+            <div className="bg-white dark:bg-gray-900 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Success Rate</h4>
               <p className="text-3xl font-bold text-yellow-900">{metrics.thisWeek.automationSuccessRate.toFixed(1)}%</p>
               <p className="text-sm text-yellow-600">Automation accuracy</p>
             </div>
           </div>
 
           {/* System Status */}
-          <div className="bg-gray-50 p-6 rounded-lg mb-8">
-            <h4 className="font-medium text-gray-900 mb-4">🔧 Automation System Status</h4>
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-8">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">🔧 Automation System Status</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {Object.entries(metrics.systemStatus).map(([key, enabled]) => {
                 const labels = {
@@ -341,14 +341,14 @@ export default function UnifiedAutomationDashboard({
                 };
 
                 return (
-                  <div key={key} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                  <div key={key} className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border">
                     <div className="flex items-center space-x-2">
                       <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
                       <span className="text-sm font-medium">{labels[key as keyof typeof labels]}</span>
                     </div>
                     <button
                       onClick={() => toggleAutomation(key as keyof AutomationMetrics['systemStatus'])}
-                      className={`p-1 rounded ${enabled ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                      className={`p-1 rounded ${enabled ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:bg-green-900/20' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'}`}
                     >
                       {enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>
@@ -363,7 +363,7 @@ export default function UnifiedAutomationDashboard({
       {/* Activity Feed */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-medium text-gray-900">📋 Recent Automation Activity</h4>
+          <h4 className="font-medium text-gray-900 dark:text-gray-100">📋 Recent Automation Activity</h4>
           
           {/* Activity Filters */}
           <div className="flex items-center space-x-2">
@@ -379,8 +379,8 @@ export default function UnifiedAutomationDashboard({
                 onClick={() => setActiveFilter(filter.key as any)}
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   activeFilter === filter.key
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
                 }`}
               >
                 {filter.label} ({activities.filter(a => {
@@ -401,7 +401,7 @@ export default function UnifiedAutomationDashboard({
           {filteredActivities.map(activity => (
             <div
               key={activity.id}
-              className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+              className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:border-gray-600 transition-colors"
             >
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}>
                 {getActivityIcon(activity.type)}
@@ -409,24 +409,24 @@ export default function UnifiedAutomationDashboard({
               
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <h5 className="font-medium text-gray-900">{activity.title}</h5>
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100">{activity.title}</h5>
                   <div className="flex items-center space-x-2">
                     {activity.impact && (
-                      <span className="text-xs text-green-600 font-medium">{activity.impact}</span>
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">{activity.impact}</span>
                     )}
                     {getStatusIcon(activity.status)}
                   </div>
                 </div>
                 
-                <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{activity.description}</p>
                 
-                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                   <span>{activity.platform}</span>
                   <span>{new Date(activity.timestamp).toLocaleString()}</span>
                   <span className={`px-2 py-1 rounded-full ${
-                    activity.status === 'success' ? 'bg-green-100 text-green-800' :
-                    activity.status === 'failed' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
+                    activity.status === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                    activity.status === 'failed' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                   }`}>
                     {activity.status}
                   </span>
@@ -437,14 +437,14 @@ export default function UnifiedAutomationDashboard({
         </div>
 
         {filteredActivities.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No activities found for the selected filter
           </div>
         )}
       </div>
 
       {/* Real-time Status */}
-      <div className="mt-6 flex items-center justify-between text-xs text-gray-500 border-t pt-4">
+      <div className="mt-6 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-t pt-4">
         <span>
           Last updated: {new Date().toLocaleString()}
           {autoRefresh && <span className="ml-2">• Auto-refresh enabled</span>}

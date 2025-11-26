@@ -148,9 +148,9 @@ export default function GrowthToolsDropdown({
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
-      default: return 'text-blue-600 bg-blue-50';
+      case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
+      default: return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
     }
   };
 
@@ -179,8 +179,8 @@ export default function GrowthToolsDropdown({
             ← Back to Growth Tools
           </Button>
           <div>
-            <h3 className="font-semibold text-gray-900">{selectedToolData.name}</h3>
-            <p className="text-sm text-gray-600">{selectedToolData.description}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{selectedToolData.name}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{selectedToolData.description}</p>
           </div>
         </div>
 
@@ -197,29 +197,29 @@ export default function GrowthToolsDropdown({
   return (
     <div className="space-y-6">
       {/* Growth Tools Overview */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">🚀 Social Media Growth Engine</h3>
-            <p className="text-sm text-gray-600">AI-powered automation tools to accelerate your follower growth</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🚀 Social Media Growth Engine</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered automation tools to accelerate your follower growth</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">+25-50%</p>
-            <p className="text-sm text-gray-600">Engagement Increase</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">+25-50%</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Engagement Increase</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">2-5x</p>
-            <p className="text-sm text-gray-600">Faster Growth Rate</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">2-5x</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Faster Growth Rate</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">90%</p>
-            <p className="text-sm text-gray-600">Time Saved</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">90%</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Time Saved</p>
           </div>
         </div>
 
@@ -248,26 +248,26 @@ export default function GrowthToolsDropdown({
           return (
             <div
               key={tool.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors cursor-pointer"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-gray-300 dark:border-gray-600 transition-colors cursor-pointer"
               onClick={() => onToolSelect?.(tool.id)}
             >
               <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <IconComponent className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
-                    <h4 className="font-medium text-gray-900">{tool.name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{tool.name}</h4>
                     <span className="text-xs">{getCategoryIcon(tool.category)}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{tool.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{tool.description}</p>
                   
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-1 rounded-full text-xs ${getImpactColor(tool.impact)}`}>
                       {tool.impact} impact
                     </span>
-                    <span className="text-xs text-gray-500 capitalize">{tool.category}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{tool.category}</span>
                   </div>
                 </div>
               </div>
@@ -278,69 +278,69 @@ export default function GrowthToolsDropdown({
 
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h4 className="font-medium text-gray-900 mb-3">🎯 Quick Start Recommendations</h4>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">🎯 Quick Start Recommendations</h4>
           <div className="space-y-3">
             <div 
-              className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:bg-blue-900/30 transition-colors"
               onClick={() => onToolSelect?.('dashboard')}
             >
-              <BarChart3 className="w-5 h-5 text-blue-600" />
+              <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <div>
-                <p className="font-medium text-blue-800">View Activity Dashboard</p>
-                <p className="text-sm text-blue-600">Monitor all automated actions</p>
+                <p className="font-medium text-blue-800 dark:text-blue-300">View Activity Dashboard</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">Monitor all automated actions</p>
               </div>
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg cursor-pointer hover:bg-green-100 dark:bg-green-900/30 transition-colors"
               onClick={() => onToolSelect?.('hashtags')}
             >
-              <Search className="w-5 h-5 text-green-600" />
+              <Search className="w-5 h-5 text-green-600 dark:text-green-400" />
               <div>
-                <p className="font-medium text-green-800">Start with Hashtag Research</p>
-                <p className="text-sm text-green-600">Immediate +25% reach boost</p>
+                <p className="font-medium text-green-800 dark:text-green-300">Start with Hashtag Research</p>
+                <p className="text-sm text-green-600 dark:text-green-400">Immediate +25% reach boost</p>
               </div>
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:bg-blue-900/30 transition-colors"
                 onClick={() => onToolSelect?.('comments')}
             >
-              <MessageCircle className="w-5 h-5 text-blue-600" />
+              <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <div>
-                <p className="font-medium text-blue-800">Enable Comment Automation</p>
-                <p className="text-sm text-blue-600">24/7 community engagement</p>
+                <p className="font-medium text-blue-800 dark:text-blue-300">Enable Comment Automation</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">24/7 community engagement</p>
               </div>
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg cursor-pointer hover:from-purple-100 hover:to-pink-100 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 dark:border-purple-800 rounded-lg cursor-pointer hover:from-purple-100 hover:to-pink-100 transition-colors"
               onClick={() => onToolSelect?.('persona')}
             >
               <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
                 <Palette className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-medium text-purple-800">🤖 ChatGPT Brand Persona (IMPORTANT)</p>
-                <p className="text-sm text-purple-600">Define your voice for AI automation</p>
+                <p className="font-medium text-purple-800 dark:text-purple-300">🤖 ChatGPT Brand Persona (IMPORTANT)</p>
+                <p className="text-sm text-purple-600 dark:text-purple-400">Define your voice for AI automation</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h4 className="font-medium text-gray-900 mb-3">📈 Growth Categories</h4>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">📈 Growth Categories</h4>
           <div className="space-y-3">
             {['automation', 'analytics', 'optimization'].map(category => {
               const categoryTools = growthTools.filter(tool => tool.category === category);
               return (
-                <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={category} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">{getCategoryIcon(category)}</span>
                     <span className="font-medium capitalize">{category}</span>
                   </div>
-                  <span className="text-sm text-gray-600">{categoryTools.length} tools</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{categoryTools.length} tools</span>
                 </div>
               );
             })}

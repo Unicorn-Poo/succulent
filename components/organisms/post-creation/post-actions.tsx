@@ -112,8 +112,8 @@ export const PostActions = ({
                                                 onClick={handlePreview}
                                                 disabled={!hasSelectedAccounts}
                                                 className={hasSelectedAccounts 
-                                                    ? "border-lime-600 text-lime-600 hover:bg-lime-50" 
-                                                    : "border-gray-300 text-gray-400 cursor-not-allowed"
+                                                    ? "border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50" 
+                                                    : "border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed"
                                                 }
                                             >
                                                 <Eye className="w-4 h-4 mr-2" />
@@ -197,7 +197,7 @@ export const PostActions = ({
                 )}
 
                 {isThread && seriesType !== 'reply' && (
-                    <Box className="bg-green-50 p-3 rounded-lg">
+                    <Box className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
                         <Text size="2" color="green">
                             This post will be published as a thread.
                         </Text>

@@ -196,7 +196,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
     return (
       <div className="mt-6 text-center py-12">
         <BarChart3 className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <Text size="4" weight="medium" className="mb-2 block text-red-600">
+        <Text size="4" weight="medium" className="mb-2 block text-red-600 dark:text-red-400">
           Analytics Unavailable
         </Text>
         <Text size="2" color="gray" className="mb-6 block max-w-md mx-auto">
@@ -261,7 +261,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
@@ -273,7 +273,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 dark:border-green-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
@@ -285,7 +285,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-white" />
@@ -310,14 +310,14 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
             const platformPost = post.postIds.find(p => p.platform === account.platform);
             
             return (
-              <div key={post.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={post.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <Text size="2" className="block mb-2 line-clamp-2">
                       {post.content.substring(0, 120)}
                       {post.content.length > 120 ? '...' : ''}
                     </Text>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.created)}
@@ -356,7 +356,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
                 </div>
 
                 {/* Engagement metrics placeholder - would be real data in full implementation */}
-                <div className="flex items-center gap-6 text-sm text-gray-600 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 pt-3 border-t border-gray-100">
                   <span className="flex items-center gap-1">
                     <Heart className="w-3 h-3" />
                     {Math.floor(Math.random() * 50)} likes
@@ -386,7 +386,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
 
       {/* Last Updated */}
       {lastRefresh && (
-        <div className="text-center pt-4 border-t border-gray-200">
+        <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
           <Text size="1" color="gray">
             Last updated: {lastRefresh.toLocaleTimeString()}
           </Text>

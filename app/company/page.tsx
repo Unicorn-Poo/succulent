@@ -24,8 +24,8 @@ export default function CompanyDashboard() {
         <div className="text-center">
           <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-4 text-red-600">🚫 Access Restricted</h1>
-          <p className="text-gray-600 mb-2">This is the company management dashboard.</p>
-          <p className="text-gray-600">Only the creator/owner of Succulent can access this area.</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">This is the company management dashboard.</p>
+          <p className="text-gray-600 dark:text-gray-400">Only the creator/owner of Succulent can access this area.</p>
           {me && (
             <div className="mt-4 p-4 bg-gray-100 rounded-lg">
               <p className="text-sm text-gray-700">

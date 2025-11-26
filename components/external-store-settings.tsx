@@ -167,7 +167,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 		<Card className="p-6">
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-3">
-					<Store className="w-5 h-5 text-purple-600" />
+					<Store className="w-5 h-5 text-purple-600 dark:text-purple-400" />
 					<div>
 						<Text size="4" weight="bold" className="mb-1 block">
 							External Store Integration
@@ -183,9 +183,9 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 			</div>
 
 			{isConnected && (
-				<div className="mb-6 p-4 bg-purple-50 rounded-lg">
+				<div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
 					<div className="flex items-center gap-2 mb-2">
-						<Store className="w-4 h-4 text-purple-600" />
+						<Store className="w-4 h-4 text-purple-600 dark:text-purple-400" />
 						<Text size="2" weight="medium" color="purple">
 							{accountGroup.externalStore?.name} ({selectedStoreType?.label})
 						</Text>
@@ -329,14 +329,14 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 					</div>
 
 					{testResult === 'success' && (
-						<div className="flex items-center gap-2 text-green-600">
+						<div className="flex items-center gap-2 text-green-600 dark:text-green-400">
 							<CheckCircle className="w-4 h-4" />
 							<Text size="2">{testMessage}</Text>
 						</div>
 					)}
 
 					{testResult === 'error' && (
-						<div className="flex items-center gap-2 text-red-600">
+						<div className="flex items-center gap-2 text-red-600 dark:text-red-400">
 							<XCircle className="w-4 h-4" />
 							<Text size="2">{testMessage}</Text>
 						</div>
@@ -345,9 +345,9 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 			) : (
 				<div className="space-y-6">
 					{/* Connection Status */}
-					<div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+					<div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
 						<div className="flex items-center gap-3">
-							<CheckCircle className="w-5 h-5 text-green-600" />
+							<CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
 							<div>
 								<Text size="2" weight="medium" className="block">
 									Connected to {accountGroup.externalStore?.name}
@@ -377,7 +377,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						</div>
 
 						{postedProducts.length === 0 ? (
-							<div className="text-center py-6 bg-gray-50 rounded-lg">
+							<div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
 								<Store className="w-8 h-8 text-gray-400 mx-auto mb-2" />
 								<Text size="2" color="gray">No products posted yet</Text>
 								<Text size="1" color="gray">
@@ -387,7 +387,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 						) : (
 							<div className="space-y-3">
 								{postedProducts.map((product: any) => (
-									<div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4">
+									<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 										<div className="flex items-center justify-between mb-2">
 											<Text size="2" weight="bold" className="line-clamp-1">
 												{product.name}
@@ -421,7 +421,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 													href={product.externalProductUrl} 
 													target="_blank" 
 													rel="noopener noreferrer"
-													className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+													className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300 text-sm"
 												>
 													<ExternalLink className="w-3 h-3" />
 													View in Store

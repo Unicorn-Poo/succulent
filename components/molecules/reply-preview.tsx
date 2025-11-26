@@ -48,9 +48,9 @@ const InstagramPreview = ({ author, content }: { author: string, content: string
   const postContent = authorParts.length > 1 ? authorParts[1].trim() : 'Could not extract content.';
 
   return (
-    <Box className="mt-4 p-4 border rounded-lg bg-white text-sm">
+    <Box className="mt-4 p-4 border rounded-lg bg-white dark:bg-gray-900 text-sm">
       <Text weight="bold">{handle}</Text>
-      <Text as="p" className="mt-2 text-gray-800 whitespace-pre-wrap">
+      <Text as="p" className="mt-2 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
         {postContent}
       </Text>
       <div className="mt-3 text-xs text-gray-400">

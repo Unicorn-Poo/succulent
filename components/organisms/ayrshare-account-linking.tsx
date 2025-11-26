@@ -208,12 +208,12 @@ export default function AyrshareAccountLinking({
   if (pendingAccounts.length === 0) {
     return (
       <Card>
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <Text weight="medium" color="green">All Accounts Connected</Text>
           </div>
-          <Text size="2" className="mt-1 text-green-700">
+          <Text size="2" className="mt-1 text-green-700 dark:text-green-300">
             All {accounts.length} social media accounts are successfully linked to Ayrshare.
           </Text>
         </div>
@@ -246,7 +246,7 @@ export default function AyrshareAccountLinking({
             </div>
             
             {/* Instructions */}
-            <div className="mb-4 p-3 bg-white border border-lime-200 rounded text-sm text-lime-800">
+            <div className="mb-4 p-3 bg-white dark:bg-gray-900 border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
               <strong>To connect your accounts:</strong>
               <ol className="list-decimal list-inside mt-1 space-y-1">
                 <li>Click "Open Ayrshare Dashboard" below</li>
@@ -289,19 +289,19 @@ export default function AyrshareAccountLinking({
             
             {/* Status messages */}
             {linkingStatus && (
-              <div className="mt-3 p-3 bg-white border border-lime-200 rounded text-sm text-lime-800">
+              <div className="mt-3 p-3 bg-white dark:bg-gray-900 border border-lime-200 rounded text-sm text-lime-800 dark:text-lime-300">
                 <pre className="whitespace-pre-wrap font-mono text-xs">{linkingStatus}</pre>
               </div>
             )}
             
             {error && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+              <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-300">
                 <pre className="whitespace-pre-wrap">{error}</pre>
               </div>
             )}
             
             {/* Additional help */}
-            <div className="mt-3 text-xs text-lime-600">
+            <div className="mt-3 text-xs text-lime-600 dark:text-lime-400">
               <strong>Need help?</strong> Make sure you're using the same email address for both Succulent and Ayrshare.
               {isJazzAccountGroup && " This is a collaborative account group - changes will sync automatically."}
             </div>

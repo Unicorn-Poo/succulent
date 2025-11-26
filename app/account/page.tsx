@@ -123,7 +123,7 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900">{account.profile?.name || 'Not set'}</p>
+                <p className="text-gray-900 dark:text-gray-100">{account.profile?.name || 'Not set'}</p>
               )}
             </div>
 
@@ -137,20 +137,20 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900">{account.profile?.email || 'Not set'}</p>
+                <p className="text-gray-900 dark:text-gray-100">{account.profile?.email || 'Not set'}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Account Created</label>
-              <p className="text-gray-900">
+              <p className="text-gray-900 dark:text-gray-100">
                 {account.profile?.createdAt ? new Date(account.profile.createdAt).toLocaleDateString() : 'Unknown'}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Last Updated</label>
-              <p className="text-gray-900">
+              <p className="text-gray-900 dark:text-gray-100">
                 {account.profile?.updatedAt ? new Date(account.profile.updatedAt).toLocaleDateString() : 'Unknown'}
               </p>
             </div>
@@ -258,12 +258,12 @@ function SubscriptionTab({ account }: { account: MyAppAccountLoaded }) {
                   
                   <div className="mb-4">
                     <h3 className="font-semibold text-lg">{plan.name}</h3>
-                    <p className="text-gray-600 text-sm">{plan.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{plan.description}</p>
                   </div>
                   
                   <div className="mb-4">
                     <span className="text-2xl font-bold">${plan.price.monthly}</span>
-                    <span className="text-gray-600">/month</span>
+                    <span className="text-gray-600 dark:text-gray-400">/month</span>
                   </div>
                   
                   <Button 
@@ -327,7 +327,7 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
                       <span>{item.icon}</span>
                       <span className="font-medium">{item.label}</span>
                     </div>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       {usage.used} / {usage.limit === -1 ? '∞' : usage.limit}
                     </span>
                   </div>

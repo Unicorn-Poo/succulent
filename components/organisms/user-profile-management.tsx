@@ -199,7 +199,7 @@ export default function UserProfileManagement({
       {/* Status Messages */}
       {error && (
         <Card>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text color="red">{error}</Text>
@@ -210,7 +210,7 @@ export default function UserProfileManagement({
 
       {success && (
         <Card>
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
               <Text color="green">{success}</Text>
@@ -229,7 +229,7 @@ export default function UserProfileManagement({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-blue-600" />
+                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <Text size="3" weight="medium">{profile.title}</Text>
                     </div>
                     <Badge 
@@ -241,7 +241,7 @@ export default function UserProfileManagement({
                   </div>
                   <button
                     onClick={() => handleDeleteProfile(profile.profileKey)}
-                    className="text-red-500 hover:text-red-700 p-1"
+                    className="text-red-500 hover:text-red-700 dark:text-red-300 p-1"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -250,11 +250,11 @@ export default function UserProfileManagement({
                 {/* Profile Details */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Created:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Created:</span>
                     <span>{new Date(profile.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Accounts:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Accounts:</span>
                     <span>{profile.connectedAccounts?.length || 0} connected</span>
                   </div>
                 </div>
@@ -277,15 +277,15 @@ export default function UserProfileManagement({
                 <div>
                   <Text size="2" weight="medium" className="block mb-1">Profile Key</Text>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs bg-gray-100 p-2 rounded font-mono truncate">
+                    <code className="flex-1 text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono truncate">
                       {profile.profileKey}
                     </code>
                     <button
                       onClick={() => handleCopyKey(profile.profileKey)}
-                      className="p-1 text-gray-600 hover:text-gray-800"
+                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200"
                     >
                       {copiedKey === profile.profileKey ? (
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -352,13 +352,13 @@ export default function UserProfileManagement({
                 value={newProfileTitle}
                 onChange={(e) => setNewProfileTitle(e.target.value)}
                 placeholder="e.g., Client Name or Project Name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={isCreating}
               />
             </div>
 
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <Text size="2" className="text-blue-800">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <Text size="2" className="text-blue-800 dark:text-blue-300">
                 <strong>Note:</strong> Each profile gets its own set of social media accounts and analytics data.
               </Text>
             </div>
@@ -388,14 +388,14 @@ export default function UserProfileManagement({
 
       {/* Info Card */}
       <Card>
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-start gap-3">
-            <Key className="w-5 h-5 text-blue-600 mt-0.5" />
+            <Key className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div className="flex-1">
-              <Text size="2" weight="medium" className="block mb-1 text-blue-800">
+              <Text size="2" weight="medium" className="block mb-1 text-blue-800 dark:text-blue-300">
                 About Profile Keys
               </Text>
-              <Text size="2" className="text-blue-700 mb-3">
+              <Text size="2" className="text-blue-700 dark:text-blue-300 mb-3">
                 Profile Keys are unique identifiers that allow you to manage multiple sets of social media accounts. 
                 Each profile operates independently with its own analytics and settings.
               </Text>

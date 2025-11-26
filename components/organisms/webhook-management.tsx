@@ -176,7 +176,7 @@ export default function WebhookManagement() {
       {/* Status Messages */}
       {error && (
         <Card>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
               <Text color="red">{error}</Text>
@@ -187,7 +187,7 @@ export default function WebhookManagement() {
 
       {success && (
         <Card>
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
               <Text color="green">{success}</Text>
@@ -204,7 +204,7 @@ export default function WebhookManagement() {
               <Text size="3" weight="medium">Create New Webhook</Text>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -220,7 +220,7 @@ export default function WebhookManagement() {
                 value={newWebhook.url}
                 onChange={(e) => setNewWebhook(prev => ({ ...prev, url: e.target.value }))}
                 placeholder="https://your-domain.com/webhook"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -234,7 +234,7 @@ export default function WebhookManagement() {
                 value={newWebhook.secret}
                 onChange={(e) => setNewWebhook(prev => ({ ...prev, secret: e.target.value }))}
                 placeholder="webhook-secret-key"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <Text size="1" color="gray" className="mt-1">
                 Used to verify webhook authenticity
@@ -252,15 +252,15 @@ export default function WebhookManagement() {
                     key={event.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                       newWebhook.events.includes(event.id)
-                        ? 'border-blue-300 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600'
                     }`}
                     onClick={() => toggleEvent(event.id)}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <Text size="2" weight="medium">{event.name}</Text>
                       {newWebhook.events.includes(event.id) && (
-                        <Check className="w-4 h-4 text-blue-600" />
+                        <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       )}
                     </div>
                     <Text size="1" color="gray">{event.description}</Text>
@@ -298,7 +298,7 @@ export default function WebhookManagement() {
                 <div className="flex-1 space-y-3">
                   {/* Header */}
                   <div className="flex items-center gap-3">
-                    <Webhook className="w-5 h-5 text-blue-600" />
+                    <Webhook className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <Text size="3" weight="medium" className="truncate flex-1">
                       {webhook.url}
                     </Text>
@@ -333,7 +333,7 @@ export default function WebhookManagement() {
                   </div>
 
                   {/* Metadata */}
-                  <div className="flex gap-6 text-sm text-gray-600">
+                  <div className="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
                     {webhook.createdAt && (
                       <div>
                         <span className="font-medium">Created:</span> {new Date(webhook.createdAt).toLocaleDateString()}
@@ -351,14 +351,14 @@ export default function WebhookManagement() {
                 <div className="flex gap-2 ml-4">
                   <button
                     onClick={() => {/* TODO: Implement edit */}}
-                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
                     title="Edit webhook"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteWebhook(webhook.id || webhook.url)}
-                    className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                    className="p-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:text-red-300 hover:bg-red-50 dark:bg-red-900/20 rounded"
                     title="Delete webhook"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -388,14 +388,14 @@ export default function WebhookManagement() {
 
       {/* Info Card */}
       <Card>
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-start gap-3">
-            <Settings className="w-5 h-5 text-blue-600 mt-0.5" />
+            <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div className="flex-1">
-              <Text size="2" weight="medium" className="block mb-1 text-blue-800">
+              <Text size="2" weight="medium" className="block mb-1 text-blue-800 dark:text-blue-300">
                 Webhook Best Practices
               </Text>
-              <Text size="2" className="text-blue-700 mb-3">
+              <Text size="2" className="text-blue-700 dark:text-blue-300 mb-3">
                 Webhooks allow you to receive real-time notifications about events in your Ayrshare account. 
                 Make sure your endpoint can handle POST requests and responds with a 200 status code.
               </Text>

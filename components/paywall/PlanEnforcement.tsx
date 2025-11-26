@@ -315,14 +315,14 @@ export function MultiMediaGuard({ children }: { children: ReactNode }) {
     <PlanEnforcement 
       feature="multiple-media"
       fallback={
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-2 mb-2">
-            <Lock className="w-4 h-4 text-blue-600" />
-            <Text size="2" weight="bold" className="text-blue-800">
+            <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <Text size="2" weight="bold" className="text-blue-800 dark:text-blue-300">
               Single Image Only
             </Text>
           </div>
-          <Text size="1" className="text-blue-700">
+          <Text size="1" className="text-blue-700 dark:text-blue-300">
             Multiple images and videos require a premium plan
           </Text>
         </Card>
@@ -338,14 +338,14 @@ export function BulkUploadGuard({ children }: { children: ReactNode }) {
     <PlanEnforcement 
       feature="bulk-uploads"
       fallback={
-        <Card className="p-4 bg-purple-50 border-purple-200">
+        <Card className="p-4 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-purple-600" />
-            <Text size="2" weight="bold" className="text-purple-800">
+            <Zap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <Text size="2" weight="bold" className="text-purple-800 dark:text-purple-300">
               Bulk Upload Available
             </Text>
           </div>
-          <Text size="1" className="text-purple-700">
+          <Text size="1" className="text-purple-700 dark:text-purple-300">
             Upload multiple posts at once with Premium
           </Text>
         </Card>
@@ -374,11 +374,11 @@ export function TrialBanner() {
     <Card className="p-4 mb-4 bg-gradient-to-r from-lime-50 to-green-50 border-lime-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-lime-100 flex items-center justify-center">
-            <Star className="w-5 h-5 text-lime-600" />
+          <div className="w-10 h-10 rounded-full bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
+            <Star className="w-5 h-5 text-lime-600 dark:text-lime-400" />
           </div>
           <div>
-            <Text size="3" weight="bold" className="text-lime-800">
+            <Text size="3" weight="bold" className="text-lime-800 dark:text-lime-300">
               Free Trial Active
             </Text>
             <Text size="2" className="text-lime-700">

@@ -120,9 +120,9 @@ export default function GrowthAnalyticsDashboard({
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'up': return 'text-green-600 dark:text-green-400';
+      case 'down': return 'text-red-600 dark:text-red-400';
+      default: return 'text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -141,10 +141,10 @@ export default function GrowthAnalyticsDashboard({
 
   if (isLoading && !metrics) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading growth analytics...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading growth analytics...</span>
         </div>
       </div>
     );
@@ -152,9 +152,9 @@ export default function GrowthAnalyticsDashboard({
 
   if (!metrics) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
         <div className="text-center py-12">
-          <p className="text-gray-500">Failed to load growth analytics</p>
+          <p className="text-gray-500 dark:text-gray-400">Failed to load growth analytics</p>
           <Button onClick={loadGrowthMetrics} className="mt-4" size="sm">
             Retry
           </Button>
@@ -164,7 +164,7 @@ export default function GrowthAnalyticsDashboard({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Growth Analytics Dashboard</h3>
         <div className="flex items-center space-x-4">
@@ -196,9 +196,9 @@ export default function GrowthAnalyticsDashboard({
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-blue-800">Followers</h4>
+            <h4 className="font-medium text-blue-800 dark:text-blue-300">Followers</h4>
             <span className={`text-sm ${getTrendColor(metrics.followerGrowth.trend)}`}>
               {getTrendIcon(metrics.followerGrowth.trend)}
             </span>
@@ -211,9 +211,9 @@ export default function GrowthAnalyticsDashboard({
           </p>
         </div>
 
-        <div className="bg-green-50 p-4 rounded-lg">
+        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-green-800">Engagement</h4>
+            <h4 className="font-medium text-green-800 dark:text-green-300">Engagement</h4>
             <span className={`text-sm ${getTrendColor(metrics.engagementGrowth.trend)}`}>
               {getTrendIcon(metrics.engagementGrowth.trend)}
             </span>
@@ -226,24 +226,24 @@ export default function GrowthAnalyticsDashboard({
           </p>
         </div>
 
-        <div className="bg-purple-50 p-4 rounded-lg">
-          <h4 className="font-medium text-purple-800 mb-2">Posts</h4>
+        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Posts</h4>
           <p className="text-2xl font-bold text-purple-900">
             {metrics.contentPerformance.totalPosts}
           </p>
-          <p className="text-sm text-purple-700">
+          <p className="text-sm text-purple-700 dark:text-purple-300">
             {Math.round(metrics.contentPerformance.avgLikes)} avg likes
           </p>
         </div>
 
-        <div className="bg-yellow-50 p-4 rounded-lg">
-          <h4 className="font-medium text-yellow-800 mb-2">Growth Rate</h4>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Growth Rate</h4>
           <p className="text-2xl font-bold text-yellow-900">
             {metrics.followerAnalytics ? 
               formatPercent(metrics.followerAnalytics.growthRate) : 
               formatPercent(metrics.followerGrowth.changePercent)}
           </p>
-          <p className="text-sm text-yellow-700">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">
             {timeframe} growth rate
           </p>
         </div>
@@ -264,8 +264,8 @@ export default function GrowthAnalyticsDashboard({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
               }`}
             >
               {tab.label}
@@ -278,11 +278,11 @@ export default function GrowthAnalyticsDashboard({
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Recommendations */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-3">Growth Recommendations</h4>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">Growth Recommendations</h4>
             <ul className="space-y-2">
               {metrics.recommendations.map((rec, index) => (
-                <li key={index} className="flex items-start space-x-2 text-blue-700">
+                <li key={index} className="flex items-start space-x-2 text-blue-700 dark:text-blue-300">
                   <span className="text-blue-500 mt-1">•</span>
                   <span className="text-sm">{rec}</span>
                 </li>
@@ -298,20 +298,20 @@ export default function GrowthAnalyticsDashboard({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span>Your Rate</span>
-                    <span className="font-bold text-blue-600">
+                    <span className="font-bold text-blue-600 dark:text-blue-400">
                       {metrics.competitorComparison.yourEngagementRate}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Industry Average</span>
-                    <span className="font-bold text-gray-600">
+                    <span className="font-bold text-gray-600 dark:text-gray-400">
                       {metrics.competitorComparison.averageEngagementRate}%
                     </span>
                   </div>
                   <div className="pt-2 border-t">
                     <span className={`text-sm ${
                       metrics.competitorComparison.yourEngagementRate > metrics.competitorComparison.averageEngagementRate
-                        ? 'text-green-600' : 'text-red-600'
+                        ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
                       {metrics.competitorComparison.yourEngagementRate > metrics.competitorComparison.averageEngagementRate
                         ? '📈 Above average' : '📉 Below average'}
@@ -325,18 +325,18 @@ export default function GrowthAnalyticsDashboard({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span>Your Growth</span>
-                    <span className="font-bold text-green-600">
+                    <span className="font-bold text-green-600 dark:text-green-400">
                       {metrics.competitorComparison.yourFollowerGrowth}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Industry Average</span>
-                    <span className="font-bold text-gray-600">
+                    <span className="font-bold text-gray-600 dark:text-gray-400">
                       {metrics.competitorComparison.averageFollowerGrowth}%
                     </span>
                   </div>
                   <div className="pt-2 border-t">
-                    <span className="text-sm text-blue-600">
+                    <span className="text-sm text-blue-600 dark:text-blue-400">
                       Ranking: #{metrics.competitorComparison.ranking} of {metrics.competitorComparison.totalCompetitors}
                     </span>
                   </div>
@@ -350,22 +350,22 @@ export default function GrowthAnalyticsDashboard({
       {activeTab === 'followers' && metrics.followerAnalytics && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium text-green-800">New Followers</h4>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300">New Followers</h4>
               <p className="text-2xl font-bold text-green-900">
                 +{formatNumber(metrics.followerAnalytics.newFollowers)}
               </p>
             </div>
             
-            <div className="p-4 bg-red-50 rounded-lg">
-              <h4 className="font-medium text-red-800">Unfollowers</h4>
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <h4 className="font-medium text-red-800 dark:text-red-300">Unfollowers</h4>
               <p className="text-2xl font-bold text-red-900">
                 -{formatNumber(metrics.followerAnalytics.unfollowers)}
               </p>
             </div>
             
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-800">Net Growth</h4>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300">Net Growth</h4>
               <p className="text-2xl font-bold text-blue-900">
                 {metrics.followerAnalytics.netGrowth > 0 ? '+' : ''}{formatNumber(metrics.followerAnalytics.netGrowth)}
               </p>
@@ -390,13 +390,13 @@ export default function GrowthAnalyticsDashboard({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Real Accounts</span>
-                  <span className="font-medium text-green-600">
+                  <span className="font-medium text-green-600 dark:text-green-400">
                     {formatNumber(metrics.followerAnalytics.followerQuality.realAccounts)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Suspicious</span>
-                  <span className="font-medium text-red-600">
+                  <span className="font-medium text-red-600 dark:text-red-400">
                     {formatNumber(metrics.followerAnalytics.followerQuality.suspiciousAccounts)}
                   </span>
                 </div>
@@ -405,10 +405,10 @@ export default function GrowthAnalyticsDashboard({
                     <span>Quality Score</span>
                     <span className={`font-bold ${
                       metrics.followerAnalytics.followerQuality.qualityScore >= 80 
-                        ? 'text-green-600' 
+                        ? 'text-green-600 dark:text-green-400' 
                         : metrics.followerAnalytics.followerQuality.qualityScore >= 60 
                           ? 'text-yellow-600' 
-                          : 'text-red-600'
+                          : 'text-red-600 dark:text-red-400'
                     }`}>
                       {metrics.followerAnalytics.followerQuality.qualityScore}%
                     </span>
@@ -430,15 +430,15 @@ export default function GrowthAnalyticsDashboard({
               </p>
             </div>
             
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-800">Average Comments</h4>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300">Average Comments</h4>
               <p className="text-2xl font-bold text-blue-900">
                 {formatNumber(metrics.contentPerformance.avgComments)}
               </p>
             </div>
             
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium text-green-800">Average Shares</h4>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300">Average Shares</h4>
               <p className="text-2xl font-bold text-green-900">
                 {formatNumber(metrics.contentPerformance.avgShares)}
               </p>
@@ -450,8 +450,8 @@ export default function GrowthAnalyticsDashboard({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(metrics.audienceInsights.engagementPatterns).map(([type, percent]) => (
                 <div key={type} className="text-center">
-                  <p className="text-2xl font-bold text-gray-800">{percent}%</p>
-                  <p className="text-sm text-gray-600 capitalize">{type}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{percent}%</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{type}</p>
                 </div>
               ))}
             </div>
@@ -462,26 +462,26 @@ export default function GrowthAnalyticsDashboard({
       {activeTab === 'content' && (
         <div className="space-y-6">
           {metrics.contentPerformance.bestPerformingPost && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-medium text-green-800 mb-2">Best Performing Post</h4>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Best Performing Post</h4>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-lg font-bold text-green-900">
                     {metrics.contentPerformance.bestPerformingPost.likes || 0}
                   </p>
-                  <p className="text-xs text-green-700">Likes</p>
+                  <p className="text-xs text-green-700 dark:text-green-300">Likes</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold text-green-900">
                     {metrics.contentPerformance.bestPerformingPost.comments || 0}
                   </p>
-                  <p className="text-xs text-green-700">Comments</p>
+                  <p className="text-xs text-green-700 dark:text-green-300">Comments</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold text-green-900">
                     {metrics.contentPerformance.bestPerformingPost.shares || 0}
                   </p>
-                  <p className="text-xs text-green-700">Shares</p>
+                  <p className="text-xs text-green-700 dark:text-green-300">Shares</p>
                 </div>
               </div>
             </div>
@@ -491,28 +491,28 @@ export default function GrowthAnalyticsDashboard({
             <h4 className="font-medium mb-3">Content Performance Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {metrics.contentPerformance.totalPosts}
                 </p>
-                <p className="text-sm text-gray-600">Total Posts</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Posts</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-pink-600">
                   {formatNumber(metrics.contentPerformance.avgLikes)}
                 </p>
-                <p className="text-sm text-gray-600">Avg Likes</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Likes</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {formatNumber(metrics.contentPerformance.avgComments)}
                 </p>
-                <p className="text-sm text-gray-600">Avg Comments</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Comments</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {formatNumber(metrics.contentPerformance.avgShares)}
                 </p>
-                <p className="text-sm text-gray-600">Avg Shares</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Shares</p>
               </div>
             </div>
           </div>
@@ -556,7 +556,7 @@ export default function GrowthAnalyticsDashboard({
               {metrics.audienceInsights.topInterests.map(interest => (
                 <span 
                   key={interest}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm"
                 >
                   {interest}
                 </span>
@@ -566,7 +566,7 @@ export default function GrowthAnalyticsDashboard({
         </div>
       )}
 
-      <div className="mt-6 text-xs text-gray-500 text-center">
+      <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
         Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
       </div>
     </div>

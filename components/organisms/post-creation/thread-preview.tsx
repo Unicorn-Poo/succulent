@@ -22,7 +22,7 @@ export const ThreadPreview = ({ isThread, threadPosts }: ThreadPreviewProps) => 
 
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                     {threadPosts.map((thread, index) => (
-                        				<div key={index} className="bg-gray-50 p-3 rounded border-l-4 border-lime-500">
+                        				<div key={index} className="bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-lime-500">
                             <div className="flex items-center gap-2 mb-2">
                                 <Badge variant="soft" size="1">{thread.index}/{thread.total}</Badge>
                                 <Text size="1" color="gray">{thread.characterCount} characters</Text>

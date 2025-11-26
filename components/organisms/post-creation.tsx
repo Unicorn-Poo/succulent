@@ -89,7 +89,7 @@ const GelatoTemplateSelector = ({
 }) => {
 	if (loading) {
 		return (
-			<div className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg ${className}`}>
+			<div className={`flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
 				<Loader2 className="w-4 h-4 animate-spin" />
 				<Text size="2" color="gray">Loading templates from your Gelato store...</Text>
 			</div>
@@ -98,12 +98,12 @@ const GelatoTemplateSelector = ({
 
 	if (error) {
 		return (
-			<div className={`p-3 bg-red-50 border border-red-200 rounded-lg ${className}`}>
+			<div className={`p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg ${className}`}>
 				<Text size="2" color="red">{error}</Text>
 				{onRetry && (
 					<button
 						onClick={onRetry}
-						className="mt-2 text-sm text-lime-600 hover:text-lime-800 underline"
+						className="mt-2 text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
 					>
 						Try Again
 					</button>
@@ -114,7 +114,7 @@ const GelatoTemplateSelector = ({
 
 	if (templates.length === 0) {
 		return (
-			<div className={`p-3 bg-yellow-50 border border-yellow-200 rounded-lg ${className}`}>
+			<div className={`p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg ${className}`}>
 				<Text size="2" color="orange">No templates found in your Gelato store</Text>
 			</div>
 		);
@@ -185,13 +185,13 @@ const GelatoTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white">
+			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-gray-100 last:border-b-0 ${
 								isSelected ? 'bg-lime-50' : ''
 							}`}
 						>
@@ -199,10 +199,10 @@ const GelatoTemplateSelector = ({
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-lime-600 border-gray-300 rounded focus:ring-lime-500"
+								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-gray-300 dark:border-gray-600 rounded focus:ring-lime-500"
 							/>
 							<div className="flex-1">
-								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800" : ""}>
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800 dark:text-lime-300" : ""}>
 									{formatTemplateTitle(template)}
 								</Text>
 								{template.productType && (
@@ -239,7 +239,7 @@ const ProdigiTemplateSelector = ({
 }) => {
 	if (loading) {
 		return (
-			<div className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg ${className}`}>
+			<div className={`flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
 				<Loader2 className="w-4 h-4 animate-spin" />
 				<Text size="2" color="gray">Loading templates from your Prodigi account...</Text>
 			</div>
@@ -248,12 +248,12 @@ const ProdigiTemplateSelector = ({
 
 	if (error) {
 		return (
-			<div className={`p-3 bg-red-50 border border-red-200 rounded-lg ${className}`}>
+			<div className={`p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg ${className}`}>
 				<Text size="2" color="red">{error}</Text>
 				{onRetry && (
 					<button
 						onClick={onRetry}
-						className="mt-2 text-sm text-lime-600 hover:text-lime-800 underline"
+						className="mt-2 text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
 					>
 						Try Again
 					</button>
@@ -264,7 +264,7 @@ const ProdigiTemplateSelector = ({
 
 	if (templates.length === 0) {
 		return (
-			<div className={`p-3 bg-yellow-50 border border-yellow-200 rounded-lg ${className}`}>
+			<div className={`p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg ${className}`}>
 				<Text size="2" color="orange">No templates found in your Prodigi account</Text>
 			</div>
 		);
@@ -284,24 +284,24 @@ const ProdigiTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white">
+			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
-								isSelected ? 'bg-blue-50' : ''
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-gray-100 last:border-b-0 ${
+								isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
 							}`}
 						>
 							<input
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+								className="w-4 h-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
 							/>
 							<div className="flex-1">
-								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-blue-800" : ""}>
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-blue-800 dark:text-blue-300" : ""}>
 									{template.displayName || template.name}
 								</Text>
 								{template.productType && (
@@ -1415,50 +1415,50 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					<div className="p-4">
 						<div className="flex items-center justify-between mb-4">
 							<div className="flex items-center gap-2">
-								<Package className="w-5 h-5 text-green-600" />
+								<Package className="w-5 h-5 text-green-600 dark:text-green-400" />
 								<Text weight="medium" size="3">Created Products ({createdProducts.length})</Text>
 							</div>
 						</div>
 						
 						<div className="space-y-3">
 							{createdProducts.filter(Boolean).map((product: any, index: number) => (
-								<div key={product?.productId || index} className="bg-gray-50 p-4 rounded-lg border">
+								<div key={product?.productId || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
-											<div className="font-medium text-gray-900 mb-1">
+											<div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
 												{product?.title || product?.sourcePost?.title || 'Untitled Product'}
 											</div>
-											<div className="text-sm text-gray-600 mb-2">
+											<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
 												Product ID: {product?.productId || 'Unknown'}
 											</div>
-											<div className="text-sm text-gray-600 mb-2">
+											<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
 												Created: {product?.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Unknown'} at {product?.createdAt ? new Date(product.createdAt).toLocaleTimeString() : 'Unknown'}
 											</div>
 											
 											{/* Status Display */}
 											<div className="flex items-center gap-2 mb-2">
 												{product?.shopifyStatus === 'pending' && (
-													<span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
 														⏳ Gelato Created
 													</span>
 												)}
 												{product?.shopifyStatus === 'syncing' && (
-													<span className="inline-flex items-center gap-1 text-xs text-lime-600 bg-lime-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-lime-600 dark:text-lime-400 bg-lime-100 dark:bg-lime-900/30 px-2 py-1 rounded-full">
 														🔄 Syncing to Shopify...
 													</span>
 												)}
 												{product?.shopifyStatus === 'synced' && (
-													<span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
 														✅ Shopify Synced
 													</span>
 												)}
 												{product?.shopifyStatus === 'partial' && (
-													<span className="inline-flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded-full">
 														⚠️ Partial Sync
 													</span>
 												)}
 												{product?.shopifyStatus === 'error' && (
-													<span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full">
 														❌ Sync Error
 													</span>
 												)}
@@ -1466,7 +1466,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											
 											{/* Status Message */}
 											{product?.shopifyMessage && (
-												<div className="text-sm text-gray-600 mb-2">
+												<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
 													{product.shopifyMessage}
 												</div>
 											)}
@@ -1478,7 +1478,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="text-sm text-lime-600 hover:text-lime-800 underline"
+														className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
 													>
 														View in Shopify Admin →
 													</a>
@@ -1486,7 +1486,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											)}
 											
 											{/* Template and Publishing Info */}
-											<div className="text-xs text-gray-500 space-y-1">
+											<div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
 												{product?.templateName && (
 													<div>Template: {product.templateName}</div>
 												)}
@@ -1551,7 +1551,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															shopifyMessage: 'Sync cancelled by user - product may take longer to appear in Shopify'
 														});
 													}}
-													className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded"
+													className="text-xs bg-gray-50 dark:bg-gray-8000 hover:bg-gray-600 text-white px-3 py-1 rounded"
 												>
 													Cancel Sync
 												</button>
@@ -1570,15 +1570,15 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				<div className="p-4">
 					<div className="flex items-center justify-between mb-4">
 						<div className="flex items-center gap-2">
-																<Package className="w-5 h-5 text-lime-600" />
+																<Package className="w-5 h-5 text-lime-600 dark:text-lime-400" />
 							<Text weight="medium" size="3">Auto-Create Gelato Product</Text>
 							{hasImages && (
-								<span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+								<span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
 									Images detected
 								</span>
 							)}
 							{!hasImages && (
-								<span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+								<span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full">
 									No images
 								</span>
 							)}
@@ -1596,7 +1596,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								}`}
 							>
 								<span
-									className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+									className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
 										autoCreateOnPublish ? 'translate-x-6' : 'translate-x-1'
 									}`}
 								/>
@@ -1606,17 +1606,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					
 					{/* Auto-Create Status */}
 					<div className="space-y-3">
-											<div className="text-sm text-gray-600">
+											<div className="text-sm text-gray-600 dark:text-gray-400">
 						{autoCreateOnPublish ? (
 							<div className="flex items-start gap-2">
 								<div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
 								<div>
-									<div className="font-medium text-green-700 mb-1">Auto-create enabled</div>
-									<div className="text-xs text-gray-600">
+									<div className="font-medium text-green-700 dark:text-green-300 mb-1">Auto-create enabled</div>
+									<div className="text-xs text-gray-600 dark:text-gray-400">
 										Products will be created automatically when you publish this post
 									</div>
 									{hasImages && isGelatoConfigured && selectedTemplates.length > 0 && (
-										<div className="text-xs text-green-600 mt-1">
+										<div className="text-xs text-green-600 dark:text-green-400 mt-1">
 											✓ Ready - will auto-create {selectedTemplates.length} product{selectedTemplates.length > 1 ? 's' : ''}
 										</div>
 									)}
@@ -1626,8 +1626,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<div className="flex items-start gap-2">
 								<div className="w-2 h-2 bg-gray-400 rounded-full mt-1.5 flex-shrink-0"></div>
 								<div>
-									<div className="font-medium text-gray-700 mb-1">Auto-create disabled</div>
-									<div className="text-xs text-gray-600">
+									<div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Auto-create disabled</div>
+									<div className="text-xs text-gray-600 dark:text-gray-400">
 										No products will be created automatically
 									</div>
 								</div>
@@ -1638,17 +1638,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						{/* Configuration Status */}
 						<div className="grid grid-cols-2 gap-4 text-sm">
 							<div className="flex items-center justify-between">
-								<span className="text-gray-600">Gelato:</span>
+								<span className="text-gray-600 dark:text-gray-400">Gelato:</span>
 								<span className={`font-medium ${
-									isGelatoConfigured ? 'text-green-600' : 'text-orange-600'
+									isGelatoConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 								}`}>
 									{isGelatoConfigured ? 'Connected' : 'Setup Required'}
 								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-gray-600">Shopify:</span>
+								<span className="text-gray-600 dark:text-gray-400">Shopify:</span>
 								<span className={`font-medium ${
-									isShopifyConfigured ? 'text-green-600' : 'text-orange-600'
+									isShopifyConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 								}`}>
 									{isShopifyConfigured ? 'Connected' : 'Not Connected'}
 								</span>
@@ -1657,14 +1657,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						
 						{selectedTemplates.length > 0 && (
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-gray-600">Templates:</span>
-								<span className="font-medium text-gray-900">{selectedTemplates.length} selected</span>
+								<span className="text-gray-600 dark:text-gray-400">Templates:</span>
+								<span className="font-medium text-gray-900 dark:text-gray-100">{selectedTemplates.length} selected</span>
 							</div>
 						)}
 						
 						{/* Warning/Setup Messages */}
 						{autoCreateOnPublish && !isGelatoConfigured && (
-							<div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+							<div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-lg">
 								<div className="text-sm text-orange-800">
 									<strong>Setup Required:</strong> Configure Gelato credentials in Settings to enable auto-creation
 								</div>
@@ -1672,21 +1672,21 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						)}
 						
 						{autoCreateOnPublish && !hasImages && (
-							<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-								<div className="text-sm text-yellow-800">
+							<div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+								<div className="text-sm text-yellow-800 dark:text-yellow-300">
 									<strong>No Images:</strong> Add images to this post to create products automatically
 								</div>
 							</div>
 						)}
 						
 						{/* Manual Create Button */}
-						<div className="flex items-center justify-between pt-2 border-t border-gray-200">
+						<div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
 							<Text size="1" color="gray">
 								Or create manually:
 							</Text>
 							<button
 								onClick={() => setShowGelatoSection(!showGelatoSection)}
-								className="text-sm text-lime-600 hover:text-lime-700 font-medium"
+								className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-700 font-medium"
 							>
 								{showGelatoSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -1698,7 +1698,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							{/* Setup Instructions when credentials are missing */}
 							{!isGelatoConfigured && (
 															<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
-								<Text size="2" weight="medium" className="block mb-2 text-lime-800">
+								<Text size="2" weight="medium" className="block mb-2 text-lime-800 dark:text-lime-300">
 									🔧 Gelato Store Setup Required
 								</Text>
 								<Text size="2" className="block mb-3 text-lime-700">
@@ -1718,8 +1718,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										<strong>Step 3:</strong> Enter your credentials and test the connection
 									</Text>
 								</div>
-									<div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-										<Text size="1" className="text-green-700">
+									<div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+										<Text size="1" className="text-green-700 dark:text-green-300">
 											🔐 <strong>Security:</strong> Your credentials are encrypted and stored securely in your profile
 										</Text>
 									</div>
@@ -1727,7 +1727,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							)}
 
 							{!hasImages && (
-								<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+								<div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
 									<Text size="2" color="orange">
 										⚠️ This post doesn&apos;t have any images. Add images to create Gelato products.
 									</Text>
@@ -1751,17 +1751,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Enhanced Template Information */}
 										{selectedTemplates.length > 0 && (
-											<div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+											<div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
 													Selected Templates ({selectedTemplates.length}):
 												</Text>
 												<div className="space-y-3">
 													{selectedTemplates.map((template, index) => (
-														<div key={template.id} className="p-2 bg-white rounded border">
+														<div key={template.id} className="p-2 bg-white dark:bg-gray-900 rounded border">
 															<Text size="2" weight="medium" className="block mb-1">
 																{template.displayName || template.name}
 															</Text>
-															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
 																<div>
 																	<strong>Type:</strong> {template.productType}
 																</div>
@@ -1794,7 +1794,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											</Text>
 											<div className="space-y-3">
 												{selectedTemplates.map((template) => (
-													<div key={template.id} className="p-3 bg-gray-50 rounded-lg">
+													<div key={template.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
 														<Text size="1" weight="medium" className="block mb-2">
 															{template.displayName || template.name}:
 														</Text>
@@ -1805,7 +1805,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																[template.id]: e.target.value
 															}))}
 															placeholder={`${template.displayName || template.name}`}
-															className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+															className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
 														/>
 													</div>
 												))}
@@ -1820,12 +1820,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									{isShopifyConfigured && selectedTemplates.length > 0 && (
 										<div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
 											<div className="flex items-center justify-between mb-3">
-												<Text size="2" weight="medium" className="text-lime-800">
+												<Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300">
 													🛒 Shopify Publishing Options
 												</Text>
 												<button
 													onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-													className="text-xs text-lime-600 hover:text-lime-800"
+													className="text-xs text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300"
 												>
 													{showAdvancedOptions ? 'Simple' : 'Advanced'}
 												</button>
@@ -1868,7 +1868,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															value={customProductType}
 															onChange={(e) => setCustomProductType(e.target.value)}
 															placeholder="Custom Product"
-															className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+															className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded"
 														/>
 													</div>
 
@@ -1881,7 +1881,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															value={productTags.join(', ')}
 															onChange={(e) => setProductTags(e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
 															placeholder="social-media, custom-design"
-															className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+															className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded"
 														/>
 													</div>
 												</div>
@@ -1903,11 +1903,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									)}
 
 									{!isShopifyConfigured && selectedTemplates.length > 0 && (
-										<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-											<Text size="2" className="text-yellow-800 block mb-2">
+										<div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+											<Text size="2" className="text-yellow-800 dark:text-yellow-300 block mb-2">
 												🔗 Shopify Integration Available
 											</Text>
-											<Text size="1" className="text-yellow-700">
+											<Text size="1" className="text-yellow-700 dark:text-yellow-300">
 												Connect your Shopify store in Settings to automatically manage publishing channels and product metadata.
 											</Text>
 										</div>
@@ -1946,7 +1946,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									};
 										handleGelatoError('Please add your Gelato API credentials to create real products');
 									}}
-									className="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-medium"
+									className="w-full bg-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000 text-white py-3 px-4 rounded-lg font-medium"
 								>
 									Demo Mode - Add API Key to Create Real Products
 								</GelatoButton>
@@ -1979,12 +1979,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								isProdigiConfigured ? 'bg-green-500' : 'bg-orange-500'
 							}`}></div>
 							<Text size="2" className={
-								isProdigiConfigured ? 'text-green-600' : 'text-orange-600'
+								isProdigiConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 							}>
-								<span className="text-gray-600">Prodigi:</span>
+								<span className="text-gray-600 dark:text-gray-400">Prodigi:</span>
 							</Text>
 							<Text size="2" className={
-								isProdigiConfigured ? 'text-green-600' : 'text-orange-600'
+								isProdigiConfigured ? 'text-green-600 dark:text-green-400' : 'text-orange-600'
 							}>
 								{isProdigiConfigured ? 'Connected' : 'Setup Required'}
 							</Text>
@@ -1995,7 +1995,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								currentPost.variants[activeTab]?.media?.some((m: any) => m?.type === 'image') ? 'bg-green-500' : 'bg-gray-400'
 							}`}></div>
 							<Text size="2">
-								<span className="text-gray-600">Images:</span>
+								<span className="text-gray-600 dark:text-gray-400">Images:</span>
 							</Text>
 							<Text size="2">
 								{currentPost.variants[activeTab]?.media?.filter((m: any) => m?.type === 'image')?.length || 0} found
@@ -2005,7 +2005,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 					{/* Warning Messages */}
 					{autoCreateProdigiOnPublish && !isProdigiConfigured && (
-						<div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+						<div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-lg">
 							<Text size="2" color="orange">
 								<strong>Setup Required:</strong> Configure Prodigi credentials in Settings to enable auto-creation
 							</Text>
@@ -2018,7 +2018,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Text size="2" weight="medium">Product Creation Options</Text>
 							<button
 								onClick={() => setShowProdigiSection(!showProdigiSection)}
-								className="text-xs text-blue-600 hover:text-blue-800"
+								className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300"
 							>
 								{showProdigiSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -2027,7 +2027,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						{showProdigiSection && (
 							<div className="space-y-4">
 								{!isProdigiConfigured && (
-									<div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+									<div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
 										<Text size="2" weight="medium" className="block mb-2">
 											🔧 Prodigi Store Setup Required
 										</Text>
@@ -2041,7 +2041,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								)}
 
 								{!hasImages && (
-									<div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+									<div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
 										<Text size="2" weight="medium" className="block mb-1">
 											⚠️ This post doesn&apos;t have any images. Add images to create Prodigi products.
 										</Text>
@@ -2070,17 +2070,17 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Template Details */}
 										{selectedProdigiTemplates.length > 0 && (
-											<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+											<div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
 													Selected Templates ({selectedProdigiTemplates.length}):
 												</Text>
 												<div className="space-y-3">
 													{selectedProdigiTemplates.map((template) => (
-														<div key={template.id} className="p-2 bg-white rounded border">
+														<div key={template.id} className="p-2 bg-white dark:bg-gray-900 rounded border">
 															<Text size="2" weight="medium" className="block mb-1">
 																{template.displayName || template.name}
 															</Text>
-															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+															<div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
 																<div>
 																	<strong>Type:</strong> {template.productType}
 																</div>
@@ -2102,7 +2102,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 												</Text>
 												<div className="space-y-3">
 													{selectedProdigiTemplates.map((template) => (
-														<div key={template.id} className="p-3 bg-blue-50 rounded-lg">
+														<div key={template.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
 															<Text size="1" weight="medium" className="block mb-2">
 																{template.displayName || template.name}:
 															</Text>
@@ -2113,7 +2113,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																	[template.id]: e.target.value
 																}))}
 																placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
-																className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+																className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 															/>
 														</div>
 													))}
@@ -2136,8 +2136,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* External Store Integration Options */}
 										{accountGroup?.externalStore?.isConfigured && selectedProdigiTemplates.length > 0 && (
-											<div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-												<Text size="2" weight="medium" className="text-purple-800">
+											<div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+												<Text size="2" weight="medium" className="text-purple-800 dark:text-purple-300">
 													🛒 External Store Publishing
 												</Text>
 												<Text size="1" color="gray" className="block mt-1">
@@ -2164,7 +2164,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										onClick={() => {
 											handleProdigiError('Please add your Prodigi API credentials to create real products');
 										}}
-										className="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-medium"
+										className="w-full bg-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000 text-white py-3 px-4 rounded-lg font-medium"
 									>
 										Demo Mode - Add API Key to Create Real Products
 									</button>
@@ -2181,7 +2181,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					<div className="p-4">
 						<div className="flex items-center justify-between mb-4">
 							<div className="flex items-center gap-2">
-								<BarChart3 className="w-5 h-5 text-blue-600" />
+								<BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
 								<Text weight="medium" size="3">Content Optimization</Text>
 							</div>
 						</div>
@@ -2215,7 +2215,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											<button
 												onClick={fetchOptimalTimes}
 												disabled={isLoadingTimes}
-												className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 disabled:opacity-50"
+												className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm hover:bg-blue-100 dark:bg-blue-900/30 disabled:opacity-50"
 											>
 												{isLoadingTimes ? (
 													<Loader2 className="w-4 h-4 animate-spin" />
@@ -2228,13 +2228,13 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{optimalTimes ? (
 											<div className="space-y-3">
-												<div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+												<div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
 													<Text size="2" weight="medium" className="block mb-2">
 														Best times for {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
 													</Text>
 													<div className="grid grid-cols-2 md:grid-cols-4 gap-2">
 														{optimalTimes.times?.slice(0, 8).map((time: string, index: number) => (
-															<div key={index} className="bg-white p-2 rounded text-center border">
+															<div key={index} className="bg-white dark:bg-gray-900 p-2 rounded text-center border">
 																<Text size="1" weight="medium">{time}</Text>
 															</div>
 														))}
@@ -2245,11 +2245,11 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 												</div>
 
 												{optimalTimes.engagement && (
-													<div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+													<div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
 														<Text size="2" weight="medium" className="block mb-1">
 															Average Engagement
 														</Text>
-														<Text size="3" className="text-green-700 font-bold">
+														<Text size="3" className="text-green-700 dark:text-green-300 font-bold">
 															{optimalTimes.engagement.toFixed(1)}%
 														</Text>
 														<Text size="1" color="gray">
@@ -2298,14 +2298,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			{/* Status Messages */}
 			{errors.length > 0 && (
 				<Card>
-					<div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+					<div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
 						<div className="flex items-center gap-2 mb-2">
 							<AlertCircle className="w-4 h-4 text-red-500" />
 							<Text weight="medium" color="red">Errors</Text>
 						</div>
 						<ul className="space-y-1">
 							{errors.map((error, index) => (
-								<li key={index} className="text-sm text-red-600">• {error}</li>
+								<li key={index} className="text-sm text-red-600 dark:text-red-400">• {error}</li>
 							))}
 						</ul>
 					</div>
@@ -2314,7 +2314,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 			{success && (
 				<Card>
-					<div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+					<div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
 						<div className="flex items-center gap-2">
 							<Check className="w-4 h-4 text-green-500" />
 							<Text weight="medium" color="green">{success}</Text>
@@ -2371,22 +2371,22 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 			{/* Delete Confirmation Dialog */}
 			{showDeleteDialog && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+					<div className="bg-white dark:bg-gray-900 dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
 						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-								<AlertTriangle className="w-5 h-5 text-red-600" />
+							<div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+								<AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+								<h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-white">
 									Delete Post
 								</h3>
-								<p className="text-sm text-gray-600 dark:text-gray-400">
+								<p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
 									This action cannot be undone
 								</p>
 							</div>
 						</div>
 						
-						<p className="text-gray-700 dark:text-gray-300 mb-6">
+						<p className="text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-6">
 							Are you sure you want to delete &quot;{title || 'Untitled Post'}&quot;? This will permanently remove the post and all its content.
 						</p>
 						

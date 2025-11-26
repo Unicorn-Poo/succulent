@@ -29,9 +29,9 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body>
-				<Theme>
+				<Theme appearance="inherit">
 					<JazzAndAuth>
-						<div className="min-h-screen bg-gray-50">
+						<div className="min-h-screen bg-background">
 							<Navigation />
 							<main>{children}</main>
 						</div>

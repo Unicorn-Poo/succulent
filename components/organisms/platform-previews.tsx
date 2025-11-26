@@ -71,7 +71,7 @@ export const TwitterPreview = ({
 				<div className="flex items-center gap-2 mb-1">
 					<Text weight="bold" size="2">{account?.displayName || 'User'}</Text>
 					<Text size="2" color="gray">@{account?.username || 'user'}</Text>
-					<span className="text-gray-500">·</span>
+					<span className="text-gray-500 dark:text-gray-400">·</span>
 					<Text size="1" color="gray">{formatTimestamp(timestamp)}</Text>
 				</div>
 				<div className="mb-3 whitespace-pre-wrap">{displayContent}</div>
@@ -85,12 +85,12 @@ export const TwitterPreview = ({
 						/>
 					</div>
 				)}
-				<div className="flex items-center justify-between max-w-md text-gray-500">
+				<div className="flex items-center justify-between max-w-md text-gray-500 dark:text-gray-400">
 					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><MessageCircle className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-green-50 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-red-50 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-green-50 dark:bg-green-900/20 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><Share className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-gray-50"><Bookmark className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800"><Bookmark className="w-4 h-4" /></Button>
 				</div>
 			</div>
 		</div>
@@ -98,7 +98,7 @@ export const TwitterPreview = ({
 
 	if (isReply && !isQuote && replyTo) {
 		return (
-			<Card className="max-w-2xl mx-auto bg-white">
+			<Card className="max-w-2xl mx-auto bg-white dark:bg-gray-900">
 				<div className="p-4">
 					<ReplyPreview 
 						htmlContent={replyTo.authorPostContent}
@@ -127,7 +127,7 @@ export const TwitterPreview = ({
 	}
 
 	return (
-		<Card className="max-w-2xl mx-auto bg-white">
+		<Card className="max-w-2xl mx-auto bg-white dark:bg-gray-900">
 			<div className="p-4">
 				<MainTweet />
 			</div>
@@ -175,13 +175,13 @@ export const InstagramPreview = ({
 	const commentsCount = engagement?.comments?.toString() || "0";
 
 	return (
-		<div className="w-full max-w-md mx-auto bg-white" style={{ 
+		<div className="w-full max-w-md mx-auto bg-white dark:bg-gray-900" style={{ 
 			fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 			fontSize: '14px',
 			lineHeight: '18px'
 		}}>
 			{/* Header */}
-			<div className="flex items-center justify-between px-4 py-3 bg-white">
+			<div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900">
 				<div className="flex items-center">
 					{/* Profile Picture with Story Ring */}
 					<div className="relative mr-3">
@@ -189,7 +189,7 @@ export const InstagramPreview = ({
 							<img
 								src={authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&fit=crop&crop=face"}
 								alt={authorName}
-								className="w-full h-full rounded-full object-cover bg-white p-0.5"
+								className="w-full h-full rounded-full object-cover bg-white dark:bg-gray-900 p-0.5"
 							/>
 						</div>
 					</div>
@@ -197,7 +197,7 @@ export const InstagramPreview = ({
 					<div className="flex items-center">
 						<span className="text-sm font-semibold text-black">{authorUsername}</span>
 						{isThread && threadInfo && (
-							<span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+							<span className="ml-2 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">
 								{threadInfo}
 							</span>
 						)}
@@ -214,7 +214,7 @@ export const InstagramPreview = ({
 			</div>
 
 			{/* Media Area - Exactly Square */}
-			<div className="relative w-full aspect-square bg-gray-100">
+			<div className="relative w-full aspect-square bg-gray-100 dark:bg-gray-700">
 				{media.length > 0 ? (
 					<MultiImageViewer media={media} platform="instagram" />
 				) : (
@@ -276,23 +276,23 @@ export const InstagramPreview = ({
 
 				{/* View Comments */}
 				<div className="mb-1">
-					<button className="text-sm text-gray-500 hover:text-gray-700">
+					<button className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300">
 						View all {commentsCount} comments
 					</button>
 				</div>
 
 				{/* Timestamp */}
 				<div className="mb-3">
-					<span className="text-xs text-gray-500 uppercase tracking-wide">
+					<span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
 						{formatTimestamp(timestamp)}
 					</span>
 				</div>
 
 				{/* Add Comment */}
-				<div className="border-t border-gray-200 pt-3">
+				<div className="border-t border-gray-200 dark:border-gray-700 pt-3">
 					<div className="flex items-center space-x-3">
 						<div className="w-6 h-6 rounded-full bg-gray-300 flex-shrink-0"></div>
-						<span className="text-sm text-gray-500">Add a comment...</span>
+						<span className="text-sm text-gray-500 dark:text-gray-400">Add a comment...</span>
 					</div>
 				</div>
 			</div>
@@ -323,7 +323,7 @@ export const FacebookPreview = ({
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
 
 	return (
-		<Card className="max-w-lg mx-auto bg-white">
+		<Card className="max-w-lg mx-auto bg-white dark:bg-gray-900">
 			<div className="p-4">
 				{/* Header */}
 				<div className="flex items-start justify-between mb-3">
@@ -354,7 +354,7 @@ export const FacebookPreview = ({
 				{isReply && !isQuote && replyTo && (
 					<div className="border rounded-lg p-3 mt-3">
 						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
-						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
+						<div className="text-sm italic text-gray-500 dark:text-gray-400">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
@@ -419,7 +419,7 @@ export const LinkedInPreview = ({
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
 
 	return (
-		<Card className="max-w-lg mx-auto bg-white">
+		<Card className="max-w-lg mx-auto bg-white dark:bg-gray-900">
 			<div className="p-4">
 				{/* Header */}
 				<div className="flex items-start justify-between mb-3">
@@ -451,7 +451,7 @@ export const LinkedInPreview = ({
 				{isReply && !isQuote && replyTo && (
 					<div className="border rounded-lg p-3 mt-3">
 						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
-						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
+						<div className="text-sm italic text-gray-500 dark:text-gray-400">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
@@ -520,7 +520,7 @@ export const YouTubePreview = ({
 	const threadInfo = currentPost ? `${currentPost.index}/${currentPost.total}` : null;
 
 	return (
-		<Card className="max-w-lg mx-auto bg-white">
+		<Card className="max-w-lg mx-auto bg-white dark:bg-gray-900">
 			<div className="p-4">
 				{/* Header */}
 				<div className="flex items-start justify-between mb-3">
@@ -551,7 +551,7 @@ export const YouTubePreview = ({
 				{isReply && !isQuote && replyTo && (
 					<div className="border rounded-lg p-3 mt-3">
 						<Text size="1" color="gray" className="mb-2 block">Replying to {replyTo.author}</Text>
-						<div className="text-sm italic text-gray-500">{replyTo.authorPostContent}</div>
+						<div className="text-sm italic text-gray-500 dark:text-gray-400">{replyTo.authorPostContent}</div>
 					</div>
 				)}
 
@@ -576,15 +576,15 @@ export const YouTubePreview = ({
 
 				{/* Actions */}
 				<div className="flex items-center justify-between pt-3 border-t">
-					<Button variant="ghost" size="1" className="hover:bg-red-50">
+					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20">
 						<Heart className="w-4 h-4 mr-2" />
 						Like
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-red-50">
+					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20">
 						<MessageCircle className="w-4 h-4 mr-2" />
 						Comment
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-red-50">
+					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20">
 						<Share className="w-4 h-4 mr-2" />
 						Share
 					</Button>
@@ -702,7 +702,7 @@ const MultiImageViewer = ({ media, platform }: { media: any[], platform: string 
 									setCurrentIndex(index);
 								}}
 								className={`w-1.5 h-1.5 rounded-full transition-opacity hover:opacity-80 ${
-									currentIndex === index ? 'bg-white' : 'bg-white bg-opacity-40'
+									currentIndex === index ? 'bg-white dark:bg-gray-900' : 'bg-white dark:bg-gray-900 bg-opacity-40'
 								}`}
 							/>
 						))}
@@ -750,7 +750,7 @@ const MultiImageViewer = ({ media, platform }: { media: any[], platform: string 
 							<button
 								key={index}
 								onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
-								className={`w-2 h-2 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-gray-400'}`}
+								className={`w-2 h-2 rounded-full ${currentIndex === index ? 'bg-white dark:bg-gray-900' : 'bg-gray-400'}`}
 							/>
 						))}
 					</div>
@@ -816,16 +816,16 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 	if (error) {
 		return (
-			<div className={`${className} bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
-				<span className="text-gray-500 text-sm">Failed to load image</span>
+			<div className={`${className} bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+				<span className="text-gray-500 dark:text-gray-400 text-sm">Failed to load image</span>
 			</div>
 		);
 	}
 
 	if (!dataUrl) {
 		return (
-			<div className={`${className} bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
-				<span className="text-gray-500 text-sm">Loading...</span>
+			<div className={`${className} bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+				<span className="text-gray-500 dark:text-gray-400 text-sm">Loading...</span>
 			</div>
 		);
 	}
@@ -914,7 +914,7 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		// Show placeholder if no valid URL
 		if (!imageUrl) {
 			return (
-				<div className={`${commonClass} bg-gray-100 flex items-center justify-center`}>
+				<div className={`${commonClass} bg-gray-100 dark:bg-gray-700 flex items-center justify-center`}>
 					<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-400">
 						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
 						<circle cx="8.5" cy="8.5" r="1.5"/>
@@ -947,7 +947,7 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		if (videoObject && typeof videoObject.getBlob === 'function') {
 			// For now, show placeholder for videos
 			return (
-				<div className={`${commonClass} bg-gray-100 flex items-center justify-center`}>
+				<div className={`${commonClass} bg-gray-100 dark:bg-gray-700 flex items-center justify-center`}>
 					<Play className="w-8 h-8 text-gray-400" />
 				</div>
 			);

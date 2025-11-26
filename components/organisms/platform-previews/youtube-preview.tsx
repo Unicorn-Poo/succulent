@@ -52,10 +52,10 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
 
   const getStatusBadgeColor = () => {
     switch (post.status) {
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-lime-100 text-lime-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
+      case 'draft': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -75,9 +75,9 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="max-w-md mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {/* Status Badge */}
-      <div className="px-4 py-2 bg-gray-50 border-b">
+      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor()}`}>
           {post.status.toUpperCase()}
         </span>
@@ -86,7 +86,7 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
       {/* Video Thumbnail */}
       <div className="relative">
         <div className="aspect-video bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
-          <div className="text-center text-red-600">
+          <div className="text-center text-red-600 dark:text-red-400">
             <div className="w-16 h-16 mx-auto mb-2 bg-red-500 rounded-full flex items-center justify-center">
               <div className="w-0 h-0 border-l-[12px] border-l-white border-y-[8px] border-y-transparent ml-1"></div>
             </div>
@@ -103,7 +103,7 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
       {/* Video Info */}
       <div className="p-4">
         {/* Title */}
-        <h3 className="font-semibold text-gray-900 line-clamp-2 leading-tight mb-2">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight mb-2">
           {post.title}
         </h3>
         
@@ -115,8 +115,8 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
             </span>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">{account.name}</p>
-            <div className="flex items-center space-x-1 text-xs text-gray-500">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{account.name}</p>
+            <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
               {post.status === 'published' && (
                 <>
                   <span>{generateViews()} views</span>
@@ -129,7 +129,7 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
         </div>
         
         {/* Description */}
-        <div className="text-sm text-gray-700 mb-4">
+        <div className="text-sm text-gray-700 dark:text-gray-300 mb-4">
           <p className="line-clamp-3">{post.content}</p>
         </div>
         
@@ -137,28 +137,28 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+              <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-full transition-colors">
                 <ThumbsUp className="w-4 h-4" />
                 {post.engagement && post.engagement.likes > 0 && post.status === 'published' && (
                   <span className="text-sm">{formatNumber(post.engagement.likes)}</span>
                 )}
               </button>
-              <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+              <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
                 <ThumbsDown className="w-4 h-4" />
               </button>
             </div>
             
-            <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+            <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-full transition-colors">
               <Share className="w-4 h-4" />
               <span className="text-sm">Share</span>
             </button>
           </div>
           
           <div className="flex items-center space-x-2">
-            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+            <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
               <Download className="w-4 h-4" />
             </button>
-            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+            <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
@@ -166,11 +166,11 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
         
         {/* Comments */}
         {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm font-medium text-gray-900 mb-2">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
               {formatNumber(post.engagement.comments)} comments
             </p>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Comments would appear here...
             </div>
           </div>

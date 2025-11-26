@@ -289,20 +289,20 @@ function RSSFeedManager({ profileKey, onUpdate }: { profileKey?: string; onUpdat
       {feeds.length > 0 ? (
         <div className="space-y-3">
           {feeds.map((feed) => (
-            <div key={feed.id} className="p-3 bg-gray-50 rounded-lg">
+            <div key={feed.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <Text size="2" weight="medium" className="block">{feed.title || feed.url}</Text>
               <Text size="1" color="gray">{feed.platforms?.join(', ')}</Text>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <Rss className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <Text size="2">No RSS feeds configured</Text>
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/feeds/overview', '_blank')}
           variant="soft" 
@@ -332,22 +332,22 @@ function BrandManager({ profileKey, onUpdate }: { profileKey?: string; onUpdate?
             <Text size="2" weight="medium" className="mb-1 block">Brand Colors</Text>
             <Text size="1" color="gray">Primary and secondary colors</Text>
           </div>
-          <div className="p-3 bg-green-50 rounded-lg">
+          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <Text size="2" weight="medium" className="mb-1 block">Logo Assets</Text>
             <Text size="1" color="gray">Brand logos and imagery</Text>
           </div>
-          <div className="p-3 bg-purple-50 rounded-lg">
+          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <Text size="2" weight="medium" className="mb-1 block">Typography</Text>
             <Text size="1" color="gray">Font families and styles</Text>
           </div>
-          <div className="p-3 bg-orange-50 rounded-lg">
+          <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
             <Text size="2" weight="medium" className="mb-1 block">Templates</Text>
             <Text size="1" color="gray">Post templates and layouts</Text>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/brand/overview', '_blank')}
           variant="soft" 
@@ -379,7 +379,7 @@ function AutoScheduleManager({
 
       <div className="space-y-4">
         {accounts.map((account) => (
-          <div key={account.id} className="p-3 bg-gray-50 rounded-lg">
+          <div key={account.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <Text size="2" weight="medium" className="block">{account.name}</Text>
@@ -393,7 +393,7 @@ function AutoScheduleManager({
         ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button 
           onClick={() => window.open('https://www.ayrshare.com/docs/apis/auto-schedule/overview', '_blank')}
           variant="soft" 

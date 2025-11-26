@@ -52,9 +52,9 @@ interface MetricCardProps {
 const MetricCard = ({ title, value, change, icon, trend = 'neutral', loading }: MetricCardProps) => {
   const getTrendColor = () => {
     switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'up': return 'text-green-600 dark:text-green-400';
+      case 'down': return 'text-red-600 dark:text-red-400';
+      default: return 'text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -125,7 +125,7 @@ const PostPerformanceChart = ({ posts, loading }: { posts: HistoricalPost[], loa
         <div key={index} className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="font-medium truncate flex-1 mr-2">{item.title}</span>
-            <span className="text-gray-500 text-xs">{item.date}</span>
+            <span className="text-gray-500 dark:text-gray-400 text-xs">{item.date}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-gray-200 rounded-full h-2">
@@ -134,7 +134,7 @@ const PostPerformanceChart = ({ posts, loading }: { posts: HistoricalPost[], loa
                 style={{ width: `${(item.engagement / maxEngagement) * 100}%` }}
               ></div>
             </div>
-            <div className="flex gap-3 text-xs text-gray-600">
+            <div className="flex gap-3 text-xs text-gray-600 dark:text-gray-400">
               <span className="flex items-center gap-1">
                 <Heart className="w-3 h-3" />
                 {item.likes}
@@ -174,12 +174,12 @@ const OptimalTimesDisplay = ({ optimalTimes, loading }: { optimalTimes: any, loa
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, index) => (
           <div key={day} className="text-center">
-            <div className="text-xs font-medium text-gray-600 mb-2">{day}</div>
+            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{day}</div>
             <div className="space-y-1">
               {times.slice(index * 2, (index + 1) * 2).map((time: string, timeIndex: number) => (
                 <div 
                   key={timeIndex}
-                  className="bg-lime-100 text-lime-800 text-xs py-1 px-2 rounded text-center"
+                  className="bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 text-xs py-1 px-2 rounded text-center"
                 >
                   {time}
                 </div>
@@ -188,7 +188,7 @@ const OptimalTimesDisplay = ({ optimalTimes, loading }: { optimalTimes: any, loa
           </div>
         ))}
       </div>
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
         Times shown in your local timezone
       </div>
     </div>
@@ -591,7 +591,7 @@ export default function AnalyticsDashboard({
     return (
       <Card className="p-6">
         <div className="text-center space-y-4">
-          <div className="text-red-600">
+          <div className="text-red-600 dark:text-red-400">
             <Text size="3" weight="medium">Analytics Error</Text>
             <Text size="2" className="block mt-2">{error}</Text>
           </div>
@@ -632,7 +632,7 @@ export default function AnalyticsDashboard({
         </div>
         <div className="flex gap-2">
           {lastUpdated && (
-            <div className="text-xs text-gray-500 mr-2 flex items-center">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mr-2 flex items-center">
               <Clock className="w-3 h-3 mr-1" />
               Updated {new Date(lastUpdated).toLocaleTimeString()}
             </div>
@@ -668,28 +668,28 @@ export default function AnalyticsDashboard({
         <MetricCard
           title="Total Followers"
           value={aggregatedMetrics.hasFollowerData ? aggregatedMetrics.followers.toLocaleString() : "No data"}
-          icon={<Users className="w-5 h-5 text-lime-600" />}
+          icon={<Users className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
           trend={aggregatedMetrics.hasFollowerData ? "neutral" : "neutral"}
           loading={isLoading}
         />
         <MetricCard
           title="Total Engagement"
           value={aggregatedMetrics.hasEngagementData ? aggregatedMetrics.engagement.toLocaleString() : "No posts"}
-          icon={<Heart className="w-5 h-5 text-lime-600" />}
+          icon={<Heart className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
           trend={aggregatedMetrics.hasEngagementData ? "up" : "neutral"}
           loading={isLoading}
         />
         <MetricCard
           title="Engagement Rate"
           value={aggregatedMetrics.hasEngagementData ? `${aggregatedMetrics.engagementRate.toFixed(1)}%` : "No data"}
-          icon={<TrendingUp className="w-5 h-5 text-lime-600" />}
+          icon={<TrendingUp className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
           trend={aggregatedMetrics.hasEngagementData ? "up" : "neutral"}
           loading={isLoading}
         />
         <MetricCard
           title="Total Posts"
           value={aggregatedMetrics.posts > 0 ? aggregatedMetrics.posts.toLocaleString() : "No posts"}
-          icon={<BarChart3 className="w-5 h-5 text-lime-600" />}
+          icon={<BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
           trend="neutral"
           loading={isLoading}
         />
@@ -728,25 +728,25 @@ export default function AnalyticsDashboard({
                   ) : (
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Engagement Rate:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Engagement Rate:</span>
                         <span className="font-medium">
                           {data.insights[platform]?.engagementRate?.toFixed(1) || 0}%
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Total Posts:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Total Posts:</span>
                         <span className="font-medium">
                           {data.overview[platform]?.profile?.postsCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Following:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Following:</span>
                         <span className="font-medium">
                           {data.overview[platform]?.profile?.followingCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Recent Posts:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Recent Posts:</span>
                         <span className="font-medium">
                           {data.posts[platform]?.length || 0}
                         </span>
@@ -779,7 +779,7 @@ export default function AnalyticsDashboard({
               {selectedPlatforms.map(platform => (
                 <Card key={platform} className="p-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <Clock className="w-5 h-5 text-lime-600" />
+                    <Clock className="w-5 h-5 text-lime-600 dark:text-lime-400" />
                     <Text size="3" weight="medium" className="capitalize">
                       {platform} Optimal Times
                     </Text>
@@ -813,11 +813,11 @@ export default function AnalyticsDashboard({
                         <Text size="2" weight="medium" className="mb-3 block">Best Performing Posts</Text>
                         <div className="space-y-2">
                           {data.insights[platform]?.bestPerformingPosts?.slice(0, 3).map((post, index) => (
-                            <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                              <Text size="1" className="block text-gray-900 mb-1">
+                            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <Text size="1" className="block text-gray-900 dark:text-gray-100 mb-1">
                                 {post.post.substring(0, 100)}...
                               </Text>
-                              <div className="flex gap-3 text-xs text-gray-600">
+                              <div className="flex gap-3 text-xs text-gray-600 dark:text-gray-400">
                                 <span>{post.likes || 0} likes</span>
                                 <span>{post.comments || 0} comments</span>
                                 <span>{post.shares || 0} shares</span>
@@ -836,7 +836,7 @@ export default function AnalyticsDashboard({
                           <div className="space-y-2">
                             {Object.entries(data.insights[platform].audienceInsights.demographics || {}).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
-                                <span className="text-gray-600 capitalize">{key.replace('_', ' ')}:</span>
+                                <span className="text-gray-600 dark:text-gray-400 capitalize">{key.replace('_', ' ')}:</span>
                                 <span className="font-medium">{String(value)}</span>
                               </div>
                             ))}

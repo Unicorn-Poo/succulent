@@ -114,20 +114,20 @@ export default function FreeTierDashboard({
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <Text size="3" weight="bold" className="block text-lime-600">
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <Text size="3" weight="bold" className="block text-lime-600 dark:text-lime-400">
               {strategy.dailyBudget}
             </Text>
             <Text size="1" color="gray">Daily Budget</Text>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <Text size="3" weight="bold" className="block text-green-600">
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <Text size="3" weight="bold" className="block text-green-600 dark:text-green-400">
               {strategy.weeklyBudget}
             </Text>
             <Text size="1" color="gray">Weekly Budget</Text>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <Text size="3" weight="bold" className="block text-purple-600">
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <Text size="3" weight="bold" className="block text-purple-600 dark:text-purple-400">
               {Math.ceil((new Date(usage.resetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
             </Text>
             <Text size="1" color="gray">Days Left</Text>
@@ -236,7 +236,7 @@ export default function FreeTierDashboard({
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {tips.map((tip, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
+              <div key={index} className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2" />
                 <Text size="2">{tip}</Text>
               </div>

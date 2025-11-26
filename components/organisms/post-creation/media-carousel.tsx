@@ -136,7 +136,7 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 							variant="soft"
 							size="1"
 							onClick={handlePrev}
-							className="absolute top-1/2 left-3 transform -translate-y-1/2 !rounded-full !w-10 !h-10 bg-white/20 hover:bg-white/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
+							className="absolute top-1/2 left-3 transform -translate-y-1/2 !rounded-full !w-10 !h-10 bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
 							aria-label="Previous image"
 						>
 							<ChevronLeft className="w-5 h-5" />
@@ -145,7 +145,7 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 							variant="soft"
 							size="1"
 							onClick={handleNext}
-							className="absolute top-1/2 right-3 transform -translate-y-1/2 !rounded-full !w-10 !h-10 bg-white/20 hover:bg-white/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
+							className="absolute top-1/2 right-3 transform -translate-y-1/2 !rounded-full !w-10 !h-10 bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/30 text-white shadow-lg backdrop-blur-md border border-white/20 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
 							aria-label="Next image"
 						>
 							<ChevronRight className="w-5 h-5" />
@@ -174,7 +174,7 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 							className={`relative w-3 h-3 rounded-full transition-all duration-300 ${
 								currentIndex === index 
 									? 'bg-lime-500 shadow-lg shadow-lime-500/50 scale-125' 
-									: 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
+									: 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000'
 							}`}
 							aria-label={`Go to slide ${index + 1}`}
 						>
@@ -304,7 +304,7 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 						<div className="w-full h-full flex items-center justify-center">
 							<div className="text-center">
 								<div className="w-12 h-12 border-4 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-								<p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Loading media...</p>
+								<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm font-medium">Loading media...</p>
 								<div className="mt-2 w-24 h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
 									<div className="h-full bg-lime-500 rounded-full animate-pulse" style={{ width: '60%' }} />
 								</div>
@@ -317,11 +317,11 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 					return (
 						<div className="w-full h-full flex items-center justify-center">
 							<div className="text-center p-8">
-								<div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 mx-auto">
+								<div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 mx-auto">
 									<X className="w-8 h-8 text-red-500" />
 								</div>
-								<p className="text-gray-600 dark:text-gray-400 font-medium">Failed to load media</p>
-								<p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+								<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 font-medium">Failed to load media</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2">
 									{(mediaItem?.type === 'image' || mediaItem?.type === 'url-image') ? 'Image' : 'Video'} unavailable
 								</p>
 
@@ -375,7 +375,7 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 									variant="soft"
 									size="2"
 									onClick={toggleVideoPlayback}
-									className="!rounded-full !w-16 !h-16 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/20"
+									className="!rounded-full !w-16 !h-16 bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/30 text-white backdrop-blur-md border border-white/20"
 								>
 									{isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
 								</Button>
@@ -406,10 +406,10 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 					<div className="w-full h-full flex items-center justify-center">
 						<div className="text-center p-8">
 							<div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 mx-auto">
-								<X className="w-8 h-8 text-gray-500" />
+								<X className="w-8 h-8 text-gray-500 dark:text-gray-400" />
 							</div>
-							<p className="text-gray-600 dark:text-gray-400 font-medium">Unsupported media type</p>
-							<p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
+							<p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 font-medium">Unsupported media type</p>
+							<p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2">Type: {mediaItem?.type || 'unknown'}</p>
 							<p className="text-xs text-red-500 mt-1">Check console for debug info</p>
 						</div>
 					</div>

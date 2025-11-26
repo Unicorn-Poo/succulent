@@ -31,10 +31,10 @@ interface HashtagItemProps {
 const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: HashtagItemProps) => {
   const getCategoryColor = () => {
     switch (category) {
-      case 'trending': return 'bg-red-50 text-red-700 border-red-200';
-      case 'relevant': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'competitive': return 'bg-purple-50 text-purple-700 border-purple-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'trending': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
+      case 'relevant': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      case 'competitive': return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+      default: return 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -61,7 +61,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-medium">#{hashtag}</span>
-          {selected && <Check className="w-4 h-4 text-lime-600" />}
+          {selected && <Check className="w-4 h-4 text-lime-600 dark:text-lime-400" />}
         </div>
         <div className="flex items-center gap-1 text-xs">
           {categoryInfo.icon}
@@ -73,15 +73,15 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="text-center">
             <div className="font-medium">{performance.usage.toLocaleString()}</div>
-            <div className="text-gray-500">Uses</div>
+            <div className="text-gray-500 dark:text-gray-400">Uses</div>
           </div>
           <div className="text-center">
             <div className="font-medium">{performance.engagement.toFixed(1)}%</div>
-            <div className="text-gray-500">Engagement</div>
+            <div className="text-gray-500 dark:text-gray-400">Engagement</div>
           </div>
           <div className="text-center">
             <div className="font-medium">{(performance.reach / 1000).toFixed(1)}K</div>
-            <div className="text-gray-500">Reach</div>
+            <div className="text-gray-500 dark:text-gray-400">Reach</div>
           </div>
         </div>
       )}
@@ -239,7 +239,7 @@ export default function HashtagSuggestions({
     return (
       <Card className="p-4">
         <div className="text-center space-y-3">
-          <div className="text-red-600">
+          <div className="text-red-600 dark:text-red-400">
             <Text size="3" weight="medium">Error Loading Suggestions</Text>
             <Text size="2" className="block mt-1">{error}</Text>
           </div>
@@ -258,7 +258,7 @@ export default function HashtagSuggestions({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Hash className="w-5 h-5 text-lime-600" />
+            <Hash className="w-5 h-5 text-lime-600 dark:text-lime-400" />
             <Text size="3" weight="medium">Hashtag Suggestions</Text>
             <Badge variant="soft" className="capitalize">{platform}</Badge>
           </div>
@@ -269,7 +269,7 @@ export default function HashtagSuggestions({
                 onClick={handleCopyHashtags}
                 size="2"
                 variant="soft"
-                className={copied ? 'bg-green-100 text-green-700' : ''}
+                className={copied ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}
               >
                 {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                 {copied ? 'Copied!' : `Copy ${selectedHashtags.length}`}

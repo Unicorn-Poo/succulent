@@ -530,8 +530,8 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
 					<div className="flex items-center gap-3">
-						<div className="flex items-center justify-center w-10 h-10 bg-lime-100 rounded-lg">
-							<Store className="w-5 h-5 text-lime-600" />
+						<div className="flex items-center justify-center w-10 h-10 bg-lime-100 dark:bg-lime-900/30 rounded-lg">
+							<Store className="w-5 h-5 text-lime-600 dark:text-lime-400" />
 						</div>
 						<div>
 							<Text weight="medium" size="4">Gelato Store Connection</Text>
@@ -565,13 +565,13 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 				{/* Connection Status */}
 				{isConfigured && !isEditing && (
-					<div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6">
+					<div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mb-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<Text weight="medium" size="3" className="text-green-800">
+								<Text weight="medium" size="3" className="text-green-800 dark:text-green-300">
 									✅ Connected to {formData.storeName || 'Your Gelato Store'}
 								</Text>
-								<Text size="2" className="text-green-700 block mt-1">
+								<Text size="2" className="text-green-700 dark:text-green-300 block mt-1">
 									{connectedAt && `Connected on ${connectedAt.toLocaleDateString()}`}
 								</Text>
 							</div>
@@ -590,7 +590,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				{/* Setup Instructions */}
 				{!isConfigured && !isEditing && (
 					<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg mb-6">
-						<Text weight="medium" size="3" className="text-lime-800 block mb-2">
+						<Text weight="medium" size="3" className="text-lime-800 dark:text-lime-300 block mb-2">
 							🔒 Secure Gelato Integration
 						</Text>
 						<Text size="2" className="text-lime-700 block mb-3">
@@ -631,7 +631,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								value={formData.apiKey}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
 								type="password"
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 							/>
 							<Text size="1" color="gray" className="block mt-1">
 								This will be encrypted and stored securely for this account group
@@ -647,7 +647,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								placeholder="Your internal store identifier (optional)"
 								value={formData.storeId}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, storeId: e.target.value }))}
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 							/>
 							<Text size="1" color="gray" className="block mt-1">
 								This is for your own reference and organization purposes
@@ -662,7 +662,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								placeholder="My Awesome Store"
 								value={formData.storeName}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, storeName: e.target.value }))}
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 							/>
 						</div>
 
@@ -670,11 +670,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						{testResult && (
 							<div className={`p-3 rounded-lg ${
 								testResult === 'success' 
-									? 'bg-green-50 border border-green-200' 
-									: 'bg-red-50 border border-red-200'
+									? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+									: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
 							}`}>
 								<Text size="2" className={
-									testResult === 'success' ? 'text-green-700' : 'text-red-700'
+									testResult === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
 								}>
 									{testResult === 'success' 
 										? '✅ Connection successful! Your credentials are valid.'
@@ -713,13 +713,13 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 				{/* Template Management Section */}
 				{isConfigured && !isEditing && (
-					<div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+					<div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
 						<div className="flex items-center justify-between mb-4">
 							<div>
-								<Text weight="medium" size="3" className="text-purple-800 block">
+								<Text weight="medium" size="3" className="text-purple-800 dark:text-purple-300 block">
 									📚 Template Management
 								</Text>
-								<Text size="2" className="text-purple-700 block mt-1">
+								<Text size="2" className="text-purple-700 dark:text-purple-300 block mt-1">
 									Import specific templates by ID or refresh existing templates from your Gelato store
 								</Text>
 							</div>
@@ -757,13 +757,13 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 						{/* Template Status */}
 						<div className="grid grid-cols-2 gap-4 mb-4">
-							<div className="text-center p-3 bg-white rounded border">
+							<div className="text-center p-3 bg-white dark:bg-gray-900 rounded border">
 								<Text size="3" weight="bold" className="block">
 									{cachedTemplatesCount}
 								</Text>
 								<Text size="1" color="gray">Cached Templates</Text>
 							</div>
-							<div className="text-center p-3 bg-white rounded border">
+							<div className="text-center p-3 bg-white dark:bg-gray-900 rounded border">
 								<Text size="1" color="gray" className="block">
 									Last Fetched
 								</Text>
@@ -779,7 +779,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						{/* Template List */}
 						{cachedTemplatesCount > 0 ? (
 							<div className="mb-4">
-								<Text weight="medium" size="2" className="text-purple-800 block mb-3">
+								<Text weight="medium" size="2" className="text-purple-800 dark:text-purple-300 block mb-3">
 									📄 Your Imported Templates ({cachedTemplatesCount} templates)
 								</Text>
 								<div className="space-y-2 max-h-64 overflow-y-auto">
@@ -791,7 +791,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										const currentTags = template.tags || [];
 										
 										return (
-											<div key={templateId} className="p-3 bg-white border rounded-lg">
+											<div key={templateId} className="p-3 bg-white dark:bg-gray-900 border rounded-lg">
 												<div className="flex items-center justify-between">
 													<div className="flex-1 min-w-0">
 														<Text size="2" weight="medium" className="block truncate">
@@ -853,7 +853,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 																value={tempTags[templateId] || ''}
 																onChange={(e) => setTempTags(prev => ({ ...prev, [templateId]: e.target.value }))}
 																placeholder="Enter tags separated by commas"
-																className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-lime-500"
+																className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-lime-500"
 															/>
 															<div className="flex gap-2">
 																<Button
@@ -900,7 +900,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								</div>
 							</div>
 						) : (
-							<div className="mb-4 p-4 bg-white border rounded-lg text-center">
+							<div className="mb-4 p-4 bg-white dark:bg-gray-900 border rounded-lg text-center">
 								<Text size="2" color="gray" className="block mb-2">
 									📄 No templates imported yet
 								</Text>
@@ -914,11 +914,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						{templateFetchResult && (
 							<div className={`p-3 rounded-lg mb-4 ${
 								templateFetchResult === 'success' 
-									? 'bg-green-50 border border-green-200' 
-									: 'bg-red-50 border border-red-200'
+									? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+									: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
 							}`}>
 								<Text size="2" className={
-									templateFetchResult === 'success' ? 'text-green-700' : 'text-red-700'
+									templateFetchResult === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
 								}>
 									{templateFetchResult === 'success' 
 										? `✅ Successfully fetched ${cachedTemplatesCount} templates from Gelato`
@@ -939,7 +939,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 					<div className="mt-6 p-4 bg-lime-50 border border-lime-200 rounded-lg">
 						<div className="flex items-center justify-between mb-4">
 							<div>
-								<Text weight="medium" size="3" className="text-lime-800 block">
+								<Text weight="medium" size="3" className="text-lime-800 dark:text-lime-300 block">
 									🛒 Shopify Integration
 								</Text>
 								<Text size="2" className="text-lime-700 block mt-1">
@@ -971,24 +971,24 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 						{/* Shopify Connection Status */}
 						{isShopifyConfigured && !showShopifyConfig && (
-							<div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
+							<div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mb-4">
 								<div className="flex items-center justify-between">
 									<div>
-										<Text weight="medium" size="3" className="text-green-800">
+										<Text weight="medium" size="3" className="text-green-800 dark:text-green-300">
 											✅ Connected to {shopifyFormData.storeName || 'Your Shopify Store'}
 										</Text>
-										<Text size="2" className="text-green-700 block mt-1">
+										<Text size="2" className="text-green-700 dark:text-green-300 block mt-1">
 											{shopifyConnectedAt && `Connected on ${shopifyConnectedAt.toLocaleDateString()}`}
 										</Text>
 										{shopifyFormData.defaultChannels && shopifyFormData.defaultChannels.length > 0 && (
-											<Text size="1" className="text-green-700 block mt-1">
+											<Text size="1" className="text-green-700 dark:text-green-300 block mt-1">
 												Default channels: {publishingChannels
 													.filter(ch => shopifyFormData.defaultChannels.includes(ch.id))
 													.map(ch => ch.name)
 													.join(', ') || shopifyFormData.defaultChannels.join(', ')}
 											</Text>
 										)}
-										<Text size="1" className="text-green-600 block mt-1">
+										<Text size="1" className="text-green-600 dark:text-green-400 block mt-1">
 											💾 Saved to Jazz: {accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels?.join(', ') || 'None'}
 										</Text>
 									</div>
@@ -1017,7 +1017,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
 											setShopifyFormData(prev => ({ ...prev, storeUrl: e.target.value }))
 										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 									/>
 									<Text size="1" color="gray" className="block mt-1">
 										Your Shopify store domain (with or without https://)
@@ -1035,7 +1035,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 											setShopifyFormData(prev => ({ ...prev, accessToken: e.target.value }))
 										}
 										type="password"
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 									/>
 									<Text size="1" color="gray" className="block mt-1">
 										<strong>NOT</strong> the same as API key! Get this from Apps → Private apps → Admin API access token
@@ -1052,7 +1052,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
 											setShopifyFormData(prev => ({ ...prev, storeName: e.target.value }))
 										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 									/>
 								</div>
 
@@ -1060,11 +1060,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								{shopifyTestResult && (
 									<div className={`p-3 rounded-lg ${
 										shopifyTestResult === 'success' 
-											? 'bg-green-50 border border-green-200' 
-											: 'bg-red-50 border border-red-200'
+											? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+											: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
 									}`}>
 										<Text size="2" className={
-											shopifyTestResult === 'success' ? 'text-green-700' : 'text-red-700'
+											shopifyTestResult === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
 										}>
 											{shopifyTestResult === 'success' 
 												? `✅ Connected successfully! Found ${publishingChannels.length} publishing channels.`
@@ -1106,7 +1106,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			<div className="mb-4">
 				<div className="flex items-center justify-between mb-3">
 					<div>
-						<Text weight="medium" size="2" className="text-lime-800 block">
+						<Text weight="medium" size="2" className="text-lime-800 dark:text-lime-300 block">
 							📡 Publishing Channels ({publishingChannels.length} channels)
 						</Text>
 						<Text size="1" className="text-lime-700 block mt-1">
@@ -1130,7 +1130,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				</Text>
 				<div className="space-y-2">
 					{publishingChannels.map((channel: any) => (
-						<div key={channel.id} className="flex items-center justify-between p-3 bg-white border rounded">
+						<div key={channel.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 border rounded">
 							<div className="flex items-center gap-3">
 								<input
 									type="checkbox"
@@ -1149,7 +1149,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										
 										handleDefaultChannelsChange(newChannels);
 									}}
-									className="w-4 h-4 text-lime-600 border-gray-300 rounded focus:ring-lime-500"
+									className="w-4 h-4 text-lime-600 dark:text-lime-400 border-gray-300 dark:border-gray-600 rounded focus:ring-lime-500"
 								/>
 								<label htmlFor={`channel-${channel.id}`} className="cursor-pointer">
 									<Text size="2" weight="medium">{channel.name}</Text>
@@ -1180,21 +1180,21 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 					💡 Tip: Online Store is typically preselected for most products
 				</Text>
 				{publishingChannels.some(ch => !ch.enabled) && (
-					<div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-						<Text size="1" className="text-yellow-800 block mb-2">
+					<div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+						<Text size="1" className="text-yellow-800 dark:text-yellow-300 block mb-2">
 							<strong>📱 Activate Inactive Channels:</strong>
 						</Text>
-						<Text size="1" className="text-yellow-700 block mb-2">
+						<Text size="1" className="text-yellow-700 dark:text-yellow-300 block mb-2">
 							Some channels appear as "Inactive" because they need to be enabled in your Shopify admin:
 						</Text>
 						<div className="space-y-1">
-							<Text size="1" className="text-yellow-700 block">
+							<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 								• Go to <strong>Shopify Admin → Sales channels</strong>
 							</Text>
-							<Text size="1" className="text-yellow-700 block">
+							<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 								• Find the inactive channel and click <strong>"Connect"</strong> or <strong>"Add channel"</strong>
 							</Text>
-							<Text size="1" className="text-yellow-700 block">
+							<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 								• Once connected, refresh channels here to see them as "Available"
 							</Text>
 						</div>
@@ -1204,26 +1204,26 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 		)}
 
 						{!isShopifyConfigured && !showShopifyConfig && (
-							<div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-								<Text size="2" className="text-yellow-800 block mb-2">
+							<div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+								<Text size="2" className="text-yellow-800 dark:text-yellow-300 block mb-2">
 									🔗 Connect Shopify for Enhanced Product Management
 								</Text>
-								<Text size="1" className="text-yellow-700 block mb-3">
+								<Text size="1" className="text-yellow-700 dark:text-yellow-300 block mb-3">
 									Connect your Shopify store to automatically manage publishing channels, 
 									sync product data, and control where your Gelato products appear.
 								</Text>
 								
 								<div className="space-y-2">
-									<Text size="1" className="text-yellow-700 block">
+									<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 										<strong>Step 1:</strong> Go to your Shopify Admin → Apps → "App and sales channel settings"
 									</Text>
-									<Text size="1" className="text-yellow-700 block">
+									<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 										<strong>Step 2:</strong> Click "Develop apps" → "Create an app" → "Configure Admin API scopes"
 									</Text>
-									<Text size="1" className="text-yellow-700 block">
+									<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 										<strong>Step 3:</strong> Enable: <code>read_products</code>, <code>write_products</code>, <code>read_publications</code>
 									</Text>
-									<Text size="1" className="text-yellow-700 block">
+									<Text size="1" className="text-yellow-700 dark:text-yellow-300 block">
 										<strong>Step 4:</strong> Install app → Copy the <strong>Admin API access token</strong> (starts with shpat_)
 									</Text>
 								</div>
@@ -1233,7 +1233,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				)}
 
 				{/* Security Notice */}
-				<div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+				<div className="mt-6 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
 					<Text size="1" color="gray">
 						🔐 <strong>Security:</strong> Your API credentials are encrypted using Jazz's built-in encryption 
 						and stored securely for this account group. They are never shared or exposed to other users.
@@ -1263,7 +1263,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 									value={templateIdToImport}
 									onChange={(e) => setTemplateIdToImport(e.target.value)}
 									placeholder="e.g., abc123-def456-ghi789"
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+									className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
 									disabled={isImporting}
 								/>
 								<Text size="1" color="gray" className="block mt-1">
@@ -1275,11 +1275,11 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 							{importResult && (
 								<div className={`p-3 rounded-lg ${
 									importResult === 'success' 
-										? 'bg-green-50 border border-green-200' 
-										: 'bg-red-50 border border-red-200'
+										? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+										: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
 								}`}>
 									<Text size="2" className={
-										importResult === 'success' ? 'text-green-700' : 'text-red-700'
+										importResult === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
 									}>
 										{importResult === 'success' 
 											? '✅ Template imported successfully! Check the template list below to see your new template.'

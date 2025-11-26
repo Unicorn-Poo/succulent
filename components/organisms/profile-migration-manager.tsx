@@ -214,12 +214,12 @@ export default function ProfileMigrationManager({
         <div className="text-center space-y-3">
           <Check className="w-8 h-8 text-green-500 mx-auto" />
           <div>
-            <Text size="3" weight="medium" className="block text-green-800">All Account Groups Migrated</Text>
+            <Text size="3" weight="medium" className="block text-green-800 dark:text-green-300">All Account Groups Migrated</Text>
             <Text size="2" color="gray" className="block mt-1">
               All your account groups have Ayrshare user profiles
             </Text>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             {groupsAlreadyMigrated.length} account group{groupsAlreadyMigrated.length !== 1 ? 's' : ''} ready for Business Plan features
           </div>
         </div>
@@ -243,10 +243,10 @@ export default function ProfileMigrationManager({
           </div>
 
           {/* Info */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-blue-600 mt-0.5" />
-              <div className="text-sm text-blue-800">
+              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div className="text-sm text-blue-800 dark:text-blue-300">
                 <Text size="2" weight="medium" className="block mb-1">Business Plan Upgrade</Text>
                 <Text size="2">
                   To use Business Plan features, each account group needs an Ayrshare user profile. 
@@ -258,7 +258,7 @@ export default function ProfileMigrationManager({
 
           {/* Status Messages */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <Text size="2" color="red">{error}</Text>
             </div>
           )}
@@ -272,7 +272,7 @@ export default function ProfileMigrationManager({
                 const status = migrationResults[group.id];
                 
                 return (
-                  <div key={group.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={group.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="flex-1">
                       <Text size="2" weight="medium">{group.name || `Group ${group.id}`}</Text>
                       <Text size="1" color="gray" className="block">
@@ -282,19 +282,19 @@ export default function ProfileMigrationManager({
                     
                     <div className="flex items-center gap-2">
                       {status === 'creating' && (
-                        <div className="flex items-center gap-2 text-blue-600">
+                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                           <RefreshCw className="w-4 h-4 animate-spin" />
                           <Text size="1">Creating...</Text>
                         </div>
                       )}
                       {status === 'success' && (
-                        <div className="flex items-center gap-2 text-green-600">
+                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                           <Check className="w-4 h-4" />
                           <Text size="1">Migrated</Text>
                         </div>
                       )}
                       {status === 'error' && (
-                        <div className="flex items-center gap-2 text-red-600">
+                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                           <AlertTriangle className="w-4 h-4" />
                           <Text size="1">Failed</Text>
                         </div>
@@ -311,14 +311,14 @@ export default function ProfileMigrationManager({
 
           {/* Already Migrated Groups */}
           {groupsAlreadyMigrated.length > 0 && (
-            <div className="space-y-3 pt-4 border-t border-gray-200">
-              <Text size="2" weight="medium" className="text-green-600">
+            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Text size="2" weight="medium" className="text-green-600 dark:text-green-400">
                 ✓ Already Migrated ({groupsAlreadyMigrated.length})
               </Text>
               
               <div className="space-y-1">
                 {groupsAlreadyMigrated.slice(0, 3).map((group) => (
-                  <div key={group.id} className="flex items-center gap-2 text-sm text-gray-600">
+                  <div key={group.id} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <Check className="w-3 h-3 text-green-500" />
                     <span>{group.name || `Group ${group.id}`}</span>
                   </div>
@@ -333,7 +333,7 @@ export default function ProfileMigrationManager({
           )}
 
           {/* Migration Button */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
             <Text size="2" color="gray">
               This will create {groupsNeedingMigration.length} Ayrshare user profile{groupsNeedingMigration.length !== 1 ? 's' : ''}
             </Text>
@@ -357,11 +357,11 @@ export default function ProfileMigrationManager({
 
           {/* Post-migration instructions */}
           {Object.values(migrationResults).some(status => status === 'success') && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <Text size="2" weight="medium" className="block mb-1 text-green-800">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <Text size="2" weight="medium" className="block mb-1 text-green-800 dark:text-green-300">
                 Next Steps
               </Text>
-              <Text size="2" className="text-green-700">
+              <Text size="2" className="text-green-700 dark:text-green-300">
                 After migration, visit each account group's Settings tab to link your social media accounts 
                 using the new Ayrshare user profiles.
               </Text>
@@ -404,20 +404,20 @@ export default function ProfileMigrationManager({
             </div>
 
             {isLoadingProfiles && (
-              <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg mb-4">
-                <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+              <div className="flex items-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+                <RefreshCw className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />
                 <Text size="2" color="blue">Loading profiles...</Text>
               </div>
             )}
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
                 <Text size="2" color="red">{error}</Text>
               </div>
             )}
 
             {!isLoadingProfiles && orphanedProfiles.length === 0 && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mb-4">
                 <Text size="2" color="green">✅ No orphaned profiles found! All profiles are properly linked.</Text>
               </div>
             )}
@@ -433,7 +433,7 @@ export default function ProfileMigrationManager({
                     const status = cleanupResults[profile.profileKey];
                     
                     return (
-                      <div key={profile.profileKey} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={profile.profileKey} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div>
                           <Text size="2" weight="medium">
                             {profile.title || 'Untitled Profile'}
@@ -445,19 +445,19 @@ export default function ProfileMigrationManager({
                         
                         <div className="flex items-center gap-2">
                           {status === 'deleting' && (
-                            <div className="flex items-center gap-2 text-red-600">
+                            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                               <RefreshCw className="w-4 h-4 animate-spin" />
                               <Text size="1">Deleting...</Text>
                             </div>
                           )}
                           {status === 'deleted' && (
-                            <div className="flex items-center gap-2 text-green-600">
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                               <Check className="w-4 h-4" />
                               <Text size="1">Deleted</Text>
                             </div>
                           )}
                           {status === 'error' && (
-                            <div className="flex items-center gap-2 text-red-600">
+                            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                               <AlertTriangle className="w-4 h-4" />
                               <Text size="1">Error</Text>
                             </div>

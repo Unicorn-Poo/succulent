@@ -86,31 +86,31 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <Clock className="w-4 h-4" />,
 					label: 'Gelato Created',
-					color: 'text-gray-600 bg-gray-100'
+					color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
 				};
 			case 'syncing':
 				return {
 					icon: <RefreshCw className="w-4 h-4 animate-spin" />,
 					label: 'Syncing...',
-					color: 'text-lime-600 bg-lime-100'
+					color: 'text-lime-600 dark:text-lime-400 bg-lime-100 dark:bg-lime-900/30'
 				};
 			case 'synced':
 				return {
 					icon: <CheckCircle className="w-4 h-4" />,
 					label: 'Shopify Synced',
-					color: 'text-green-600 bg-green-100'
+					color: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
 				};
 			case 'error':
 				return {
 					icon: <AlertCircle className="w-4 h-4" />,
 					label: 'Sync Error',
-					color: 'text-red-600 bg-red-100'
+					color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
 				};
 			default:
 				return {
 					icon: <Package className="w-4 h-4" />,
 					label: 'Unknown',
-					color: 'text-gray-600 bg-gray-100'
+					color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
 				};
 		}
 	};
@@ -138,7 +138,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 			<Card>
 				<div className="p-6">
 					<div className="flex items-center gap-2 mb-4">
-						<Package className="w-5 h-5 text-green-600" />
+						<Package className="w-5 h-5 text-green-600 dark:text-green-400" />
 						<Text weight="medium" size="3">Gelato Products</Text>
 					</div>
 					<div className="text-center py-6">
@@ -156,12 +156,12 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 			<div className="p-6">
 				<div className="flex items-center justify-between mb-4">
 					<div className="flex items-center gap-2">
-						<Package className="w-5 h-5 text-green-600" />
+						<Package className="w-5 h-5 text-green-600 dark:text-green-400" />
 						<Text weight="medium" size="3">Gelato Products ({createdProducts.length})</Text>
 					</div>
 					<div className="flex items-center gap-2">
 						{isShopifyConfigured && (
-							<div className="flex items-center gap-1 text-xs text-green-600">
+							<div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
 								<CheckCircle className="w-3 h-3" />
 								Shopify Connected
 							</div>
@@ -175,7 +175,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 						const isRetrying = retryingProducts.has(product?.productId);
 
 						return (
-							<div key={product?.productId || index} className="bg-gray-50 p-4 rounded-lg border">
+							<div key={product?.productId || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
 								<div className="flex items-start justify-between">
 									<div className="flex-1">
 										<div className="flex items-center gap-2 mb-2">
@@ -188,7 +188,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 											</span>
 										</div>
 										
-										<div className="text-sm text-gray-600 space-y-1">
+										<div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
 											<div>Product ID: {product?.productId || 'Unknown'}</div>
 											<div>
 												Created: {product?.createdAt ? new Date(product.createdAt).toLocaleString() : 'Unknown'}
@@ -203,7 +203,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 
 										{/* Status Message */}
 										{product?.shopifyMessage && (
-											<div className="mt-2 text-sm text-gray-600 bg-white p-2 rounded border">
+											<div className="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 p-2 rounded border">
 												{product.shopifyMessage}
 											</div>
 										)}
@@ -215,7 +215,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 													href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="text-sm text-lime-600 hover:text-lime-800 underline"
+													className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
 												>
 													View in Shopify Admin →
 												</a>
@@ -245,28 +245,28 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				</div>
 
 				{/* Summary Stats */}
-				<div className="mt-6 pt-4 border-t border-gray-200">
+				<div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
 						<div>
-							<Text weight="medium" size="2" className="block text-gray-900">
+							<Text weight="medium" size="2" className="block text-gray-900 dark:text-gray-100">
 								{createdProducts.length}
 							</Text>
 							<Text size="1" color="gray">Total Products</Text>
 						</div>
 						<div>
-							<Text weight="medium" size="2" className="block text-green-600">
+							<Text weight="medium" size="2" className="block text-green-600 dark:text-green-400">
 								{createdProducts.filter((p: any) => p?.shopifyStatus === 'synced').length}
 							</Text>
 							<Text size="1" color="gray">Synced</Text>
 						</div>
 						<div>
-							<Text weight="medium" size="2" className="block text-lime-600">
+							<Text weight="medium" size="2" className="block text-lime-600 dark:text-lime-400">
 								{createdProducts.filter((p: any) => p?.shopifyStatus === 'syncing').length}
 							</Text>
 							<Text size="1" color="gray">Syncing</Text>
 						</div>
 						<div>
-							<Text weight="medium" size="2" className="block text-red-600">
+							<Text weight="medium" size="2" className="block text-red-600 dark:text-red-400">
 								{createdProducts.filter((p: any) => p?.shopifyStatus === 'error').length}
 							</Text>
 							<Text size="1" color="gray">Errors</Text>

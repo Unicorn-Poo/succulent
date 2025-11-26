@@ -50,10 +50,10 @@ export default function XPreview({ post, account }: XPreviewProps) {
 
   const getStatusBadgeColor = () => {
     switch (post.status) {
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-lime-100 text-lime-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
+      case 'draft': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -64,9 +64,9 @@ export default function XPreview({ post, account }: XPreviewProps) {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="max-w-xl mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {/* Status Badge */}
-      <div className="px-4 py-2 bg-gray-50 border-b">
+      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor()}`}>
           {post.status.toUpperCase()}
         </span>
@@ -88,26 +88,26 @@ export default function XPreview({ post, account }: XPreviewProps) {
           <div className="flex-1 min-w-0">
             {/* Header */}
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-gray-900 truncate">{account.name}</h3>
-              <span className="text-sm text-gray-500">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{account.name}</h3>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 @{account.username || account.name.toLowerCase().replace(/\s+/g, '')}
               </span>
-              <span className="text-gray-500">·</span>
-              <span className="text-sm text-gray-500">{getStatusDisplay()}</span>
+              <span className="text-gray-500 dark:text-gray-400">·</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{getStatusDisplay()}</span>
               <div className="flex-1"></div>
               <MoreHorizontal className="w-5 h-5 text-gray-400" />
             </div>
             
             {/* Tweet Text */}
             <div className="mt-1">
-              <p className="text-gray-900 whitespace-pre-wrap">{post.content}</p>
+              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{post.content}</p>
             </div>
             
             {/* Media Placeholder */}
             {post.content.includes('http') && (
-              <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+              <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
+                  <div className="text-center text-gray-500 dark:text-gray-400">
                     <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 rounded-lg flex items-center justify-center">
                       <span className="text-lg">🖼️</span>
                     </div>
@@ -121,36 +121,36 @@ export default function XPreview({ post, account }: XPreviewProps) {
             <div className="flex items-center justify-between mt-3 max-w-md">
               <div className="flex items-center space-x-1 group cursor-pointer">
                 <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <MessageCircle className="w-4 h-4 text-gray-500 group-hover:text-lime-500" />
+                  <MessageCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-lime-500" />
                 </div>
                 {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 group-hover:text-lime-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-lime-500">
                     {formatEngagement(post.engagement.comments)}
                   </span>
                 )}
               </div>
               
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-green-50 transition-colors">
-                  <Repeat2 className="w-4 h-4 text-gray-500 group-hover:text-green-500" />
+                <div className="p-2 rounded-full group-hover:bg-green-50 dark:bg-green-900/20 transition-colors">
+                  <Repeat2 className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-500" />
                 </div>
                 {post.engagement && post.engagement.shares > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 group-hover:text-green-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-green-500">
                     {formatEngagement(post.engagement.shares)}
                   </span>
                 )}
               </div>
               
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors">
+                <div className="p-2 rounded-full group-hover:bg-red-50 dark:bg-red-900/20 transition-colors">
                   <Heart className={`w-4 h-4 ${
                     post.status === 'published' && post.engagement?.likes 
                       ? 'text-red-500 fill-current' 
-                      : 'text-gray-500 group-hover:text-red-500'
+                      : 'text-gray-500 dark:text-gray-400 group-hover:text-red-500'
                   }`} />
                 </div>
                 {post.engagement && post.engagement.likes > 0 && post.status === 'published' && (
-                  <span className="text-sm text-gray-500 group-hover:text-red-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-red-500">
                     {formatEngagement(post.engagement.likes)}
                   </span>
                 )}
@@ -158,7 +158,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
               
               <div className="flex items-center space-x-1 group cursor-pointer">
                 <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <Share className="w-4 h-4 text-gray-500 group-hover:text-lime-500" />
+                  <Share className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-lime-500" />
                 </div>
               </div>
             </div>

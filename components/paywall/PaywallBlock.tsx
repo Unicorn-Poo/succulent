@@ -256,7 +256,7 @@ export function PaywallBlock({
         </div>
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-white dark:bg-gray-900/90 backdrop-blur-sm flex items-center justify-center p-4">
           <Card className="max-w-md">
             <PaywallContent />
           </Card>

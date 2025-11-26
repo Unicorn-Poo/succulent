@@ -131,7 +131,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Bell className="w-5 h-5 text-gray-600" />
+            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <div>
               <Heading size="4">Push Notifications</Heading>
               <Text size="2" color="gray">
@@ -185,17 +185,17 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
         {isEditing && (
           <div className="space-y-6">
             {/* Setup Instructions */}
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
               <div className="flex items-start gap-3">
-                <ExternalLink className="w-5 h-5 text-blue-600 mt-0.5" />
+                <ExternalLink className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
                   <Text size="2" weight="medium" className="text-blue-900 block mb-2">
                     Pushover Setup Required
                   </Text>
-                  <Text size="2" className="text-blue-800 mb-3 block">
+                  <Text size="2" className="text-blue-800 dark:text-blue-300 mb-3 block">
                     To receive notifications, you&apos;ll need a Pushover account and app token:
                   </Text>
-                  <ol className="text-sm text-blue-800 space-y-1 ml-4">
+                  <ol className="text-sm text-blue-800 dark:text-blue-300 space-y-1 ml-4">
                     <li>1. Sign up at <a href="https://pushover.net" target="_blank" rel="noopener noreferrer" className="underline">pushover.net</a></li>
                     <li>2. Create an application to get your API Token</li>
                     <li>3. Find your User Key in your account dashboard</li>
@@ -233,7 +233,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
                       type="password"
                       value={formData.apiToken}
                       onChange={(e) => setFormData(prev => ({ ...prev, apiToken: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
                       placeholder="Your Pushover API Token"
                     />
                   </div>
@@ -246,7 +246,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
                       type="password"
                       value={formData.userKey}
                       onChange={(e) => setFormData(prev => ({ ...prev, userKey: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
                       placeholder="Your Pushover User Key"
                     />
                   </div>
@@ -319,7 +319,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
             {/* Test Result */}
             {testResult && (
               <div className={`p-3 rounded-lg flex items-center gap-2 ${
-                testResult === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                testResult === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300'
               }`}>
                 {testResult === 'success' ? (
                   <CheckCircle className="w-4 h-4" />

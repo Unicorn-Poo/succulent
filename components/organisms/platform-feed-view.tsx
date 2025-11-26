@@ -494,8 +494,8 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
     <div className="space-y-4 mt-6">
       {/* Feed Header */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-          <div className="w-8 h-8 bg-lime-100 rounded-lg flex items-center justify-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="w-8 h-8 bg-lime-100 dark:bg-lime-900/30 rounded-lg flex items-center justify-center">
             <Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
           </div>
           <div>
@@ -539,7 +539,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
                 <div key={post.ayrshareId || post.id} className="relative">
                   {/* Historical post indicator */}
                   <div className="absolute top-2 right-2 z-10">
-                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                    <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-xs flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {formatDate(post.created)}
                     </div>
@@ -670,7 +670,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
 
       {/* Feed Info */}
       {/* {allPosts.length > 0 && (
-        <div className="text-center py-4 border-t border-gray-200">
+        <div className="text-center py-4 border-t border-gray-200 dark:border-gray-700">
                      <Text size="1" color="gray">
              Showing {transformedLocalPosts.length} Jazz posts
              {historicalPosts.length > 0 && ` and ${historicalPosts.length} from Ayrshare`} for {account.platform}

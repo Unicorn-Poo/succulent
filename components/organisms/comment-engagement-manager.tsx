@@ -177,9 +177,9 @@ export default function CommentEngagementManager({
 
   const getSentimentColor = (sentiment?: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-600 bg-green-50';
-      case 'negative': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'positive': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+      case 'negative': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800';
     }
   };
 
@@ -192,7 +192,7 @@ export default function CommentEngagementManager({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Comment Engagement Manager</h3>
         <div className="flex items-center space-x-4">
@@ -224,8 +224,8 @@ export default function CommentEngagementManager({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
               }`}
             >
               {tab.label}
@@ -238,7 +238,7 @@ export default function CommentEngagementManager({
       {activeTab === 'comments' && (
         <div>
           {selectedComments.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{selectedComments.length} comments selected</span>
                 <Button 
@@ -257,7 +257,7 @@ export default function CommentEngagementManager({
               <div
                 key={comment.id}
                 className={`p-4 border rounded-lg ${
-                  selectedComments.includes(comment.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  selectedComments.includes(comment.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'
                 } ${comment.isSpam ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-start space-x-3">
@@ -275,20 +275,20 @@ export default function CommentEngagementManager({
                         {getSentimentIcon(comment.sentiment)} {comment.sentiment}
                       </span>
                       {comment.requiresResponse && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs">
                           Needs Response
                         </span>
                       )}
                       {comment.isSpam && (
-                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-xs">
                           Spam
                         </span>
                       )}
                     </div>
                     
-                    <p className="text-gray-800 mb-2">{comment.comment}</p>
+                    <p className="text-gray-800 dark:text-gray-200 mb-2">{comment.comment}</p>
                     
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                       <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
                       <span>{comment.platform}</span>
                       {comment.likes && <span>❤️ {comment.likes}</span>}
@@ -300,7 +300,7 @@ export default function CommentEngagementManager({
           </div>
 
           {comments.length === 0 && !isLoading && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               No comments to moderate
             </div>
           )}
@@ -311,7 +311,7 @@ export default function CommentEngagementManager({
       {activeTab === 'rules' && (
         <div>
           <div className="mb-4 flex justify-between items-center">
-            <p className="text-sm text-gray-600">Configure automatic reply rules for comments</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Configure automatic reply rules for comments</p>
             <Button onClick={addNewRule} size="sm">Add Rule</Button>
           </div>
 
@@ -383,23 +383,23 @@ export default function CommentEngagementManager({
       {activeTab === 'metrics' && metrics && (
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-800">Total Comments</h4>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300">Total Comments</h4>
               <p className="text-2xl font-bold text-blue-900">{metrics.totalComments}</p>
             </div>
             
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-medium text-green-800">Replied Comments</h4>
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300">Replied Comments</h4>
               <p className="text-2xl font-bold text-green-900">{metrics.repliedComments}</p>
             </div>
             
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-medium text-yellow-800">Response Time</h4>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Response Time</h4>
               <p className="text-2xl font-bold text-yellow-900">{metrics.averageResponseTime}m</p>
             </div>
             
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h4 className="font-medium text-purple-800">Engagement Rate</h4>
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-800 dark:text-purple-300">Engagement Rate</h4>
               <p className="text-2xl font-bold text-purple-900">{metrics.engagementRate.toFixed(1)}%</p>
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function CommentEngagementManager({
                 {metrics.topEngagers.map((engager, index) => (
                   <div key={engager} className="flex items-center justify-between">
                     <span>#{index + 1} {engager}</span>
-                    <span className="text-sm text-gray-500">Active</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Active</span>
                   </div>
                 ))}
               </div>

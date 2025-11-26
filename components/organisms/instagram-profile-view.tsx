@@ -128,7 +128,7 @@ export default function InstagramProfileView({
 
     return (
       <Link href={getPostUrl(post.id)} className="block group">
-        <div className="aspect-square relative bg-gray-100 overflow-hidden">
+        <div className="aspect-square relative bg-gray-100 dark:bg-gray-700 overflow-hidden">
           {mediaUrl ? (
             <>
               {isVideo ? (
@@ -203,9 +203,9 @@ export default function InstagramProfileView({
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white">
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900">
       {/* Profile Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function InstagramProfileView({
           {/* Profile Picture */}
           <div className="flex-shrink-0">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 p-1">
-              <div className="w-full h-full rounded-full overflow-hidden bg-white p-1">
+              <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-900 p-1">
                 {account.avatar ? (
                   <Image
                     src={account.avatar}
@@ -299,7 +299,7 @@ export default function InstagramProfileView({
                 </Text>
               )}
               {profileInfo?.website && (
-                <Link href={profileInfo.website} target="_blank" className="text-blue-600 hover:underline">
+                <Link href={profileInfo.website} target="_blank" className="text-blue-600 dark:text-blue-400 hover:underline">
                   <Text size="2" className="flex items-center gap-1">
                     {profileInfo.website}
                     <ExternalLink className="w-3 h-3" />
@@ -331,18 +331,18 @@ export default function InstagramProfileView({
 
         {/* Sync Results */}
         {syncResults && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <Text size="2" color="blue">{syncResults}</Text>
           </div>
         )}
       </div>
 
       {/* Highlights Row */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4 overflow-x-auto">
           {/* New Highlight */}
           <div className="flex-shrink-0 text-center">
-            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mb-1">
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-1">
               <Plus className="w-6 h-6 text-gray-400" />
             </div>
             <Text size="1" color="gray">New</Text>
@@ -363,14 +363,14 @@ export default function InstagramProfileView({
       </div>
 
       {/* Content Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <div className="flex">
           <button
             onClick={() => setActiveTab('posts')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'posts' 
                 ? 'border-black text-black' 
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >
             <Grid3X3 className="w-5 h-5 mr-2" />
@@ -381,7 +381,7 @@ export default function InstagramProfileView({
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'reels' 
                 ? 'border-black text-black' 
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >
             <PlayCircle className="w-5 h-5 mr-2" />
@@ -392,7 +392,7 @@ export default function InstagramProfileView({
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'tagged' 
                 ? 'border-black text-black' 
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >
             <Bookmark className="w-5 h-5 mr-2" />

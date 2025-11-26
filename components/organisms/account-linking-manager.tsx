@@ -691,7 +691,7 @@ export default function AccountLinkingManager({
 
           {/* Status Messages */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500" />
                 <Text size="2" color="red">{error}</Text>
@@ -700,7 +700,7 @@ export default function AccountLinkingManager({
           )}
 
           {success && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
                 <Text size="2" color="green">{success}</Text>
@@ -710,7 +710,7 @@ export default function AccountLinkingManager({
 
           {/* Polling Progress Indicator */}
           {isPolling && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
@@ -736,13 +736,13 @@ export default function AccountLinkingManager({
 
           {/* Force Refresh Section */}
           {connectedAccounts.length === 0 && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <Text size="2" weight="medium" className="block text-blue-800 mb-1">
+                  <Text size="2" weight="medium" className="block text-blue-800 dark:text-blue-300 mb-1">
                     Just linked accounts in Ayrshare?
                   </Text>
-                  <Text size="2" className="text-blue-700">
+                  <Text size="2" className="text-blue-700 dark:text-blue-300">
                     If you just connected accounts, click refresh to update the status.
                   </Text>
                 </div>
@@ -791,14 +791,14 @@ export default function AccountLinkingManager({
 
             {/* Jazz Database Corruption Warning */}
             {!accountGroup?.accounts && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                  <Text size="2" weight="medium" className="text-red-800">
+                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <Text size="2" weight="medium" className="text-red-800 dark:text-red-300">
                     Database Corruption Detected
                   </Text>
                 </div>
-                <Text size="2" className="text-red-700 mb-3 block">
+                <Text size="2" className="text-red-700 dark:text-red-300 mb-3 block">
                   Your account group data is corrupted. This can happen if the browser was closed during account group creation.
                 </Text>
                 <div className="flex gap-2">
@@ -823,7 +823,7 @@ export default function AccountLinkingManager({
 
             {/* Add Account Form */}
             {showAddAccountForm && (
-              <Card className="p-4 border-dashed border-2 border-gray-300">
+              <Card className="p-4 border-dashed border-2 border-gray-300 dark:border-gray-600">
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <label className="block text-xs font-medium mb-1">Platform</label>
@@ -913,7 +913,7 @@ export default function AccountLinkingManager({
                                 size="1" 
                                 variant="ghost" 
                                 onClick={() => handleRemoveAccount(index, account)}
-                                className="text-red-500 hover:text-red-700"
+                                className="text-red-500 hover:text-red-700 dark:text-red-300"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
@@ -926,7 +926,7 @@ export default function AccountLinkingManager({
                 );
               } else if (!showAddAccountForm && accountGroup?.accounts !== undefined) {
                 return (
-                  <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                  <div className="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                     <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <Text size="2" color="gray" className="block mb-3">
                       No accounts found
@@ -949,15 +949,15 @@ export default function AccountLinkingManager({
 
 
           {/* Profile Information */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-start gap-3">
-              <Settings className="w-4 h-4 text-blue-600 mt-0.5" />
+              <Settings className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="flex-1">
-                <Text size="2" weight="medium" className="block mb-1 text-blue-800">
+                <Text size="2" weight="medium" className="block mb-1 text-blue-800 dark:text-blue-300">
                   Profile Key Management
                 </Text>
-                <Text size="1" className="text-blue-700 mb-2">
-                  This account group uses Ayrshare user profile: <code className="bg-blue-100 px-1 rounded">{profileKey?.substring(0, 12)}...</code>
+                <Text size="1" className="text-blue-700 dark:text-blue-300 mb-2">
+                  This account group uses Ayrshare user profile: <code className="bg-blue-100 dark:bg-blue-900/30 px-1 rounded">{profileKey?.substring(0, 12)}...</code>
                 </Text>
                 <Button 
                   size="1" 
@@ -994,7 +994,7 @@ export default function AccountLinkingManager({
           
           {accountToRemove && (
             <div className="space-y-4 mt-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <Image 
                   src={platformIcons[accountToRemove.account.platform as keyof typeof platformIcons]} 
                   alt={accountToRemove.account.platform} 

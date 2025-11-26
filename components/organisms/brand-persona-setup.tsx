@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../atoms/button';
 import { Input } from '../atoms/input';
-import { BrandPersona, BrandPersonaManager, getDefaultBrandPersonas, saveBrandPersona, loadBrandPersona } from '../../utils/brandPersonaManager';
+import { BrandPersona, BrandPersonaManager, getDefaultBrandPersonas, saveBrandPersona, loadBrandPersona, deleteBrandPersona } from '../../utils/brandPersonaManager';
 import { 
   generateChatGPTPersonaPrompt, 
   parseChatGPTPersonaResponse, 
@@ -106,6 +106,12 @@ export default function BrandPersonaSetup({
   const [showExamplePostsPrompt, setShowExamplePostsPrompt] = useState(false);
   const [examplePostsPrompt, setExamplePostsPrompt] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // New states for copy/paste JSON and re-import
+  const [showJsonImport, setShowJsonImport] = useState(false);
+  const [jsonImportValue, setJsonImportValue] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load existing persona
   useEffect(() => {
@@ -313,6 +319,96 @@ export default function BrandPersonaSetup({
     alert(`Test Results:\n\nSample Post:\n${testPost}\n\nSample Reply:\n${testReply}`);
   };
 
+  // Delete persona handler
+  const handleDeletePersona = async () => {
+    if (!accountGroup) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteBrandPersona(accountGroup);
+      setCurrentPersona(null);
+      setSetupMethod('choose');
+      setShowDeleteConfirm(false);
+      onPersonaUpdated?.(null as any);
+    } catch (error) {
+      console.error('Error deleting persona:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Generate JSON prompt template for external ChatGPT
+  const getJsonPromptTemplate = () => {
+    return `Create a brand persona JSON for my social media AI tools. Return ONLY valid JSON with this exact structure:
+
+{
+  "name": "Brand Name",
+  "description": "Brief brand description",
+  "voice": {
+    "tone": "professional|casual|friendly|authoritative|playful|inspirational|educational",
+    "personality": ["trait1", "trait2", "trait3"],
+    "writingStyle": "formal|conversational|witty|direct|storytelling|technical",
+    "emojiUsage": "none|minimal|moderate|frequent",
+    "languageLevel": "simple|intermediate|advanced|expert"
+  },
+  "messaging": {
+    "keyMessages": ["message1", "message2", "message3"],
+    "valueProposition": "Your unique value statement",
+    "targetAudience": "Description of target audience",
+    "contentPillars": ["pillar1", "pillar2", "pillar3"],
+    "avoidTopics": ["topic1", "topic2"]
+  },
+  "engagement": {
+    "commentStyle": "brief|detailed|questions|supportive|expert",
+    "dmApproach": "professional|friendly|direct|collaborative",
+    "hashtagStrategy": "branded|trending|niche|mixed",
+    "mentionStyle": "conservative|active|strategic"
+  },
+  "contentGuidelines": {
+    "postLength": "short|medium|long|varies",
+    "contentMix": { "educational": 40, "entertainment": 30, "promotional": 20, "personal": 10 },
+    "callToActionStyle": "subtle|direct|creative|none",
+    "questionFrequency": "rare|occasional|frequent|always"
+  },
+  "examples": {
+    "samplePosts": ["Example post 1", "Example post 2"],
+    "sampleReplies": ["Example reply 1"],
+    "sampleDMs": ["Example DM 1"]
+  }
+}
+
+Return ONLY the JSON, no additional text or markdown.`;
+  };
+
+  // Copy JSON prompt template
+  const copyJsonPromptTemplate = async () => {
+    try {
+      await navigator.clipboard.writeText(getJsonPromptTemplate());
+      alert('JSON prompt template copied! Paste it into your ChatGPT conversation.');
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  // Import persona from pasted JSON
+  const handleImportFromJson = () => {
+    if (!jsonImportValue.trim()) {
+      alert('Please paste JSON content');
+      return;
+    }
+
+    const parsedPersona = parseChatGPTPersonaResponse(jsonImportValue);
+    if (parsedPersona) {
+      setCurrentPersona(parsedPersona);
+      setIsEditing(true);
+      setShowJsonImport(false);
+      setJsonImportValue('');
+      alert('Persona imported successfully!');
+    } else {
+      alert('Failed to parse JSON. Please check the format and try again.');
+    }
+  };
+
   // Handle manual setup
   useEffect(() => {
     if (setupMethod === 'manual') {
@@ -322,13 +418,13 @@ export default function BrandPersonaSetup({
 
   // Render different interfaces based on setup method
   const renderChooseInterface = () => (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border dark:border-gray-800 p-6">
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl text-white">🎨</span>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Set Your Brand Persona</h3>
-        <p className="text-gray-600 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Set Your Brand Persona</h3>
+        <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-6">
           Define your brand voice and tone to ensure all AI automation matches your style perfectly.
         </p>
 
@@ -336,16 +432,16 @@ export default function BrandPersonaSetup({
           {defaultPersonas.map(persona => (
             <div
               key={persona.id}
-              className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 cursor-pointer transition-colors"
+              className="p-4 border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-gray-800"
               onClick={() => handleUseTemplate(persona.id)}
             >
-              <h4 className="font-medium text-gray-900 mb-2">{persona.name}</h4>
-              <p className="text-sm text-gray-600 mb-3">{persona.description}</p>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{persona.name}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-3">{persona.description}</p>
               <div className="flex items-center space-x-2 text-xs">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 dark:text-blue-300 rounded-full">
                   {persona.voice.tone}
                 </span>
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 dark:bg-green-900/30 text-green-800 dark:text-green-300 dark:text-green-300 rounded-full">
                   {persona.voice.emojiUsage} emojis
                 </span>
               </div>
@@ -372,11 +468,11 @@ export default function BrandPersonaSetup({
   );
 
   const renderChatGPTInterface = () => (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">🤖 ChatGPT Persona Generator</h3>
-          <p className="text-sm text-gray-600">Let AI create your perfect brand persona in seconds</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🤖 ChatGPT Persona Generator</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">Let AI create your perfect brand persona in seconds</p>
         </div>
         <Button onClick={() => setSetupMethod('choose')} variant="outline" size="1">
           ← Back to Options
@@ -385,9 +481,9 @@ export default function BrandPersonaSetup({
 
       {/* Quick Import from Example Posts */}
       {!showPrompt && !showExamplePostsPrompt && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
-          <h4 className="font-medium text-purple-800 mb-2">⚡ Quick Import: Learn from Your Posts</h4>
-          <p className="text-sm text-purple-600 mb-4">
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 dark:border-purple-800 rounded-lg">
+          <h4 className="font-medium text-purple-800 dark:text-purple-300 dark:text-purple-300 mb-2">⚡ Quick Import: Learn from Your Posts</h4>
+          <p className="text-sm text-purple-600 dark:text-purple-400 dark:text-purple-400 mb-4">
             Paste 2-5 of your best performing posts and AI will extract your brand voice automatically.
           </p>
           
@@ -407,7 +503,7 @@ export default function BrandPersonaSetup({
                   newPosts[index] = e.target.value;
                   setExamplePosts(newPosts);
                 }}
-                className="w-full p-3 border rounded-lg h-20 resize-none text-sm"
+                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none text-sm bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
               />
             ))}
             <Button 
@@ -432,7 +528,7 @@ export default function BrandPersonaSetup({
       {showExamplePostsPrompt && (
         <div className="space-y-6">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-gray-900">📋 Generated Analysis Prompt</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">📋 Generated Analysis Prompt</h4>
             <div className="flex gap-2">
               <Button onClick={copyExamplePostsPrompt} size="1" variant="outline">
                 📋 Copy Prompt
@@ -443,23 +539,23 @@ export default function BrandPersonaSetup({
             </div>
           </div>
           
-          <div className="p-4 bg-gray-50 border rounded-lg max-h-64 overflow-y-auto">
-            <pre className="text-sm whitespace-pre-wrap text-gray-700">{examplePostsPrompt}</pre>
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
+            <pre className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300 dark:text-gray-300">{examplePostsPrompt}</pre>
           </div>
           
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <p className="text-sm text-purple-700">
+          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 dark:border-purple-800 rounded-lg">
+            <p className="text-sm text-purple-700 dark:text-purple-300 dark:text-purple-300">
               <strong>Steps:</strong> 1. Copy this prompt → 2. Paste into ChatGPT or Claude → 3. Copy the JSON response → 4. Paste below
             </p>
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">🤖 Paste AI Response</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">🤖 Paste AI Response</h4>
             <textarea
               placeholder="Paste the complete JSON response here..."
               value={chatgptResponse}
               onChange={(e) => setChatgptResponse(e.target.value)}
-              className="w-full p-4 border rounded-lg h-40 resize-none font-mono text-sm"
+              className="w-full p-4 border dark:border-gray-700 rounded-lg h-40 resize-none font-mono text-sm bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
             />
             
             <div className="flex gap-3 mt-4">
@@ -479,9 +575,9 @@ export default function BrandPersonaSetup({
         <div className="space-y-6">
           {/* Quick Examples */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-800 mb-2">🚀 Quick Setup (30 seconds)</h4>
-              <p className="text-sm text-blue-600 mb-3">Just fill in the basics and get a simple prompt</p>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 dark:border-blue-800 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300 dark:text-blue-300 mb-2">🚀 Quick Setup (30 seconds)</h4>
+              <p className="text-sm text-blue-600 dark:text-blue-400 dark:text-blue-400 mb-3">Just fill in the basics and get a simple prompt</p>
               <div className="space-y-3">
                 <Input
                   placeholder="Brand name (e.g., 'Wellness With Sarah')"
@@ -492,7 +588,7 @@ export default function BrandPersonaSetup({
                   placeholder="Brief brand description (e.g., 'I help busy women prioritize wellness...')"
                   value={promptInput.brandDescription}
                   onChange={(e) => setPromptInput(prev => ({ ...prev, brandDescription: e.target.value }))}
-                  className="w-full p-3 border rounded-lg h-20 resize-none"
+                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
                 />
                 <Button onClick={handleQuickPrompt} className="w-full">
                   Generate Quick Prompt
@@ -500,9 +596,9 @@ export default function BrandPersonaSetup({
               </div>
             </div>
 
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-medium text-green-800 mb-2">⚡ Detailed Setup (2 minutes)</h4>
-              <p className="text-sm text-green-600 mb-3">Fill out more details for a comprehensive persona</p>
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 dark:bg-green-900/20 border border-green-200 dark:border-green-800 dark:border-green-800 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300 dark:text-green-300 mb-2">⚡ Detailed Setup (2 minutes)</h4>
+              <p className="text-sm text-green-600 dark:text-green-400 dark:text-green-400 mb-3">Fill out more details for a comprehensive persona</p>
               <div className="space-y-3">
                 <Input
                   placeholder="Industry (e.g., 'Health & Wellness')"
@@ -523,25 +619,25 @@ export default function BrandPersonaSetup({
 
           {/* Example Templates */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">💡 Use These Examples (Click to Fill)</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">💡 Use These Examples (Click to Fill)</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {promptExamples.slice(0, 4).map((example, index) => (
                 <div
                   key={index}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 cursor-pointer transition-colors"
+                  className="p-4 border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-gray-800"
                   onClick={() => handleUseExample(example)}
                 >
-                  <h5 className="font-medium text-gray-900 mb-2">{example.brandName}</h5>
-                  <p className="text-sm text-gray-600 mb-2">{example.industry}</p>
-                  <p className="text-xs text-gray-500">{example.brandDescription.substring(0, 100)}...</p>
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{example.brandName}</h5>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-2">{example.industry}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400">{example.brandDescription.substring(0, 100)}...</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Manual Input Form */}
-          <div className="border-t pt-6">
-            <h4 className="font-medium text-gray-900 mb-4">📝 Or Fill Out Details Manually</h4>
+          <div className="border-t dark:border-gray-700 pt-6">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">📝 Or Fill Out Details Manually</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
                 placeholder="Brand Name"
@@ -560,14 +656,14 @@ export default function BrandPersonaSetup({
                 placeholder="Target Audience (e.g., 'Busy professionals aged 25-45 who want to improve productivity')"
                 value={promptInput.targetAudience}
                 onChange={(e) => setPromptInput(prev => ({ ...prev, targetAudience: e.target.value }))}
-                className="w-full p-3 border rounded-lg h-20 resize-none"
+                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
               />
               
               <textarea
                 placeholder="Brand Description (e.g., 'We help entrepreneurs automate their workflows and scale efficiently')"
                 value={promptInput.brandDescription}
                 onChange={(e) => setPromptInput(prev => ({ ...prev, brandDescription: e.target.value }))}
-                className="w-full p-3 border rounded-lg h-20 resize-none"
+                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
               />
               
               <Input
@@ -600,7 +696,7 @@ export default function BrandPersonaSetup({
           {/* Generated Prompt Display */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-900">📋 Generated ChatGPT Prompt</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">📋 Generated ChatGPT Prompt</h4>
               <div className="flex gap-2">
                 <Button onClick={copyPromptToClipboard} size="1" variant="outline">
                   📋 Copy Prompt
@@ -611,12 +707,12 @@ export default function BrandPersonaSetup({
               </div>
             </div>
             
-            <div className="p-4 bg-gray-50 border rounded-lg max-h-64 overflow-y-auto">
-              <pre className="text-sm whitespace-pre-wrap text-gray-700">{generatedPrompt}</pre>
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
+              <pre className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300 dark:text-gray-300">{generatedPrompt}</pre>
             </div>
             
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
+            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-300">
                 <strong>Instructions:</strong>
                 1. Copy the prompt above
                 2. Paste it into ChatGPT
@@ -628,12 +724,12 @@ export default function BrandPersonaSetup({
 
           {/* ChatGPT Response Input */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">🤖 Paste ChatGPT Response</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">🤖 Paste ChatGPT Response</h4>
             <textarea
               placeholder="Paste the complete JSON response from ChatGPT here..."
               value={chatgptResponse}
               onChange={(e) => setChatgptResponse(e.target.value)}
-              className="w-full p-4 border rounded-lg h-40 resize-none font-mono text-sm"
+              className="w-full p-4 border dark:border-gray-700 rounded-lg h-40 resize-none font-mono text-sm bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
             />
             
             <div className="flex gap-3 mt-4">
@@ -655,8 +751,8 @@ export default function BrandPersonaSetup({
 
           {/* Validation Helper */}
           {chatgptResponse && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-700">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 dark:text-yellow-300">
                 💡 <strong>Tip:</strong> Make sure you copied the complete JSON response from ChatGPT
               </p>
             </div>
@@ -670,16 +766,16 @@ export default function BrandPersonaSetup({
     if (!currentPersona) return null;
 
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border dark:border-gray-800 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">🎨 Brand Persona: {currentPersona.name}</h3>
-            <p className="text-sm text-gray-600">{currentPersona.description}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🎨 Brand Persona: {currentPersona.name}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">{currentPersona.description}</p>
           </div>
           
           <div className="flex items-center space-x-3">
             <Button onClick={testPersona} variant="outline" size="1">
-              🧪 Test Persona
+              🧪 Test
             </Button>
             
             {isEditing ? (
@@ -689,99 +785,367 @@ export default function BrandPersonaSetup({
                   className="bg-green-600 hover:bg-green-700"
                   disabled={isSaving}
                 >
-                  {isSaving ? '💾 Saving...' : '💾 Save Persona'}
+                  {isSaving ? '💾 Saving...' : '💾 Save'}
                 </Button>
                 <Button onClick={() => setIsEditing(false)} variant="outline" disabled={isSaving}>
                   Cancel
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)} variant="outline">
-                ✏️ Edit Persona
-              </Button>
+              <>
+                <Button onClick={() => setIsEditing(true)} variant="outline">
+                  ✏️ Edit
+                </Button>
+                <Button onClick={() => setShowDeleteConfirm(true)} variant="outline" intent="danger" size="1">
+                  🗑️ Delete
+                </Button>
+              </>
             )}
           </div>
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 dark:bg-red-900/20 border border-red-200 dark:border-red-800 dark:border-red-800 rounded-lg">
+            <h4 className="font-medium text-red-800 dark:text-red-300 dark:text-red-300 mb-2">⚠️ Delete Brand Persona?</h4>
+            <p className="text-sm text-red-600 dark:text-red-400 dark:text-red-400 mb-4">
+              This will permanently delete your brand persona. All AI automation will use default settings.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleDeletePersona} 
+                intent="danger"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              </Button>
+              <Button onClick={() => setShowDeleteConfirm(false)} variant="outline">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Copy/Paste JSON Section */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-indigo-800 dark:text-indigo-300">🔄 Update via ChatGPT</h4>
+            <div className="flex gap-2">
+              <Button onClick={copyJsonPromptTemplate} variant="outline" size="1">
+                📋 Copy JSON Prompt
+              </Button>
+              <Button onClick={() => setShowJsonImport(!showJsonImport)} variant="outline" size="1">
+                {showJsonImport ? '✕ Close' : '📥 Paste JSON'}
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-indigo-600 dark:text-indigo-400 mb-2">
+            Copy the JSON prompt template, paste into your ChatGPT, then paste the response back here to update your persona.
+          </p>
+          
+          {showJsonImport && (
+            <div className="mt-4 space-y-3">
+              <textarea
+                placeholder="Paste the JSON response from ChatGPT here..."
+                value={jsonImportValue}
+                onChange={(e) => setJsonImportValue(e.target.value)}
+                className="w-full p-4 border dark:border-gray-700 rounded-lg h-32 resize-none font-mono text-sm bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+              />
+              <Button 
+                onClick={handleImportFromJson}
+                disabled={!jsonImportValue.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                🎯 Import & Update Persona
+              </Button>
+            </div>
+          )}
         </div>
 
         {!isEditing ? (
           // Display Mode
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800">Voice Tone</h4>
-                <p className="text-2xl font-bold text-blue-900 capitalize">{currentPersona.voice.tone}</p>
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/20 rounded-lg">
+                <h4 className="font-medium text-blue-800 dark:text-blue-300 dark:text-blue-300">Voice Tone</h4>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 capitalize">{currentPersona.voice.tone}</p>
               </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-medium text-green-800">Writing Style</h4>
-                <p className="text-2xl font-bold text-green-900 capitalize">{currentPersona.voice.writingStyle}</p>
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 dark:bg-green-900/20 rounded-lg">
+                <h4 className="font-medium text-green-800 dark:text-green-300 dark:text-green-300">Writing Style</h4>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100 capitalize">{currentPersona.voice.writingStyle}</p>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-purple-800">Emoji Usage</h4>
-                <p className="text-2xl font-bold text-purple-900 capitalize">{currentPersona.voice.emojiUsage}</p>
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 dark:bg-purple-900/20 rounded-lg">
+                <h4 className="font-medium text-purple-800 dark:text-purple-300 dark:text-purple-300">Emoji Usage</h4>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 capitalize">{currentPersona.voice.emojiUsage}</p>
               </div>
-              <div className="p-4 bg-yellow-50 rounded-lg">
-                <h4 className="font-medium text-yellow-800">Comment Style</h4>
-                <p className="text-2xl font-bold text-yellow-900 capitalize">{currentPersona.engagement.commentStyle}</p>
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 dark:bg-yellow-900/20 rounded-lg">
+                <h4 className="font-medium text-yellow-800 dark:text-yellow-300 dark:text-yellow-300">Comment Style</h4>
+                <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 capitalize">{currentPersona.engagement.commentStyle}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-3">Content Pillars</h4>
+              <div className="p-4 border dark:border-gray-700 rounded-lg">
+                <h4 className="font-medium mb-3 dark:text-gray-100">Content Pillars</h4>
                 <div className="flex flex-wrap gap-2">
                   {currentPersona.messaging.contentPillars.map(pillar => (
-                    <span key={pillar} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    <span key={pillar} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 dark:text-blue-300 rounded-full text-sm">
                       {pillar}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-3">Content Mix</h4>
+              <div className="p-4 border dark:border-gray-700 rounded-lg">
+                <h4 className="font-medium mb-3 dark:text-gray-100">Content Mix</h4>
                 <div className="space-y-2">
                   {Object.entries(currentPersona.contentGuidelines.contentMix).map(([type, percentage]) => (
                     <div key={type} className="flex items-center justify-between">
-                      <span className="capitalize">{type}</span>
-                      <span className="font-medium">{percentage}%</span>
+                      <span className="capitalize dark:text-gray-300">{type}</span>
+                      <span className="font-medium dark:text-gray-100">{percentage}%</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium mb-2">Value Proposition</h4>
-              <p className="text-gray-700">{currentPersona.messaging.valueProposition}</p>
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium mb-2 dark:text-gray-100">Value Proposition</h4>
+              <p className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{currentPersona.messaging.valueProposition}</p>
             </div>
           </div>
         ) : (
-          // Edit Mode - Simplified for now
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Brand Name</label>
-              <Input
-                value={currentPersona.name}
-                onChange={(e) => updatePersona({ name: e.target.value })}
-                placeholder="Enter your brand name"
-              />
+          // Full Edit Mode
+          <div className="space-y-6">
+            {/* Basic Info */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Basic Info</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Brand Name</label>
+                  <Input
+                    value={currentPersona.name}
+                    onChange={(e) => updatePersona({ name: e.target.value })}
+                    placeholder="Enter your brand name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Description</label>
+                  <Input
+                    value={currentPersona.description}
+                    onChange={(e) => updatePersona({ description: e.target.value })}
+                    placeholder="Brief description"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                value={currentPersona.description}
-                onChange={(e) => updatePersona({ description: e.target.value })}
-                placeholder="Describe your brand persona"
-                className="w-full p-3 border rounded-lg h-20 resize-none"
-              />
+
+            {/* Voice Settings */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Voice & Tone</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tone</label>
+                  <select
+                    value={currentPersona.voice.tone}
+                    onChange={(e) => updateVoice({ tone: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="authoritative">Authoritative</option>
+                    <option value="playful">Playful</option>
+                    <option value="inspirational">Inspirational</option>
+                    <option value="educational">Educational</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Writing Style</label>
+                  <select
+                    value={currentPersona.voice.writingStyle}
+                    onChange={(e) => updateVoice({ writingStyle: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="formal">Formal</option>
+                    <option value="conversational">Conversational</option>
+                    <option value="witty">Witty</option>
+                    <option value="direct">Direct</option>
+                    <option value="storytelling">Storytelling</option>
+                    <option value="technical">Technical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Emoji Usage</label>
+                  <select
+                    value={currentPersona.voice.emojiUsage}
+                    onChange={(e) => updateVoice({ emojiUsage: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="none">None</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="frequent">Frequent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Language Level</label>
+                  <select
+                    value={currentPersona.voice.languageLevel}
+                    onChange={(e) => updateVoice({ languageLevel: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="simple">Simple</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="expert">Expert</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Messaging */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Messaging</h4>
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Value Proposition</label>
+                <textarea
+                  value={currentPersona.messaging.valueProposition}
+                  onChange={(e) => updateMessaging({ valueProposition: e.target.value })}
+                  placeholder="What unique value do you provide?"
+                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Target Audience</label>
+                <textarea
+                  value={currentPersona.messaging.targetAudience}
+                  onChange={(e) => updateMessaging({ targetAudience: e.target.value })}
+                  placeholder="Describe your ideal audience"
+                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Content Pillars (comma-separated)</label>
+                <Input
+                  value={currentPersona.messaging.contentPillars.join(', ')}
+                  onChange={(e) => updateMessaging({ contentPillars: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                  placeholder="tips, insights, community"
+                />
+              </div>
+            </div>
+
+            {/* Engagement */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Engagement Style</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Comment Style</label>
+                  <select
+                    value={currentPersona.engagement.commentStyle}
+                    onChange={(e) => updateEngagement({ commentStyle: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="brief">Brief</option>
+                    <option value="detailed">Detailed</option>
+                    <option value="questions">Questions</option>
+                    <option value="supportive">Supportive</option>
+                    <option value="expert">Expert</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">DM Approach</label>
+                  <select
+                    value={currentPersona.engagement.dmApproach}
+                    onChange={(e) => updateEngagement({ dmApproach: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="direct">Direct</option>
+                    <option value="collaborative">Collaborative</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Hashtag Strategy</label>
+                  <select
+                    value={currentPersona.engagement.hashtagStrategy}
+                    onChange={(e) => updateEngagement({ hashtagStrategy: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="branded">Branded</option>
+                    <option value="trending">Trending</option>
+                    <option value="niche">Niche</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Mention Style</label>
+                  <select
+                    value={currentPersona.engagement.mentionStyle}
+                    onChange={(e) => updateEngagement({ mentionStyle: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="conservative">Conservative</option>
+                    <option value="active">Active</option>
+                    <option value="strategic">Strategic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Guidelines */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Content Guidelines</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Post Length</label>
+                  <select
+                    value={currentPersona.contentGuidelines.postLength}
+                    onChange={(e) => updateContentGuidelines({ postLength: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                    <option value="varies">Varies</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Call to Action Style</label>
+                  <select
+                    value={currentPersona.contentGuidelines.callToActionStyle}
+                    onChange={(e) => updateContentGuidelines({ callToActionStyle: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="subtle">Subtle</option>
+                    <option value="direct">Direct</option>
+                    <option value="creative">Creative</option>
+                    <option value="none">None</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Question Frequency</label>
+                  <select
+                    value={currentPersona.contentGuidelines.questionFrequency}
+                    onChange={(e) => updateContentGuidelines({ questionFrequency: e.target.value as any })}
+                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    <option value="rare">Rare</option>
+                    <option value="occasional">Occasional</option>
+                    <option value="frequent">Frequent</option>
+                    <option value="always">Always</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* AI Integration Notice */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
-          <h4 className="font-medium text-blue-800 mb-2">🤖 AI Integration</h4>
-          <p className="text-sm text-blue-700">
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 dark:border-blue-800 rounded-lg">
+          <h4 className="font-medium text-blue-800 dark:text-blue-300 dark:text-blue-300 mb-2">🤖 AI Integration</h4>
+          <p className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-400">
             This persona will guide all AI automation tools including auto-replies, content generation, 
             hashtag selection, and DM campaigns to ensure consistent brand voice across all platforms.
           </p>

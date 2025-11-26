@@ -47,17 +47,17 @@ export default function ContentSuggestionCard({
 
   const getEngagementColor = (level: string) => {
     switch (level) {
-      case 'high': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'high': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
+      case 'low': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
     }
   };
 
   const getConfidenceColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
+    if (score >= 80) return 'text-green-600 dark:text-green-400';
     if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    return 'text-red-600 dark:text-red-400';
   };
 
   const saveFeedback = async (accepted: boolean, reason?: string, edited?: string) => {
@@ -127,12 +127,12 @@ export default function ContentSuggestionCard({
 
   if (status === 'accepted') {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-green-700">
+      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
           <Check className="w-5 h-5" />
           <span className="font-medium">Content accepted!</span>
         </div>
-        <p className="text-sm text-green-600 mt-1">
+        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
           This feedback will help improve future suggestions.
         </p>
       </div>
@@ -141,9 +141,9 @@ export default function ContentSuggestionCard({
 
   if (status === 'rejected') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-red-700">
+          <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
             <X className="w-5 h-5" />
             <span className="font-medium">Content rejected</span>
           </div>
@@ -155,23 +155,23 @@ export default function ContentSuggestionCard({
           )}
         </div>
         {rejectReason && (
-          <p className="text-sm text-red-600 mt-1">Reason: {rejectReason}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-1">Reason: {rejectReason}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {contentPillar ? `${contentPillar}` : 'AI Generated Content'}
             </span>
-            <span className="text-xs px-2 py-0.5 bg-white rounded-full text-gray-600 capitalize">
+            <span className="text-xs px-2 py-0.5 bg-white dark:bg-gray-900 rounded-full text-gray-600 dark:text-gray-400 capitalize">
               {platform}
             </span>
           </div>
@@ -192,12 +192,12 @@ export default function ContentSuggestionCard({
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={6}
             placeholder="Edit the content..."
           />
         ) : (
-          <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+          <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
             {content}
           </div>
         )}
@@ -208,7 +208,7 @@ export default function ContentSuggestionCard({
             {hashtags.map((tag, i) => (
               <span
                 key={i}
-                className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full"
+                className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full"
               >
                 #{tag}
               </span>
@@ -218,7 +218,7 @@ export default function ContentSuggestionCard({
 
         {/* Meta info */}
         {bestTimeToPost && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Calendar className="w-4 h-4" />
             <span>Best time to post: {bestTimeToPost}</span>
           </div>
@@ -228,14 +228,14 @@ export default function ContentSuggestionCard({
       {/* Reject reason input */}
       {showRejectReason && (
         <div className="px-4 pb-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <label className="text-sm font-medium text-red-800 block mb-2">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+            <label className="text-sm font-medium text-red-800 dark:text-red-300 block mb-2">
               Why doesn't this work for your brand? (helps AI learn)
             </label>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              className="w-full p-2 border border-red-200 rounded-lg resize-none text-sm"
+              className="w-full p-2 border border-red-200 dark:border-red-800 rounded-lg resize-none text-sm"
               rows={2}
               placeholder="e.g., Too formal, wrong topic, doesn't match our voice..."
             />
@@ -262,14 +262,14 @@ export default function ContentSuggestionCard({
 
       {/* Actions */}
       {!showRejectReason && (
-        <div className="bg-gray-50 px-4 py-3 border-t border-gray-100">
+        <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-t border-gray-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
                 size="1"
-                className="text-gray-600"
+                className="text-gray-600 dark:text-gray-400"
               >
                 <Edit2 className="w-4 h-4 mr-1" />
                 {isEditing ? 'Preview' : 'Edit'}
@@ -278,7 +278,7 @@ export default function ContentSuggestionCard({
                 onClick={handleCopy}
                 variant="outline"
                 size="1"
-                className="text-gray-600"
+                className="text-gray-600 dark:text-gray-400"
               >
                 <Copy className="w-4 h-4 mr-1" />
                 Copy
@@ -288,7 +288,7 @@ export default function ContentSuggestionCard({
                   onClick={onRegenerate}
                   variant="outline"
                   size="1"
-                  className="text-gray-600"
+                  className="text-gray-600 dark:text-gray-400"
                 >
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Regenerate
@@ -301,7 +301,7 @@ export default function ContentSuggestionCard({
                 onClick={handleReject}
                 variant="outline"
                 size="1"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:bg-red-900/20"
                 disabled={isSubmitting}
               >
                 <X className="w-4 h-4 mr-1" />

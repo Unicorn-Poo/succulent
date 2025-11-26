@@ -239,7 +239,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 		<Card className="p-6">
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-3">
-					<Package className="w-5 h-5 text-blue-600" />
+					<Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
 					<div>
 						<Text size="4" weight="bold" className="mb-1 block">
 							Prodigi Integration
@@ -255,9 +255,9 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			</div>
 
 			{isConnected && (
-				<div className="mb-6 p-4 bg-blue-50 rounded-lg">
+				<div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
 					<div className="flex items-center gap-2 mb-2">
-						<AlertCircle className="w-4 h-4 text-blue-600" />
+						<AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
 						<Text size="2" weight="medium" color="blue">
 							{sandboxMode ? "Sandbox Mode Active" : "Live Mode Active"}
 						</Text>
@@ -309,14 +309,14 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 					</div>
 
 					{testResult === 'success' && (
-						<div className="flex items-center gap-2 text-green-600">
+						<div className="flex items-center gap-2 text-green-600 dark:text-green-400">
 							<CheckCircle className="w-4 h-4" />
 							<Text size="2">Connection successful!</Text>
 						</div>
 					)}
 
 					{testResult === 'error' && (
-						<div className="flex items-center gap-2 text-red-600">
+						<div className="flex items-center gap-2 text-red-600 dark:text-red-400">
 							<XCircle className="w-4 h-4" />
 							<Text size="2">Connection failed. Please check your API key.</Text>
 						</div>
@@ -325,9 +325,9 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			) : (
 				<div className="space-y-6">
 					{/* Connection Status */}
-					<div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+					<div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
 						<div className="flex items-center gap-3">
-							<CheckCircle className="w-5 h-5 text-green-600" />
+							<CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
 							<div>
 								<Text size="2" weight="medium" className="block">Connected to Prodigi</Text>
 								<Text size="1" color="gray">
@@ -383,7 +383,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 							{accountGroup.prodigiCredentials?.createdProducts && accountGroup.prodigiCredentials.createdProducts.length > 0 ? (
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 									{accountGroup.prodigiCredentials.createdProducts.map((product: any) => (
-										<div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4">
+										<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 											<div className="flex items-center justify-between mb-2">
 												<Text size="2" weight="bold" className="line-clamp-1">
 													{product.name}
@@ -439,7 +439,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 									))}
 								</div>
 							) : (
-								<div className="text-center py-6 bg-gray-50 rounded-lg mb-4">
+								<div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
 									<Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
 									<Text size="2" color="gray">No product designs created yet</Text>
 									<Text size="1" color="gray">
@@ -450,14 +450,14 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 						</div>
 
 						{productFetchResult === 'success' && (
-							<div className="flex items-center gap-2 text-green-600 mb-4">
+							<div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-4">
 								<CheckCircle className="w-4 h-4" />
 								<Text size="2">Products updated successfully!</Text>
 							</div>
 						)}
 
 						{productFetchResult === 'error' && (
-							<div className="flex items-center gap-2 text-red-600 mb-4">
+							<div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-4">
 								<XCircle className="w-4 h-4" />
 								<Text size="2">Failed to fetch products. Please try again.</Text>
 							</div>
@@ -484,7 +484,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 								<Text size="2" weight="medium" className="mb-3 block">Base Products Catalog</Text>
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 									{templates.map((product: any) => (
-										<div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4">
+										<div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 											<div className="flex items-center justify-between mb-3">
 												<Text size="2" weight="bold" className="line-clamp-1">
 													{product.displayName}
@@ -493,7 +493,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 													size="1"
 													variant="ghost"
 													onClick={() => handleRemoveProduct(product)}
-													className="text-red-500 hover:text-red-700"
+													className="text-red-500 hover:text-red-700 dark:text-red-300"
 												>
 													<Trash2 className="w-3 h-3" />
 												</Button>
@@ -590,14 +590,14 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 						</div>
 
 						{importResult === 'success' && (
-							<div className="flex items-center gap-2 text-green-600">
+							<div className="flex items-center gap-2 text-green-600 dark:text-green-400">
 								<CheckCircle className="w-4 h-4" />
 								<Text size="2">Product imported successfully!</Text>
 							</div>
 						)}
 
 						{importResult === 'error' && (
-							<div className="flex items-center gap-2 text-red-600">
+							<div className="flex items-center gap-2 text-red-600 dark:text-red-400">
 								<XCircle className="w-4 h-4" />
 								<Text size="2">{importError || 'Failed to import product'}</Text>
 							</div>

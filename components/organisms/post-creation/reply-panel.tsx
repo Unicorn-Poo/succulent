@@ -45,25 +45,25 @@ export const ReplyPanel = ({
                             {isValidReplyUrl ? (
                                 <>
                                     <Check className="w-4 h-4 text-green-500" />
-                                    <span className="text-green-600">Valid {detectedPlatform} URL detected</span>
+                                    <span className="text-green-600 dark:text-green-400">Valid {detectedPlatform} URL detected</span>
                                 </>
                             ) : (
                                 <>
                                     <AlertCircle className="w-4 h-4 text-red-500" />
-                                    <span className="text-red-600">Please enter a valid social media post URL</span>
+                                    <span className="text-red-600 dark:text-red-400">Please enter a valid social media post URL</span>
                                 </>
                             )}
                         </div>
                     )}
                 </div>
                 {isFetchingReply && (
-                    <Box className="flex items-center gap-2 text-sm text-gray-500">
+                    <Box className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Fetching post...</span>
                     </Box>
                 )}
                 {fetchReplyError && (
-                    <Box className="text-sm text-red-600">
+                    <Box className="text-sm text-red-600 dark:text-red-400">
                         {fetchReplyError}
                     </Box>
                 )}

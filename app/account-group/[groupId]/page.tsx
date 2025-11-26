@@ -198,13 +198,13 @@ export default function AccountGroupPage() {
 
   if (!accountGroup) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
         <div className="text-center">
           <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Account Group Not Found
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             The account group you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/">
@@ -516,9 +516,9 @@ export default function AccountGroupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -526,7 +526,7 @@ export default function AccountGroupPage() {
                 <Home className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {accountGroup.name || "Account Group"}
                 </h1>
                 <p className="text-sm text-gray-500">
@@ -646,16 +646,16 @@ export default function AccountGroupPage() {
 
           {/* Settings Tab - Delete Account Group */}
           <Tabs.Content value="settings" className="mt-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Account Group Settings
               </h2>
 
-              <div className="border-t border-gray-200 pt-6">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                 <h3 className="text-lg font-medium text-red-600 mb-2">
                   Danger Zone
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Deleting this account group will permanently remove all posts,
                   accounts, and settings associated with it. This action cannot
                   be undone.
@@ -739,7 +739,7 @@ export default function AccountGroupPage() {
                 {/* Posts Header with Filters and View Selector */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                       Posts
                     </h2>
                     <div className="text-sm text-gray-500">
@@ -1016,7 +1016,7 @@ export default function AccountGroupPage() {
               <div>
                 <div className="flex items-center space-x-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                     Growth Automation Tools
                   </h2>
                 </div>
@@ -1036,13 +1036,13 @@ export default function AccountGroupPage() {
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-200"></div>
+              <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
               {/* Original Tools Section */}
               <div>
                 <div className="flex items-center space-x-2 mb-4">
-                  <Settings className="w-5 h-5 text-gray-600" />
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                     Account Management Tools
                   </h2>
                 </div>
@@ -1105,7 +1105,7 @@ export default function AccountGroupPage() {
                   {accounts.map((account: any) => (
                     <div
                       key={account.id || account._id}
-                      className="bg-white rounded-lg p-6 border border-gray-200"
+                      className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
@@ -1184,7 +1184,7 @@ export default function AccountGroupPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Cog className="w-5 h-5 text-gray-600" />
+                  <Cog className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   <Text size="5" weight="bold">
                     Account Group Settings
                   </Text>
@@ -1201,7 +1201,7 @@ export default function AccountGroupPage() {
 
                   {/* API ID Copy Button */}
                   <div
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md border cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-md border cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={async () => {
                       try {
                         // Copy the URL-friendly ID (this is what API expects)
@@ -1214,7 +1214,7 @@ export default function AccountGroupPage() {
                     }}
                     title="Click to copy the API-friendly Account Group ID"
                   >
-                    <Text size="1" className="font-mono text-gray-600">
+                    <Text size="1" className="font-mono text-gray-600 dark:text-gray-400">
                       API ID: {accountGroupId}
                     </Text>
                     {copiedAccountGroupId ? (
@@ -1327,7 +1327,7 @@ export default function AccountGroupPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                       <Text size="2" weight="medium" className="block mb-1">
                         Members
                       </Text>
@@ -1335,7 +1335,7 @@ export default function AccountGroupPage() {
                         3 collaborators
                       </Text>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                       <Text size="2" weight="medium" className="block mb-1">
                         Pending Invites
                       </Text>
@@ -1343,7 +1343,7 @@ export default function AccountGroupPage() {
                         1 invitation sent
                       </Text>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                       <Text size="2" weight="medium" className="block mb-1">
                         Role
                       </Text>

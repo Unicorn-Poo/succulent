@@ -26,7 +26,7 @@ export const PostViewCard = memo(function PostViewCard({
   
   const platformIcons = useMemo(() => 
     PLATFORM_ICONS.map(({ Icon, key }) => (
-      <Icon key={key} className="w-5 h-5 text-gray-700" />
+      <Icon key={key} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
     )),
     []
   );
