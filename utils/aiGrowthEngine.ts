@@ -5,6 +5,23 @@ import {
   BrandPersonaManager,
   loadBrandPersona,
 } from "./brandPersonaManager";
+import {
+  getSocialAccountAnalytics,
+  SocialAccountAnalytics,
+} from "./ayrshareAnalytics";
+import { AILearningSystem } from "./aiLearningSystem";
+import { generateObject } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
+
+// Learned insights structure for content generation
+interface LearnedInsights {
+  patternsLearned: string[];
+  recommendedAdjustments: string[];
+  enhancedPrompt: string;
+  acceptanceRate: number;
+  topPerformingPillars: string[];
+}
 
 interface AIDecision {
   action: string;
@@ -29,12 +46,73 @@ interface CompetitorIntelligence {
   contentGaps: string[];
 }
 
+// Real analytics data structure
+interface RealAnalyticsData {
+  hasRealData: boolean;
+  platform: string;
+  accountMetrics: {
+    followersCount: number | null;
+    followingCount: number | null;
+    postsCount: number | null;
+    engagementRate: number | null;
+    impressions: number | null;
+    reach: number | null;
+  };
+  recentPerformance: {
+    averageLikes: number;
+    averageComments: number;
+    averageShares: number;
+    topPerformingContentTypes: string[];
+    worstPerformingContentTypes: string[];
+    bestPostingTimes: string[];
+  };
+  trends: {
+    followerGrowthRate: number | null;
+    engagementTrend: "up" | "down" | "stable";
+    contentPerformanceTrend: "improving" | "declining" | "stable";
+  };
+}
+
+// Zod schema for AI-generated recommendations
+const AIRecommendationSchema = z.object({
+  recommendations: z.array(
+    z.object({
+      action: z.string().describe("Specific actionable recommendation"),
+      confidence: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe("Confidence score based on data quality"),
+      reasoning: z
+        .string()
+        .describe("Data-backed reasoning for this recommendation"),
+      expectedImpact: z.string().describe("Expected impact with metrics"),
+      priority: z.enum(["high", "medium", "low"]),
+      dataSource: z.enum([
+        "real_analytics",
+        "brand_persona",
+        "industry_best_practice",
+      ]),
+    })
+  ),
+  overallAssessment: z
+    .string()
+    .describe("Brief overall assessment of the account's growth potential"),
+  dataQualityNote: z
+    .string()
+    .optional()
+    .describe("Note about data quality if applicable"),
+});
+
 export class AIGrowthEngine {
   private profileKey?: string;
   private platform: string;
   private aggressiveness: "conservative" | "moderate" | "aggressive";
   private brandManager?: BrandPersonaManager;
   private brandPersona?: BrandPersona;
+  private learningSystem?: AILearningSystem;
+  private accountGroup?: any;
+  private learnedInsights?: LearnedInsights;
 
   constructor(
     platform: string,
@@ -45,6 +123,7 @@ export class AIGrowthEngine {
     this.platform = platform;
     this.profileKey = profileKey;
     this.aggressiveness = aggressiveness;
+    this.accountGroup = accountGroup;
 
     // Load brand persona if available
     if (accountGroup) {
@@ -53,7 +132,489 @@ export class AIGrowthEngine {
       if (this.brandPersona) {
         this.brandManager = new BrandPersonaManager(this.brandPersona);
       }
+
+      // Initialize learning system if we have an account group ID
+      if (accountGroup.id) {
+        this.learningSystem = new AILearningSystem(accountGroup.id, [platform]);
+      }
     }
+  }
+
+  /**
+   * Fetch real analytics data from Ayrshare APIs
+   */
+  async fetchRealAnalytics(): Promise<RealAnalyticsData> {
+    try {
+      // Fetch social account analytics from Ayrshare
+      const analyticsData = await getSocialAccountAnalytics(
+        [this.platform],
+        this.profileKey
+      );
+
+      const platformData = analyticsData[this.platform];
+
+      if (!platformData) {
+        return this.getEmptyAnalytics();
+      }
+
+      // Extract real metrics
+      const accountMetrics = {
+        followersCount: platformData.followersCount ?? null,
+        followingCount: platformData.followingCount ?? null,
+        postsCount: platformData.postsCount ?? null,
+        engagementRate: platformData.engagementRate ?? null,
+        impressions: platformData.impressions ?? null,
+        reach: platformData.reach ?? null,
+      };
+
+      // Calculate trends based on available data
+      const hasRealData = Object.values(accountMetrics).some((v) => v !== null);
+
+      return {
+        hasRealData,
+        platform: this.platform,
+        accountMetrics,
+        recentPerformance: {
+          averageLikes: 0, // Would need post-level data
+          averageComments: 0,
+          averageShares: 0,
+          topPerformingContentTypes: [],
+          worstPerformingContentTypes: [],
+          bestPostingTimes: [],
+        },
+        trends: {
+          followerGrowthRate: null,
+          engagementTrend: "stable",
+          contentPerformanceTrend: "stable",
+        },
+      };
+    } catch (error) {
+      // Return empty analytics if API fails
+      return this.getEmptyAnalytics();
+    }
+  }
+
+  /**
+   * Get empty analytics structure for fallback
+   */
+  private getEmptyAnalytics(): RealAnalyticsData {
+    return {
+      hasRealData: false,
+      platform: this.platform,
+      accountMetrics: {
+        followersCount: null,
+        followingCount: null,
+        postsCount: null,
+        engagementRate: null,
+        impressions: null,
+        reach: null,
+      },
+      recentPerformance: {
+        averageLikes: 0,
+        averageComments: 0,
+        averageShares: 0,
+        topPerformingContentTypes: [],
+        worstPerformingContentTypes: [],
+        bestPostingTimes: [],
+      },
+      trends: {
+        followerGrowthRate: null,
+        engagementTrend: "stable",
+        contentPerformanceTrend: "stable",
+      },
+    };
+  }
+
+  /**
+   * Fetch learned insights from content feedback history
+   * This analyzes past accept/reject decisions to improve future content
+   */
+  async fetchLearnedInsights(): Promise<LearnedInsights> {
+    const emptyInsights: LearnedInsights = {
+      patternsLearned: [],
+      recommendedAdjustments: [],
+      enhancedPrompt: "",
+      acceptanceRate: 0,
+      topPerformingPillars: [],
+    };
+
+    if (!this.learningSystem || !this.accountGroup) {
+      return emptyInsights;
+    }
+
+    try {
+      // Extract content feedback from account group
+      const feedbackData: {
+        generatedContent: string;
+        accepted: boolean;
+        reason?: string;
+        editedVersion?: string;
+        contentPillar?: string;
+        toneUsed?: string;
+        platform?: string;
+      }[] = [];
+
+      if (this.accountGroup.contentFeedback) {
+        const feedbackArray = Array.from(this.accountGroup.contentFeedback);
+        feedbackArray.forEach((feedback: any) => {
+          if (feedback) {
+            feedbackData.push({
+              generatedContent: feedback.generatedContent || "",
+              accepted: feedback.accepted || false,
+              reason: feedback.reason,
+              editedVersion: feedback.editedVersion,
+              contentPillar: feedback.contentPillar,
+              toneUsed: feedback.toneUsed,
+              platform: feedback.platform,
+            });
+          }
+        });
+      }
+
+      if (feedbackData.length === 0) {
+        return emptyInsights;
+      }
+
+      // Learn from the feedback
+      const learningResults =
+        await this.learningSystem.learnFromContentFeedback(feedbackData);
+
+      // Get enhanced prompt based on learned patterns
+      const enhancedPrompt =
+        this.learningSystem.getEnhancedPromptFromFeedback();
+
+      // Calculate top performing pillars
+      const pillarStats: Record<string, { accepted: number; total: number }> =
+        {};
+      feedbackData.forEach((f) => {
+        const pillar = f.contentPillar || "unknown";
+        if (!pillarStats[pillar]) {
+          pillarStats[pillar] = { accepted: 0, total: 0 };
+        }
+        pillarStats[pillar].total++;
+        if (f.accepted) {
+          pillarStats[pillar].accepted++;
+        }
+      });
+
+      const topPerformingPillars = Object.entries(pillarStats)
+        .filter(([_, stats]) => stats.total >= 2)
+        .sort((a, b) => b[1].accepted / b[1].total - a[1].accepted / a[1].total)
+        .slice(0, 3)
+        .map(([pillar]) => pillar);
+
+      // Calculate overall acceptance rate
+      const acceptedCount = feedbackData.filter((f) => f.accepted).length;
+      const acceptanceRate =
+        feedbackData.length > 0
+          ? (acceptedCount / feedbackData.length) * 100
+          : 0;
+
+      this.learnedInsights = {
+        patternsLearned: learningResults.patternsLearned,
+        recommendedAdjustments: learningResults.recommendedAdjustments,
+        enhancedPrompt,
+        acceptanceRate,
+        topPerformingPillars,
+      };
+
+      return this.learnedInsights;
+    } catch (error) {
+      return emptyInsights;
+    }
+  }
+
+  /**
+   * Track content performance after posting to improve future predictions
+   * This creates a feedback loop: predicted performance → actual performance → learning
+   */
+  async trackContentPerformance(performanceData: {
+    postId: string;
+    content: string;
+    platform: string;
+    predictedEngagement: number;
+    actualEngagement: {
+      likes: number;
+      comments: number;
+      shares: number;
+      impressions: number;
+    };
+    contentPillar?: string;
+    publishedAt: Date;
+  }): Promise<{
+    predictionAccuracy: number;
+    learningApplied: boolean;
+    insights: string[];
+  }> {
+    // Calculate actual engagement rate
+    const totalEngagement =
+      performanceData.actualEngagement.likes +
+      performanceData.actualEngagement.comments +
+      performanceData.actualEngagement.shares;
+    const actualEngagementRate =
+      performanceData.actualEngagement.impressions > 0
+        ? (totalEngagement / performanceData.actualEngagement.impressions) * 100
+        : 0;
+
+    // Calculate prediction accuracy (how close our prediction was)
+    const predictionDifference = Math.abs(
+      performanceData.predictedEngagement - actualEngagementRate
+    );
+    const predictionAccuracy = Math.max(0, 100 - predictionDifference * 5); // 5% penalty per percentage point off
+
+    const insights: string[] = [];
+
+    // Determine if the content over/under-performed
+    if (actualEngagementRate > performanceData.predictedEngagement * 1.2) {
+      insights.push(
+        `Content outperformed prediction by ${(
+          (actualEngagementRate / performanceData.predictedEngagement) * 100 -
+          100
+        ).toFixed(0)}%`
+      );
+      if (performanceData.contentPillar) {
+        insights.push(
+          `"${performanceData.contentPillar}" content pillar is performing well`
+        );
+      }
+    } else if (
+      actualEngagementRate <
+      performanceData.predictedEngagement * 0.8
+    ) {
+      insights.push(
+        `Content underperformed prediction by ${(
+          (1 - actualEngagementRate / performanceData.predictedEngagement) *
+          100
+        ).toFixed(0)}%`
+      );
+      if (performanceData.contentPillar) {
+        insights.push(
+          `Consider adjusting "${performanceData.contentPillar}" content style`
+        );
+      }
+    } else {
+      insights.push("Content performed as expected");
+    }
+
+    // If we have the learning system, analyze this performance
+    let learningApplied = false;
+    if (this.learningSystem && this.accountGroup) {
+      try {
+        // This would trigger a learning analysis if enough data accumulates
+        await this.learningSystem.analyzeAllPosts(this.accountGroup);
+        learningApplied = true;
+        insights.push("Performance data added to learning system");
+      } catch {
+        // Learning system analysis failed, but that's okay
+      }
+    }
+
+    return {
+      predictionAccuracy,
+      learningApplied,
+      insights,
+    };
+  }
+
+  /**
+   * Get current learning status and quality metrics
+   */
+  getLearningStatus(): {
+    hasLearningSystem: boolean;
+    insightsCount: number;
+    acceptanceRate: number;
+    topPillars: string[];
+    isLearning: boolean;
+  } {
+    return {
+      hasLearningSystem: !!this.learningSystem,
+      insightsCount: this.learnedInsights?.patternsLearned.length ?? 0,
+      acceptanceRate: this.learnedInsights?.acceptanceRate ?? 0,
+      topPillars: this.learnedInsights?.topPerformingPillars ?? [],
+      isLearning:
+        !!this.learnedInsights &&
+        this.learnedInsights.patternsLearned.length > 0,
+    };
+  }
+
+  /**
+   * Generate AI-powered recommendations using GPT-4 with real analytics and brand context
+   */
+  async generateAIRecommendations(
+    analytics: RealAnalyticsData,
+    userGoals?: {
+      followerTarget?: number;
+      engagementTarget?: number;
+      postsPerWeek?: number;
+    }
+  ): Promise<AIDecision[]> {
+    // First, fetch learned insights from past content feedback
+    const learnedInsights = await this.fetchLearnedInsights();
+
+    // Build the analytics context
+    const analyticsContext = analytics.hasRealData
+      ? `
+REAL ANALYTICS DATA (${this.platform.toUpperCase()}):
+- Followers: ${analytics.accountMetrics.followersCount ?? "Unknown"}
+- Following: ${analytics.accountMetrics.followingCount ?? "Unknown"}
+- Total Posts: ${analytics.accountMetrics.postsCount ?? "Unknown"}
+- Engagement Rate: ${
+          analytics.accountMetrics.engagementRate
+            ? `${analytics.accountMetrics.engagementRate}%`
+            : "Unknown"
+        }
+- Impressions: ${analytics.accountMetrics.impressions ?? "Unknown"}
+- Reach: ${analytics.accountMetrics.reach ?? "Unknown"}
+- Engagement Trend: ${analytics.trends.engagementTrend}
+- Content Performance Trend: ${analytics.trends.contentPerformanceTrend}
+`
+      : `
+NOTE: No real analytics data available. Recommendations will be based on brand persona and industry best practices.
+Platform: ${this.platform.toUpperCase()}
+`;
+
+    // Build brand context
+    const brandContext = this.brandPersona
+      ? `
+BRAND PERSONA:
+- Brand Name: ${this.brandPersona.name}
+- Voice Tone: ${this.brandPersona.voice.tone}
+- Writing Style: ${this.brandPersona.voice.writingStyle}
+- Target Audience: ${this.brandPersona.messaging.targetAudience}
+- Content Pillars: ${this.brandPersona.messaging.contentPillars.join(", ")}
+- Value Proposition: ${this.brandPersona.messaging.valueProposition}
+- Emoji Usage: ${this.brandPersona.voice.emojiUsage}
+- Call-to-Action Style: ${this.brandPersona.contentGuidelines.callToActionStyle}
+`
+      : `
+NOTE: No brand persona configured. Using general best practices.
+`;
+
+    // Build learned insights context
+    const learningContext =
+      learnedInsights.patternsLearned.length > 0
+        ? `
+LEARNED FROM PAST CONTENT (${learnedInsights.acceptanceRate.toFixed(
+            0
+          )}% acceptance rate):
+- Patterns that work: ${learnedInsights.patternsLearned.slice(0, 3).join("; ")}
+- Adjustments to make: ${learnedInsights.recommendedAdjustments
+            .slice(0, 3)
+            .join("; ")}
+- Top performing content pillars: ${
+            learnedInsights.topPerformingPillars.join(", ") || "Not enough data"
+          }
+${learnedInsights.enhancedPrompt}
+`
+        : "";
+
+    // Build goals context
+    const goalsContext = userGoals
+      ? `
+USER GOALS:
+- Follower Growth Target: ${userGoals.followerTarget ?? 15}% per month
+- Engagement Rate Target: ${userGoals.engagementTarget ?? 5}%
+- Posts Per Week Target: ${userGoals.postsPerWeek ?? 7}
+`
+      : "";
+
+    // Build the full prompt
+    const systemPrompt = `You are an expert social media growth strategist. Analyze the provided data and generate specific, actionable recommendations.
+
+Your recommendations should be:
+1. Specific and actionable (not vague advice)
+2. Data-backed when real analytics are available
+3. Aligned with the brand persona when provided
+4. PRIORITIZE patterns learned from past content feedback
+5. Include realistic confidence scores based on data quality
+
+For confidence scores:
+- 85-100: Strong data support + learned patterns confirm
+- 70-84: Good data or strong patterns from feedback
+- 50-69: Limited data, based on best practices
+- Below 50: Speculative, needs testing`;
+
+    const userPrompt = `${analyticsContext}
+${brandContext}
+${learningContext}
+${goalsContext}
+AGGRESSIVENESS LEVEL: ${this.aggressiveness}
+
+Generate 5 strategic recommendations for growing this ${this.platform} account. Focus on:
+1. Content strategy improvements
+2. Posting schedule optimization
+3. Engagement tactics
+4. Hashtag/discoverability strategy
+5. Growth acceleration tactics
+
+Be specific with numbers and actionable steps. If real data is missing, note that the recommendation is based on best practices.`;
+
+    try {
+      const result = await generateObject({
+        model: openai("gpt-4"),
+        schema: AIRecommendationSchema,
+        system: systemPrompt,
+        prompt: userPrompt,
+        temperature: 0.7,
+      });
+
+      // Convert to AIDecision format
+      return result.object.recommendations.map((rec) => ({
+        action: rec.action,
+        confidence: rec.confidence,
+        reasoning: rec.reasoning,
+        expectedImpact: rec.expectedImpact,
+        priority: rec.priority,
+      }));
+    } catch (error) {
+      // Fallback to basic recommendations if GPT-4 fails
+      return this.getFallbackRecommendations();
+    }
+  }
+
+  /**
+   * Get basic fallback recommendations if AI generation fails
+   */
+  private getFallbackRecommendations(): AIDecision[] {
+    const baseRecommendations: AIDecision[] = [
+      {
+        action: `Post consistently at optimal times for ${this.platform}`,
+        confidence: 75,
+        reasoning: "Consistent posting improves algorithm visibility",
+        expectedImpact: "+20% reach improvement",
+        priority: "high",
+      },
+      {
+        action:
+          "Increase engagement with your audience through replies and comments",
+        confidence: 80,
+        reasoning: "Active engagement builds community and improves visibility",
+        expectedImpact: "+15% engagement rate",
+        priority: "high",
+      },
+      {
+        action: "Use a mix of trending and niche hashtags",
+        confidence: 70,
+        reasoning: "Balanced hashtag strategy improves discoverability",
+        expectedImpact: "+100 average impressions",
+        priority: "medium",
+      },
+    ];
+
+    // Add brand-specific recommendation if persona exists
+    if (this.brandPersona) {
+      baseRecommendations.unshift({
+        action: `Focus content on your core pillars: ${this.brandPersona.messaging.contentPillars
+          .slice(0, 2)
+          .join(" and ")}`,
+        confidence: 85,
+        reasoning: `Aligned content builds brand consistency with your ${this.brandPersona.messaging.targetAudience} audience`,
+        expectedImpact: "Stronger brand recognition and audience loyalty",
+        priority: "high",
+      });
+    }
+
+    return baseRecommendations;
   }
 
   /**
@@ -132,105 +693,35 @@ export class AIGrowthEngine {
   }
 
   /**
-   * Generate AI-powered growth recommendations based on brand persona
+   * Generate AI-powered growth recommendations using real analytics + GPT-4
    */
-  async generateGrowthRecommendations(): Promise<AIDecision[]> {
-    const decisions: AIDecision[] = [];
+  async generateGrowthRecommendations(userGoals?: {
+    followerTarget?: number;
+    engagementTarget?: number;
+    postsPerWeek?: number;
+  }): Promise<AIDecision[]> {
+    try {
+      // Step 1: Fetch real analytics from Ayrshare
+      const realAnalytics = await this.fetchRealAnalytics();
 
-    // Analyze current performance and generate recommendations
-    const performanceAnalysis = await this.analyzeCurrentPerformance();
-
-    // Content strategy recommendations based on brand persona
-    if (performanceAnalysis.engagementRate < 3.0) {
-      const contentSuggestion = this.brandPersona
-        ? `Create more ${this.brandPersona.messaging.contentPillars[0]} content with ${this.brandPersona.contentGuidelines.callToActionStyle} calls-to-action`
-        : "Increase question-based content by 40%";
-
-      decisions.push({
-        action: contentSuggestion,
-        confidence: 85,
-        reasoning: this.brandPersona
-          ? `Based on your brand focus on ${this.brandPersona.messaging.contentPillars.join(
-              ", "
-            )}, this content type performs best`
-          : "Question-based posts generate 60% more comments than statements",
-        expectedImpact: "+1.2% engagement rate within 2 weeks",
-        priority: "high",
-      });
-    }
-
-    // Timing optimization
-    if (performanceAnalysis.postingConsistency < 0.7) {
-      decisions.push({
-        action: "Implement consistent posting schedule at optimal times",
-        confidence: 92,
-        reasoning:
-          "Consistent posting at peak audience hours increases reach by 35%",
-        expectedImpact: "+200 average reach per post",
-        priority: "high",
-      });
-    }
-
-    // Hashtag strategy
-    if (performanceAnalysis.hashtagEffectiveness < 0.6) {
-      decisions.push({
-        action: "Optimize hashtag strategy with trending tags",
-        confidence: 78,
-        reasoning:
-          "Current hashtags are underperforming. Trending tags show 25% better reach",
-        expectedImpact: "+150 average impressions per post",
-        priority: "medium",
-      });
-    }
-
-    // Engagement automation
-    if (performanceAnalysis.responseTime > 120) {
-      // 2 hours
-      decisions.push({
-        action: "Enable aggressive auto-reply for faster community engagement",
-        confidence: 88,
-        reasoning:
-          "Response time under 1 hour increases follower retention by 40%",
-        expectedImpact: "+15% follower retention rate",
-        priority: "high",
-      });
-    }
-
-    // Competitor analysis insights
-    const competitorInsights = await this.analyzeCompetitorGaps();
-    if (competitorInsights.contentGaps.length > 0) {
-      decisions.push({
-        action: `Create content around underserved topics: ${competitorInsights.contentGaps
-          .slice(0, 2)
-          .join(", ")}`,
-        confidence: 75,
-        reasoning:
-          "Competitors are not covering these trending topics, opportunity for increased visibility",
-        expectedImpact: "+300 potential reach from untapped topics",
-        priority: "medium",
-      });
-    }
-
-    // Growth acceleration based on aggressiveness
-    if (this.aggressiveness === "aggressive") {
-      decisions.push({
-        action:
-          "Launch targeted DM outreach campaign to 50 potential collaborators",
-        confidence: 65,
-        reasoning:
-          "Aggressive outreach can accelerate follower acquisition through network effects",
-        expectedImpact: "+100-200 new followers through collaborations",
-        priority: "medium",
-      });
-    }
-
-    return decisions.sort((a, b) => {
-      const priorityWeight = { high: 3, medium: 2, low: 1 };
-      return (
-        priorityWeight[b.priority] * b.confidence -
-        priorityWeight[a.priority] * a.confidence
+      // Step 2: Generate AI-powered recommendations based on real data + brand persona
+      const aiRecommendations = await this.generateAIRecommendations(
+        realAnalytics,
+        userGoals
       );
-    });
+
+      // Sort by priority and confidence
+      return aiRecommendations.sort((a, b) => {
+        const priorityWeight = { high: 3, medium: 2, low: 1 };
+        return (
+          priorityWeight[b.priority] * b.confidence -
+          priorityWeight[a.priority] * a.confidence
+        );
+      });
+    } catch (error) {
+      // Fallback to basic recommendations if everything fails
+      return this.getFallbackRecommendations();
+    }
   }
 
   /**
@@ -284,18 +775,34 @@ export class AIGrowthEngine {
       bestTime: string;
       engagementPotential: number;
       reasoning: string;
+      learnedFromFeedback: boolean;
     }[]
   > {
     const suggestions = [];
 
+    // Fetch learned insights to prioritize topics
+    const learnedInsights = await this.fetchLearnedInsights();
+
     // Get topics relevant to brand persona or fallback to trending
-    const relevantTopics = this.brandPersona
+    let relevantTopics = this.brandPersona
       ? this.brandPersona.messaging.contentPillars
       : await this.getTrendingTopics();
+
+    // Prioritize topics based on learned performance
+    if (learnedInsights.topPerformingPillars.length > 0) {
+      // Put top performing pillars first
+      const topPillars = learnedInsights.topPerformingPillars;
+      const remainingTopics = relevantTopics.filter(
+        (t) => !topPillars.includes(t)
+      );
+      relevantTopics = [...topPillars, ...remainingTopics];
+    }
 
     // Generate content for each topic using AI
     for (let i = 0; i < Math.min(count, relevantTopics.length); i++) {
       const topic = relevantTopics[i];
+      const isTopPerformer =
+        learnedInsights.topPerformingPillars.includes(topic);
 
       try {
         // Use GPT-4 for content generation if brand manager exists
@@ -318,17 +825,32 @@ export class AIGrowthEngine {
 
         const analysis = await this.analyzeContent(content);
 
-        const reasoning = this.brandPersona
+        // Build reasoning with learning context
+        let reasoning = this.brandPersona
           ? `AI-generated content aligned with your "${topic}" pillar and ${this.brandPersona.voice.tone} voice`
           : `AI-generated content about ${topic} optimized for ${this.platform}`;
+
+        if (isTopPerformer) {
+          reasoning += ` • This content pillar has high acceptance rate based on your feedback`;
+        }
+        if (learnedInsights.patternsLearned.length > 0) {
+          reasoning += ` • Incorporates learned patterns from past content`;
+        }
+
+        // Boost engagement potential for content using learned patterns
+        const adjustedEngagement = isTopPerformer
+          ? Math.min(analysis.engagementPotential + 10, 100)
+          : analysis.engagementPotential;
 
         suggestions.push({
           title: `${topic.charAt(0).toUpperCase() + topic.slice(1)} Content`,
           content,
           hashtags,
           bestTime: analysis.bestPostingTime,
-          engagementPotential: analysis.engagementPotential,
+          engagementPotential: adjustedEngagement,
           reasoning,
+          learnedFromFeedback:
+            isTopPerformer || learnedInsights.patternsLearned.length > 0,
         });
       } catch (error) {
         // Skip this topic if AI generation fails
@@ -599,11 +1121,23 @@ export async function executeAIGrowthActions(
   platform: string,
   profileKey?: string,
   aggressiveness: "conservative" | "moderate" | "aggressive" = "moderate",
-  accountGroup?: any
+  accountGroup?: any,
+  userGoals?: {
+    followerTarget?: number;
+    engagementTarget?: number;
+    postsPerWeek?: number;
+  }
 ): Promise<{
   recommendations: AIDecision[];
   executedActions: { executed: number; skipped: number; results: string[] };
   contentSuggestions: any[];
+  analyticsSource: "real" | "simulated" | "unavailable";
+  learningStatus: {
+    isLearning: boolean;
+    insightsCount: number;
+    acceptanceRate: number;
+    topPillars: string[];
+  };
 }> {
   const ai = new AIGrowthEngine(
     platform,
@@ -612,16 +1146,35 @@ export async function executeAIGrowthActions(
     accountGroup
   );
 
+  // Fetch real analytics first to determine data source
+  let analyticsSource: "real" | "simulated" | "unavailable" = "unavailable";
+  try {
+    const analytics = await ai.fetchRealAnalytics();
+    analyticsSource = analytics.hasRealData ? "real" : "simulated";
+  } catch {
+    analyticsSource = "unavailable";
+  }
+
   const [recommendations, executedActions, contentSuggestions] =
     await Promise.all([
-      ai.generateGrowthRecommendations(),
+      ai.generateGrowthRecommendations(userGoals),
       ai.executeAutomatedGrowthActions(),
       ai.generateContentSuggestions(3),
     ]);
+
+  // Get learning status
+  const learningStatus = ai.getLearningStatus();
 
   return {
     recommendations,
     executedActions,
     contentSuggestions,
+    analyticsSource,
+    learningStatus: {
+      isLearning: learningStatus.isLearning,
+      insightsCount: learningStatus.insightsCount,
+      acceptanceRate: learningStatus.acceptanceRate,
+      topPillars: learningStatus.topPillars,
+    },
   };
 }

@@ -196,6 +196,11 @@ export default function GrowthAutopilot({
               accountGroupId: accountGroup?.id,
               brandPersona,
               contentFeedback,
+              userGoals: {
+                followerTarget: settings.goals.followerGrowthTarget,
+                engagementTarget: settings.goals.engagementRateTarget,
+                postsPerWeek: settings.goals.postsPerWeek,
+              },
             }),
           });
 
