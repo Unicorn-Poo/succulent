@@ -74,7 +74,7 @@ export const PostActions = ({
                         {/* Quote Tweet Toggle */}
                         {seriesType === 'reply' && detectedPlatform === 'x' && (
                             <div className="flex items-center gap-2">
-                                <Label.Root htmlFor="quote-tweet-toggle" className="text-sm font-medium">
+                                <Label.Root htmlFor="quote-tweet-toggle" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     Quote Tweet
                                 </Label.Root>
                                 <Switch
@@ -90,7 +90,7 @@ export const PostActions = ({
                     <div className="flex items-center justify-end gap-4">
                         {/* Thread Toggle */}
                         <div className="flex items-center gap-2">
-                            <Label.Root htmlFor="thread-toggle" className="text-sm font-medium">
+                            <Label.Root htmlFor="thread-toggle" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 Create Thread
                             </Label.Root>
                             <Switch

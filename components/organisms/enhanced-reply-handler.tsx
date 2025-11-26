@@ -248,7 +248,7 @@ export default function EnhancedReplyHandler({
 
         {/* URL Input */}
         <div>
-          <label className="block text-sm font-medium mb-2">Post URL</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Post URL</label>
           <TextField.Root
             value={url}
             onChange={(e) => setUrl(e.target.value)}

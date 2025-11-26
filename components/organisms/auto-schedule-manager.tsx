@@ -359,7 +359,7 @@ export default function AutoScheduleManager({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Auto-Schedule Manager</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Auto-Schedule Manager</h3>
         <div className="flex items-center space-x-2">
           <span className={`px-3 py-1 rounded-full text-sm ${
             metrics?.activeRules && metrics.activeRules > 0 
@@ -414,7 +414,7 @@ export default function AutoScheduleManager({
                   ...prev,
                   schedule: { ...prev.schedule!, frequency: e.target.value as any }
                 }))}
-                className="px-3 py-2 border rounded-lg"
+                className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -424,7 +424,7 @@ export default function AutoScheduleManager({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Posting Times</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Posting Times</label>
                 <div className="flex flex-wrap gap-2">
                   {optimalTimes.map(time => (
                     <label key={time} className="flex items-center space-x-1">
@@ -450,7 +450,7 @@ export default function AutoScheduleManager({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Max Posts Per Day</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Max Posts Per Day</label>
                 <Input
                   type="number"
                   value={newRule.postingLimits?.maxPerDay || 2}
@@ -473,10 +473,10 @@ export default function AutoScheduleManager({
           {/* Existing Rules */}
           <div className="space-y-4">
             {rules.map(rule => (
-              <div key={rule.id} className="p-4 border rounded-lg">
+              <div key={rule.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-medium">{rule.name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{rule.name}</h4>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       rule.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                     }`}>
@@ -504,21 +504,21 @@ export default function AutoScheduleManager({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="font-medium">Schedule</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Schedule</p>
                     <p>Frequency: {rule.schedule.frequency}</p>
                     <p>Times: {rule.schedule.times.join(', ')}</p>
                     <p>Days: {rule.schedule.days.length} selected</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium">Content Filters</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Content Filters</p>
                     <p>Min Engagement: {rule.contentFilters.minEngagementPotential}%</p>
                     <p>Categories: {rule.contentFilters.categories.join(', ')}</p>
                     <p>Approval: {rule.contentFilters.requiresApproval ? 'Required' : 'Not required'}</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium">Limits</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Limits</p>
                     <p>Max/Day: {rule.postingLimits.maxPerDay}</p>
                     <p>Max/Week: {rule.postingLimits.maxPerWeek}</p>
                     <p>Min Interval: {rule.postingLimits.minInterval}m</p>
@@ -545,10 +545,10 @@ export default function AutoScheduleManager({
             .filter(post => post.status === 'pending')
             .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
             .map(post => (
-              <div key={post.id} className="p-4 border rounded-lg">
+              <div key={post.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h4 className="font-medium">{post.title}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{post.title}</h4>
                     <p className="text-gray-700 dark:text-gray-300 mt-1">{post.content}</p>
                   </div>
                   
@@ -601,19 +601,19 @@ export default function AutoScheduleManager({
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-              <p className="text-3xl font-bold text-blue-900">{metrics.totalRules}</p>
+              <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">{metrics.totalRules}</p>
               <p className="text-sm text-blue-700 dark:text-blue-300">Total Rules</p>
             </div>
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-              <p className="text-3xl font-bold text-green-900">{metrics.activeRules}</p>
+              <p className="text-3xl font-bold text-green-900 dark:text-green-300">{metrics.activeRules}</p>
               <p className="text-sm text-green-700 dark:text-green-300">Active Rules</p>
             </div>
             <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-              <p className="text-3xl font-bold text-purple-900">{metrics.postsScheduled}</p>
+              <p className="text-3xl font-bold text-purple-900 dark:text-purple-300">{metrics.postsScheduled}</p>
               <p className="text-sm text-purple-700 dark:text-purple-300">Posts Scheduled</p>
             </div>
             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
-              <p className="text-3xl font-bold text-yellow-900">{metrics.postsPosted}</p>
+              <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-300">{metrics.postsPosted}</p>
               <p className="text-sm text-yellow-700 dark:text-yellow-300">Posts Posted</p>
             </div>
           </div>
@@ -624,7 +624,7 @@ export default function AutoScheduleManager({
               <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Next Scheduled Post</h4>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{metrics.nextScheduledPost.title}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{metrics.nextScheduledPost.title}</p>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     {formatDateTime(metrics.nextScheduledPost.scheduledDate)}
                   </p>
@@ -642,7 +642,7 @@ export default function AutoScheduleManager({
           )}
 
           {/* Upcoming Posts */}
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Upcoming Posts</h4>
             <div className="space-y-2">
               {metrics.upcomingPosts.slice(0, 5).map(post => (
@@ -661,7 +661,7 @@ export default function AutoScheduleManager({
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Global Settings</h4>
             <div className="space-y-4">
               <label className="flex items-center space-x-2">
@@ -679,7 +679,7 @@ export default function AutoScheduleManager({
             </div>
           </div>
 
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Optimal Times for {platform}</h4>
             <div className="flex flex-wrap gap-2">
               {optimalTimes.map(time => (

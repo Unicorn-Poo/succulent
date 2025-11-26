@@ -344,7 +344,7 @@ export default function UserProfileManagement({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Profile Title
               </label>
               <input

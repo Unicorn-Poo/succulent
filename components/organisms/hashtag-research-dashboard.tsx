@@ -149,7 +149,7 @@ export default function HashtagResearchDashboard({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="font-medium">#{hashtag.hashtag}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">#{hashtag.hashtag}</span>
               {showMetrics && (
                 <>
                   <span className="text-sm">{getTrendIcon(hashtag.trend)}</span>
@@ -167,13 +167,13 @@ export default function HashtagResearchDashboard({
           {showMetrics && (
             <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600 dark:text-gray-400">
               <div>
-                <span className="font-medium">Usage:</span> {hashtag.usage.toLocaleString()}
+                <span className="font-medium text-gray-900 dark:text-gray-100">Usage:</span> {hashtag.usage.toLocaleString()}
               </div>
               <div>
-                <span className="font-medium">Engagement:</span> {hashtag.engagement.toLocaleString()}
+                <span className="font-medium text-gray-900 dark:text-gray-100">Engagement:</span> {hashtag.engagement.toLocaleString()}
               </div>
               <div>
-                <span className="font-medium">Reach:</span> {hashtag.reach.toLocaleString()}
+                <span className="font-medium text-gray-900 dark:text-gray-100">Reach:</span> {hashtag.reach.toLocaleString()}
               </div>
             </div>
           )}
@@ -194,7 +194,7 @@ export default function HashtagResearchDashboard({
           }`}
           onClick={() => handleHashtagToggle(hashtag)}
         >
-          <span className="font-medium">#{hashtag}</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">#{hashtag}</span>
         </div>
       ))}
     </div>
@@ -203,7 +203,7 @@ export default function HashtagResearchDashboard({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Hashtag Research & Analysis</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hashtag Research & Analysis</h3>
         <div className="flex items-center space-x-2">
           <label className="flex items-center space-x-2 text-sm">
             <input
@@ -233,7 +233,7 @@ export default function HashtagResearchDashboard({
       {selectedHashtags.length > 0 && (
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-medium">Selected Hashtags ({selectedHashtags.length})</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">Selected Hashtags ({selectedHashtags.length})</span>
             <Button onClick={handleCopyHashtags} size="sm" variant="outline">
               Copy All
             </Button>

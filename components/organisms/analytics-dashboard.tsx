@@ -729,25 +729,25 @@ export default function AnalyticsDashboard({
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Engagement Rate:</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {data.insights[platform]?.engagementRate?.toFixed(1) || 0}%
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Total Posts:</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {data.overview[platform]?.profile?.postsCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Following:</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {data.overview[platform]?.profile?.followingCount || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Recent Posts:</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {data.posts[platform]?.length || 0}
                         </span>
                       </div>
@@ -837,7 +837,7 @@ export default function AnalyticsDashboard({
                             {Object.entries(data.insights[platform].audienceInsights.demographics || {}).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
                                 <span className="text-gray-600 dark:text-gray-400 capitalize">{key.replace('_', ' ')}:</span>
-                                <span className="font-medium">{String(value)}</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">{String(value)}</span>
                               </div>
                             ))}
                           </div>

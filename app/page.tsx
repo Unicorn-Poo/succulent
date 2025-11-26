@@ -495,7 +495,7 @@ export default function HomePage() {
 
               <div className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                     Post Title
                   </label>
                   <TextField.Root
@@ -506,7 +506,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                     Content
                   </label>
                   <TextArea

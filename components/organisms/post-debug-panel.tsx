@@ -103,7 +103,7 @@ export default function PostDebugPanel() {
 
       {/* Platform Selection */}
       <div className="flex items-center gap-4">
-        <label className="font-medium">Platform:</label>
+        <label className="font-medium text-gray-900 dark:text-gray-100">Platform:</label>
         <select 
           value={selectedPlatform} 
           onChange={(e) => setSelectedPlatform(e.target.value)}
@@ -212,7 +212,7 @@ export default function PostDebugPanel() {
           {/* Warnings */}
           {debugResult.warnings.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
+              <h4 className="font-medium mb-2 text-yellow-600 dark:text-yellow-400">Warnings</h4>
               <ul className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded text-sm space-y-1">
                 {debugResult.warnings.map((warning, i) => (
                   <li key={i} className="text-yellow-700 dark:text-yellow-300">• {warning}</li>

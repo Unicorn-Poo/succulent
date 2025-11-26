@@ -317,7 +317,7 @@ export default function ContentDiscoveryManager({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Content Discovery Manager</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Content Discovery Manager</h3>
         <Button onClick={discoverContent} disabled={isLoading}>
           {isLoading ? 'Discovering...' : 'Refresh Content'}
         </Button>
@@ -353,7 +353,7 @@ export default function ContentDiscoveryManager({
           {selectedContent.length > 0 && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{selectedContent.length} content items selected</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedContent.length} content items selected</span>
                 <Button onClick={scheduleSelectedContent} size="sm">
                   Schedule Selected
                 </Button>
@@ -381,7 +381,7 @@ export default function ContentDiscoveryManager({
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium">{item.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
                         <span className={`px-2 py-1 rounded-full text-xs ${getSentimentColor(item.sentiment)}`}>
                           {item.sentiment}
                         </span>
@@ -432,7 +432,7 @@ export default function ContentDiscoveryManager({
       {activeTab === 'trending' && (
         <div className="space-y-6">
           {trendingTopics.map(topic => (
-            <div key={topic.topic} className="p-4 border rounded-lg">
+            <div key={topic.topic} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-lg">{topic.topic}</h4>
                 <div className="flex items-center space-x-2">
@@ -515,9 +515,9 @@ export default function ContentDiscoveryManager({
           {/* Existing Feeds */}
           <div className="space-y-4">
             {feeds.map(feed => (
-              <div key={feed.id} className="p-4 border rounded-lg">
+              <div key={feed.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{feed.title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{feed.title}</h4>
                   <div className="flex items-center space-x-2">
                     {feed.autoPost && (
                       <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs">
@@ -558,7 +558,7 @@ export default function ContentDiscoveryManager({
             .map(item => (
               <div key={item.id} className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{item.title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
                   <span className="text-sm text-blue-600 dark:text-blue-400">
                     Scheduled for {item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : 'Unknown'}
                   </span>

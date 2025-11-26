@@ -130,7 +130,7 @@ export default function ContentSuggestionCard({
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
           <Check className="w-5 h-5" />
-          <span className="font-medium">Content accepted!</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">Content accepted!</span>
         </div>
         <p className="text-sm text-green-600 dark:text-green-400 mt-1">
           This feedback will help improve future suggestions.
@@ -145,7 +145,7 @@ export default function ContentSuggestionCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
             <X className="w-5 h-5" />
-            <span className="font-medium">Content rejected</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">Content rejected</span>
           </div>
           {onRegenerate && (
             <Button onClick={onRegenerate} variant="outline" size="1">
@@ -164,7 +164,7 @@ export default function ContentSuggestionCard({
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3 border-b border-gray-100">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />

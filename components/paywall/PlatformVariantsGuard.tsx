@@ -51,7 +51,7 @@ export function PlatformVariantsGuard({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Used this month:</span>
-              <span className="font-medium">{variantsUsage?.used || 0} / {variantsUsage?.limit || 0}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{variantsUsage?.used || 0} / {variantsUsage?.limit || 0}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 

@@ -791,7 +791,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										const currentTags = template.tags || [];
 										
 										return (
-											<div key={templateId} className="p-3 bg-white dark:bg-gray-900 border rounded-lg">
+											<div key={templateId} className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
 												<div className="flex items-center justify-between">
 													<div className="flex-1 min-w-0">
 														<Text size="2" weight="medium" className="block truncate">
@@ -1255,7 +1255,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 						<div className="space-y-4 mt-4">
 							<div>
-								<label className="block text-sm font-medium mb-2">
+								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
 									<Package className="w-4 h-4 inline mr-1" />
 									Template ID
 								</label>

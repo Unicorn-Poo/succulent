@@ -166,7 +166,7 @@ export default function GrowthAnalyticsDashboard({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Growth Analytics Dashboard</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Growth Analytics Dashboard</h3>
         <div className="flex items-center space-x-4">
           <select
             value={timeframe}
@@ -203,7 +203,7 @@ export default function GrowthAnalyticsDashboard({
               {getTrendIcon(metrics.followerGrowth.trend)}
             </span>
           </div>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
             {formatNumber(metrics.followerGrowth.current)}
           </p>
           <p className={`text-sm ${getTrendColor(metrics.followerGrowth.trend)}`}>
@@ -218,7 +218,7 @@ export default function GrowthAnalyticsDashboard({
               {getTrendIcon(metrics.engagementGrowth.trend)}
             </span>
           </div>
-          <p className="text-2xl font-bold text-green-900">
+          <p className="text-2xl font-bold text-green-900 dark:text-green-300">
             {formatNumber(metrics.engagementGrowth.current)}
           </p>
           <p className={`text-sm ${getTrendColor(metrics.engagementGrowth.trend)}`}>
@@ -228,7 +228,7 @@ export default function GrowthAnalyticsDashboard({
 
         <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
           <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Posts</h4>
-          <p className="text-2xl font-bold text-purple-900">
+          <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">
             {metrics.contentPerformance.totalPosts}
           </p>
           <p className="text-sm text-purple-700 dark:text-purple-300">
@@ -238,7 +238,7 @@ export default function GrowthAnalyticsDashboard({
 
         <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
           <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Growth Rate</h4>
-          <p className="text-2xl font-bold text-yellow-900">
+          <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-300">
             {metrics.followerAnalytics ? 
               formatPercent(metrics.followerAnalytics.growthRate) : 
               formatPercent(metrics.followerGrowth.changePercent)}
@@ -293,7 +293,7 @@ export default function GrowthAnalyticsDashboard({
           {/* Competitor Comparison */}
           {metrics.competitorComparison && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <h4 className="font-medium mb-3">Engagement Rate Comparison</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -320,7 +320,7 @@ export default function GrowthAnalyticsDashboard({
                 </div>
               </div>
 
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <h4 className="font-medium mb-3">Growth Rate Comparison</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -352,40 +352,40 @@ export default function GrowthAnalyticsDashboard({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <h4 className="font-medium text-green-800 dark:text-green-300">New Followers</h4>
-              <p className="text-2xl font-bold text-green-900">
+              <p className="text-2xl font-bold text-green-900 dark:text-green-300">
                 +{formatNumber(metrics.followerAnalytics.newFollowers)}
               </p>
             </div>
             
             <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
               <h4 className="font-medium text-red-800 dark:text-red-300">Unfollowers</h4>
-              <p className="text-2xl font-bold text-red-900">
+              <p className="text-2xl font-bold text-red-900 dark:text-red-300">
                 -{formatNumber(metrics.followerAnalytics.unfollowers)}
               </p>
             </div>
             
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <h4 className="font-medium text-blue-800 dark:text-blue-300">Net Growth</h4>
-              <p className="text-2xl font-bold text-blue-900">
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
                 {metrics.followerAnalytics.netGrowth > 0 ? '+' : ''}{formatNumber(metrics.followerAnalytics.netGrowth)}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Follower Sources</h4>
               <div className="space-y-2">
                 {Object.entries(metrics.followerAnalytics.followerSources).map(([source, percent]) => (
                   <div key={source} className="flex items-center justify-between">
                     <span className="capitalize">{source}</span>
-                    <span className="font-medium">{percent}%</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{percent}%</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Follower Quality</h4>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -432,20 +432,20 @@ export default function GrowthAnalyticsDashboard({
             
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <h4 className="font-medium text-blue-800 dark:text-blue-300">Average Comments</h4>
-              <p className="text-2xl font-bold text-blue-900">
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
                 {formatNumber(metrics.contentPerformance.avgComments)}
               </p>
             </div>
             
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <h4 className="font-medium text-green-800 dark:text-green-300">Average Shares</h4>
-              <p className="text-2xl font-bold text-green-900">
+              <p className="text-2xl font-bold text-green-900 dark:text-green-300">
                 {formatNumber(metrics.contentPerformance.avgShares)}
               </p>
             </div>
           </div>
 
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Engagement Patterns</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(metrics.audienceInsights.engagementPatterns).map(([type, percent]) => (
@@ -466,19 +466,19 @@ export default function GrowthAnalyticsDashboard({
               <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Best Performing Post</h4>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-lg font-bold text-green-900">
+                  <p className="text-lg font-bold text-green-900 dark:text-green-300">
                     {metrics.contentPerformance.bestPerformingPost.likes || 0}
                   </p>
                   <p className="text-xs text-green-700 dark:text-green-300">Likes</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-900">
+                  <p className="text-lg font-bold text-green-900 dark:text-green-300">
                     {metrics.contentPerformance.bestPerformingPost.comments || 0}
                   </p>
                   <p className="text-xs text-green-700 dark:text-green-300">Comments</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-900">
+                  <p className="text-lg font-bold text-green-900 dark:text-green-300">
                     {metrics.contentPerformance.bestPerformingPost.shares || 0}
                   </p>
                   <p className="text-xs text-green-700 dark:text-green-300">Shares</p>
@@ -487,7 +487,7 @@ export default function GrowthAnalyticsDashboard({
             </div>
           )}
 
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Content Performance Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
@@ -522,19 +522,19 @@ export default function GrowthAnalyticsDashboard({
       {activeTab === 'audience' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Age Demographics</h4>
               <div className="space-y-2">
                 {Object.entries(metrics.audienceInsights.demographics).map(([age, percent]) => (
                   <div key={age} className="flex items-center justify-between">
                     <span>{age}</span>
-                    <span className="font-medium">{percent}%</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{percent}%</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Active Hours</h4>
               <div className="space-y-2">
                 {Object.entries(metrics.audienceInsights.activeHours)
@@ -543,14 +543,14 @@ export default function GrowthAnalyticsDashboard({
                   .map(([hour, activity]) => (
                     <div key={hour} className="flex items-center justify-between">
                       <span>{hour}:00</span>
-                      <span className="font-medium">{activity}% active</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{activity}% active</span>
                     </div>
                   ))}
               </div>
             </div>
           </div>
 
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Top Interests</h4>
             <div className="flex flex-wrap gap-2">
               {metrics.audienceInsights.topInterests.map(interest => (

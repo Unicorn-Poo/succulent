@@ -114,7 +114,7 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Name</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Name</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -128,7 +128,7 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Email</label>
               {isEditing ? (
                 <input
                   type="email"
@@ -142,14 +142,14 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Account Created</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Account Created</label>
               <p className="text-gray-900 dark:text-gray-100">
                 {account.profile?.createdAt ? new Date(account.profile.createdAt).toLocaleDateString() : 'Unknown'}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Last Updated</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Last Updated</label>
               <p className="text-gray-900 dark:text-gray-100">
                 {account.profile?.updatedAt ? new Date(account.profile.updatedAt).toLocaleDateString() : 'Unknown'}
               </p>
@@ -325,7 +325,7 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span>{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
                     </div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {usage.used} / {usage.limit === -1 ? '∞' : usage.limit}

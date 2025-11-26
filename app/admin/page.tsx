@@ -154,7 +154,7 @@ function OverviewTab() {
           {Object.entries(stats.subscriptions).map(([tier, count]) => (
             <div key={tier} className="flex justify-between">
               <span className="capitalize">{tier}</span>
-              <span className="font-medium">{String(count)}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{String(count)}</span>
             </div>
           ))}
         </div>
@@ -167,7 +167,7 @@ function OverviewTab() {
           {stats.recentActivity.map((activity: { user: string; action: string; time: string }, index: number) => (
             <div key={index} className="flex justify-between items-center">
               <div>
-                <span className="font-medium">{activity.user}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{activity.user}</span>
                 <span className="text-gray-500 ml-2">{activity.action}</span>
               </div>
               <span className="text-sm text-gray-400">{activity.time}</span>
@@ -372,7 +372,7 @@ function UsersTab() {
                     </button>
                     <button
                       onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 dark:text-red-300"
                     >
                       Delete
                     </button>

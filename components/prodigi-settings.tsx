@@ -274,7 +274,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			{!isConnected ? (
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium mb-2">API Key</label>
+						<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
 						<TextField.Root
 							value={formData.apiKey}
 							onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -542,7 +542,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 
 					<div className="space-y-4 mt-4">
 						<div>
-							<label className="block text-sm font-medium mb-2">API Key</label>
+							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">API Key</label>
 							<TextField.Root
 								value={formData.apiKey}
 								onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
@@ -581,7 +581,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 
 					<div className="space-y-4 mt-4">
 						<div>
-							<label className="block text-sm font-medium mb-2">Product ID</label>
+							<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Product ID</label>
 							<TextField.Root
 								value={productIdToImport}
 								onChange={(e) => setProductIdToImport(e.target.value)}

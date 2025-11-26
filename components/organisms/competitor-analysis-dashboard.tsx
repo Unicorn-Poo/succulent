@@ -144,7 +144,7 @@ export default function CompetitorAnalysisDashboard({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Competitor Analysis Dashboard</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Competitor Analysis Dashboard</h3>
         <Button onClick={analyzeCompetitors} disabled={isLoading || competitors.length === 0}>
           {isLoading ? 'Analyzing...' : 'Analyze Competitors'}
         </Button>
@@ -226,7 +226,7 @@ export default function CompetitorAnalysisDashboard({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Your Engagement Rate</h4>
-                  <p className="text-2xl font-bold text-blue-900">
+                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
                     {analysis.yourMetrics.engagementRate}%
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -236,7 +236,7 @@ export default function CompetitorAnalysisDashboard({
 
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">Your Followers</h4>
-                  <p className="text-2xl font-bold text-green-900">
+                  <p className="text-2xl font-bold text-green-900 dark:text-green-300">
                     {formatNumber(analysis.yourMetrics.followerCount)}
                   </p>
                   <p className="text-sm text-green-700 dark:text-green-300">
@@ -246,7 +246,7 @@ export default function CompetitorAnalysisDashboard({
 
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">Your Avg Likes</h4>
-                  <p className="text-2xl font-bold text-purple-900">
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">
                     {formatNumber(analysis.yourMetrics.avgLikes)}
                   </p>
                   <p className="text-sm text-purple-700 dark:text-purple-300">
@@ -256,7 +256,7 @@ export default function CompetitorAnalysisDashboard({
 
                 <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                   <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Your Post Frequency</h4>
-                  <p className="text-2xl font-bold text-yellow-900">
+                  <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-300">
                     {analysis.yourMetrics.postFrequency}/week
                   </p>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
@@ -279,7 +279,7 @@ export default function CompetitorAnalysisDashboard({
 
               {/* Key Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 border rounded-lg">
+                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <h4 className="font-medium mb-3">Common Strategies</h4>
                   <ul className="space-y-2">
                     {analysis.insights.commonStrategies.map((strategy, index) => (
@@ -291,7 +291,7 @@ export default function CompetitorAnalysisDashboard({
                   </ul>
                 </div>
 
-                <div className="p-4 border rounded-lg">
+                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <h4 className="font-medium mb-3">Recommendations</h4>
                   <ul className="space-y-2">
                     {analysis.insights.recommendations.map((rec, index) => (
@@ -339,7 +339,7 @@ export default function CompetitorAnalysisDashboard({
                     return (
                       <>
                         {/* Profile Info */}
-                        <div className="p-4 border rounded-lg">
+                        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <div className="flex items-center space-x-4 mb-4">
                             <Image
                               src={comp.competitor.avatar}
@@ -384,25 +384,25 @@ export default function CompetitorAnalysisDashboard({
                         {/* Metrics */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-blue-900">{comp.metrics.engagementRate}%</p>
+                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{comp.metrics.engagementRate}%</p>
                             <p className="text-sm text-blue-700 dark:text-blue-300">Engagement Rate</p>
                           </div>
                           <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-green-900">{formatNumber(comp.metrics.avgLikes)}</p>
+                            <p className="text-2xl font-bold text-green-900 dark:text-green-300">{formatNumber(comp.metrics.avgLikes)}</p>
                             <p className="text-sm text-green-700 dark:text-green-300">Avg Likes</p>
                           </div>
                           <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-purple-900">{formatNumber(comp.metrics.avgComments)}</p>
+                            <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">{formatNumber(comp.metrics.avgComments)}</p>
                             <p className="text-sm text-purple-700 dark:text-purple-300">Avg Comments</p>
                           </div>
                           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-yellow-900">{comp.metrics.postFrequency}</p>
+                            <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-300">{comp.metrics.postFrequency}</p>
                             <p className="text-sm text-yellow-700 dark:text-yellow-300">Posts/Week</p>
                           </div>
                         </div>
 
                         {/* Top Hashtags */}
-                        <div className="p-4 border rounded-lg">
+                        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <h4 className="font-medium mb-3">Top Performing Hashtags</h4>
                           <div className="flex flex-wrap gap-2">
                             {comp.metrics.topHashtags.slice(0, 10).map(hashtag => (
@@ -460,7 +460,7 @@ export default function CompetitorAnalysisDashboard({
               </div>
 
               {/* Underutilized Hashtags */}
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <h4 className="font-medium mb-3">Underutilized Hashtags with High Potential</h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.competitors
@@ -484,7 +484,7 @@ export default function CompetitorAnalysisDashboard({
           {activeTab === 'content' && (
             <div className="space-y-6">
               {analysis.competitors.map(comp => (
-                <div key={comp.competitor.username} className="p-4 border rounded-lg">
+                <div key={comp.competitor.username} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <h4 className="font-medium mb-4">@{comp.competitor.username} Content Strategy</h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

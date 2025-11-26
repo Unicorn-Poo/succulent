@@ -90,7 +90,7 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
             <div className="w-16 h-16 mx-auto mb-2 bg-red-500 rounded-full flex items-center justify-center">
               <div className="w-0 h-0 border-l-[12px] border-l-white border-y-[8px] border-y-transparent ml-1"></div>
             </div>
-            <p className="text-sm font-medium">Video Thumbnail</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Video Thumbnail</p>
           </div>
         </div>
         

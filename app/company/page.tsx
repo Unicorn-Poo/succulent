@@ -187,17 +187,17 @@ function CompanyOverviewTab({ account }: { account: MyAppAccountLoaded }) {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 border rounded-lg">
+            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="text-2xl mb-2">🚀</div>
               <Text weight="medium">Performance</Text>
               <Text size="2" color="gray">Excellent</Text>
             </div>
-            <div className="text-center p-4 border rounded-lg">
+            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="text-2xl mb-2">🔒</div>
               <Text weight="medium">Security</Text>
               <Text size="2" color="gray">Secure</Text>
             </div>
-            <div className="text-center p-4 border rounded-lg">
+            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="text-2xl mb-2">💿</div>
               <Text weight="medium">Database</Text>
               <Text size="2" color="gray">Online</Text>
@@ -296,7 +296,7 @@ function AdminGroupsTab({ account }: { account: MyAppAccountLoaded }) {
           {/* Admin Groups List */}
           <div className="space-y-3">
             {adminGroups.map((group) => (
-              <div key={group.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={group.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <Shield size={20} className="text-red-600" />
@@ -442,7 +442,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
           <Heading size="5" className="mb-6">Security Overview</Heading>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <Shield size={20} className="text-green-600" />
@@ -455,7 +455,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
               <Badge color="green">Enabled</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Database size={20} className="text-blue-600" />
@@ -468,7 +468,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
               <Badge color="green">Active</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <AlertTriangle size={20} className="text-purple-600" />

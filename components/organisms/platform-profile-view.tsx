@@ -414,7 +414,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
           <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-r ${getPlatformColor(account.platform)} text-white`}>
             <Users className="w-5 h-5" />
             <div>
-              <h1 className="text-lg font-semibold">{account.name}</h1>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{account.name}</h1>
               <p className="text-sm opacity-90 capitalize">{account.platform} Account</p>
             </div>
           </div>

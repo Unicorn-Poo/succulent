@@ -197,7 +197,7 @@ export default function GrowthToolsDropdown({
   return (
     <div className="space-y-6">
       {/* Growth Tools Overview */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-white" />

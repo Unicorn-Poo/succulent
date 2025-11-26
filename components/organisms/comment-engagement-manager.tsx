@@ -194,7 +194,7 @@ export default function CommentEngagementManager({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Comment Engagement Manager</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Comment Engagement Manager</h3>
         <div className="flex items-center space-x-4">
           <label className="flex items-center space-x-2">
             <input
@@ -240,7 +240,7 @@ export default function CommentEngagementManager({
           {selectedComments.length > 0 && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{selectedComments.length} comments selected</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedComments.length} comments selected</span>
                 <Button 
                   onClick={handleBulkEngage} 
                   disabled={bulkEngaging}
@@ -270,7 +270,7 @@ export default function CommentEngagementManager({
                   
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-medium">{comment.authorUsername}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{comment.authorUsername}</span>
                       <span className={`px-2 py-1 rounded-full text-xs ${getSentimentColor(comment.sentiment)}`}>
                         {getSentimentIcon(comment.sentiment)} {comment.sentiment}
                       </span>
@@ -317,12 +317,12 @@ export default function CommentEngagementManager({
 
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {autoReplyRules.map(rule => (
-              <div key={rule.id} className="p-4 border rounded-lg">
+              <div key={rule.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <Input
                     value={rule.name}
                     onChange={(e) => updateRule(rule.id, { name: e.target.value })}
-                    className="font-medium"
+                    className="font-medium text-gray-900 dark:text-gray-100"
                     placeholder="Rule name"
                   />
                   <label className="flex items-center space-x-2">
@@ -338,7 +338,7 @@ export default function CommentEngagementManager({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Triggers (comma-separated)</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Triggers (comma-separated)</label>
                     <Input
                       value={rule.triggers.join(', ')}
                       onChange={(e) => updateRule(rule.id, { triggers: e.target.value.split(',').map(t => t.trim()) })}
@@ -347,7 +347,7 @@ export default function CommentEngagementManager({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Response Template</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Response Template</label>
                     <Input
                       value={rule.response}
                       onChange={(e) => updateRule(rule.id, { response: e.target.value })}
@@ -356,7 +356,7 @@ export default function CommentEngagementManager({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Cooldown (minutes)</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Cooldown (minutes)</label>
                     <Input
                       type="number"
                       value={rule.cooldownMinutes}
@@ -365,7 +365,7 @@ export default function CommentEngagementManager({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Max Replies/Day</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Max Replies/Day</label>
                     <Input
                       type="number"
                       value={rule.maxRepliesPerDay}
@@ -385,39 +385,39 @@ export default function CommentEngagementManager({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
               <h4 className="font-medium text-blue-800 dark:text-blue-300">Total Comments</h4>
-              <p className="text-2xl font-bold text-blue-900">{metrics.totalComments}</p>
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{metrics.totalComments}</p>
             </div>
             
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
               <h4 className="font-medium text-green-800 dark:text-green-300">Replied Comments</h4>
-              <p className="text-2xl font-bold text-green-900">{metrics.repliedComments}</p>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-300">{metrics.repliedComments}</p>
             </div>
             
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
               <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Response Time</h4>
-              <p className="text-2xl font-bold text-yellow-900">{metrics.averageResponseTime}m</p>
+              <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-300">{metrics.averageResponseTime}m</p>
             </div>
             
             <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
               <h4 className="font-medium text-purple-800 dark:text-purple-300">Engagement Rate</h4>
-              <p className="text-2xl font-bold text-purple-900">{metrics.engagementRate.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">{metrics.engagementRate.toFixed(1)}%</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Sentiment Breakdown</h4>
               <div className="space-y-2">
                 {Object.entries(metrics.sentimentBreakdown).map(([sentiment, count]) => (
                   <div key={sentiment} className="flex items-center justify-between">
                     <span className="capitalize">{sentiment}</span>
-                    <span className="font-medium">{count}%</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{count}%</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 border rounded-lg">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 className="font-medium mb-3">Top Engagers</h4>
               <div className="space-y-2">
                 {metrics.topEngagers.map((engager, index) => (

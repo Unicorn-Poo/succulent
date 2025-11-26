@@ -166,7 +166,7 @@ export default function MasterGrowthDashboard({
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'
                   }`}
                 >
-                  <div className="font-medium">{component.name}</div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{component.name}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{component.description}</div>
                 </button>
               ))}

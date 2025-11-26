@@ -472,7 +472,7 @@ export default function GrowthAutopilot({
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <h3 className="text-lg font-semibold">🤖 Growth Autopilot</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">🤖 Growth Autopilot</h3>
           <span className={`px-3 py-1 rounded-full text-sm ${
             dashboard.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
             dashboard.status === 'learning' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
@@ -491,7 +491,7 @@ export default function GrowthAutopilot({
               onChange={(e) => setSettings(prev => ({ ...prev, enabled: e.target.checked }))}
               className="rounded"
             />
-            <span className="text-sm font-medium">Enable Autopilot</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Enable Autopilot</span>
           </label>
           
           {settings.enabled && pendingActions.filter(a => a.status === 'pending').length > 0 && (
@@ -509,19 +509,19 @@ export default function GrowthAutopilot({
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-blue-900">{dashboard.actionsToday}</p>
+          <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{dashboard.actionsToday}</p>
           <p className="text-sm text-blue-700 dark:text-blue-300">Actions Today</p>
         </div>
         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-green-900">{dashboard.growthRate}%</p>
+          <p className="text-2xl font-bold text-green-900 dark:text-green-300">{dashboard.growthRate}%</p>
           <p className="text-sm text-green-700 dark:text-green-300">Growth Rate</p>
         </div>
         <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-purple-900">{dashboard.engagementRate}%</p>
+          <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">{dashboard.engagementRate}%</p>
           <p className="text-sm text-purple-700 dark:text-purple-300">Engagement Rate</p>
         </div>
         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-yellow-900">{pendingActions.filter(a => a.status === 'pending').length}</p>
+          <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-300">{pendingActions.filter(a => a.status === 'pending').length}</p>
           <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending Actions</p>
         </div>
       </div>
@@ -554,7 +554,7 @@ export default function GrowthAutopilot({
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           {/* Next Recommended Actions */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">🎯 Next Recommended Actions</h4>
             <div className="space-y-3">
               {dashboard.nextActions.slice(0, 3).map(action => (
@@ -562,7 +562,7 @@ export default function GrowthAutopilot({
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{getActionIcon(action.type)}</span>
                     <div>
-                      <p className="font-medium">{action.title}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{action.title}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{action.description}</p>
                     </div>
                   </div>
@@ -585,41 +585,41 @@ export default function GrowthAutopilot({
 
           {/* Performance Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-3">Today's Automation Performance</h4>
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Today's Automation Performance</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Posts Scheduled</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Posts Scheduled</span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">{dashboard.performance.postsScheduled}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Comments Replied</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Comments Replied</span>
                   <span className="font-bold text-green-600 dark:text-green-400">{dashboard.performance.commentsReplied}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">DMs Sent</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">DMs Sent</span>
                   <span className="font-bold text-purple-600 dark:text-purple-400">{dashboard.performance.dmssSent}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Hashtags Optimized</span>
-                  <span className="font-bold text-yellow-600">{dashboard.performance.hashtagsOptimized}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Hashtags Optimized</span>
+                  <span className="font-bold text-yellow-600 dark:text-yellow-400">{dashboard.performance.hashtagsOptimized}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-3">Growth Trajectory</h4>
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Growth Trajectory</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Current Growth Rate</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Current Growth Rate</span>
                   <span className="font-bold text-green-600 dark:text-green-400">{dashboard.growthRate}%/month</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Target Growth Rate</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Target Growth Rate</span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">{settings.goals.followerGrowthTarget}%/month</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Projected Followers (30 days)</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Projected Followers (30 days)</span>
                   <span className="font-bold text-purple-600 dark:text-purple-400">+{Math.round(2500 * (dashboard.growthRate / 100))}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -666,17 +666,17 @@ export default function GrowthAutopilot({
           {pendingActions
             .filter(action => !action.id.startsWith('brand_content_'))
             .map(action => (
-            <div key={action.id} className="p-4 border rounded-lg">
+            <div key={action.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl mt-1">{getActionIcon(action.type)}</span>
                   <div>
-                    <h4 className="font-medium">{action.title}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{action.title}</h4>
                     <p className="text-gray-700 dark:text-gray-300 mt-1">{action.description}</p>
                     <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">💡 {action.reason}</p>
                     {action.content && (
                       <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-sm font-medium mb-1">Suggested Content:</p>
+                        <p className="text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Suggested Content:</p>
                         <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{action.content}</p>
                       </div>
                     )}
@@ -745,7 +745,7 @@ export default function GrowthAutopilot({
               <div className="flex items-start space-x-3">
                 <span className="text-2xl">{getInsightIcon(insight.type)}</span>
                 <div className="flex-1">
-                  <h4 className="font-medium">{insight.title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{insight.title}</h4>
                   <p className="text-gray-700 dark:text-gray-300 mt-1">{insight.description}</p>
                   {insight.action && (
                     <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
@@ -775,8 +775,8 @@ export default function GrowthAutopilot({
       {activeTab === 'settings' && (
         <div className="space-y-6">
           {/* Aggressiveness Level */}
-          <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-3">Automation Aggressiveness</h4>
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Automation Aggressiveness</h4>
             <div className="flex space-x-4">
               {(['conservative', 'moderate', 'aggressive'] as const).map(level => (
                 <label key={level} className="flex items-center space-x-2">
@@ -788,7 +788,7 @@ export default function GrowthAutopilot({
                     onChange={(e) => setSettings(prev => ({ ...prev, aggressiveness: e.target.value as any }))}
                     className="rounded"
                   />
-                  <span className="capitalize">{level}</span>
+                  <span className="capitalize text-gray-900 dark:text-gray-100">{level}</span>
                 </label>
               ))}
             </div>
@@ -800,11 +800,11 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Growth Goals */}
-          <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-3">Growth Goals</h4>
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Growth Goals</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Monthly Follower Growth Target (%)</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 text-gray-900 dark:text-gray-100">Monthly Follower Growth Target (%)</label>
                 <Input
                   type="number"
                   value={settings.goals.followerGrowthTarget}
@@ -815,7 +815,7 @@ export default function GrowthAutopilot({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Engagement Rate Target (%)</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 text-gray-900 dark:text-gray-100">Engagement Rate Target (%)</label>
                 <Input
                   type="number"
                   step="0.1"
@@ -827,7 +827,7 @@ export default function GrowthAutopilot({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Posts Per Week</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 text-gray-900 dark:text-gray-100">Posts Per Week</label>
                 <Input
                   type="number"
                   value={settings.goals.postsPerWeek}
@@ -841,8 +841,8 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Automation Toggles */}
-          <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-3">Automation Features</h4>
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h4 className="font-medium mb-3 text-gray-900 dark:text-gray-100">Automation Features</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(settings.automation).map(([key, value]) => (
                 <label key={key} className="flex items-center space-x-2">
@@ -855,14 +855,14 @@ export default function GrowthAutopilot({
                     }))}
                     className="rounded"
                   />
-                  <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').toLowerCase()}</span>
+                  <span className="capitalize text-gray-900 dark:text-gray-100">{key.replace(/([A-Z])/g, ' $1').toLowerCase()}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {/* Approval Settings */}
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <h4 className="font-medium mb-3">Approval Requirements</h4>
             <div className="space-y-3">
               {Object.entries(settings.approvals).map(([key, value]) => (

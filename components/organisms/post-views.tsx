@@ -770,7 +770,7 @@ export function PostSuccinctView({
       case "published":
         return "text-green-600 dark:text-green-400";
       case "scheduled":
-        return "text-yellow-600";
+        return "text-yellow-600 dark:text-yellow-400";
       case "draft":
         return "text-gray-600 dark:text-gray-400";
       default:

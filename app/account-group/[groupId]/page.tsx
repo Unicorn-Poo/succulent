@@ -1405,7 +1405,7 @@ export default function AccountGroupPage() {
 
           <div className="space-y-4 mt-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Post Title
               </label>
               <TextField.Root
@@ -1415,7 +1415,7 @@ export default function AccountGroupPage() {
               />
             </div>
             {/* <div>
-								<label className="block text-sm font-medium mb-2">Post Title</label>
+								<label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Post Title</label>
 								<SmartTitleInput
 									value={newPostTitle}
 									onChange={setNewPostTitle}
@@ -1425,7 +1425,7 @@ export default function AccountGroupPage() {
 							</div> */}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Content</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Content</label>
               <TextArea
                 value={newPostText}
                 onChange={(e) => setNewPostText(e.target.value)}

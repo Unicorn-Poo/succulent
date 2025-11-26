@@ -922,7 +922,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Basic Info</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Brand Name</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Brand Name</label>
                   <Input
                     value={currentPersona.name}
                     onChange={(e) => updatePersona({ name: e.target.value })}
@@ -930,7 +930,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Description</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Description</label>
                   <Input
                     value={currentPersona.description}
                     onChange={(e) => updatePersona({ description: e.target.value })}
@@ -945,7 +945,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Voice & Tone</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tone</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Tone</label>
                   <select
                     value={currentPersona.voice.tone}
                     onChange={(e) => updateVoice({ tone: e.target.value as any })}
@@ -961,7 +961,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Writing Style</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Writing Style</label>
                   <select
                     value={currentPersona.voice.writingStyle}
                     onChange={(e) => updateVoice({ writingStyle: e.target.value as any })}
@@ -976,7 +976,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Emoji Usage</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Emoji Usage</label>
                   <select
                     value={currentPersona.voice.emojiUsage}
                     onChange={(e) => updateVoice({ emojiUsage: e.target.value as any })}
@@ -989,7 +989,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Language Level</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Language Level</label>
                   <select
                     value={currentPersona.voice.languageLevel}
                     onChange={(e) => updateVoice({ languageLevel: e.target.value as any })}
@@ -1008,7 +1008,7 @@ Return ONLY the JSON, no additional text or markdown.`;
             <div className="space-y-4">
               <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Messaging</h4>
               <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Value Proposition</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Value Proposition</label>
                 <textarea
                   value={currentPersona.messaging.valueProposition}
                   onChange={(e) => updateMessaging({ valueProposition: e.target.value })}
@@ -1017,7 +1017,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Target Audience</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Target Audience</label>
                 <textarea
                   value={currentPersona.messaging.targetAudience}
                   onChange={(e) => updateMessaging({ targetAudience: e.target.value })}
@@ -1026,7 +1026,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Content Pillars (comma-separated)</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Content Pillars (comma-separated)</label>
                 <Input
                   value={currentPersona.messaging.contentPillars.join(', ')}
                   onChange={(e) => updateMessaging({ contentPillars: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
@@ -1040,7 +1040,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Engagement Style</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Comment Style</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Comment Style</label>
                   <select
                     value={currentPersona.engagement.commentStyle}
                     onChange={(e) => updateEngagement({ commentStyle: e.target.value as any })}
@@ -1054,7 +1054,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">DM Approach</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">DM Approach</label>
                   <select
                     value={currentPersona.engagement.dmApproach}
                     onChange={(e) => updateEngagement({ dmApproach: e.target.value as any })}
@@ -1067,7 +1067,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Hashtag Strategy</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Hashtag Strategy</label>
                   <select
                     value={currentPersona.engagement.hashtagStrategy}
                     onChange={(e) => updateEngagement({ hashtagStrategy: e.target.value as any })}
@@ -1080,7 +1080,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Mention Style</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Mention Style</label>
                   <select
                     value={currentPersona.engagement.mentionStyle}
                     onChange={(e) => updateEngagement({ mentionStyle: e.target.value as any })}
@@ -1099,7 +1099,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               <h4 className="font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Content Guidelines</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Post Length</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Post Length</label>
                   <select
                     value={currentPersona.contentGuidelines.postLength}
                     onChange={(e) => updateContentGuidelines({ postLength: e.target.value as any })}
@@ -1112,7 +1112,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Call to Action Style</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Call to Action Style</label>
                   <select
                     value={currentPersona.contentGuidelines.callToActionStyle}
                     onChange={(e) => updateContentGuidelines({ callToActionStyle: e.target.value as any })}
@@ -1125,7 +1125,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Question Frequency</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 dark:text-gray-200">Question Frequency</label>
                   <select
                     value={currentPersona.contentGuidelines.questionFrequency}
                     onChange={(e) => updateContentGuidelines({ questionFrequency: e.target.value as any })}

@@ -212,7 +212,7 @@ export default function WebhookManagement() {
 
             {/* URL Input */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Webhook URL
               </label>
               <input
@@ -226,7 +226,7 @@ export default function WebhookManagement() {
 
             {/* Secret Input */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Secret (Optional)
               </label>
               <input
@@ -243,7 +243,7 @@ export default function WebhookManagement() {
 
             {/* Events Selection */}
             <div>
-              <label className="block text-sm font-medium mb-3">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
                 Events to Subscribe ({newWebhook.events.length} selected)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -336,12 +336,12 @@ export default function WebhookManagement() {
                   <div className="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
                     {webhook.createdAt && (
                       <div>
-                        <span className="font-medium">Created:</span> {new Date(webhook.createdAt).toLocaleDateString()}
+                        <span className="font-medium text-gray-900 dark:text-gray-100">Created:</span> {new Date(webhook.createdAt).toLocaleDateString()}
                       </div>
                     )}
                     {webhook.lastTriggered && (
                       <div>
-                        <span className="font-medium">Last Triggered:</span> {new Date(webhook.lastTriggered).toLocaleDateString()}
+                        <span className="font-medium text-gray-900 dark:text-gray-100">Last Triggered:</span> {new Date(webhook.lastTriggered).toLocaleDateString()}
                       </div>
                     )}
                   </div>

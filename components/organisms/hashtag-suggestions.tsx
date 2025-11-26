@@ -60,7 +60,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="font-medium">#{hashtag}</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">#{hashtag}</span>
           {selected && <Check className="w-4 h-4 text-lime-600 dark:text-lime-400" />}
         </div>
         <div className="flex items-center gap-1 text-xs">
@@ -72,15 +72,15 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
       {performance && (
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="text-center">
-            <div className="font-medium">{performance.usage.toLocaleString()}</div>
+            <div className="font-medium text-gray-900 dark:text-gray-100">{performance.usage.toLocaleString()}</div>
             <div className="text-gray-500 dark:text-gray-400">Uses</div>
           </div>
           <div className="text-center">
-            <div className="font-medium">{performance.engagement.toFixed(1)}%</div>
+            <div className="font-medium text-gray-900 dark:text-gray-100">{performance.engagement.toFixed(1)}%</div>
             <div className="text-gray-500 dark:text-gray-400">Engagement</div>
           </div>
           <div className="text-center">
-            <div className="font-medium">{(performance.reach / 1000).toFixed(1)}K</div>
+            <div className="font-medium text-gray-900 dark:text-gray-100">{(performance.reach / 1000).toFixed(1)}K</div>
             <div className="text-gray-500 dark:text-gray-400">Reach</div>
           </div>
         </div>

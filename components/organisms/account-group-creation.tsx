@@ -185,7 +185,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
           {/* Group Name */}
           <div>
-            <label className="block text-sm font-medium mb-2">Group Name</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Group Name</label>
             <Input
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}

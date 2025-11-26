@@ -87,12 +87,12 @@ export default function PostStatusSync({ accountGroupId }: PostStatusSyncProps) 
         }`}>
           {syncResult.success ? (
             <div className="text-green-800 dark:text-green-300">
-              <p className="font-medium">✅ Sync completed successfully</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">✅ Sync completed successfully</p>
               <p className="text-sm">Updated {syncResult.updated} posts</p>
             </div>
           ) : (
             <div className="text-red-800 dark:text-red-300">
-              <p className="font-medium">❌ Sync failed</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">❌ Sync failed</p>
               {syncResult.errors.map((error, index) => (
                 <p key={index} className="text-sm">{error}</p>
               ))}

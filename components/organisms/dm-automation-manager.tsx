@@ -275,7 +275,7 @@ export default function DMAutomationManager({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">DM Automation Manager</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">DM Automation Manager</h3>
         <Button onClick={loadConversations} disabled={isLoading} size="sm">
           {isLoading ? 'Loading...' : 'Refresh'}
         </Button>
@@ -311,7 +311,7 @@ export default function DMAutomationManager({
           {selectedConversations.length > 0 && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">{selectedConversations.length} conversations selected</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedConversations.length} conversations selected</span>
                 <div className="flex items-center space-x-2">
                   <select
                     value={selectedTemplate}
@@ -351,7 +351,7 @@ export default function DMAutomationManager({
                   
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-medium">{conversation.participantUsername}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{conversation.participantUsername}</span>
                       <span className={`px-2 py-1 rounded-full text-xs ${getSentimentColor(conversation.sentiment)}`}>
                         {getSentimentIcon(conversation.sentiment)}
                       </span>
@@ -422,9 +422,9 @@ export default function DMAutomationManager({
           {/* Existing Templates */}
           <div className="space-y-4">
             {templates.map(template => (
-              <div key={template.id} className="p-4 border rounded-lg">
+              <div key={template.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{template.name}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h4>
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -465,9 +465,9 @@ export default function DMAutomationManager({
         <div>
           <div className="space-y-4">
             {campaigns.map(campaign => (
-              <div key={campaign.id} className="p-4 border rounded-lg">
+              <div key={campaign.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{campaign.name}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{campaign.name}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     campaign.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
                     campaign.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
@@ -530,7 +530,7 @@ export default function DMAutomationManager({
                     }`}
                     onClick={() => setSelectedTemplate(template.id)}
                   >
-                    <h5 className="font-medium">{template.name}</h5>
+                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h5>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{template.message.substring(0, 100)}...</p>
                   </div>
                 ))}

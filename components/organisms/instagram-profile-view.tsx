@@ -369,7 +369,7 @@ export default function InstagramProfileView({
             onClick={() => setActiveTab('posts')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'posts' 
-                ? 'border-black text-black' 
+                ? 'border-black text-gray-900 dark:text-gray-100' 
                 : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -380,7 +380,7 @@ export default function InstagramProfileView({
             onClick={() => setActiveTab('reels')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'reels' 
-                ? 'border-black text-black' 
+                ? 'border-black text-gray-900 dark:text-gray-100' 
                 : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -391,7 +391,7 @@ export default function InstagramProfileView({
             onClick={() => setActiveTab('tagged')}
             className={`flex-1 flex items-center justify-center py-3 border-b-2 transition-colors ${
               activeTab === 'tagged' 
-                ? 'border-black text-black' 
+                ? 'border-black text-gray-900 dark:text-gray-100' 
                 : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-400'
             }`}
           >

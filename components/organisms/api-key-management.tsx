@@ -623,7 +623,7 @@ export default function APIKeyManagement() {
 
           <div className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Name *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Name *</label>
               <TextField.Root
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
@@ -632,7 +632,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Description</label>
               <TextArea
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
@@ -642,7 +642,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-3">Permissions</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Permissions</label>
               <div className="space-y-2">
                 {availablePermissions.map((permission) => (
                   <label key={permission.id} className="flex items-start gap-3 cursor-pointer">
@@ -672,7 +672,7 @@ export default function APIKeyManagement() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Rate Limit Tier</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Rate Limit Tier</label>
               <select
                 value={createForm.rateLimitTier}
                 onChange={(e) => setCreateForm({ ...createForm, rateLimitTier: e.target.value as any })}
@@ -773,7 +773,7 @@ export default function APIKeyManagement() {
           {editingKey && (
             <div className="space-y-4 mt-6">
               <div>
-                <label className="block text-sm font-medium mb-2">Name *</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Name *</label>
                 <TextField.Root
                   value={editingKey.name}
                   onChange={(e) => setEditingKey({ ...editingKey, name: e.target.value })}
@@ -782,7 +782,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Description</label>
                 <TextArea
                   value={editingKey.description || ''}
                   onChange={(e) => setEditingKey({ ...editingKey, description: e.target.value })}
@@ -792,7 +792,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-3">Permissions</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Permissions</label>
                 <div className="space-y-2">
                   {availablePermissions.map((permission) => (
                     <label key={permission.id} className="flex items-start gap-3 cursor-pointer">
@@ -822,7 +822,7 @@ export default function APIKeyManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Status</label>
                 <select
                   value={editingKey.status}
                   onChange={(e) => setEditingKey({ ...editingKey, status: e.target.value as any })}
