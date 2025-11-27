@@ -162,6 +162,18 @@ export default function AccountGroupPage() {
                 },
               },
             },
+            // CRITICAL: Load brand persona for AI content generation
+            brandPersona: {
+              personality: true,
+              contentPillars: true,
+              keyMessages: true,
+              avoidTopics: true,
+              samplePosts: true,
+            },
+            // Load automation-related data
+            automationLogs: { $each: true },
+            postQueue: { $each: true },
+            contentFeedback: { $each: true },
           },
         },
       },

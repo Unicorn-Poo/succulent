@@ -56,7 +56,7 @@ interface GrowthInsight {
 }
 
 interface AutopilotDashboard {
-  status: "active" | "paused" | "learning";
+  status: "active" | "paused";
   actionsToday: number;
   growthRate: number;
   engagementRate: number;
@@ -205,20 +205,35 @@ export default function GrowthAutopilot({
     [saveSettingsToJazz]
   );
 
+  // Load performance stats from automationLogs (persisted in Jazz)
+  const automationLogs: any[] = accountGroup?.automationLogs || [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayLogs = automationLogs.filter((log: any) => {
+    const logDate = new Date(log?.timestamp);
+    return logDate >= todayStart;
+  });
+
+  const persistedPerformance = {
+    postsScheduled: todayLogs.filter(
+      (l: any) => l?.type === "post" || l?.type === "schedule"
+    ).length,
+    commentsReplied: todayLogs.filter((l: any) => l?.type === "reply").length,
+    dmssSent: todayLogs.filter((l: any) => l?.type === "dm").length,
+    hashtagsOptimized: todayLogs.filter((l: any) => l?.type === "hashtag")
+      .length,
+    followerGrowth: 0,
+  };
+
   const [dashboard, setDashboard] = useState<AutopilotDashboard>({
-    status: "learning",
-    actionsToday: 0,
+    status: settings.enabled ? "active" : "paused",
+    actionsToday: todayLogs.length,
     growthRate: 12.5,
     engagementRate: 4.2,
     nextActions: [],
     insights: [],
-    performance: {
-      postsScheduled: 0,
-      commentsReplied: 0,
-      dmssSent: 0,
-      hashtagsOptimized: 0,
-      followerGrowth: 0,
-    },
+    performance: persistedPerformance,
   });
 
   const [pendingActions, setPendingActions] = useState<AutopilotAction[]>([]);
@@ -261,19 +276,29 @@ export default function GrowthAutopilot({
             writingStyle: accountGroup.brandPersona.writingStyle,
             emojiUsage: accountGroup.brandPersona.emojiUsage,
             languageLevel: accountGroup.brandPersona.languageLevel,
-            personality: accountGroup.brandPersona.personality ? Array.from(accountGroup.brandPersona.personality) : [],
-            contentPillars: accountGroup.brandPersona.contentPillars ? Array.from(accountGroup.brandPersona.contentPillars) : [],
+            personality: accountGroup.brandPersona.personality
+              ? Array.from(accountGroup.brandPersona.personality)
+              : [],
+            contentPillars: accountGroup.brandPersona.contentPillars
+              ? Array.from(accountGroup.brandPersona.contentPillars)
+              : [],
             targetAudience: accountGroup.brandPersona.targetAudience,
             valueProposition: accountGroup.brandPersona.valueProposition,
-            keyMessages: accountGroup.brandPersona.keyMessages ? Array.from(accountGroup.brandPersona.keyMessages) : [],
-            avoidTopics: accountGroup.brandPersona.avoidTopics ? Array.from(accountGroup.brandPersona.avoidTopics) : [],
+            keyMessages: accountGroup.brandPersona.keyMessages
+              ? Array.from(accountGroup.brandPersona.keyMessages)
+              : [],
+            avoidTopics: accountGroup.brandPersona.avoidTopics
+              ? Array.from(accountGroup.brandPersona.avoidTopics)
+              : [],
             callToActionStyle: accountGroup.brandPersona.callToActionStyle,
-            samplePosts: accountGroup.brandPersona.samplePosts ? Array.from(accountGroup.brandPersona.samplePosts) : [],
+            samplePosts: accountGroup.brandPersona.samplePosts
+              ? Array.from(accountGroup.brandPersona.samplePosts)
+              : [],
           }
         : null;
 
       // 🔍 DEBUG: Log what we're sending to API
-      console.log('🔍 [GROWTH-AUTOPILOT] Sending to API:', {
+      console.log("🔍 [GROWTH-AUTOPILOT] Sending to API:", {
         hasBrandPersona: !!brandPersona,
         contentPillarsCount: brandPersona?.contentPillars?.length || 0,
         contentPillars: brandPersona?.contentPillars,
@@ -404,9 +429,20 @@ export default function GrowthAutopilot({
 
       if (allActions.length > 0) {
         setPendingActions(allActions);
+
+        // Prioritize showing ACTUAL POST CONTENT (not generic tips) in the dashboard
+        // Filter for actions that have actual content to post
+        const postActions = allActions.filter(
+          (a) => a.type === "post" && a.content
+        );
+        const nextActionsToShow =
+          postActions.length > 0
+            ? postActions.slice(0, 3)
+            : allActions.slice(0, 3);
+
         setDashboard((prev) => ({
           ...prev,
-          nextActions: allActions.slice(0, 3),
+          nextActions: nextActionsToShow,
           status: "active",
         }));
 
@@ -429,7 +465,8 @@ export default function GrowthAutopilot({
         impact: "high",
         status: "pending",
         platform,
-        reason: "A configured brand persona helps the AI generate content that matches your style",
+        reason:
+          "A configured brand persona helps the AI generate content that matches your style",
         createdAt: new Date().toISOString(),
       },
     ];
@@ -515,6 +552,32 @@ export default function GrowthAutopilot({
         }
 
         const result = await response.json();
+
+        // Log to automationLogs for persistence
+        if (accountGroup?.automationLogs) {
+          try {
+            const { AutomationLog } = await import("@/app/schema");
+            const newLog = AutomationLog.create(
+              {
+                type: "post",
+                action: `Scheduled: ${action.title}`,
+                platform: action.platform,
+                status: "success",
+                timestamp: new Date(),
+                details: JSON.stringify({
+                  postId: result.postId,
+                  scheduledFor: result.scheduledTime,
+                  contentPreview: action.content.slice(0, 200),
+                }),
+              },
+              { owner: accountGroup._owner }
+            );
+            accountGroup.automationLogs.push(newLog);
+          } catch (logError) {
+            // Continue even if logging fails
+          }
+        }
+
         setNotification({
           type: "success",
           message: `Post scheduled for ${action.platform}!`,
@@ -778,15 +841,15 @@ export default function GrowthAutopilot({
             className={`px-3 py-1 rounded-full text-sm ${
               dashboard.status === "active"
                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-                : dashboard.status === "learning"
+                : isLoading
                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                 : "bg-muted text-foreground"
             }`}
           >
-            {dashboard.status === "active"
+            {isLoading
+              ? "🔄 Loading..."
+              : dashboard.status === "active"
               ? "🟢 Active"
-              : dashboard.status === "learning"
-              ? "🔄 Learning"
               : "⏸️ Paused"}
           </span>
         </div>
@@ -895,50 +958,139 @@ export default function GrowthAutopilot({
       {/* Dashboard Tab */}
       {activeTab === "dashboard" && (
         <div className="space-y-6">
-          {/* Next Recommended Actions */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">
-              🎯 Next Recommended Actions
-            </h4>
-            <div className="space-y-3">
-              {dashboard.nextActions.slice(0, 3).map((action) => (
-                <div
-                  key={action.id}
-                  className="flex items-center justify-between p-3 bg-card rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">
-                      {getActionIcon(action.type)}
-                    </span>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {action.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {action.description}
-                      </p>
+          {/* Generated Posts Preview */}
+          {dashboard.nextActions.filter((a) => a.content).length > 0 && (
+            <div className="p-4 bg-gradient-to-r from-green-50 to-lime-50 dark:from-green-900/20 dark:to-lime-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <h4 className="font-medium text-green-800 dark:text-green-300 mb-3">
+                📝 Generated Posts Ready to Publish
+              </h4>
+              <div className="space-y-4">
+                {dashboard.nextActions
+                  .filter((a) => a.content)
+                  .slice(0, 2)
+                  .map((action) => (
+                    <div
+                      key={action.id}
+                      className="p-4 bg-card rounded-lg border border-border"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">
+                            {getActionIcon(action.type)}
+                          </span>
+                          <span className="text-sm font-medium text-foreground">
+                            {action.title}
+                          </span>
+                          <span className="px-2 py-0.5 bg-muted text-xs rounded">
+                            {action.platform}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${getImpactColor(
+                            action.impact
+                          )}`}
+                        >
+                          {action.confidence}%
+                        </span>
+                      </div>
+                      <div className="bg-muted p-3 rounded-lg mb-3">
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                          {action.content!.length > 300
+                            ? action.content!.slice(0, 300) + "..."
+                            : action.content}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() =>
+                            approveAction(action.id, action.content)
+                          }
+                          size="1"
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={isLoading}
+                        >
+                          ✓ Approve & Queue
+                        </Button>
+                        <Button
+                          onClick={() => executeAction(action.id)}
+                          size="1"
+                          disabled={isLoading}
+                        >
+                          Schedule Now
+                        </Button>
+                        <Button
+                          onClick={() => setActiveTab("actions")}
+                          size="1"
+                          variant="soft"
+                        >
+                          Edit First
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getImpactColor(
-                        action.impact
-                      )}`}
-                    >
-                      {action.confidence}% confidence
-                    </span>
-                    <Button
-                      onClick={() => executeAction(action.id)}
-                      size="1"
-                      disabled={isLoading}
-                    >
-                      Execute
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                  ))}
+                {dashboard.nextActions.filter((a) => a.content).length > 2 && (
+                  <button
+                    onClick={() => setActiveTab("actions")}
+                    className="w-full py-2 text-sm text-green-600 dark:text-green-400 hover:underline"
+                  >
+                    View all{" "}
+                    {dashboard.nextActions.filter((a) => a.content).length}{" "}
+                    generated posts →
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Tips & Recommendations (non-content actions) */}
+          {dashboard.nextActions.filter((a) => !a.content).length > 0 && (
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">
+                💡 Growth Tips & Recommendations
+              </h4>
+              <div className="space-y-3">
+                {dashboard.nextActions
+                  .filter((a) => !a.content)
+                  .slice(0, 3)
+                  .map((action) => (
+                    <div
+                      key={action.id}
+                      className="flex items-center justify-between p-3 bg-card rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">
+                          {getActionIcon(action.type)}
+                        </span>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {action.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {action.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${getImpactColor(
+                            action.impact
+                          )}`}
+                        >
+                          {action.confidence}% confidence
+                        </span>
+                        <Button
+                          onClick={() => executeAction(action.id)}
+                          size="1"
+                          disabled={isLoading}
+                        >
+                          Execute
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Post Queue Widget */}
           <PostQueue

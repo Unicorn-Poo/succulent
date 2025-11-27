@@ -286,6 +286,7 @@ export default function PostQueue({
   // Compact widget view for Growth Autopilot
   if (compact) {
     const pendingCount = statusCounts.pending;
+    const scheduledCount = statusCounts.scheduled;
     const topPending = filteredPosts.slice(0, 3);
 
     return (
@@ -296,15 +297,32 @@ export default function PostQueue({
             <Inbox className="w-5 h-5 text-primary" />
             <h4 className="font-medium text-foreground">Post Queue</h4>
           </div>
-          <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
-            {pendingCount} pending
-          </span>
+          <div className="flex items-center space-x-2">
+            {scheduledCount > 0 && (
+              <span className="px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                {scheduledCount} scheduled
+              </span>
+            )}
+            <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+              {pendingCount} pending
+            </span>
+          </div>
         </div>
 
         {pendingCount === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No posts awaiting approval
-          </p>
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground">
+              No posts awaiting approval
+            </p>
+            {scheduledCount > 0 && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                ✓ {scheduledCount} posts already scheduled to publish
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              Approve content from the Actions tab to add posts here
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {topPending.map((post: any, index: number) => (
