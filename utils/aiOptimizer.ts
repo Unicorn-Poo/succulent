@@ -299,7 +299,15 @@ STRICT RULES:
 6. Write as the BRAND, in first person
 7. Be SPECIFIC to the topic - reference actual details from the content pillar
 8. Start with a scroll-stopping hook relevant to the pillar topic
-9. Sound human and authentic, not like generic AI content`,
+9. Sound human and authentic, not like generic AI content
+
+FORMATTING RULES:
+- NO MARKDOWN (**bold**, *italic*, # headers) - platforms don't render it
+- NO em-dashes (—) - they scream AI-generated
+- NO AI clichés: "let's dive in", "here's the thing", "game-changer", "unlock", "elevate"
+- Use actual line breaks for formatting, not markdown
+- For TikTok: SHORT caption only (not a video script)
+- NO video script formatting: no "[Scene:]", "**Hook**:", "**Script**:"`,
     prompt: `Generate ${count} ${platform} posts. Each post MUST be about a DIFFERENT content pillar:
 
 ${contentPillars.slice(0, count).map((p, i) => `Post ${i + 1}: About "${p}"`).join("\n")}

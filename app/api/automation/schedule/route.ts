@@ -73,11 +73,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get API key from environment
-    const apiKey = process.env.AYRSHARE_API_KEY;
+    // Get API key from environment - check both possible variable names
+    const apiKey = process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Ayrshare API key not configured" },
+        { error: "Ayrshare API key not configured. Set AYRSHARE_API_KEY or NEXT_PUBLIC_AYRSHARE_API_KEY in environment." },
         { status: 500 }
       );
     }
