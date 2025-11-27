@@ -206,12 +206,21 @@ export default function GrowthAutopilot({
   );
 
   // Load performance stats from automationLogs (persisted in Jazz)
-  const automationLogs: any[] = accountGroup?.automationLogs || [];
+  // Handle case where automationLogs doesn't exist on older account groups
+  const automationLogs: any[] = (() => {
+    try {
+      return accountGroup?.automationLogs ? Array.from(accountGroup.automationLogs) : [];
+    } catch {
+      return [];
+    }
+  })();
+  
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-
+  
   const todayLogs = automationLogs.filter((log: any) => {
-    const logDate = new Date(log?.timestamp);
+    if (!log?.timestamp) return false;
+    const logDate = new Date(log.timestamp);
     return logDate >= todayStart;
   });
 
@@ -298,8 +307,11 @@ export default function GrowthAutopilot({
         : null;
 
       // 🔍 DEBUG: Log what we're sending to API
+      console.log("🔍 [GROWTH-AUTOPILOT] Raw accountGroup.brandPersona:", accountGroup?.brandPersona);
       console.log("🔍 [GROWTH-AUTOPILOT] Sending to API:", {
         hasBrandPersona: !!brandPersona,
+        hasRawBrandPersona: !!accountGroup?.brandPersona,
+        rawContentPillars: accountGroup?.brandPersona?.contentPillars,
         contentPillarsCount: brandPersona?.contentPillars?.length || 0,
         contentPillars: brandPersona?.contentPillars,
         samplePostsCount: brandPersona?.samplePosts?.length || 0,
@@ -553,9 +565,9 @@ export default function GrowthAutopilot({
 
         const result = await response.json();
 
-        // Log to automationLogs for persistence
-        if (accountGroup?.automationLogs) {
-          try {
+        // Log to automationLogs for persistence (skip if field doesn't exist on older account groups)
+        try {
+          if (accountGroup?.automationLogs && accountGroup._owner) {
             const { AutomationLog } = await import("@/app/schema");
             const newLog = AutomationLog.create(
               {
@@ -573,9 +585,9 @@ export default function GrowthAutopilot({
               { owner: accountGroup._owner }
             );
             accountGroup.automationLogs.push(newLog);
-          } catch (logError) {
-            // Continue even if logging fails
           }
+        } catch (logError) {
+          // Continue even if logging fails - field may not exist on older account groups
         }
 
         setNotification({

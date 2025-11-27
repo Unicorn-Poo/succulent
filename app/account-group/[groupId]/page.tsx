@@ -170,10 +170,6 @@ export default function AccountGroupPage() {
               avoidTopics: true,
               samplePosts: true,
             },
-            // Load automation-related data
-            automationLogs: { $each: true },
-            postQueue: { $each: true },
-            contentFeedback: { $each: true },
           },
         },
       },
