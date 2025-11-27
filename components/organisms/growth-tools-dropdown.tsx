@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '../atoms/button';
-import { ChevronDown, Zap, TrendingUp, MessageCircle, Mail, Users, Search, Rss, Palette, Clock, BarChart3 } from 'lucide-react';
+import { ChevronDown, Zap, TrendingUp, MessageCircle, Mail, Users, Search, Rss, Palette, Clock, BarChart3, Inbox, Star, Webhook } from 'lucide-react';
 
 // Import all growth components
 import GrowthAutopilot from './growth-autopilot';
@@ -16,6 +16,9 @@ import BrandManagementDashboard from './brand-management-dashboard';
 import AutoScheduleManager from './auto-schedule-manager';
 import UnifiedAutomationDashboard from './unified-automation-dashboard';
 import BrandPersonaSetup from './brand-persona-setup';
+import DMInbox from './dm-inbox';
+import ReviewsManagement from './reviews-management';
+import WebhookManagement from './webhook-management';
 
 interface GrowthTool {
   id: string;
@@ -143,6 +146,33 @@ export default function GrowthToolsDropdown({
       category: 'optimization',
       impact: 'high',
       component: BrandPersonaSetup
+    },
+    {
+      id: 'dm-inbox',
+      name: 'DM Inbox',
+      description: 'View and respond to direct messages',
+      icon: Inbox,
+      category: 'automation',
+      impact: 'medium',
+      component: DMInbox
+    },
+    {
+      id: 'reviews',
+      name: 'Reviews Management',
+      description: 'Monitor and reply to customer reviews',
+      icon: Star,
+      category: 'analytics',
+      impact: 'medium',
+      component: ReviewsManagement
+    },
+    {
+      id: 'webhooks',
+      name: 'Webhook Management',
+      description: 'Configure real-time notifications',
+      icon: Webhook,
+      category: 'automation',
+      impact: 'low',
+      component: WebhookManagement
     }
   ];
 

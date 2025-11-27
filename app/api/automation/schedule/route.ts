@@ -10,6 +10,9 @@ interface ScheduleRequest {
   scheduledFor?: string; // ISO date string - if not provided, we calculate optimal time
   mediaUrls?: string[];
   hashtags?: string[];
+  // Ayrshare enhanced features
+  autoHashtag?: boolean; // Automatically add trending hashtags
+  shortenLinks?: boolean; // Automatically shorten URLs
 }
 
 interface OptimalTimeResult {
@@ -63,7 +66,7 @@ function calculateOptimalTime(platform: string): OptimalTimeResult {
 export async function POST(request: NextRequest) {
   try {
     const body: ScheduleRequest = await request.json();
-    const { content, platform, profileKey, scheduledFor, mediaUrls, hashtags } =
+    const { content, platform, profileKey, scheduledFor, mediaUrls, hashtags, autoHashtag, shortenLinks } =
       body;
 
     if (!content || !platform) {
@@ -112,8 +115,16 @@ export async function POST(request: NextRequest) {
       postPayload.mediaUrls = mediaUrls;
     }
 
-    // Add hashtags if provided (append to post)
-    if (hashtags && hashtags.length > 0) {
+    // Ayrshare enhanced features
+    if (autoHashtag) {
+      postPayload.autoHashtag = true; // Let Ayrshare add trending hashtags
+    }
+    if (shortenLinks) {
+      postPayload.shortenLinks = true; // Let Ayrshare shorten URLs
+    }
+
+    // Add hashtags if provided (append to post) - only if not using autoHashtag
+    if (hashtags && hashtags.length > 0 && !autoHashtag) {
       const hashtagString = hashtags
         .map((h) => (h.startsWith("#") ? h : `#${h}`))
         .join(" ");

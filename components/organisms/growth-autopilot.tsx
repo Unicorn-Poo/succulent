@@ -498,6 +498,9 @@ export default function GrowthAutopilot({
             content: action.content,
             platform: action.platform,
             profileKey: profileKey,
+            // Use Ayrshare enhanced features based on automation settings
+            autoHashtag: settings.automation.autoHashtags,
+            shortenLinks: true, // Always shorten links for cleaner posts
           }),
         });
 

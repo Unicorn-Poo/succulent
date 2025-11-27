@@ -11,7 +11,8 @@ import {
   AlertCircle,
   ExternalLink,
   RefreshCw,
-  Settings
+  Settings,
+  Zap
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -28,12 +29,23 @@ interface WebhookItem extends WebhookConfig {
   status?: 'active' | 'inactive' | 'error';
 }
 
+interface AyrshareWebhookInfo {
+  currentWebhooks: any;
+  availableEvents: string[];
+  suggestedWebhookUrl: string;
+  eventDescriptions: Record<string, string>;
+}
+
 export default function WebhookManagement() {
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showAyrshareRegister, setShowAyrshareRegister] = useState(false);
+  const [ayrshareInfo, setAyrshareInfo] = useState<AyrshareWebhookInfo | null>(null);
+  const [selectedAyrshareEvents, setSelectedAyrshareEvents] = useState<string[]>([]);
   const [newWebhook, setNewWebhook] = useState<WebhookConfig>({
     url: '',
     events: [],
@@ -74,6 +86,113 @@ export default function WebhookManagement() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Load Ayrshare webhook info and current registrations
+  const loadAyrshareWebhookInfo = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/ayrshare-webhooks/register');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load Ayrshare webhook info');
+      }
+
+      setAyrshareInfo(data);
+      // Pre-select all events by default
+      setSelectedAyrshareEvents(data.availableEvents || []);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load Ayrshare webhook info');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Register webhook with Ayrshare
+  const handleAyrshareRegister = async () => {
+    if (!ayrshareInfo?.suggestedWebhookUrl || selectedAyrshareEvents.length === 0) {
+      setError('Please select at least one event to subscribe to');
+      return;
+    }
+
+    setIsRegistering(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/ayrshare-webhooks/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'subscribe',
+          url: ayrshareInfo.suggestedWebhookUrl,
+          events: selectedAyrshareEvents,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.details || 'Failed to register webhook');
+      }
+
+      setSuccess(`Webhook registered with Ayrshare for ${selectedAyrshareEvents.length} events`);
+      setShowAyrshareRegister(false);
+      
+      // Reload webhook info
+      await loadAyrshareWebhookInfo();
+      
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to register webhook');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  // Unregister webhook from Ayrshare
+  const handleAyrshareUnregister = async (url: string) => {
+    if (!confirm('Are you sure you want to unregister this webhook from Ayrshare?')) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/ayrshare-webhooks/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'unsubscribe',
+          url,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.details || 'Failed to unregister webhook');
+      }
+
+      setSuccess('Webhook unregistered from Ayrshare');
+      await loadAyrshareWebhookInfo();
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to unregister webhook');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toggle Ayrshare event selection
+  const toggleAyrshareEvent = (eventId: string) => {
+    setSelectedAyrshareEvents(prev =>
+      prev.includes(eventId)
+        ? prev.filter(e => e !== eventId)
+        : [...prev, eventId]
+    );
   };
 
   useEffect(() => {
@@ -166,6 +285,17 @@ export default function WebhookManagement() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button 
+            variant="soft" 
+            color="orange"
+            onClick={() => {
+              setShowAyrshareRegister(true);
+              loadAyrshareWebhookInfo();
+            }}
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Register with Ayrshare
+          </Button>
           <Button onClick={() => setShowCreateForm(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Webhook
@@ -192,6 +322,121 @@ export default function WebhookManagement() {
               <Check className="w-4 h-4 text-green-500" />
               <Text color="green">{success}</Text>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Ayrshare Webhook Registration */}
+      {showAyrshareRegister && (
+        <Card>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-orange-500" />
+                <Text size="3" weight="medium">Register Webhook with Ayrshare</Text>
+              </div>
+              <button
+                onClick={() => setShowAyrshareRegister(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {isLoading ? (
+              <div className="py-8 text-center">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                <Text size="2" color="gray" className="mt-2">Loading webhook information...</Text>
+              </div>
+            ) : ayrshareInfo ? (
+              <>
+                {/* Webhook URL */}
+                <div className="p-3 bg-muted rounded-lg">
+                  <Text size="2" color="gray" className="block mb-1">Webhook Endpoint</Text>
+                  <code className="text-sm font-mono text-foreground break-all">
+                    {ayrshareInfo.suggestedWebhookUrl}
+                  </code>
+                </div>
+
+                {/* Event Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-3">
+                    Select Events to Subscribe ({selectedAyrshareEvents.length} selected)
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {ayrshareInfo.availableEvents.map((event) => (
+                      <div
+                        key={event}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedAyrshareEvents.includes(event)
+                            ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20'
+                            : 'border-border hover:border-orange-200'
+                        }`}
+                        onClick={() => toggleAyrshareEvent(event)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Text size="2" weight="medium" className="capitalize">{event}</Text>
+                          {selectedAyrshareEvents.includes(event) && (
+                            <Check className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                          )}
+                        </div>
+                        <Text size="1" color="gray">
+                          {ayrshareInfo.eventDescriptions[event] || `Triggered on ${event} events`}
+                        </Text>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Current Registrations */}
+                {ayrshareInfo.currentWebhooks && (
+                  <div>
+                    <Text size="2" weight="medium" className="block mb-2">Current Ayrshare Registrations</Text>
+                    {Array.isArray(ayrshareInfo.currentWebhooks) && ayrshareInfo.currentWebhooks.length > 0 ? (
+                      <div className="space-y-2">
+                        {ayrshareInfo.currentWebhooks.map((webhook: any, index: number) => (
+                          <div key={index} className="p-2 bg-muted rounded flex items-center justify-between">
+                            <code className="text-xs font-mono truncate flex-1">{webhook.url || webhook}</code>
+                            <button
+                              onClick={() => handleAyrshareUnregister(webhook.url || webhook)}
+                              className="ml-2 p-1 text-red-500 hover:text-red-700"
+                              title="Unregister"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Text size="2" color="gray">No webhooks currently registered with Ayrshare</Text>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="soft"
+                    onClick={() => setShowAyrshareRegister(false)}
+                    disabled={isRegistering}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    color="orange"
+                    onClick={handleAyrshareRegister}
+                    disabled={isRegistering || selectedAyrshareEvents.length === 0}
+                  >
+                    {isRegistering ? 'Registering...' : 'Register Webhook'}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="py-4 text-center">
+                <AlertCircle className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                <Text size="2" color="gray">Failed to load Ayrshare webhook information</Text>
+              </div>
+            )}
           </div>
         </Card>
       )}

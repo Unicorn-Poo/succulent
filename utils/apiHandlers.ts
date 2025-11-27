@@ -84,6 +84,9 @@ export interface PostData {
   profileKey?: string; // Only used in Business Plan mode
   mediaUrls?: string[];
   scheduleDate?: string;
+  // Ayrshare enhanced features
+  autoHashtag?: boolean; // Automatically add trending/relevant hashtags
+  shortenLinks?: boolean; // Automatically shorten URLs in post
   twitterOptions?: {
     thread?: boolean;
     threadNumber?: boolean;
@@ -171,6 +174,9 @@ export const handleStandardPost = async (postData: PostData) => {
     platforms: mappedPlatforms,
     // Remove profileKey from the body as it's only used in headers
     profileKey: undefined,
+    // Ayrshare enhanced features
+    autoHashtag: postData.autoHashtag, // Automatically add trending hashtags
+    shortenLinks: postData.shortenLinks, // Automatically shorten URLs
     // Use provided twitterOptions, or add default ones for long posts
     twitterOptions:
       postData.twitterOptions ||
