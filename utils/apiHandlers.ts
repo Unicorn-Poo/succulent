@@ -101,9 +101,36 @@ export interface PostData {
     boardId?: string;
     boardName?: string;
   };
-  instagramOptions?: any;
-  facebookOptions?: any;
-  linkedinOptions?: any;
+  // Instagram options for Stories, Reels, etc.
+  instagramOptions?: {
+    isStory?: boolean; // Post as Instagram Story instead of feed
+    isReel?: boolean; // Post as Instagram Reel
+    shareToFeed?: boolean; // Also share Reel to feed
+    coverImageUrl?: string; // Custom cover for Reel
+  };
+  // Facebook options for Stories
+  facebookOptions?: {
+    isStory?: boolean; // Post as Facebook Story instead of feed
+    isReel?: boolean; // Post as Facebook Reel
+  };
+  linkedinOptions?: {
+    isStory?: boolean; // Post as LinkedIn Story
+  };
+  // TikTok options
+  tiktokOptions?: {
+    privacyLevel?: "PUBLIC_TO_EVERYONE" | "MUTUAL_FOLLOW_FRIENDS" | "SELF_ONLY";
+    disableComment?: boolean;
+    disableDuet?: boolean;
+    disableStitch?: boolean;
+  };
+  // YouTube options for Shorts
+  youtubeOptions?: {
+    isShort?: boolean; // Post as YouTube Short
+    title?: string;
+    description?: string;
+    visibility?: "public" | "unlisted" | "private";
+    madeForKids?: boolean;
+  };
 }
 
 /**
@@ -204,17 +231,36 @@ export const handleStandardPost = async (postData: PostData) => {
           return options.boardId || options.boardName ? options : undefined;
         })()
       : undefined,
+    // Instagram options (Stories, Reels)
+    instagramOptions: postData.instagramOptions,
+    // Facebook options (Stories, Reels)
+    facebookOptions: postData.facebookOptions,
+    // LinkedIn options (Stories)
+    linkedinOptions: postData.linkedinOptions,
+    // TikTok options
+    tiktokOptions: postData.tiktokOptions,
+    // YouTube options (Shorts)
+    youtubeOptions: postData.youtubeOptions,
   };
 
   // Clean up undefined fields that might cause issues with Ayrshare
   // But preserve platform-specific options even if they exist as an object
+  const platformOptionKeys = [
+    "twitterOptions",
+    "redditOptions",
+    "pinterestOptions",
+    "instagramOptions",
+    "facebookOptions",
+    "linkedinOptions",
+    "tiktokOptions",
+    "youtubeOptions",
+  ];
+
   const cleanedBody = Object.fromEntries(
     Object.entries(requestBody).filter(([key, value]) => {
       // Always keep platform-specific options if they exist as objects
       if (
-        (key === "twitterOptions" ||
-          key === "redditOptions" ||
-          key === "pinterestOptions") &&
+        platformOptionKeys.includes(key) &&
         value &&
         typeof value === "object"
       ) {
@@ -268,6 +314,12 @@ export const handleStandardPost = async (postData: PostData) => {
     cleanedBody.twitterOptions = postData.twitterOptions;
   }
 
+  // Cast to proper types for accessing specific fields
+  const mediaUrlsTyped = cleanedBody.mediaUrls as string[] | undefined;
+  const scheduleDateTyped = cleanedBody.scheduleDate as string | undefined;
+  const platformsTyped = cleanedBody.platforms as string[] | undefined;
+  const postTyped = cleanedBody.post as string | undefined;
+
   // Log media processing with structured logging
   logAyrshareOperation({
     timestamp: new Date().toISOString(),
@@ -275,24 +327,24 @@ export const handleStandardPost = async (postData: PostData) => {
     status: "started",
     data: {
       originalMediaCount: postData.mediaUrls?.length || 0,
-      cleanedMediaCount: cleanedBody.mediaUrls?.length || 0,
-      mediaUrls: cleanedBody.mediaUrls,
-      mediaPresent: !!cleanedBody.mediaUrls?.length,
+      cleanedMediaCount: mediaUrlsTyped?.length || 0,
+      mediaUrls: mediaUrlsTyped,
+      mediaPresent: !!mediaUrlsTyped?.length,
     },
     requestId,
   });
 
   // Validate schedule date and remove if in past or too soon (Ayrshare requires 5+ minutes)
-  if (cleanedBody.scheduleDate) {
+  if (scheduleDateTyped) {
     try {
-      const scheduleDate = new Date(cleanedBody.scheduleDate);
-      if (isNaN(scheduleDate.getTime())) {
+      const scheduleDateParsed = new Date(scheduleDateTyped);
+      if (isNaN(scheduleDateParsed.getTime())) {
         throw new Error("Invalid date format");
       }
 
       const now = new Date();
       const minutesFromNow = Math.round(
-        (scheduleDate.getTime() - now.getTime()) / (1000 * 60)
+        (scheduleDateParsed.getTime() - now.getTime()) / (1000 * 60)
       );
       const minMinutes = 5;
 
@@ -302,7 +354,7 @@ export const handleStandardPost = async (postData: PostData) => {
       }
     } catch (dateError) {
       throw new Error(
-        `Invalid schedule date format: ${cleanedBody.scheduleDate}, error: ${dateError}`
+        `Invalid schedule date format: ${scheduleDateTyped}, error: ${dateError}`
       );
     }
   }
@@ -324,10 +376,10 @@ export const handleStandardPost = async (postData: PostData) => {
     },
     body: {
       ...cleanedBody,
-      platforms: cleanedBody.platforms,
+      platforms: platformsTyped,
       twitterOptions: cleanedBody.twitterOptions,
-      hasTwitterInPlatforms: cleanedBody.platforms?.includes("twitter"),
-      postLength: cleanedBody.post?.length,
+      hasTwitterInPlatforms: platformsTyped?.includes("twitter"),
+      postLength: postTyped?.length,
     },
   });
 
@@ -702,11 +754,10 @@ export const handleStandardPost = async (postData: PostData) => {
         }
 
         // Check if the error is related to problematic URLs (like Lunary OG images)
+        const bodyMediaUrls = cleanedBody.mediaUrls as string[] | undefined;
         if (
-          cleanedBody.mediaUrls &&
-          cleanedBody.mediaUrls.some((url: string) =>
-            url.includes("lunary.app")
-          )
+          bodyMediaUrls &&
+          bodyMediaUrls.some((url: string) => url.includes("lunary.app"))
         ) {
           throw new Error(
             `Media URL Error: Ayrshare cannot access the provided media URL. This often happens with dynamic image URLs. Please try uploading the image directly or using a different image source.`

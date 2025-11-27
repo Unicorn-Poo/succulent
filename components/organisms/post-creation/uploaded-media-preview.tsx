@@ -127,7 +127,19 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	return (
 		<>
 			<div className="relative group max-w-2xl mx-auto">
-				<div className="relative overflow-hidden rounded-lg bg-muted dark:bg-muted">
+				<div 
+					className="relative overflow-hidden rounded-lg bg-muted dark:bg-muted"
+					onTouchStart={handleTouchStart}
+					onTouchMove={handleTouchMove}
+					onTouchEnd={handleTouchEnd}
+				>
+					{/* Image counter badge */}
+					{mediaArray.length > 1 && (
+						<div className="absolute top-3 left-3 z-20 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded-full">
+							{currentIndex + 1} / {mediaArray.length}
+						</div>
+					)}
+
 					<div
 						className="flex transition-transform duration-300 ease-out"
 						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -181,7 +193,48 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 							</div>
 						))}
 					</div>
+
+					{/* Navigation arrows - only show when multiple images */}
+					{mediaArray.length > 1 && (
+						<>
+							{/* Left arrow */}
+							<button
+								onClick={handlePrev}
+								className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
+								aria-label="Previous image"
+							>
+								<ChevronLeft className="w-6 h-6" />
+							</button>
+
+							{/* Right arrow */}
+							<button
+								onClick={handleNext}
+								className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
+								aria-label="Next image"
+							>
+								<ChevronRight className="w-6 h-6" />
+							</button>
+						</>
+					)}
 				</div>
+
+				{/* Dot indicators - only show when multiple images */}
+				{mediaArray.length > 1 && (
+					<div className="flex justify-center gap-1.5 mt-3">
+						{mediaArray.map((_, index) => (
+							<button
+								key={index}
+								onClick={() => setCurrentIndex(index)}
+								className={`w-2 h-2 rounded-full transition-all duration-200 ${
+									index === currentIndex
+										? 'bg-lime-500 w-4'
+										: 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+								}`}
+								aria-label={`Go to image ${index + 1}`}
+							/>
+						))}
+					</div>
+				)}
 
 				{/* Simple add more button */}
 				{handleImageUpload && (
