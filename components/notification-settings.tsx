@@ -233,7 +233,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
                       type="password"
                       value={formData.apiToken}
                       onChange={(e) => setFormData(prev => ({ ...prev, apiToken: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
                       placeholder="Your Pushover API Token"
                     />
                   </div>
@@ -246,7 +246,7 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
                       type="password"
                       value={formData.userKey}
                       onChange={(e) => setFormData(prev => ({ ...prev, userKey: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
                       placeholder="Your Pushover User Key"
                     />
                   </div>

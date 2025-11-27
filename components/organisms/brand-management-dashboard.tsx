@@ -426,7 +426,7 @@ export default function BrandManagementDashboard({
                           ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                           : category === 'primary'
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                            : 'bg-muted text-foreground'
                       }`}
                     >
                       <span>#{hashtag}</span>
@@ -502,7 +502,7 @@ export default function BrandManagementDashboard({
                   </Button>
                 </div>
                 
-                <p className="text-gray-800 dark:text-gray-200 mb-3 whitespace-pre-wrap">{template.content}</p>
+                <p className="text-foreground mb-3 whitespace-pre-wrap">{template.content}</p>
                 
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <span>Platforms: {template.platforms.join(', ')}</span>

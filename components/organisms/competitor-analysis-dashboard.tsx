@@ -320,7 +320,7 @@ export default function CompetitorAnalysisDashboard({
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       selectedCompetitor === comp.competitor.username
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                        : 'border-border hover:border-gray-300 dark:border-gray-600'
+                        : 'border-border hover:border-border'
                     }`}
                   >
                     @{comp.competitor.username}

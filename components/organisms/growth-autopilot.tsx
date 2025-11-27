@@ -827,7 +827,7 @@ export default function GrowthAutopilot({
                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                 : dashboard.status === "learning"
                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                : "bg-muted text-foreground"
             }`}
           >
             {dashboard.status === "active"
@@ -930,7 +930,7 @@ export default function GrowthAutopilot({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-muted-foreground"
+                  : "border-transparent text-muted-foreground hover:text-muted-foreground"
               }`}
             >
               {tab.label}
@@ -1165,7 +1165,7 @@ export default function GrowthAutopilot({
                           ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                           : action.status === "rejected"
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          : "bg-muted text-foreground"
                       }`}
                     >
                       {action.status}

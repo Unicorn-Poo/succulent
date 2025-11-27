@@ -9,9 +9,58 @@ import { generateObject, generateText, streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { AIGrowthEngine } from "./aiGrowthEngine";
-import { BrandPersonaManager } from "./brandPersonaManager";
+import { BrandPersonaManager, BrandPersona } from "./brandPersonaManager";
 import { getEnhancedOptimalTiming } from "./optimalTimingEngine";
 import { getModelForTask, usageTracker } from "./aiOptimizer";
+
+// Structured content suggestion schema - separates content from metadata
+export const ContentSuggestionSchema = z.object({
+  content: z.string().describe("The actual post content with hashtags - ready to post, no metadata or tips"),
+  suggestedPostTime: z.object({
+    day: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]).describe("Day of week"),
+    hour: z.number().min(0).max(23).describe("Hour in 24h format, e.g. 10 for 10 AM, 14 for 2 PM"),
+  }),
+  contentPillar: z.string().describe("Which content pillar/topic this content is about"),
+  engagementPotential: z.number().min(0).max(100).describe("Predicted engagement score"),
+});
+
+export type ContentSuggestion = z.infer<typeof ContentSuggestionSchema>;
+
+/**
+ * Convert AI suggested day/hour to the next occurrence of that time
+ */
+export function getNextScheduledDate(day: string, hour: number): Date {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const targetDayIndex = days.indexOf(day);
+  
+  if (targetDayIndex === -1) {
+    // Invalid day, return tomorrow at the specified hour
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(hour, 0, 0, 0);
+    return tomorrow;
+  }
+  
+  const now = new Date();
+  const currentDayIndex = now.getDay();
+  const currentHour = now.getHours();
+  
+  // Calculate days until target day
+  let daysUntil = targetDayIndex - currentDayIndex;
+  
+  // If it's the same day, check if the hour has passed
+  if (daysUntil === 0 && currentHour >= hour) {
+    daysUntil = 7; // Next week
+  } else if (daysUntil < 0) {
+    daysUntil += 7; // Next week
+  }
+  
+  const scheduledDate = new Date();
+  scheduledDate.setDate(scheduledDate.getDate() + daysUntil);
+  scheduledDate.setHours(hour, 0, 0, 0);
+  
+  return scheduledDate;
+}
 
 // AI Decision Schema
 const AIDecisionSchema = z.object({
@@ -65,6 +114,7 @@ export class AIAutopilot {
   private state: AutopilotState;
   private growthEngine: AIGrowthEngine;
   private brandManager?: BrandPersonaManager;
+  private brandPersona?: BrandPersona;
 
   constructor(config: AutopilotConfig) {
     this.config = config;
@@ -82,6 +132,14 @@ export class AIAutopilot {
       undefined, // Profile key will be loaded
       config.aggressiveness
     );
+  }
+
+  /**
+   * Set brand persona for content generation
+   */
+  setBrandPersona(persona: BrandPersona): void {
+    this.brandPersona = persona;
+    this.brandManager = new BrandPersonaManager(persona);
   }
 
   /**
@@ -204,29 +262,177 @@ Be decisive and provide clear reasoning for each recommendation.`,
   }
 
   /**
-   * Generate AI-powered content suggestions with streaming
+   * Generate AI-powered content with structured output (content, timing, pillar)
+   * Returns structured data that separates post content from metadata
+   */
+  async generateStructuredContent(
+    prompt: string
+  ): Promise<ContentSuggestion> {
+    // Build brand context with actual content pillars
+    let brandContext = "";
+    let contentPillars: string[] = [];
+    let samplePosts: string[] = [];
+    
+    if (this.brandPersona) {
+      contentPillars = this.brandPersona.messaging.contentPillars || [];
+      samplePosts = this.brandPersona.examples.samplePosts || [];
+      
+      // Get emoji guidance
+      const emojiGuidance = {
+        none: "DO NOT use any emojis.",
+        minimal: "Use 1-2 emojis maximum, placed strategically.",
+        moderate: "Use 3-5 emojis naturally throughout.",
+        frequent: "Use emojis expressively throughout the content.",
+      }[this.brandPersona.voice.emojiUsage] || "Use emojis moderately.";
+
+      brandContext = `
+=== YOUR BRAND IDENTITY ===
+Brand: ${this.brandPersona.name}
+Voice: ${this.brandPersona.voice.tone}, ${this.brandPersona.voice.writingStyle}
+Target Audience: ${this.brandPersona.messaging.targetAudience}
+Value Proposition: ${this.brandPersona.messaging.valueProposition}
+Emoji Style: ${emojiGuidance}
+
+=== CONTENT TOPICS (pick ONE randomly) ===
+${contentPillars.map((p, i) => `${i + 1}. ${p}`).join("\n")}
+
+${samplePosts.length > 0 ? `=== EXAMPLE POSTS (match this style) ===
+${samplePosts.slice(0, 2).map((p, i) => `Example ${i + 1}: "${p}"`).join("\n\n")}` : ""}
+`;
+    }
+
+    // Platform-specific guidance
+    const platform = this.config.platforms[0]?.toLowerCase() || 'instagram';
+    const platformGuidance: Record<string, string> = {
+      instagram: `Instagram best practices:
+- Use line breaks for readability
+- Start with a hook that stops the scroll
+- End with a clear call-to-action question
+- Use 5-10 relevant hashtags at the end
+- Keep it conversational and authentic
+- Character limit: 2200 (aim for 150-300 for feed posts)`,
+      x: `X/Twitter best practices:
+- Keep it under 280 characters
+- Be punchy and direct
+- Use 1-3 hashtags max
+- Make it shareable/quotable
+- Strong opinions perform well`,
+      twitter: `Twitter best practices:
+- Keep it under 280 characters
+- Be punchy and direct
+- Use 1-3 hashtags max
+- Make it shareable/quotable`,
+      linkedin: `LinkedIn best practices:
+- Professional but personable tone
+- Start with a hook line
+- Use line breaks and formatting
+- Share insights and lessons learned
+- 3-5 hashtags at end
+- Aim for 150-300 words`,
+      tiktok: `TikTok caption best practices:
+- Keep it SHORT (under 150 chars)
+- Use trending hashtags
+- Be casual and fun
+- Add a CTA`,
+      facebook: `Facebook best practices:
+- Conversational tone
+- Ask questions to drive comments
+- 1-3 hashtags max
+- 100-250 characters ideal`,
+    };
+
+    const systemPrompt = `You are ${this.brandPersona?.name || 'a social media expert'}. Generate a REAL, ready-to-post piece of content.
+
+${brandContext}
+
+=== PLATFORM: ${platform.toUpperCase()} ===
+${platformGuidance[platform] || platformGuidance.instagram}
+
+=== ABSOLUTE REQUIREMENTS ===
+1. The "content" field must be the EXACT text that gets posted - copy-paste ready
+2. NO metadata in the content (no "Best Time to Post", no "Engagement Tip", no headers)
+3. NO placeholder text like [topic] or {insert here}
+4. Write as the BRAND, not about the brand
+5. Be specific and authentic - no generic fluff
+6. Include hashtags at the END of the content
+7. Make it sound human, not AI-generated
+
+=== WHAT MAKES CONTENT USABLE ===
+- Specific insights, not vague platitudes
+- Personal voice and perspective
+- A clear hook at the start
+- Actionable or thought-provoking
+- Natural language a human would actually say`;
+
+    // Pick a random pillar to ensure variety
+    const randomPillar = contentPillars.length > 0 
+      ? contentPillars[Math.floor(Math.random() * contentPillars.length)]
+      : null;
+
+    const result = await generateObject({
+      model: getModelForTask("complex"),
+      schema: ContentSuggestionSchema,
+      system: systemPrompt,
+      prompt: `Create a ${platform} post${randomPillar ? ` about: ${randomPillar}` : ''}.
+
+The content must be:
+- Ready to copy-paste and post immediately
+- In the brand's authentic voice
+- Specific and valuable (not generic)
+- Engaging with a clear hook
+
+${prompt !== 'Generate engaging content for my brand' ? `Additional context: ${prompt}` : ''}
+
+Remember: Output ONLY the post content in the content field. No tips, no metadata, no explanations.`,
+      temperature: 0.85,
+    });
+
+    return result.object;
+  }
+
+  /**
+   * Generate AI-powered content suggestions with streaming (legacy method)
+   * @deprecated Use generateStructuredContent instead for structured output
    */
   async generateContentWithStreaming(
     prompt: string
   ): Promise<AsyncIterable<string>> {
-    const enhancedPrompt = `${
-      this.brandManager
-        ? `Brand Context: Brand persona is configured for this account\n\n`
-        : ""
-    }Content Request: ${prompt}
+    // Build brand context with actual content pillars
+    let brandContext = "";
+    
+    if (this.brandPersona) {
+      const contentPillars = this.brandPersona.messaging.contentPillars || [];
+      const randomPillar = contentPillars[Math.floor(Math.random() * contentPillars.length)];
+      
+      brandContext = `You are ${this.brandPersona.name}.
 
-Create engaging social media content that:
-1. Matches the brand voice and personality
-2. Includes optimal hashtags
-3. Has high engagement potential
-4. Follows platform best practices
+BRAND VOICE: ${this.brandPersona.voice.tone}, ${this.brandPersona.voice.writingStyle}
+TARGET AUDIENCE: ${this.brandPersona.messaging.targetAudience}
+TODAY'S TOPIC: ${randomPillar || 'general brand content'}
 
-Format as ready-to-post content.`;
+Write as the brand, not about the brand. Be authentic and specific.
+`;
+    }
+
+    const platform = this.config.platforms[0] || 'instagram';
+    
+    const enhancedPrompt = `${brandContext}
+Create a ${platform} post that is READY TO POST.
+
+REQUIREMENTS:
+- Output ONLY the post content (what gets posted)
+- Include hashtags at the end
+- NO metadata (no "Best Time to Post", no tips, no headers)
+- Be specific and authentic
+- Use natural language
+- Start with a scroll-stopping hook
+
+${prompt !== 'Generate engaging content for my brand' ? `Topic guidance: ${prompt}` : ''}`;
 
     const result = await streamText({
       model: getModelForTask("complex"),
       prompt: enhancedPrompt,
-      temperature: 0.8,
+      temperature: 0.85,
     });
 
     return result.textStream;

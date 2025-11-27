@@ -450,7 +450,7 @@ export default function GrowthAnalyticsDashboard({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(metrics.audienceInsights.engagementPatterns).map(([type, percent]) => (
                 <div key={type} className="text-center">
-                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{percent}%</p>
+                  <p className="text-2xl font-bold text-foreground">{percent}%</p>
                   <p className="text-sm text-muted-foreground capitalize">{type}</p>
                 </div>
               ))}

@@ -113,7 +113,7 @@ export const PostActions = ({
                                                 disabled={!hasSelectedAccounts}
                                                 className={hasSelectedAccounts 
                                                     ? "border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50" 
-                                                    : "border-gray-300 dark:border-gray-600 text-muted-foreground cursor-not-allowed"
+                                                    : "border-border text-muted-foreground cursor-not-allowed"
                                                 }
                                             >
                                                 <Eye className="w-4 h-4 mr-2" />
@@ -168,7 +168,7 @@ export const PostActions = ({
                                                 <Button
                     onClick={handlePublishPost}
                     disabled={isScheduling}
-                    className="flex items-center gap-2 bg-lime-600 hover:bg-lime-700 text-white disabled:bg-gray-400"
+                    className="flex items-center gap-2 bg-lime-600 hover:bg-lime-700 text-white disabled:bg-muted-foreground"
                 >
                                     {isScheduling ? (
                                         <>

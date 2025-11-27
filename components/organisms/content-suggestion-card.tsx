@@ -103,7 +103,7 @@ export default function ContentSuggestionCard({
       case "low":
         return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800";
       default:
-        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-border";
+        return "bg-muted text-foreground border-border";
     }
   };
 
@@ -227,7 +227,7 @@ export default function ContentSuggestionCard({
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-border dark:border-gray-800">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-border dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
@@ -268,7 +268,7 @@ export default function ContentSuggestionCard({
             placeholder="Edit the content..."
           />
         ) : (
-          <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+          <div className="text-foreground whitespace-pre-wrap leading-relaxed">
             {content}
           </div>
         )}
@@ -333,7 +333,7 @@ export default function ContentSuggestionCard({
 
       {/* Image Preview */}
       {showImagePreview && (
-        <div className="p-4 bg-gray-900 border-t border-border">
+        <div className="p-4 bg-card border-t border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
@@ -342,7 +342,7 @@ export default function ContentSuggestionCard({
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value as any)}
-                className="text-sm bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white"
+                className="text-sm bg-muted border border-border rounded px-2 py-1 text-white"
               >
                 <option value="quote">Quote Card</option>
                 <option value="tip">Tip Card</option>

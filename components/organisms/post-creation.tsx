@@ -185,13 +185,13 @@ const GelatoTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-card">
+			<div className="max-h-48 overflow-y-auto border border-border rounded-md bg-card">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-border last:border-b-0 ${
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 ${
 								isSelected ? 'bg-lime-50' : ''
 							}`}
 						>
@@ -199,7 +199,7 @@ const GelatoTemplateSelector = ({
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-gray-300 dark:border-gray-600 rounded focus:ring-lime-500"
+								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-border rounded focus:ring-lime-500"
 							/>
 							<div className="flex-1">
 								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800 dark:text-lime-300" : ""}>
@@ -284,13 +284,13 @@ const ProdigiTemplateSelector = ({
 			<Text size="2" color="gray" className="block mb-2">
 				Select one or more templates ({selectedTemplates.length} selected):
 			</Text>
-			<div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-card">
+			<div className="max-h-48 overflow-y-auto border border-border rounded-md bg-card">
 				{templates.map((template: any) => {
 					const isSelected = selectedTemplates.some(t => t.id === template.id);
 					return (
 						<label
 							key={template.id}
-							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 border-b border-border last:border-b-0 ${
+							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 ${
 								isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
 							}`}
 						>
@@ -298,7 +298,7 @@ const ProdigiTemplateSelector = ({
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+								className="w-4 h-4 text-blue-600 dark:text-blue-400 border-border rounded focus:ring-blue-500"
 							/>
 							<div className="flex-1">
 								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-blue-800 dark:text-blue-300" : ""}>
@@ -1438,7 +1438,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											{/* Status Display */}
 											<div className="flex items-center gap-2 mb-2">
 												{product?.shopifyStatus === 'pending' && (
-													<span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
 														⏳ Gelato Created
 													</span>
 												)}
@@ -1578,7 +1578,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 								</span>
 							)}
 							{!hasImages && (
-								<span className="text-xs bg-gray-100 dark:bg-gray-700 text-muted-foreground px-2 py-1 rounded-full">
+								<span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
 									No images
 								</span>
 							)}
@@ -1805,7 +1805,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																[template.id]: e.target.value
 															}))}
 															placeholder={`${template.displayName || template.name}`}
-															className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+															className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
 														/>
 													</div>
 												))}
@@ -1868,7 +1868,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															value={customProductType}
 															onChange={(e) => setCustomProductType(e.target.value)}
 															placeholder="Custom Product"
-															className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded"
+															className="w-full px-2 py-1 text-xs border border-border rounded"
 														/>
 													</div>
 
@@ -1881,7 +1881,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 															value={productTags.join(', ')}
 															onChange={(e) => setProductTags(e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
 															placeholder="social-media, custom-design"
-															className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded"
+															className="w-full px-2 py-1 text-xs border border-border rounded"
 														/>
 													</div>
 												</div>
@@ -1946,7 +1946,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									};
 										handleGelatoError('Please add your Gelato API credentials to create real products');
 									}}
-									className="w-full bg-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000 text-white py-3 px-4 rounded-lg font-medium"
+									className="w-full bg-gray-400 hover:bg-muted0 text-white py-3 px-4 rounded-lg font-medium"
 								>
 									Demo Mode - Add API Key to Create Real Products
 								</GelatoButton>
@@ -2113,7 +2113,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																	[template.id]: e.target.value
 																}))}
 																placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
-																className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+																className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 															/>
 														</div>
 													))}
@@ -2164,7 +2164,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 										onClick={() => {
 											handleProdigiError('Please add your Prodigi API credentials to create real products');
 										}}
-										className="w-full bg-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000 text-white py-3 px-4 rounded-lg font-medium"
+										className="w-full bg-gray-400 hover:bg-muted0 text-white py-3 px-4 rounded-lg font-medium"
 									>
 										Demo Mode - Add API Key to Create Real Products
 									</button>

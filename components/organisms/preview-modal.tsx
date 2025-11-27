@@ -233,7 +233,7 @@ export const PreviewModal = ({
           <div className="flex items-center gap-2">
             {/* Preview Mode Toggle - Hide for replies or if only one platform selected */}
             {!isReply && previewPlatforms.length > 1 && (
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                 <Button
                   variant={previewMode === "current" ? "solid" : "ghost"}
                   size="1"

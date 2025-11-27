@@ -106,7 +106,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (loading) {
 		return (
-			<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+			<div className="w-full h-full bg-muted flex items-center justify-center">
 				<div className="text-center text-muted-foreground">
 					<span className="text-sm">Loading...</span>
 				</div>
@@ -116,7 +116,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (error || !imageUrl) {
 		return (
-			<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+			<div className="w-full h-full bg-muted flex items-center justify-center">
 				<div className="text-center text-muted-foreground">
 					<span className="text-2xl">📝</span>
 				</div>
@@ -146,7 +146,7 @@ const GridMediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	}
 
 	return (
-		<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+		<div className="w-full h-full bg-muted flex items-center justify-center">
 			<div className="text-center text-muted-foreground">
 				<span className="text-2xl">📝</span>
 			</div>
@@ -307,7 +307,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               className="aspect-square relative cursor-pointer group"
               onClick={() => onCreatePost?.(account.platform)}
             >
-              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg">
+              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-border hover:border-gray-400 rounded-lg">
                 <div className="text-center text-muted-foreground group-hover:text-muted-foreground">
                   <span className="text-3xl font-light">+</span>
                 </div>
@@ -349,7 +349,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
                       postStatus === 'published' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
                       postStatus === 'scheduled' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                      'bg-gray-100 dark:bg-gray-700 text-foreground'
+                      'bg-muted text-foreground'
                     }`}>
                       {postStatus}
                     </div>
@@ -471,7 +471,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500"
+                className="border border-border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500"
               >
                 <option value="all">All Posts ({statusCounts.all})</option>
                 <option value="published">Published ({statusCounts.published})</option>

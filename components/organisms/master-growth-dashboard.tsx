@@ -163,7 +163,7 @@ export default function MasterGrowthDashboard({
                   className={`w-full text-left p-4 rounded-lg border transition-colors ${
                     activeComponent === component.id
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      : 'border-border hover:border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'
+                      : 'border-border hover:border-border hover:bg-muted'
                   }`}
                 >
                   <div className="font-medium text-foreground">{component.name}</div>

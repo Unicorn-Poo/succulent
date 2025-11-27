@@ -526,7 +526,7 @@ export default function APIKeyManagement() {
                         </div>
                         
                         <div className="flex items-center gap-4 mb-2 text-sm text-muted-foreground">
-                          <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                          <span className="font-mono bg-muted px-2 py-1 rounded">
                             {key.keyPrefix}
                           </span>
                           <span className="flex items-center gap-1">

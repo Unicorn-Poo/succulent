@@ -491,7 +491,7 @@ export default function CSVPostUpload({
                   value={csvText}
                   onChange={(e) => handleTextChange(e.target.value)}
                   placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate,mediaUrls&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;,&quot;&quot;"
-                  className="w-full h-48 p-3 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
+                  className="w-full h-48 p-3 border border-border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
                 />
                 <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-4">
@@ -521,7 +521,7 @@ export default function CSVPostUpload({
                 <Text size="3" weight="medium" className="block mb-2">
                   Upload CSV File
                 </Text>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
                   <input
                     type="file"
                     accept=".csv"

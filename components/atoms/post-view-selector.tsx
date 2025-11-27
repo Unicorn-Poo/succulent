@@ -15,7 +15,7 @@ const viewOptions = [
 
 export default function PostViewSelector({ currentView, onViewChange }: PostViewSelectorProps) {
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+    <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
       {viewOptions.map(({ key, label, icon: Icon, description }) => (
         <button
           key={key}
@@ -23,7 +23,7 @@ export default function PostViewSelector({ currentView, onViewChange }: PostView
           className={`flex items-center gap-1 px-3 py-1 transition-all rounded-md text-xs font-medium ${
             currentView === key 
               ? 'bg-card shadow-sm text-lime-700 border border-lime-200' 
-              : 'text-muted-foreground hover:text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800'
+              : 'text-muted-foreground hover:text-foreground dark:text-foreground hover:bg-muted'
           }`}
           title={description}
         >

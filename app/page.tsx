@@ -352,7 +352,7 @@ export default function HomePage() {
                 className="h-12 sm:h-14 w-auto mb-2"
                 priority
               />
-              <p className="text-gray-600 dark:text-muted-foreground">
+              <p className="text-muted-foreground">
                 Your social media management platform
               </p>
             </div>
@@ -419,7 +419,7 @@ export default function HomePage() {
                       }
                     >
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                        <h3 className="font-semibold text-lg text-foreground">
                           {group.name}
                         </h3>
                         <div
@@ -429,10 +429,10 @@ export default function HomePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-sm text-gray-600 dark:text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {group.accounts?.length || 0} accounts connected
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {group.posts?.length || 0} posts created
                         </p>
                       </div>
@@ -471,7 +471,7 @@ export default function HomePage() {
               disabled={!me?.root?.accountGroups}
             >
               <Plus className="w-8 h-8 text-lime-600 mx-auto mb-2" />
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+              <h3 className="font-medium text-foreground mb-1">
                 Create Account Group
               </h3>
               <p className="text-sm text-gray-500 dark:text-muted-foreground">
@@ -495,7 +495,7 @@ export default function HomePage() {
 
               <div className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Post Title
                   </label>
                   <TextField.Root
@@ -506,7 +506,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Content
                   </label>
                   <TextArea

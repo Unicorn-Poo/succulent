@@ -54,8 +54,8 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
     switch (post.status) {
       case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
-      case 'draft': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      case 'draft': return 'bg-muted text-foreground';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -137,28 +137,28 @@ export default function YouTubePreview({ post, account }: YouTubePreviewProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-muted rounded-full transition-colors">
+              <button className="flex items-center space-x-1 px-3 py-1.5 bg-muted hover:bg-muted rounded-full transition-colors">
                 <ThumbsUp className="w-4 h-4" />
                 {post.engagement && post.engagement.likes > 0 && post.status === 'published' && (
                   <span className="text-sm">{formatNumber(post.engagement.likes)}</span>
                 )}
               </button>
-              <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
+              <button className="p-1.5 hover:bg-muted dark:bg-muted rounded-full transition-colors">
                 <ThumbsDown className="w-4 h-4" />
               </button>
             </div>
             
-            <button className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-muted rounded-full transition-colors">
+            <button className="flex items-center space-x-1 px-3 py-1.5 bg-muted hover:bg-muted rounded-full transition-colors">
               <Share className="w-4 h-4" />
               <span className="text-sm">Share</span>
             </button>
           </div>
           
           <div className="flex items-center space-x-2">
-            <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
+            <button className="p-1.5 hover:bg-muted dark:bg-muted rounded-full transition-colors">
               <Download className="w-4 h-4" />
             </button>
-            <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-full transition-colors">
+            <button className="p-1.5 hover:bg-muted dark:bg-muted rounded-full transition-colors">
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>

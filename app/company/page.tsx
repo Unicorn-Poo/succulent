@@ -48,10 +48,10 @@ export default function CompanyDashboard() {
           <h1 className="text-2xl font-bold mb-4 text-red-600">
             🚫 Access Restricted
           </h1>
-          <p className="text-gray-600 dark:text-muted-foreground mb-2">
+          <p className="text-muted-foreground mb-2">
             This is the company management dashboard.
           </p>
-          <p className="text-gray-600 dark:text-muted-foreground">
+          <p className="text-muted-foreground">
             Only the creator/owner of Succulent can access this area.
           </p>
           {me && (
@@ -233,21 +233,21 @@ function CompanyOverviewTab({ account }: { account: MyAppAccountLoaded }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="text-center p-4 border border-border rounded-lg">
               <div className="text-2xl mb-2">🚀</div>
               <Text weight="medium">Performance</Text>
               <Text size="2" color="gray">
                 Excellent
               </Text>
             </div>
-            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="text-center p-4 border border-border rounded-lg">
               <div className="text-2xl mb-2">🔒</div>
               <Text weight="medium">Security</Text>
               <Text size="2" color="gray">
                 Secure
               </Text>
             </div>
-            <div className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="text-center p-4 border border-border rounded-lg">
               <div className="text-2xl mb-2">💿</div>
               <Text weight="medium">Database</Text>
               <Text size="2" color="gray">
@@ -350,7 +350,7 @@ function AdminGroupsTab({ account }: { account: MyAppAccountLoaded }) {
             {adminGroups.map((group) => (
               <div
                 key={group.id}
-                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="flex items-center justify-between p-4 border border-border rounded-lg"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -553,7 +553,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
           </Heading>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <Shield size={20} className="text-green-600" />
@@ -568,7 +568,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
               <Badge color="green">Enabled</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Database size={20} className="text-blue-600" />
@@ -583,7 +583,7 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
               <Badge color="green">Active</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <AlertTriangle size={20} className="text-purple-600" />

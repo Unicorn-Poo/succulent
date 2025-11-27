@@ -88,7 +88,7 @@ export const PostContent = ({
 							className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 ${
 								isDragOver 
 									? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 scale-105' 
-									: 'border-gray-300 dark:border-gray-600 dark:border-gray-600 hover:border-lime-400 dark:hover:border-lime-500'
+									: 'border-border dark:border-border hover:border-lime-400 dark:hover:border-lime-500'
 							}`}
 							onDragEnter={handleDragEnter}
 							onDragLeave={handleDragLeave}
@@ -169,7 +169,7 @@ export const PostContent = ({
 						value={contextText || post.variants[activeTab]?.text?.toString() || ""}
 						onChange={(e) => handleContentChange(e.target.value)}
 						placeholder={`What's happening? Use double line breaks for threads.`}
-						className="w-full min-h-[150px] p-4 border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-card text-foreground placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+						className="w-full min-h-[150px] p-4 border border-border dark:border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-card text-foreground placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
 						rows={6}
 					/>
 					
@@ -181,7 +181,7 @@ export const PostContent = ({
 								Thread
 							</div>
 						)}
-						<div className="text-xs text-muted-foreground bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 px-2 py-1 rounded-full">
+						<div className="text-xs text-muted-foreground bg-muted dark:bg-muted px-2 py-1 rounded-full">
 							{(contextText || post.variants[activeTab]?.text?.toString() || "").length}
 						</div>
 					</div>

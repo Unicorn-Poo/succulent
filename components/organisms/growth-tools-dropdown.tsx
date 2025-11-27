@@ -248,11 +248,11 @@ export default function GrowthToolsDropdown({
           return (
             <div
               key={tool.id}
-              className="bg-card border border-border rounded-lg p-4 hover:border-gray-300 dark:border-gray-600 transition-colors cursor-pointer"
+              className="bg-card border border-border rounded-lg p-4 hover:border-border transition-colors cursor-pointer"
               onClick={() => onToolSelect?.(tool.id)}
             >
               <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                   <IconComponent className="w-5 h-5 text-muted-foreground" />
                 </div>
                 

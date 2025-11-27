@@ -45,7 +45,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600 dark:text-muted-foreground">
+          <p className="text-muted-foreground">
             You don&apos;t have permission to access this page.
           </p>
         </div>
@@ -161,13 +161,13 @@ function OverviewTab() {
     <div className="space-y-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+        <div className="bg-card p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-muted-foreground">
             Total Users
           </h3>
           <p className="text-2xl font-bold">{stats.overview.totalUsers}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+        <div className="bg-card p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-muted-foreground">
             Active Subscriptions
           </h3>
@@ -175,13 +175,13 @@ function OverviewTab() {
             {stats.overview.activeSubscriptions}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+        <div className="bg-card p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-muted-foreground">
             Monthly Revenue
           </h3>
           <p className="text-2xl font-bold">${stats.overview.monthlyRevenue}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+        <div className="bg-card p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-muted-foreground">
             Churn Rate
           </h3>
@@ -190,13 +190,13 @@ function OverviewTab() {
       </div>
 
       {/* Subscription Breakdown */}
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+      <div className="bg-card p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Subscription Breakdown</h3>
         <div className="space-y-2">
           {Object.entries(stats.subscriptions).map(([tier, count]) => (
             <div key={tier} className="flex justify-between">
               <span className="capitalize">{tier}</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span className="font-medium text-foreground">
                 {String(count)}
               </span>
             </div>
@@ -205,7 +205,7 @@ function OverviewTab() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+      <div className="bg-card p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
         <div className="space-y-2">
           {stats.recentActivity.map(
@@ -215,7 +215,7 @@ function OverviewTab() {
             ) => (
               <div key={index} className="flex justify-between items-center">
                 <div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <span className="font-medium text-foreground">
                     {activity.user}
                   </span>
                   <span className="text-muted-foreground ml-2">
@@ -232,7 +232,7 @@ function OverviewTab() {
       </div>
 
       {/* System Stats */}
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow">
+      <div className="bg-card p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">System Statistics</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
@@ -364,7 +364,7 @@ function UsersTab() {
   return (
     <div className="space-y-6">
       {/* Search */}
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow">
+      <div className="bg-card p-4 rounded-lg shadow">
         <input
           type="text"
           placeholder="Search users..."
@@ -375,9 +375,9 @@ function UsersTab() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-800">
+          <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 User
@@ -396,7 +396,7 @@ function UsersTab() {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-200">
             {loading ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center">
@@ -414,7 +414,7 @@ function UsersTab() {
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                      <div className="font-medium text-foreground">
                         {user.name}
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -426,7 +426,7 @@ function UsersTab() {
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         user.tier === "free"
-                          ? "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          ? "bg-muted text-foreground"
                           : user.tier === "premium"
                           ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                           : user.tier === "business"
@@ -477,7 +477,7 @@ function UsersTab() {
       {/* Edit User Dialog */}
       {editDialogOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md">
+          <div className="bg-card p-6 rounded-lg w-full max-w-md">
             <h3 className="text-lg font-medium mb-4">Edit User</h3>
 
             <div className="space-y-4">
@@ -673,13 +673,13 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
           <h3 className="text-lg font-medium">Subscriptions Management</h3>
         </div>
 
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-800">
+          <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 User
@@ -701,7 +701,7 @@ function SubscriptionsTab() {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-200">
             {loading ? (
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center">
@@ -718,7 +718,7 @@ function SubscriptionsTab() {
               subscriptions.map((subscription) => (
                 <tr key={subscription.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                    <div className="font-medium text-foreground">
                       {subscription.user}
                     </div>
                   </td>
@@ -726,7 +726,7 @@ function SubscriptionsTab() {
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         subscription.plan === "Free"
-                          ? "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          ? "bg-muted text-foreground"
                           : subscription.plan === "Premium"
                           ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                           : subscription.plan === "Business"
@@ -746,7 +746,7 @@ function SubscriptionsTab() {
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                           : subscription.status === "past_due"
                           ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          : "bg-muted text-foreground"
                       }`}
                     >
                       {subscription.status}
@@ -755,7 +755,7 @@ function SubscriptionsTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {subscription.nextBilling || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     ${subscription.revenue}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

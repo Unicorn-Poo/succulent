@@ -111,7 +111,7 @@ export default function PostPage() {
           <h2 className="text-xl font-semibold mb-2">
             Account Group Not Found
           </h2>
-          <p className="text-gray-600 dark:text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-4">
             The account group you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button onClick={() => router.push("/")}>
@@ -128,7 +128,7 @@ export default function PostPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Post Not Found</h2>
-          <p className="text-gray-600 dark:text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-4">
             The post you&apos;re looking for doesn&apos;t exist in{" "}
             {accountGroup.name}.
           </p>
@@ -157,7 +157,7 @@ export default function PostPage() {
         <Button
           variant="soft"
           onClick={() => router.push(`/account-group/${accountGroupId}`)}
-          className="flex items-center gap-2 text-gray-600 dark:text-muted-foreground hover:text-gray-800"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to {accountGroup.name || "Account Group"}

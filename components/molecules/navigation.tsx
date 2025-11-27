@@ -35,7 +35,7 @@ export function Navigation() {
 
   if (!me) {
     return (
-      <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-card border-b dark:border-gray-800">
+      <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-card border-b dark:border-border">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center">
             <Image
@@ -60,7 +60,7 @@ export function Navigation() {
   }
 
   return (
-    <nav className="bg-card border-b dark:border-gray-800">
+    <nav className="bg-card border-b dark:border-border">
       <div className="flex items-center justify-between px-4 py-3 sm:p-4">
         <div className="flex items-center space-x-2 sm:space-x-4">
           <Link href="/" className="flex items-center">
@@ -76,7 +76,7 @@ export function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/account"
-              className="text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-gray-100"
+              className="text-muted-foreground hover:text-foreground"
             >
               Account
             </Link>
@@ -130,7 +130,7 @@ export function Navigation() {
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-56 bg-card rounded-md shadow-lg border border-border z-50">
                 <div className="py-1">
-                  <div className="px-4 py-3 border-b border-border dark:border-gray-800">
+                  <div className="px-4 py-3 border-b border-border dark:border-border">
                     <p className="text-sm font-medium text-foreground">
                       {me.profile?.name}
                     </p>

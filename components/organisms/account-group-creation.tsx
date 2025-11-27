@@ -210,7 +210,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
 
             {/* Add Account Form */}
             {showAddAccountForm && (
-              <Card className="p-4 mb-4 border-dashed border-2 border-gray-300 dark:border-gray-600">
+              <Card className="p-4 mb-4 border-dashed border-2 border-border">
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <label className="block text-xs font-medium mb-1">Platform</label>
@@ -300,7 +300,7 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
             )}
 
             {accounts.length === 0 && !showAddAccountForm && (
-              <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+              <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
                 <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <Text size="2" color="gray">No accounts added yet</Text>
                 <Text size="1" color="gray" className="block mt-1">

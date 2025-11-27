@@ -51,8 +51,8 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
     switch (post.status) {
       case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
-      case 'draft': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      case 'draft': return 'bg-muted text-foreground';
+      default: return 'bg-muted text-foreground';
     }
   };
 

@@ -145,7 +145,7 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Name
               </label>
               {isEditing ? (
@@ -156,14 +156,14 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900 dark:text-gray-100">
+                <p className="text-foreground">
                   {account.profile?.name || "Not set"}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Email
               </label>
               {isEditing ? (
@@ -174,17 +174,17 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
                   className="w-full p-2 border rounded-md"
                 />
               ) : (
-                <p className="text-gray-900 dark:text-gray-100">
+                <p className="text-foreground">
                   {account.profile?.email || "Not set"}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Account Created
               </label>
-              <p className="text-gray-900 dark:text-gray-100">
+              <p className="text-foreground">
                 {account.profile?.createdAt
                   ? new Date(account.profile.createdAt).toLocaleDateString()
                   : "Unknown"}
@@ -192,10 +192,10 @@ function ProfileTab({ account }: { account: MyAppAccountLoaded }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Last Updated
               </label>
-              <p className="text-gray-900 dark:text-gray-100">
+              <p className="text-foreground">
                 {account.profile?.updatedAt
                   ? new Date(account.profile.updatedAt).toLocaleDateString()
                   : "Unknown"}
@@ -319,7 +319,7 @@ function SubscriptionTab({ account }: { account: MyAppAccountLoaded }) {
 
                   <div className="mb-4">
                     <h3 className="font-semibold text-lg">{plan.name}</h3>
-                    <p className="text-gray-600 dark:text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {plan.description}
                     </p>
                   </div>
@@ -328,7 +328,7 @@ function SubscriptionTab({ account }: { account: MyAppAccountLoaded }) {
                     <span className="text-2xl font-bold">
                       ${plan.price.monthly}
                     </span>
-                    <span className="text-gray-600 dark:text-muted-foreground">
+                    <span className="text-muted-foreground">
                       /month
                     </span>
                   </div>
@@ -401,11 +401,11 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span>{item.icon}</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                      <span className="font-medium text-foreground">
                         {item.label}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-600 dark:text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       {usage.used} / {usage.limit === -1 ? "∞" : usage.limit}
                     </span>
                   </div>

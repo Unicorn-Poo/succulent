@@ -277,12 +277,12 @@ export default function UserProfileManagement({
                 <div>
                   <Text size="2" weight="medium" className="block mb-1">Profile Key</Text>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded font-mono truncate">
+                    <code className="flex-1 text-xs bg-muted p-2 rounded font-mono truncate">
                       {profile.profileKey}
                     </code>
                     <button
                       onClick={() => handleCopyKey(profile.profileKey)}
-                      className="p-1 text-muted-foreground hover:text-gray-800 dark:text-gray-200"
+                      className="p-1 text-muted-foreground hover:text-foreground dark:text-foreground"
                     >
                       {copiedKey === profile.profileKey ? (
                         <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -352,7 +352,7 @@ export default function UserProfileManagement({
                 value={newProfileTitle}
                 onChange={(e) => setNewProfileTitle(e.target.value)}
                 placeholder="e.g., Client Name or Project Name"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={isCreating}
               />
             </div>

@@ -220,7 +220,7 @@ export default function WebhookManagement() {
                 value={newWebhook.url}
                 onChange={(e) => setNewWebhook(prev => ({ ...prev, url: e.target.value }))}
                 placeholder="https://your-domain.com/webhook"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -234,7 +234,7 @@ export default function WebhookManagement() {
                 value={newWebhook.secret}
                 onChange={(e) => setNewWebhook(prev => ({ ...prev, secret: e.target.value }))}
                 placeholder="webhook-secret-key"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <Text size="1" color="gray" className="mt-1">
                 Used to verify webhook authenticity
@@ -253,7 +253,7 @@ export default function WebhookManagement() {
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                       newWebhook.events.includes(event.id)
                         ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-border hover:border-gray-300 dark:border-gray-600'
+                        : 'border-border hover:border-border'
                     }`}
                     onClick={() => toggleEvent(event.id)}
                   >
@@ -351,7 +351,7 @@ export default function WebhookManagement() {
                 <div className="flex gap-2 ml-4">
                   <button
                     onClick={() => {/* TODO: Implement edit */}}
-                    className="p-2 text-muted-foreground hover:text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
+                    className="p-2 text-muted-foreground hover:text-foreground dark:text-foreground hover:bg-muted dark:bg-muted rounded"
                     title="Edit webhook"
                   >
                     <Edit className="w-4 h-4" />

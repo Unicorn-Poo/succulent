@@ -90,7 +90,7 @@ export const TwitterPreview = ({
 					<Button variant="ghost" size="1" className="hover:bg-green-50 dark:bg-green-900/20 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><Share className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800"><Bookmark className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-muted"><Bookmark className="w-4 h-4" /></Button>
 				</div>
 			</div>
 		</div>
@@ -217,7 +217,7 @@ export const InstagramPreview = ({
 			</div>
 
 			{/* Media Area - Exactly Square */}
-			<div className="relative w-full aspect-square bg-gray-100 dark:bg-gray-700">
+			<div className="relative w-full aspect-square bg-muted">
 				{media.length > 0 ? (
 					<MultiImageViewer media={media} platform="instagram" />
 				) : (
@@ -819,7 +819,7 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 	if (error) {
 		return (
-			<div className={`${className} bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+			<div className={`${className} bg-muted dark:bg-muted rounded-lg flex items-center justify-center`}>
 				<span className="text-muted-foreground text-sm">Failed to load image</span>
 			</div>
 		);
@@ -827,7 +827,7 @@ const FileStreamImage = ({ fileStream, className, alt }: { fileStream: any, clas
 
 	if (!dataUrl) {
 		return (
-			<div className={`${className} bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 rounded-lg flex items-center justify-center`}>
+			<div className={`${className} bg-muted dark:bg-muted rounded-lg flex items-center justify-center`}>
 				<span className="text-muted-foreground text-sm">Loading...</span>
 			</div>
 		);
@@ -921,7 +921,7 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		// Show placeholder if no valid URL
 		if (!imageUrl) {
 			return (
-				<div className={`${commonClass} bg-gray-100 dark:bg-gray-700 flex items-center justify-center`}>
+				<div className={`${commonClass} bg-muted flex items-center justify-center`}>
 					<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-muted-foreground">
 						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
 						<circle cx="8.5" cy="8.5" r="1.5"/>
@@ -952,7 +952,7 @@ const MediaItemRenderer = ({ item, isCarousel }: { item: any, isCarousel?: boole
 		if (videoObject && typeof videoObject.getBlob === 'function') {
 			// For now, show placeholder for videos
 			return (
-				<div className={`${commonClass} bg-gray-100 dark:bg-gray-700 flex items-center justify-center`}>
+				<div className={`${commonClass} bg-muted flex items-center justify-center`}>
 					<Play className="w-8 h-8 text-muted-foreground" />
 				</div>
 			);

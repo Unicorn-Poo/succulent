@@ -50,7 +50,7 @@ const InstagramPreview = ({ author, content }: { author: string, content: string
   return (
     <Box className="mt-4 p-4 border rounded-lg bg-card text-sm">
       <Text weight="bold">{handle}</Text>
-      <Text as="p" className="mt-2 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+      <Text as="p" className="mt-2 text-foreground whitespace-pre-wrap">
         {postContent}
       </Text>
       <div className="mt-3 text-xs text-muted-foreground">

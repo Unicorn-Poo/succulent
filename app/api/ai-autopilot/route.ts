@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAIAutopilot, getQuickAutopilotDecision } from '@/utils/aiAutopilot';
+import { createAIAutopilot, getQuickAutopilotDecision, getNextScheduledDate } from '@/utils/aiAutopilot';
 
 export const dynamic = 'force-dynamic';
 /**
@@ -73,38 +73,87 @@ export async function POST(request: NextRequest) {
         const contentPrompt = context || 'Generate engaging social media content';
         
         try {
-          // Create a temporary autopilot for content generation
+          // Create autopilot for content generation
           const contentAutopilot = await createAIAutopilot({
             aggressiveness: 'moderate',
             maxPostsPerDay: 5,
             enableAutoPosting: false,
             enableAutoEngagement: false,
             enableContentOptimization: true,
-            platforms: ['instagram', 'x'],
+            platforms: config?.platforms || ['instagram', 'x'],
             accountGroupId: config?.accountGroupId || 'temp'
           });
 
-          const contentStream = await contentAutopilot.generateContentWithStreaming(contentPrompt);
-          
-          // Convert stream to string for response with timeout
-          let content = '';
-          const streamTimeout = setTimeout(() => {
-            throw new Error('Content generation stream timeout');
-          }, 60000); // 60 second timeout
-          
-          try {
-            for await (const chunk of contentStream) {
-              content += chunk;
-            }
-            clearTimeout(streamTimeout);
-          } catch (streamError) {
-            clearTimeout(streamTimeout);
-            throw streamError;
+          // Set brand persona from the extracted data (not from Jazz object)
+          if (config?.brandPersona) {
+            const persona = config.brandPersona;
+            contentAutopilot.setBrandPersona({
+              id: `persona_${Date.now()}`,
+              name: persona.name || 'My Brand',
+              description: persona.description || '',
+              voice: {
+                tone: persona.tone || 'friendly',
+                personality: persona.personality || [],
+                writingStyle: persona.writingStyle || 'conversational',
+                emojiUsage: persona.emojiUsage || 'moderate',
+                languageLevel: persona.languageLevel || 'intermediate',
+              },
+              messaging: {
+                keyMessages: persona.keyMessages || [],
+                valueProposition: persona.valueProposition || '',
+                targetAudience: persona.targetAudience || '',
+                contentPillars: persona.contentPillars || [],
+                avoidTopics: persona.avoidTopics || [],
+              },
+              engagement: {
+                commentStyle: 'supportive',
+                dmApproach: 'friendly',
+                hashtagStrategy: 'mixed',
+                mentionStyle: 'active',
+              },
+              contentGuidelines: {
+                postLength: 'medium',
+                contentMix: { educational: 40, entertainment: 30, promotional: 20, personal: 10 },
+                callToActionStyle: persona.callToActionStyle || 'direct',
+                questionFrequency: 'frequent',
+              },
+              platformCustomization: {},
+              examples: {
+                samplePosts: persona.samplePosts || [],
+                sampleReplies: [],
+                sampleDMs: [],
+              },
+            });
           }
+
+          // Use structured content generation
+          const structuredContent = await contentAutopilot.generateStructuredContent(contentPrompt);
+          
+          // Calculate the actual scheduled date from the AI's suggestion
+          const scheduledDate = getNextScheduledDate(
+            structuredContent.suggestedPostTime.day,
+            structuredContent.suggestedPostTime.hour
+          );
+
+          // Format the hour properly
+          const hour = structuredContent.suggestedPostTime.hour;
+          const formattedHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          const amPm = hour >= 12 ? 'PM' : 'AM';
 
           return NextResponse.json({
             success: true,
-            content,
+            // The actual post content (no metadata)
+            content: structuredContent.content,
+            // Structured scheduling data
+            suggestedPostTime: {
+              day: structuredContent.suggestedPostTime.day,
+              hour: structuredContent.suggestedPostTime.hour,
+              scheduledDate: scheduledDate.toISOString(),
+              formattedTime: `${structuredContent.suggestedPostTime.day} at ${formattedHour} ${amPm}`
+            },
+            // Content metadata
+            contentPillar: structuredContent.contentPillar,
+            engagementPotential: structuredContent.engagementPotential,
             timestamp: new Date().toISOString()
           });
         } catch (error) {
@@ -144,12 +193,12 @@ export async function GET() {
   return NextResponse.json({
     capabilities: [
       'Real-time performance analysis',
-      'AI-powered content generation',
+      'AI-powered content generation with structured output',
       'Automated engagement optimization', 
-      'Smart posting time recommendations',
+      'Smart posting time recommendations with auto-scheduling',
       'Brand-aware decision making',
       'Risk assessment and mitigation',
-      'Streaming content generation',
+      'Content pillar rotation for topic variety',
       'Image analysis and captioning'
     ],
     actions: [
@@ -170,8 +219,19 @@ export async function GET() {
       },
       {
         name: 'quick-content',
-        description: 'Generate content with streaming AI',
-        parameters: ['context']
+        description: 'Generate structured content with optimal timing',
+        parameters: ['context', 'config.accountGroup (optional)', 'config.platforms (optional)'],
+        returns: {
+          content: 'The actual post content (ready to post)',
+          suggestedPostTime: {
+            day: 'Day of week',
+            hour: 'Hour in 24h format',
+            scheduledDate: 'ISO date string for scheduling',
+            formattedTime: 'Human-readable time'
+          },
+          contentPillar: 'Which topic/pillar the content is about',
+          engagementPotential: 'Predicted engagement score (0-100)'
+        }
       }
     ],
     example: {
@@ -187,10 +247,13 @@ export async function GET() {
           accountGroupId: 'your-account-group-id'
         }
       },
-      decision: {
-        action: 'decision',
-        context: 'Should I post now or wait 2 hours?',
-        options: ['post_now', 'wait_2_hours', 'schedule_optimal_time']
+      'quick-content': {
+        action: 'quick-content',
+        context: 'Generate content for my brand',
+        config: {
+          platforms: ['instagram'],
+          accountGroup: '(pass your account group object to use brand persona)'
+        }
       }
     }
   });

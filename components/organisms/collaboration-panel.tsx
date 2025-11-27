@@ -197,7 +197,7 @@ function GroupCard({ group, isOwner, onInvite, onShare }: GroupCardProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
+    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
           <Users size={20} className="text-blue-600 dark:text-blue-400" />

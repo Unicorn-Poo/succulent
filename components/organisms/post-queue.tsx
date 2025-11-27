@@ -240,7 +240,7 @@ export default function PostQueue({
         );
       default:
         return (
-          <span className="px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-muted-foreground">
+          <span className="px-2 py-1 rounded-full text-xs bg-muted text-gray-800 dark:text-muted-foreground">
             {status}
           </span>
         );

@@ -127,14 +127,14 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 	return (
 		<>
 			<div className="relative group max-w-2xl mx-auto">
-				<div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-800">
+				<div className="relative overflow-hidden rounded-lg bg-muted dark:bg-muted">
 					<div
 						className="flex transition-transform duration-300 ease-out"
 						style={{ transform: `translateX(-${currentIndex * 100}%)` }}
 					>
 						{mediaArray.map((mediaItem, index) => (
 							<div key={index} className="w-full flex-shrink-0 relative group">
-								<div className="aspect-video relative bg-muted dark:bg-gray-700">
+								<div className="aspect-video relative bg-muted dark:bg-muted">
 									{/* Remove button */}
 									<button
 										onClick={() => handleRemoveMedia(index)}
@@ -283,7 +283,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (loading) {
 		return (
-			<div className="w-full h-[400px] bg-muted dark:bg-gray-700 flex items-center justify-center">
+			<div className="w-full h-[400px] bg-muted dark:bg-muted flex items-center justify-center">
 				<div className="text-center">
 					<div className="w-8 h-8 border-2 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
 					<p className="text-muted-foreground text-sm">Loading...</p>
@@ -294,7 +294,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 
 	if (error || !imageUrl) {
 		return (
-			<div className="w-full h-[400px] bg-muted dark:bg-gray-700 flex items-center justify-center">
+			<div className="w-full h-[400px] bg-muted dark:bg-muted flex items-center justify-center">
 				<div className="text-center">
 					<X className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
 					<p className="text-muted-foreground text-sm">Failed to load media</p>
@@ -331,7 +331,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 	}
 
 	return (
-		<div className="w-full h-[400px] bg-muted dark:bg-gray-700 flex items-center justify-center">
+		<div className="w-full h-[400px] bg-muted dark:bg-muted flex items-center justify-center">
 			<div className="text-center">
 				<X className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
 				<p className="text-muted-foreground text-sm">Unsupported media type</p>

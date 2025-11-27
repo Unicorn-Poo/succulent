@@ -78,7 +78,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 												account.profile.name = e.target.value;
 											}
 										}}
-										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-card dark:text-gray-100"
+										className="w-full px-3 py-2 border border-border dark:border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-card dark:text-foreground"
 										placeholder="Enter your display name"
 									/>
 								</div>
@@ -111,7 +111,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 						<Card>
 							<div className="p-6">
 								<div className="flex items-center gap-3 mb-4">
-									<div className="flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg">
+									<div className="flex items-center justify-center w-10 h-10 bg-muted rounded-lg">
 										<Key className="w-5 h-5 text-muted-foreground" />
 									</div>
 									<div>
@@ -248,7 +248,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 								</div>
 
 								<div className="p-4 bg-muted border border-border rounded-lg">
-									<Text size="2" className="text-gray-800 dark:text-gray-200">
+									<Text size="2" className="text-foreground">
 										📱 <strong>Device Access</strong>
 									</Text>
 									<Text size="2" className="text-foreground block mt-1">

@@ -189,7 +189,7 @@ export default function EnhancedReplyHandler({
       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
         selectedComment?.id === comment.id 
           ? 'border-lime-500 bg-lime-50' 
-          : 'border-border hover:border-gray-300 dark:border-gray-600'
+          : 'border-border hover:border-border'
       }`}
       onClick={() => setSelectedComment(selectedComment?.id === comment.id ? null : comment)}
     >

@@ -186,7 +186,7 @@ export const PostCreationHeader = ({
                                                     e.stopPropagation(); // Prevent tab switch
                                                     handleRemoveAccount(platform);
                                                 }}
-                                                className="ml-1 p-0.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000/20"
+                                                className="ml-1 p-0.5 rounded-full hover:bg-muted0/20"
                                             >
                                                 <X className="w-3 h-3" />
                                             </span>

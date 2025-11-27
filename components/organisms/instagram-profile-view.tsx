@@ -128,7 +128,7 @@ export default function InstagramProfileView({
 
     return (
       <Link href={getPostUrl(post.id)} className="block group">
-        <div className="aspect-square relative bg-gray-100 dark:bg-gray-700 overflow-hidden">
+        <div className="aspect-square relative bg-muted overflow-hidden">
           {mediaUrl ? (
             <>
               {isVideo ? (
@@ -342,7 +342,7 @@ export default function InstagramProfileView({
         <div className="flex items-center gap-4 overflow-x-auto">
           {/* New Highlight */}
           <div className="flex-shrink-0 text-center">
-            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-1">
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-border flex items-center justify-center mb-1">
               <Plus className="w-6 h-6 text-muted-foreground" />
             </div>
             <Text size="1" color="gray">New</Text>

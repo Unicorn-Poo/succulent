@@ -230,7 +230,7 @@ export default function UnifiedAutomationDashboard({
       case "approval":
         return "bg-lime-100 dark:bg-lime-900/30 text-lime-600 dark:text-lime-400";
       default:
-        return "bg-gray-100 dark:bg-gray-700 text-muted-foreground";
+        return "bg-muted text-muted-foreground";
     }
   };
 

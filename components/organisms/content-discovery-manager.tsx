@@ -409,7 +409,7 @@ export default function ContentDiscoveryManager({
                       
                       <div className="flex flex-wrap gap-1 mt-2">
                         {item.tags.map(tag => (
-                          <span key={tag} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-foreground rounded text-xs">
+                          <span key={tag} className="px-2 py-1 bg-muted text-foreground rounded text-xs">
                             #{tag}
                           </span>
                         ))}

@@ -66,8 +66,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
     const postStatus = getPostStatus(post);
     if (postStatus === 'draft') {
       return (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center">
-          <span className="text-white text-xs font-medium px-2 py-1 bg-gray-700 rounded">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <span className="text-white text-xs font-medium px-2 py-1 bg-muted rounded">
             DRAFT
           </span>
         </div>
@@ -116,7 +116,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
             className="aspect-square relative cursor-pointer group"
             onClick={() => onCreatePost?.(account.platform)}
           >
-            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg">
+            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 flex items-center justify-center transition-colors border-2 border-dashed border-border hover:border-gray-400 rounded-lg">
               <div className="text-center text-muted-foreground group-hover:text-muted-foreground">
                 <span className="text-3xl font-light">+</span>
               </div>
@@ -238,7 +238,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
               
               return (
                 <Link key={post.id} href={getPostUrl(post.id)} className="block">
-                  <div className="p-4 border-b border-border hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 transition-colors relative cursor-pointer">
+                  <div className="p-4 border-b border-border hover:bg-muted transition-colors relative cursor-pointer">
                     <div className="flex space-x-3">
                       {/* Avatar */}
                       <div className="w-10 h-10 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -287,7 +287,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                       const postStatus = getPostStatus(post);
                       return (postStatus === 'draft' || postStatus === 'scheduled') && (
                         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                          postStatus === 'draft' ? 'bg-gray-100 dark:bg-gray-700 text-foreground' : 'bg-lime-100 dark:bg-lime-900/30 text-lime-700'
+                          postStatus === 'draft' ? 'bg-muted text-foreground' : 'bg-lime-100 dark:bg-lime-900/30 text-lime-700'
                         }`}>
                           {postStatus.toUpperCase()}
                         </div>

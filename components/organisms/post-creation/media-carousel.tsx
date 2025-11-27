@@ -174,7 +174,7 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 							className={`relative w-3 h-3 rounded-full transition-all duration-300 ${
 								currentIndex === index 
 									? 'bg-lime-500 shadow-lg shadow-lime-500/50 scale-125' 
-									: 'bg-muted-foreground/30 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-8000'
+									: 'bg-muted-foreground/30 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-muted0'
 							}`}
 							aria-label={`Go to slide ${index + 1}`}
 						>
@@ -405,7 +405,7 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 				return (
 					<div className="w-full h-full flex items-center justify-center">
 						<div className="text-center p-8">
-							<div className="w-16 h-16 bg-muted dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 mx-auto">
+							<div className="w-16 h-16 bg-muted dark:bg-muted rounded-full flex items-center justify-center mb-4 mx-auto">
 								<X className="w-8 h-8 text-muted-foreground" />
 							</div>
 							<p className="text-muted-foreground font-medium">Unsupported media type</p>

@@ -102,7 +102,7 @@ export default function GrowthQuickAccess({
                       onToolSelect(action.id);
                       setIsDropdownOpen(false);
                     }}
-                    className="w-full text-left p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 transition-colors group"
+                    className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group"
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${action.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>

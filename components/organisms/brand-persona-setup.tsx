@@ -418,7 +418,7 @@ Return ONLY the JSON, no additional text or markdown.`;
 
   // Render different interfaces based on setup method
   const renderChooseInterface = () => (
-    <div className="bg-card rounded-lg shadow-sm border dark:border-gray-800 p-6">
+    <div className="bg-card rounded-lg shadow-sm border dark:border-border p-6">
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl text-white">🎨</span>
@@ -432,7 +432,7 @@ Return ONLY the JSON, no additional text or markdown.`;
           {defaultPersonas.map(persona => (
             <div
               key={persona.id}
-              className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-gray-800"
+              className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-muted"
               onClick={() => handleUseTemplate(persona.id)}
             >
               <h4 className="font-medium text-foreground mb-2">{persona.name}</h4>
@@ -468,7 +468,7 @@ Return ONLY the JSON, no additional text or markdown.`;
   );
 
   const renderChatGPTInterface = () => (
-    <div className="bg-card rounded-lg shadow-sm border dark:border-gray-800 p-6">
+    <div className="bg-card rounded-lg shadow-sm border dark:border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">🤖 ChatGPT Persona Generator</h3>
@@ -503,7 +503,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   newPosts[index] = e.target.value;
                   setExamplePosts(newPosts);
                 }}
-                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none text-sm bg-card dark:text-gray-100"
+                className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none text-sm bg-card dark:text-foreground"
               />
             ))}
             <Button 
@@ -539,7 +539,7 @@ Return ONLY the JSON, no additional text or markdown.`;
             </div>
           </div>
           
-          <div className="p-4 bg-muted border dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
+          <div className="p-4 bg-muted border dark:border-border rounded-lg max-h-64 overflow-y-auto">
             <pre className="text-sm whitespace-pre-wrap text-foreground">{examplePostsPrompt}</pre>
           </div>
           
@@ -555,7 +555,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               placeholder="Paste the complete JSON response here..."
               value={chatgptResponse}
               onChange={(e) => setChatgptResponse(e.target.value)}
-              className="w-full p-4 border dark:border-gray-700 rounded-lg h-40 resize-none font-mono text-sm bg-card dark:text-gray-100"
+              className="w-full p-4 border dark:border-border rounded-lg h-40 resize-none font-mono text-sm bg-card dark:text-foreground"
             />
             
             <div className="flex gap-3 mt-4">
@@ -588,7 +588,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   placeholder="Brief brand description (e.g., 'I help busy women prioritize wellness...')"
                   value={promptInput.brandDescription}
                   onChange={(e) => setPromptInput(prev => ({ ...prev, brandDescription: e.target.value }))}
-                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-card dark:text-gray-100"
+                  className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none bg-card dark:text-foreground"
                 />
                 <Button onClick={handleQuickPrompt} className="w-full">
                   Generate Quick Prompt
@@ -624,7 +624,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               {promptExamples.slice(0, 4).map((example, index) => (
                 <div
                   key={index}
-                  className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-gray-800"
+                  className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-muted"
                   onClick={() => handleUseExample(example)}
                 >
                   <h5 className="font-medium text-foreground mb-2">{example.brandName}</h5>
@@ -636,7 +636,7 @@ Return ONLY the JSON, no additional text or markdown.`;
           </div>
 
           {/* Manual Input Form */}
-          <div className="border-t dark:border-gray-700 pt-6">
+          <div className="border-t dark:border-border pt-6">
             <h4 className="font-medium text-foreground mb-4">📝 Or Fill Out Details Manually</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
@@ -656,14 +656,14 @@ Return ONLY the JSON, no additional text or markdown.`;
                 placeholder="Target Audience (e.g., 'Busy professionals aged 25-45 who want to improve productivity')"
                 value={promptInput.targetAudience}
                 onChange={(e) => setPromptInput(prev => ({ ...prev, targetAudience: e.target.value }))}
-                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-card dark:text-gray-100"
+                className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none bg-card dark:text-foreground"
               />
               
               <textarea
                 placeholder="Brand Description (e.g., 'We help entrepreneurs automate their workflows and scale efficiently')"
                 value={promptInput.brandDescription}
                 onChange={(e) => setPromptInput(prev => ({ ...prev, brandDescription: e.target.value }))}
-                className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-card dark:text-gray-100"
+                className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none bg-card dark:text-foreground"
               />
               
               <Input
@@ -707,7 +707,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               </div>
             </div>
             
-            <div className="p-4 bg-muted border dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
+            <div className="p-4 bg-muted border dark:border-border rounded-lg max-h-64 overflow-y-auto">
               <pre className="text-sm whitespace-pre-wrap text-foreground">{generatedPrompt}</pre>
             </div>
             
@@ -729,7 +729,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               placeholder="Paste the complete JSON response from ChatGPT here..."
               value={chatgptResponse}
               onChange={(e) => setChatgptResponse(e.target.value)}
-              className="w-full p-4 border dark:border-gray-700 rounded-lg h-40 resize-none font-mono text-sm bg-card dark:text-gray-100"
+              className="w-full p-4 border dark:border-border rounded-lg h-40 resize-none font-mono text-sm bg-card dark:text-foreground"
             />
             
             <div className="flex gap-3 mt-4">
@@ -766,7 +766,7 @@ Return ONLY the JSON, no additional text or markdown.`;
     if (!currentPersona) return null;
 
     return (
-      <div className="bg-card rounded-lg shadow-sm border dark:border-gray-800 p-6">
+      <div className="bg-card rounded-lg shadow-sm border dark:border-border p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-semibold text-foreground">🎨 Brand Persona: {currentPersona.name}</h3>
@@ -849,7 +849,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                 placeholder="Paste the JSON response from ChatGPT here..."
                 value={jsonImportValue}
                 onChange={(e) => setJsonImportValue(e.target.value)}
-                className="w-full p-4 border dark:border-gray-700 rounded-lg h-32 resize-none font-mono text-sm bg-card dark:text-gray-100"
+                className="w-full p-4 border dark:border-border rounded-lg h-32 resize-none font-mono text-sm bg-card dark:text-foreground"
               />
               <Button 
                 onClick={handleImportFromJson}
@@ -885,8 +885,8 @@ Return ONLY the JSON, no additional text or markdown.`;
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 border dark:border-gray-700 rounded-lg">
-                <h4 className="font-medium mb-3 dark:text-gray-100">Content Pillars</h4>
+              <div className="p-4 border dark:border-border rounded-lg">
+                <h4 className="font-medium mb-3 dark:text-foreground">Content Pillars</h4>
                 <div className="flex flex-wrap gap-2">
                   {currentPersona.messaging.contentPillars.map(pillar => (
                     <span key={pillar} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm">
@@ -896,13 +896,13 @@ Return ONLY the JSON, no additional text or markdown.`;
                 </div>
               </div>
 
-              <div className="p-4 border dark:border-gray-700 rounded-lg">
-                <h4 className="font-medium mb-3 dark:text-gray-100">Content Mix</h4>
+              <div className="p-4 border dark:border-border rounded-lg">
+                <h4 className="font-medium mb-3 dark:text-foreground">Content Mix</h4>
                 <div className="space-y-2">
                   {Object.entries(currentPersona.contentGuidelines.contentMix).map(([type, percentage]) => (
                     <div key={type} className="flex items-center justify-between">
                       <span className="capitalize dark:text-muted-foreground">{type}</span>
-                      <span className="font-medium dark:text-gray-100">{percentage}%</span>
+                      <span className="font-medium dark:text-foreground">{percentage}%</span>
                     </div>
                   ))}
                 </div>
@@ -910,7 +910,7 @@ Return ONLY the JSON, no additional text or markdown.`;
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2 dark:text-gray-100">Value Proposition</h4>
+              <h4 className="font-medium mb-2 dark:text-foreground">Value Proposition</h4>
               <p className="text-foreground">{currentPersona.messaging.valueProposition}</p>
             </div>
           </div>
@@ -919,10 +919,10 @@ Return ONLY the JSON, no additional text or markdown.`;
           <div className="space-y-6">
             {/* Basic Info */}
             <div className="space-y-4">
-              <h4 className="font-medium text-foreground border-b dark:border-gray-700 pb-2">Basic Info</h4>
+              <h4 className="font-medium text-foreground border-b dark:border-border pb-2">Basic Info</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Brand Name</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Brand Name</label>
                   <Input
                     value={currentPersona.name}
                     onChange={(e) => updatePersona({ name: e.target.value })}
@@ -930,7 +930,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Description</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Description</label>
                   <Input
                     value={currentPersona.description}
                     onChange={(e) => updatePersona({ description: e.target.value })}
@@ -942,14 +942,14 @@ Return ONLY the JSON, no additional text or markdown.`;
 
             {/* Voice Settings */}
             <div className="space-y-4">
-              <h4 className="font-medium text-foreground border-b dark:border-gray-700 pb-2">Voice & Tone</h4>
+              <h4 className="font-medium text-foreground border-b dark:border-border pb-2">Voice & Tone</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Tone</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Tone</label>
                   <select
                     value={currentPersona.voice.tone}
                     onChange={(e) => updateVoice({ tone: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="professional">Professional</option>
                     <option value="casual">Casual</option>
@@ -961,11 +961,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Writing Style</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Writing Style</label>
                   <select
                     value={currentPersona.voice.writingStyle}
                     onChange={(e) => updateVoice({ writingStyle: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="formal">Formal</option>
                     <option value="conversational">Conversational</option>
@@ -976,11 +976,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Emoji Usage</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Emoji Usage</label>
                   <select
                     value={currentPersona.voice.emojiUsage}
                     onChange={(e) => updateVoice({ emojiUsage: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="none">None</option>
                     <option value="minimal">Minimal</option>
@@ -989,11 +989,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Language Level</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Language Level</label>
                   <select
                     value={currentPersona.voice.languageLevel}
                     onChange={(e) => updateVoice({ languageLevel: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="simple">Simple</option>
                     <option value="intermediate">Intermediate</option>
@@ -1006,27 +1006,27 @@ Return ONLY the JSON, no additional text or markdown.`;
 
             {/* Messaging */}
             <div className="space-y-4">
-              <h4 className="font-medium text-foreground border-b dark:border-gray-700 pb-2">Messaging</h4>
+              <h4 className="font-medium text-foreground border-b dark:border-border pb-2">Messaging</h4>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Value Proposition</label>
+                <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Value Proposition</label>
                 <textarea
                   value={currentPersona.messaging.valueProposition}
                   onChange={(e) => updateMessaging({ valueProposition: e.target.value })}
                   placeholder="What unique value do you provide?"
-                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-card dark:text-gray-100"
+                  className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none bg-card dark:text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Target Audience</label>
+                <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Target Audience</label>
                 <textarea
                   value={currentPersona.messaging.targetAudience}
                   onChange={(e) => updateMessaging({ targetAudience: e.target.value })}
                   placeholder="Describe your ideal audience"
-                  className="w-full p-3 border dark:border-gray-700 rounded-lg h-20 resize-none bg-card dark:text-gray-100"
+                  className="w-full p-3 border dark:border-border rounded-lg h-20 resize-none bg-card dark:text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Content Pillars (comma-separated)</label>
+                <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Content Pillars (comma-separated)</label>
                 <Input
                   value={currentPersona.messaging.contentPillars.join(', ')}
                   onChange={(e) => updateMessaging({ contentPillars: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
@@ -1037,14 +1037,14 @@ Return ONLY the JSON, no additional text or markdown.`;
 
             {/* Engagement */}
             <div className="space-y-4">
-              <h4 className="font-medium text-foreground border-b dark:border-gray-700 pb-2">Engagement Style</h4>
+              <h4 className="font-medium text-foreground border-b dark:border-border pb-2">Engagement Style</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Comment Style</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Comment Style</label>
                   <select
                     value={currentPersona.engagement.commentStyle}
                     onChange={(e) => updateEngagement({ commentStyle: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="brief">Brief</option>
                     <option value="detailed">Detailed</option>
@@ -1054,11 +1054,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">DM Approach</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">DM Approach</label>
                   <select
                     value={currentPersona.engagement.dmApproach}
                     onChange={(e) => updateEngagement({ dmApproach: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="professional">Professional</option>
                     <option value="friendly">Friendly</option>
@@ -1067,11 +1067,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Hashtag Strategy</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Hashtag Strategy</label>
                   <select
                     value={currentPersona.engagement.hashtagStrategy}
                     onChange={(e) => updateEngagement({ hashtagStrategy: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="branded">Branded</option>
                     <option value="trending">Trending</option>
@@ -1080,11 +1080,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Mention Style</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Mention Style</label>
                   <select
                     value={currentPersona.engagement.mentionStyle}
                     onChange={(e) => updateEngagement({ mentionStyle: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="conservative">Conservative</option>
                     <option value="active">Active</option>
@@ -1096,14 +1096,14 @@ Return ONLY the JSON, no additional text or markdown.`;
 
             {/* Content Guidelines */}
             <div className="space-y-4">
-              <h4 className="font-medium text-foreground border-b dark:border-gray-700 pb-2">Content Guidelines</h4>
+              <h4 className="font-medium text-foreground border-b dark:border-border pb-2">Content Guidelines</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Post Length</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Post Length</label>
                   <select
                     value={currentPersona.contentGuidelines.postLength}
                     onChange={(e) => updateContentGuidelines({ postLength: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="short">Short</option>
                     <option value="medium">Medium</option>
@@ -1112,11 +1112,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Call to Action Style</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Call to Action Style</label>
                   <select
                     value={currentPersona.contentGuidelines.callToActionStyle}
                     onChange={(e) => updateContentGuidelines({ callToActionStyle: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="subtle">Subtle</option>
                     <option value="direct">Direct</option>
@@ -1125,11 +1125,11 @@ Return ONLY the JSON, no additional text or markdown.`;
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-gray-200">Question Frequency</label>
+                  <label className="block text-sm font-medium text-foreground mb-2 dark:text-foreground">Question Frequency</label>
                   <select
                     value={currentPersona.contentGuidelines.questionFrequency}
                     onChange={(e) => updateContentGuidelines({ questionFrequency: e.target.value as any })}
-                    className="w-full p-2 border dark:border-gray-700 rounded-lg bg-card dark:text-gray-100"
+                    className="w-full p-2 border dark:border-border rounded-lg bg-card dark:text-foreground"
                   >
                     <option value="rare">Rare</option>
                     <option value="occasional">Occasional</option>

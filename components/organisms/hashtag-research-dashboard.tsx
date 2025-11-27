@@ -143,7 +143,7 @@ export default function HashtagResearchDashboard({
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag.hashtag)
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-border hover:border-gray-300 dark:border-gray-600'
+              : 'border-border hover:border-border'
           }`}
           onClick={() => handleHashtagToggle(hashtag.hashtag)}
         >
@@ -153,7 +153,7 @@ export default function HashtagResearchDashboard({
               {showMetrics && (
                 <>
                   <span className="text-sm">{getTrendIcon(hashtag.trend)}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(hashtag.difficulty)} bg-gray-100 dark:bg-gray-700`}>
+                  <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(hashtag.difficulty)} bg-muted`}>
                     {hashtag.difficulty}
                   </span>
                 </>
@@ -190,7 +190,7 @@ export default function HashtagResearchDashboard({
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag)
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-border hover:border-gray-300 dark:border-gray-600'
+              : 'border-border hover:border-border'
           }`}
           onClick={() => handleHashtagToggle(hashtag)}
         >

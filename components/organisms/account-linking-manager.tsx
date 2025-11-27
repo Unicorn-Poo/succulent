@@ -823,7 +823,7 @@ export default function AccountLinkingManager({
 
             {/* Add Account Form */}
             {showAddAccountForm && (
-              <Card className="p-4 border-dashed border-2 border-gray-300 dark:border-gray-600">
+              <Card className="p-4 border-dashed border-2 border-border">
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <label className="block text-xs font-medium mb-1">Platform</label>
@@ -926,7 +926,7 @@ export default function AccountLinkingManager({
                 );
               } else if (!showAddAccountForm && accountGroup?.accounts !== undefined) {
                 return (
-                  <div className="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                  <div className="text-center py-6 border-2 border-dashed border-border rounded-lg">
                     <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                     <Text size="2" color="gray" className="block mb-3">
                       No accounts found

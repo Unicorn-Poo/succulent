@@ -82,7 +82,7 @@ export function PlatformAuthorizationError({
                 {error.message}
               </p>
               
-              <div className="bg-muted dark:bg-gray-700 rounded p-3">
+              <div className="bg-muted dark:bg-muted rounded p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-2">
                   To fix this issue:
                 </p>

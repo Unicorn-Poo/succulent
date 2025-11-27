@@ -347,7 +347,7 @@ export default function AutoScheduleManager({
     switch (status) {
       case 'posted': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'failed': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
-      case 'cancelled': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      case 'cancelled': return 'bg-muted text-foreground';
       default: return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
     }
   };
@@ -364,7 +364,7 @@ export default function AutoScheduleManager({
           <span className={`px-3 py-1 rounded-full text-sm ${
             metrics?.activeRules && metrics.activeRules > 0 
               ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+              : 'bg-muted text-foreground'
           }`}>
             {metrics?.activeRules || 0} Active Rules
           </span>
@@ -478,7 +478,7 @@ export default function AutoScheduleManager({
                   <div className="flex items-center space-x-2">
                     <h4 className="font-medium text-foreground">{rule.name}</h4>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      rule.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                      rule.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-muted text-foreground'
                     }`}>
                       {rule.enabled ? 'Active' : 'Inactive'}
                     </span>

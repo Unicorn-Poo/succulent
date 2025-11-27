@@ -68,7 +68,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
     }
 
     return (
-      <div className="relative w-full h-full bg-gray-100 dark:bg-gray-700">
+      <div className="relative w-full h-full bg-muted">
         {isLoading && (
           <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center z-10">
             <div className="text-center">
@@ -212,9 +212,9 @@ export function PostGridView({
       case "scheduled":
         return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
       case "draft":
-        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
+        return "bg-muted text-foreground";
       default:
-        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -707,7 +707,7 @@ export function PostImageView({
                 className="block w-full h-full relative"
               >
                 {/* Media content - behind overlay */}
-                <div className="w-full h-full bg-gray-100 dark:bg-gray-700 relative z-0 overflow-hidden">
+                <div className="w-full h-full bg-muted relative z-0 overflow-hidden">
                   {hasMedia ? (
                     <ImageCarousel mediaItems={mediaItems} postId={postId} />
                   ) : (
@@ -929,7 +929,7 @@ export function PostSuccinctView({
 
               {/* Media thumbnail (if available) */}
               {hasMedia && firstMediaItem && (
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-700">
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
                   <MediaThumbnail mediaItem={firstMediaItem} />
                 </div>
               )}

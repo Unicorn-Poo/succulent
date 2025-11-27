@@ -164,7 +164,7 @@ export default function PostDebugPanel() {
           {/* Environment Info */}
           <div className="mb-4">
             <h4 className="font-medium mb-2">Environment</h4>
-            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
+            <div className="bg-muted p-2 rounded text-sm">
               <div>API Key: {debugResult.environment.hasAyrshareApiKey ? '✅ Present' : '❌ Missing'}</div>
               <div>Business Plan: {debugResult.environment.businessPlanMode ? '✅ Enabled' : '❌ Disabled'}</div>
               <div>Region: {debugResult.environment.vercelRegion}</div>
@@ -175,7 +175,7 @@ export default function PostDebugPanel() {
           {debugResult.ayrshareConnection && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Ayrshare Connection</h4>
-              <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
+              <div className="bg-muted p-2 rounded text-sm">
                 <div>Status: {debugResult.ayrshareConnection.success ? '✅ Connected' : '❌ Failed'}</div>
                 <div>Connected Platforms: {debugResult.ayrshareConnection.connectedPlatforms?.join(', ') || 'None'}</div>
                 {debugResult.ayrshareConnection.error && (
@@ -189,7 +189,7 @@ export default function PostDebugPanel() {
           {debugResult.recentPosts && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Recent Posts</h4>
-              <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm">
+              <div className="bg-muted p-2 rounded text-sm">
                 <div>Total Posts: {debugResult.recentPosts.totalPosts || 0}</div>
                 <div>Platforms: {debugResult.recentPosts.platforms?.join(', ') || 'None'}</div>
                 <div>Failed Posts: {debugResult.recentPosts.failedPosts?.length || 0}</div>
@@ -277,7 +277,7 @@ export default function PostDebugPanel() {
           {testResult.ayrshareResponse && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Ayrshare Response</h4>
-              <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-xs overflow-auto max-h-40">
+              <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
                 {JSON.stringify(testResult.ayrshareResponse, null, 2)}
               </pre>
             </div>

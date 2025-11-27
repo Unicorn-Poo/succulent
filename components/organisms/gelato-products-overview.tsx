@@ -86,7 +86,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <Clock className="w-4 h-4" />,
 					label: 'Gelato Created',
-					color: 'text-muted-foreground bg-gray-100 dark:bg-gray-700'
+					color: 'text-muted-foreground bg-muted'
 				};
 			case 'syncing':
 				return {
@@ -110,7 +110,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <Package className="w-4 h-4" />,
 					label: 'Unknown',
-					color: 'text-muted-foreground bg-gray-100 dark:bg-gray-700'
+					color: 'text-muted-foreground bg-muted'
 				};
 		}
 	};
@@ -228,7 +228,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 										<button
 											onClick={() => retryShopifySync(product?.productId, product?.publishingChannels || [])}
 											disabled={isRetrying}
-											className="ml-4 flex items-center gap-1 text-xs bg-lime-500 hover:bg-lime-600 disabled:bg-gray-400 text-white px-3 py-1 rounded"
+											className="ml-4 flex items-center gap-1 text-xs bg-lime-500 hover:bg-lime-600 disabled:bg-muted-foreground text-white px-3 py-1 rounded"
 										>
 											{isRetrying ? (
 												<RefreshCw className="w-3 h-3 animate-spin" />

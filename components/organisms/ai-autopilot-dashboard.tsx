@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, Text, Heading, Button, Switch, Badge } from '@radix-ui/themes';
-import { Bot, Play, Pause, Settings, TrendingUp, Zap, Brain, AlertCircle, BookOpen, BarChart3 } from 'lucide-react';
+import { Bot, Play, Pause, Settings, TrendingUp, Zap, Brain, AlertCircle, BookOpen, Clock, Calendar, Sparkles } from 'lucide-react';
 import type { AccountGroupType } from '../../app/schema';
 
 interface AIAutopilotDashboardProps {
@@ -26,12 +26,25 @@ interface AIDecision {
   shouldExecute: boolean;
 }
 
+interface GeneratedContent {
+  content: string;
+  suggestedPostTime: {
+    day: string;
+    hour: number;
+    scheduledDate: string;
+    formattedTime: string;
+  };
+  contentPillar: string;
+  engagementPotential: number;
+}
+
 export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashboardProps) {
   const [autopilotStatus, setAutopilotStatus] = useState<AutopilotStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [recentDecisions, setRecentDecisions] = useState<AIDecision[]>([]);
-  const [streamingContent, setStreamingContent] = useState('');
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [learningStats, setLearningStats] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -103,25 +116,58 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
   // Generate content with AI
   const handleGenerateContent = async () => {
     setIsGenerating(true);
-    setStreamingContent('');
+    setGeneratedContent(null);
+    setGenerationError(null);
     
     try {
+      // Extract brand persona data from accountGroup (Jazz objects don't serialize well)
+      const brandPersonaData = accountGroup.brandPersona ? {
+        name: accountGroup.brandPersona.name,
+        description: accountGroup.brandPersona.description,
+        tone: accountGroup.brandPersona.tone,
+        writingStyle: accountGroup.brandPersona.writingStyle,
+        emojiUsage: accountGroup.brandPersona.emojiUsage,
+        languageLevel: accountGroup.brandPersona.languageLevel,
+        personality: accountGroup.brandPersona.personality ? Array.from(accountGroup.brandPersona.personality) : [],
+        contentPillars: accountGroup.brandPersona.contentPillars ? Array.from(accountGroup.brandPersona.contentPillars) : [],
+        targetAudience: accountGroup.brandPersona.targetAudience,
+        keyMessages: accountGroup.brandPersona.keyMessages ? Array.from(accountGroup.brandPersona.keyMessages) : [],
+        valueProposition: accountGroup.brandPersona.valueProposition,
+        avoidTopics: accountGroup.brandPersona.avoidTopics ? Array.from(accountGroup.brandPersona.avoidTopics) : [],
+        callToActionStyle: accountGroup.brandPersona.callToActionStyle,
+        samplePosts: accountGroup.brandPersona.samplePosts ? Array.from(accountGroup.brandPersona.samplePosts) : [],
+      } : null;
+
       const response = await fetch('/api/ai-autopilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'quick-content', 
-          context: 'Generate engaging content for my brand' 
+          context: 'Generate engaging content for my brand',
+          config: {
+            platforms: config.platforms,
+            accountGroupId: accountGroup.id,
+            brandPersona: brandPersonaData
+          }
         })
       });
 
       const result = await response.json();
       
       if (result.success) {
-        setStreamingContent(result.content);
+        setGeneratedContent({
+          content: result.content,
+          suggestedPostTime: result.suggestedPostTime,
+          contentPillar: result.contentPillar,
+          engagementPotential: result.engagementPotential
+        });
+        setGenerationError(null);
+      } else {
+        setGenerationError(result.error || 'Failed to generate content');
       }
     } catch (error) {
       console.error('Content generation failed:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Content generation failed');
     } finally {
       setIsGenerating(false);
     }
@@ -191,7 +237,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
       case 'low': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
-      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -289,7 +335,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
                     ...prev, 
                     aggressiveness: e.target.value as any 
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                 >
                   <option value="conservative">Conservative</option>
                   <option value="moderate">Moderate</option>
@@ -310,7 +356,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
                     ...prev, 
                     maxPostsPerDay: parseInt(e.target.value) 
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                 />
               </div>
             </div>
@@ -486,21 +532,94 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
             </Button>
           </div>
 
-          {streamingContent && (
-            <div className="p-4 bg-muted rounded-lg">
-              <Text size="2" className="whitespace-pre-wrap">
-                {streamingContent}
+          {/* Loading State */}
+          {isGenerating && (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <Text size="2" color="gray">Generating content based on your brand...</Text>
+            </div>
+          )}
+
+          {/* Error State */}
+          {generationError && !isGenerating && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <Text size="2" weight="medium" className="text-red-900 dark:text-red-100">
+                  Generation failed
+                </Text>
+              </div>
+              <Text size="2" className="text-red-700 dark:text-red-300 mt-1">
+                {generationError}
               </Text>
             </div>
           )}
 
-          {!streamingContent && !isGenerating && (
+          {/* Generated Content */}
+          {generatedContent && !isGenerating && (
+            <div className="space-y-4">
+              {/* Content Metadata Bar */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge color="purple" variant="soft" className="flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  {generatedContent.contentPillar}
+                </Badge>
+                <Badge color="blue" variant="soft" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {generatedContent.suggestedPostTime.formattedTime}
+                </Badge>
+                <Badge color="green" variant="soft">
+                  {generatedContent.engagementPotential}% engagement potential
+                </Badge>
+              </div>
+
+              {/* Post Content */}
+              <div className="p-4 bg-muted rounded-lg border border-border">
+                <Text size="2" className="whitespace-pre-wrap leading-relaxed">
+                  {generatedContent.content}
+                </Text>
+              </div>
+
+              {/* Scheduling Info */}
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <Text size="2" weight="medium" className="text-blue-900 dark:text-blue-100">
+                      Optimal posting time
+                    </Text>
+                    <Text size="1" className="text-blue-700 dark:text-blue-300">
+                      {generatedContent.suggestedPostTime.formattedTime} • {new Date(generatedContent.suggestedPostTime.scheduledDate).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </Text>
+                  </div>
+                </div>
+                <Button size="1" color="blue">
+                  Schedule Post
+                </Button>
+              </div>
+
+              {/* Regenerate Button */}
+              <div className="flex justify-end">
+                <Button variant="ghost" size="1" onClick={handleGenerateContent}>
+                  <Zap className="w-3 h-3 mr-1" />
+                  Generate Another
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!generatedContent && !isGenerating && !generationError && (
             <div className="text-center py-8">
-              <Text size="2" color="gray">
-                {learningStats?.totalInsights > 0 
-                  ? 'Generate AI content optimized based on your past performance'
-                  : 'Click "Generate Content" to create AI-powered social media content'
+              <Zap className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+              <Text size="2" color="gray" className="block mb-1">
+                {accountGroup.brandPersona 
+                  ? 'Ready to generate content based on your brand persona'
+                  : 'No brand persona configured - content will use default settings'
                 }
+              </Text>
+              <Text size="1" color="gray">
+                Click "Generate Content" to create AI-powered social media content
               </Text>
             </div>
           )}

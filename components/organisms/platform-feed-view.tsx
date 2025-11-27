@@ -494,7 +494,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
     <div className="space-y-4 mt-6">
       {/* Feed Header */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
           <div className="w-8 h-8 bg-lime-100 dark:bg-lime-900/30 rounded-lg flex items-center justify-center">
             <Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
           </div>

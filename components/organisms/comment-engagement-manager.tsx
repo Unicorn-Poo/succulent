@@ -286,7 +286,7 @@ export default function CommentEngagementManager({
                       )}
                     </div>
                     
-                    <p className="text-gray-800 dark:text-gray-200 mb-2">{comment.comment}</p>
+                    <p className="text-foreground mb-2">{comment.comment}</p>
                     
                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                       <span>{new Date(comment.createdAt).toLocaleDateString()}</span>

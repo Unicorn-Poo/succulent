@@ -367,7 +367,7 @@ export default function DMAutomationManager({
                       )}
                     </div>
                     
-                    <p className="text-gray-800 dark:text-gray-200 mb-2">{conversation.lastMessage}</p>
+                    <p className="text-foreground mb-2">{conversation.lastMessage}</p>
                     
                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                       <span>{new Date(conversation.lastMessageAt).toLocaleDateString()}</span>
@@ -448,7 +448,7 @@ export default function DMAutomationManager({
                   </p>
                 )}
                 
-                <p className="text-gray-800 dark:text-gray-200 mb-2">{template.message}</p>
+                <p className="text-foreground mb-2">{template.message}</p>
                 
                 <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                   <span>Platform: {template.platform}</span>
@@ -472,7 +472,7 @@ export default function DMAutomationManager({
                     campaign.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
                     campaign.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
                     campaign.status === 'paused' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                    'bg-muted text-foreground'
                   }`}>
                     {campaign.status}
                   </span>
@@ -526,7 +526,7 @@ export default function DMAutomationManager({
                   <div
                     key={template.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedTemplate === template.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-gray-300 dark:border-gray-600'
+                      selectedTemplate === template.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-border'
                     }`}
                     onClick={() => setSelectedTemplate(template.id)}
                   >

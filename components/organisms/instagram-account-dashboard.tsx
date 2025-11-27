@@ -398,7 +398,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value as '7' | '30' | '90')}
-                className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm"
+                className="border border-border rounded px-2 py-1 text-sm"
               >
                 <option value="7">7 days</option>
                 <option value="30">30 days</option>
