@@ -33,6 +33,18 @@ export async function POST(request: NextRequest) {
       userGoals,
     } = await request.json();
 
+    // 🔍 DEBUG: Log what we received from frontend
+    console.log('🔍 [AI-GROWTH-AUTOPILOT] Received from frontend:', {
+      platform,
+      hasBrandPersona: !!brandPersona,
+      brandPersonaName: brandPersona?.name,
+      contentPillarsType: typeof brandPersona?.contentPillars,
+      contentPillarsIsArray: Array.isArray(brandPersona?.contentPillars),
+      contentPillarsLength: brandPersona?.contentPillars?.length,
+      contentPillars: brandPersona?.contentPillars,
+      samplePostsLength: brandPersona?.samplePosts?.length,
+    });
+
     if (!platform) {
       return NextResponse.json(
         { error: "Platform parameter is required" },
@@ -63,44 +75,75 @@ export async function POST(request: NextRequest) {
 
     if (brandPersona) {
       try {
-        // Extract accepted/rejected patterns from feedback
-        const acceptedContent = contentFeedback
-          .filter((f: any) => f.accepted)
-          .slice(-5)
-          .map((f: any) => f.generatedContent);
-        const rejectedReasons = contentFeedback
-          .filter((f: any) => !f.accepted && f.reason)
-          .slice(-5)
-          .map((f: any) => f.reason);
+        // CRITICAL: Validate that contentPillars is actually an array with content
+        const contentPillars = Array.isArray(brandPersona.contentPillars) && brandPersona.contentPillars.length > 0
+          ? brandPersona.contentPillars
+          : null;
 
-        const brandContext = `
-BRAND VOICE:
+        // 🔍 DEBUG: Log content pillars validation
+        console.log('🔍 [AI-GROWTH-AUTOPILOT] Content pillars validation:', {
+          rawContentPillars: brandPersona.contentPillars,
+          isArray: Array.isArray(brandPersona.contentPillars),
+          length: brandPersona.contentPillars?.length,
+          validatedPillars: contentPillars,
+          willGenerateContent: !!contentPillars,
+        });
+
+        // If no valid content pillars, skip brand-aware generation - don't generate garbage
+        if (!contentPillars) {
+          console.error("❌ [AI-GROWTH-AUTOPILOT] No valid content pillars found - skipping brand-aware content generation");
+        } else {
+          // Extract accepted/rejected patterns from feedback
+          const acceptedContent = contentFeedback
+            .filter((f: any) => f.accepted)
+            .slice(-5)
+            .map((f: any) => f.generatedContent);
+          const rejectedReasons = contentFeedback
+            .filter((f: any) => !f.accepted && f.reason)
+            .slice(-5)
+            .map((f: any) => f.reason);
+
+          // Get sample posts for few-shot learning
+          const samplePosts = Array.isArray(brandPersona.samplePosts) && brandPersona.samplePosts.length > 0
+            ? brandPersona.samplePosts
+            : [];
+
+          const brandContext = `
+BRAND IDENTITY:
 - Name: ${brandPersona.name || "Brand"}
 - Tone: ${brandPersona.tone || "friendly"}
 - Writing Style: ${brandPersona.writingStyle || "conversational"}
 - Emoji Usage: ${brandPersona.emojiUsage || "moderate"}
+- Language Level: ${brandPersona.languageLevel || "intermediate"}
 
-CONTENT STRATEGY:
-- Content Pillars: ${
-          (brandPersona.contentPillars || []).join(", ") || "general content"
-        }
-- Target Audience: ${brandPersona.targetAudience || "general audience"}
-- Key Messages: ${
-          (brandPersona.keyMessages || []).join(", ") || "none specified"
-        }
-- Topics to Avoid: ${
-          (brandPersona.avoidTopics || []).join(", ") || "none specified"
-        }
+YOUR CONTENT PILLARS (ONLY create content about these topics):
+${contentPillars.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n")}
+
+TARGET AUDIENCE: ${brandPersona.targetAudience || "not specified"}
+VALUE PROPOSITION: ${brandPersona.valueProposition || "not specified"}
+
+TOPICS TO STRICTLY AVOID: ${
+            Array.isArray(brandPersona.avoidTopics) && brandPersona.avoidTopics.length > 0
+              ? brandPersona.avoidTopics.join(", ")
+              : "none specified"
+          }
 
 PLATFORM: ${platform.toUpperCase()}
 
 ${
+  samplePosts.length > 0
+    ? `
+EXAMPLE POSTS FROM THIS BRAND (MATCH THIS EXACT STYLE AND VOICE):
+${samplePosts.slice(0, 3).map((p: string, i: number) => `${i + 1}. "${p}"`).join("\n\n")}
+`
+    : ""
+}
+
+${
   acceptedContent.length > 0
     ? `
-EXAMPLES OF APPROVED CONTENT:
-${acceptedContent
-  .map((c: string, i: number) => `${i + 1}. "${c.slice(0, 200)}..."`)
-  .join("\n")}
+PREVIOUSLY APPROVED CONTENT (this style works):
+${acceptedContent.map((c: string, i: number) => `${i + 1}. "${c.slice(0, 300)}..."`).join("\n")}
 `
     : ""
 }
@@ -108,32 +151,68 @@ ${acceptedContent
 ${
   rejectedReasons.length > 0
     ? `
-THINGS TO AVOID (from past rejections):
+PREVIOUSLY REJECTED - AVOID THESE PATTERNS:
 ${rejectedReasons.map((r: string, i: number) => `${i + 1}. ${r}`).join("\n")}
 `
     : ""
 }
 `;
 
-        const response = await generateObject({
-          model: openai("gpt-4"),
-          schema: ContentSuggestionSchema,
-          prompt: `${brandContext}
+          // 🔍 DEBUG: Log what we're sending to GPT-4
+          const promptForAI = `${brandContext}
 
-Generate 3 unique content suggestions for ${platform} that match this brand's voice and style.
+Generate 3 unique ${platform} posts. Each post MUST be about a DIFFERENT content pillar from the list above.
 
-For each suggestion:
-1. Write engaging content that matches the brand tone
-2. Use the content pillars as themes
-3. Include relevant hashtags for the platform
-4. Suggest optimal posting time
-5. Rate expected engagement
+Requirements:
+1. Post 1: About "${contentPillars[0]}"
+2. Post 2: About "${contentPillars[1] || contentPillars[0]}"
+3. Post 3: About "${contentPillars[2] || contentPillars[0]}"
 
-Focus on what has been approved before and avoid patterns that were rejected.`,
-          temperature: 0.7,
-        });
+Each post must:
+- Be written in the brand's authentic voice (match the sample posts if provided)
+- Be SPECIFIC to the content pillar topic - not generic advice
+- Include relevant hashtags at the end
+- Be ready to copy-paste and post immediately
+- Sound human and natural, not AI-generated
 
-        brandAwareContent = response.object;
+Put timing suggestions in "bestTimeToPost" field, NOT in the content.`;
+
+          console.log('🔍 [AI-GROWTH-AUTOPILOT] Sending to GPT-4:', {
+            pillarsInPrompt: [contentPillars[0], contentPillars[1], contentPillars[2]],
+            promptLength: promptForAI.length,
+            brandContextPreview: brandContext.slice(0, 500) + '...',
+          });
+
+          const response = await generateObject({
+            model: openai("gpt-4"),
+            schema: ContentSuggestionSchema,
+            system: `You are the voice of "${brandPersona.name || "this brand"}". Generate AUTHENTIC content that sounds like it was written by this specific brand.
+
+CRITICAL RULES:
+1. Each post must be about ONE of the provided content pillars - NO generic productivity/lifestyle garbage
+2. Write as the brand IN FIRST PERSON - you ARE this brand
+3. Match the exact tone, style, and voice from the example posts
+4. Output ONLY the actual post text - copy-paste ready to publish
+5. NO metadata in the content: no "Best Time to Post", no "Engagement Tip", no "Suggested Content:" headers
+6. Hashtags go at the END of the content
+7. Be SPECIFIC and AUTHENTIC - reference the actual topics from the content pillars
+8. NO generic clickbait like "Productivity Hack" or "Morning Routine" unless that's actually in the pillars
+9. The "bestTimeToPost" field is SEPARATE - timing info goes there, not in content
+
+REMEMBER: You are creating content for a SPECIFIC brand with SPECIFIC topics. Do not generate generic self-help content.`,
+            prompt: promptForAI,
+            temperature: 0.85,
+          });
+
+          // 🔍 DEBUG: Log what GPT-4 returned
+          console.log('🔍 [AI-GROWTH-AUTOPILOT] GPT-4 returned:', {
+            suggestionsCount: response.object?.suggestions?.length,
+            firstSuggestionPillar: response.object?.suggestions?.[0]?.contentPillar,
+            firstSuggestionContentPreview: response.object?.suggestions?.[0]?.content?.slice(0, 100),
+          });
+
+          brandAwareContent = response.object;
+        }
       } catch (aiError) {
         console.error("Brand-aware content generation error:", aiError);
         // Continue without brand-aware content

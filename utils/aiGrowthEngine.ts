@@ -797,10 +797,21 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
     // Fetch learned insights to prioritize topics
     const learnedInsights = await this.fetchLearnedInsights();
 
-    // Get topics relevant to brand persona or fallback to trending
-    let relevantTopics = this.brandPersona
-      ? this.brandPersona.messaging.contentPillars
-      : await this.getTrendingTopics();
+    // Get topics from brand persona - MUST have valid content pillars
+    let relevantTopics = this.brandPersona?.messaging?.contentPillars || [];
+
+    // 🔍 DEBUG: Log content pillars from brand persona
+    console.log('🔍 [AI-GROWTH-ENGINE] generateContentSuggestions:', {
+      hasBrandPersona: !!this.brandPersona,
+      contentPillars: relevantTopics,
+      contentPillarsLength: relevantTopics.length,
+    });
+
+    // CRITICAL: If no valid content pillars, return empty - don't generate garbage
+    if (!relevantTopics || relevantTopics.length === 0) {
+      console.log('🔍 [AI-GROWTH-ENGINE] No valid content pillars - returning empty array');
+      return [];
+    }
 
     // Prioritize topics based on learned performance
     if (learnedInsights.topPerformingPillars.length > 0) {
@@ -1118,51 +1129,17 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
   }
 
   private async getTrendingTopics(): Promise<string[]> {
-    // If brand persona exists, prioritize brand content pillars
-    if (this.brandPersona) {
+    // If brand persona exists and has valid content pillars, use them
+    if (this.brandPersona && 
+        this.brandPersona.messaging.contentPillars && 
+        this.brandPersona.messaging.contentPillars.length > 0) {
       return this.brandPersona.messaging.contentPillars;
     }
 
-    // Platform-specific trending topics as fallback
-    const topics = {
-      instagram: [
-        "lifestyle tips",
-        "productivity",
-        "self improvement",
-        "creativity",
-        "wellness",
-      ],
-      twitter: [
-        "tech news",
-        "industry insights",
-        "hot takes",
-        "breaking news",
-        "discussions",
-      ],
-      linkedin: [
-        "career advice",
-        "leadership",
-        "industry trends",
-        "networking",
-        "professional growth",
-      ],
-      tiktok: [
-        "life hacks",
-        "tutorials",
-        "challenges",
-        "entertainment",
-        "trending sounds",
-      ],
-      facebook: [
-        "community events",
-        "family content",
-        "local news",
-        "memories",
-        "celebrations",
-      ],
-    };
-
-    return topics[this.platform as keyof typeof topics] || topics.instagram;
+    // NO HARDCODED FALLBACK TOPICS - if no brand persona, return empty
+    // This prevents generating generic garbage content that doesn't match the brand
+    // The caller should handle empty topics appropriately
+    return [];
   }
 
   private selectContentTemplate(topic: string): string {

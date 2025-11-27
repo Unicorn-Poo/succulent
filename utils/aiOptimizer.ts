@@ -268,20 +268,49 @@ export async function batchGenerateContent(options: {
   const { brandContext, learnedInsights, platform, contentPillars, count } =
     options;
 
+  // 🔍 DEBUG: Log what batchGenerateContent received
+  console.log('🔍 [AI-OPTIMIZER] batchGenerateContent called:', {
+    platform,
+    contentPillarsCount: contentPillars.length,
+    contentPillars: contentPillars,
+    count,
+  });
+
   const platformRules = PLATFORM_RULES[platform.toLowerCase()] || "";
 
   const result = await generateObject({
     model: getModelForTask("medium"),
     schema: BatchContentSchema,
-    system: `You are a social media content expert. Generate ${count} unique, high-quality posts.
+    system: `You are a social media content creator for a SPECIFIC brand. Generate ${count} REAL, ready-to-post content pieces.
+
 Brand Context: ${brandContext}
 Learned Preferences: ${learnedInsights}
-Platform Rules: ${platformRules}`,
-    prompt: `Generate ${count} diverse posts for ${platform} covering these pillars: ${contentPillars.join(", ")}.
-Each post should be unique, engaging, and ready to publish.
-Vary the tone, hooks, and CTAs across suggestions.
-Include optimal hashtags and posting times.`,
-    temperature: 0.8,
+Platform: ${platform} | Rules: ${platformRules}
+
+CRITICAL CONTENT PILLARS - YOU MUST ONLY CREATE CONTENT ABOUT THESE TOPICS:
+${contentPillars.map((p, i) => `${i + 1}. ${p}`).join("\n")}
+
+STRICT RULES:
+1. Each post MUST be about one of the content pillars above - NO exceptions
+2. Do NOT generate generic productivity/lifestyle/self-help content unless it's in the pillars
+3. Output ONLY the actual post text - copy-paste ready to publish
+4. Hashtags go in the separate "hashtags" array field, NOT in content
+5. Do NOT include in content: "Best Time to Post", "Engagement Tip", "Suggested Content:" headers, or any metadata
+6. Write as the BRAND, in first person
+7. Be SPECIFIC to the topic - reference actual details from the content pillar
+8. Start with a scroll-stopping hook relevant to the pillar topic
+9. Sound human and authentic, not like generic AI content`,
+    prompt: `Generate ${count} ${platform} posts. Each post MUST be about a DIFFERENT content pillar:
+
+${contentPillars.slice(0, count).map((p, i) => `Post ${i + 1}: About "${p}"`).join("\n")}
+
+Requirements:
+- Each post is SPECIFIC to its assigned content pillar
+- Written in the brand's authentic voice
+- Ready to copy-paste and post immediately
+- Hashtags in "hashtags" array, timing in "bestTimeToPost" - NOT in content
+- NO generic advice - be specific to the actual topic`,
+    temperature: 0.85,
   });
 
   return result.object;

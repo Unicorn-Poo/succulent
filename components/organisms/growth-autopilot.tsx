@@ -252,19 +252,33 @@ export default function GrowthAutopilot({
 
     try {
       // Extract brand persona from account group for API
+      // CRITICAL: Jazz CoLists must be converted with Array.from() to serialize properly
       const brandPersona = accountGroup?.brandPersona
         ? {
             name: accountGroup.brandPersona.name,
+            description: accountGroup.brandPersona.description,
             tone: accountGroup.brandPersona.tone,
             writingStyle: accountGroup.brandPersona.writingStyle,
             emojiUsage: accountGroup.brandPersona.emojiUsage,
-            contentPillars: accountGroup.brandPersona.contentPillars,
+            languageLevel: accountGroup.brandPersona.languageLevel,
+            personality: accountGroup.brandPersona.personality ? Array.from(accountGroup.brandPersona.personality) : [],
+            contentPillars: accountGroup.brandPersona.contentPillars ? Array.from(accountGroup.brandPersona.contentPillars) : [],
             targetAudience: accountGroup.brandPersona.targetAudience,
-            keyMessages: accountGroup.brandPersona.keyMessages,
-            avoidTopics: accountGroup.brandPersona.avoidTopics,
-            samplePosts: accountGroup.brandPersona.samplePosts,
+            valueProposition: accountGroup.brandPersona.valueProposition,
+            keyMessages: accountGroup.brandPersona.keyMessages ? Array.from(accountGroup.brandPersona.keyMessages) : [],
+            avoidTopics: accountGroup.brandPersona.avoidTopics ? Array.from(accountGroup.brandPersona.avoidTopics) : [],
+            callToActionStyle: accountGroup.brandPersona.callToActionStyle,
+            samplePosts: accountGroup.brandPersona.samplePosts ? Array.from(accountGroup.brandPersona.samplePosts) : [],
           }
         : null;
+
+      // 🔍 DEBUG: Log what we're sending to API
+      console.log('🔍 [GROWTH-AUTOPILOT] Sending to API:', {
+        hasBrandPersona: !!brandPersona,
+        contentPillarsCount: brandPersona?.contentPillars?.length || 0,
+        contentPillars: brandPersona?.contentPillars,
+        samplePostsCount: brandPersona?.samplePosts?.length || 0,
+      });
 
       // Extract content feedback for learning
       const contentFeedback = accountGroup?.contentFeedback
@@ -403,76 +417,19 @@ export default function GrowthAutopilot({
       console.error("Error getting AI recommendations:", error);
     }
 
-    // Fallback to simulated actions if API fails
+    // Fallback message when API fails - no fake content
     const actions: AutopilotAction[] = [
       {
-        id: "action_1",
-        type: "post",
-        title: "Schedule High-Engagement Content",
-        description:
-          'AI identified optimal content: "5 Quick Tips for Social Media Growth" with 87% engagement potential',
-        confidence: 87,
-        impact: "high",
-        status: "pending",
-        scheduledFor: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-        platform,
-        content:
-          "🚀 5 Quick Tips for Social Media Growth:\n\n1. Post at optimal times (AI suggests 2 PM today)\n2. Use trending hashtags: #growth #socialmedia #tips\n3. Engage within first hour of posting\n4. Ask questions to drive comments\n5. Share valuable insights, not just promotion\n\nWhich tip resonates most with you? 👇",
-        reason:
-          "Historical data shows educational content performs 45% better at this time",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "action_2",
-        type: "reply",
-        title: "Auto-Reply to High-Value Comments",
-        description:
-          "Respond to 3 comments with high engagement potential from influencers",
-        confidence: 92,
-        impact: "high",
-        status: "pending",
-        platform,
-        reason: "Comments from verified accounts increase visibility by 3x",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "action_3",
-        type: "hashtag",
-        title: "Optimize Hashtag Strategy",
-        description:
-          "Switch to trending hashtags: #contentcreator #growthhacks #socialmediatips",
-        confidence: 78,
-        impact: "medium",
-        status: "pending",
-        platform,
-        reason: "These hashtags have 25% higher engagement than current ones",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "action_4",
-        type: "dm",
-        title: "Outreach to Potential Collaborators",
-        description:
-          "Send personalized DMs to 5 accounts in your niche for potential collaboration",
-        confidence: 65,
-        impact: "medium",
-        status: "pending",
-        platform,
-        target: "@similaraccount1, @growthexpert, @contentcreator2",
-        reason: "Collaboration posts get 40% more engagement than solo posts",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "action_5",
+        id: "action_fallback",
         type: "schedule",
-        title: "Adjust Posting Schedule",
+        title: "Set Up Content Generation",
         description:
-          "Move tomorrow's post from 10 AM to 2 PM for 30% better engagement",
-        confidence: 85,
-        impact: "medium",
+          "Configure your brand persona to enable AI-powered content generation. Go to Brand Management to add your voice, content pillars, and sample posts.",
+        confidence: 100,
+        impact: "high",
         status: "pending",
         platform,
-        reason: "Audience analysis shows peak activity at 2 PM on weekdays",
+        reason: "A configured brand persona helps the AI generate content that matches your style",
         createdAt: new Date().toISOString(),
       },
     ];
@@ -488,41 +445,34 @@ export default function GrowthAutopilot({
   }, [platform, settings]);
 
   const generateGrowthInsights = useCallback(() => {
+    // Note: These insights are based on general best practices until real analytics are connected
+    // TODO: Replace with real insights from Ayrshare analytics API when available
     const insights: GrowthInsight[] = [
       {
         type: "opportunity",
-        title: "Untapped Growth Window",
+        title: "Recommended Posting Strategy",
         description:
-          "Your competitors are less active between 2-4 PM. Posting during this time could increase visibility by 35%.",
-        action: "Schedule 2 additional posts this week during this window",
-        priority: "high",
-        estimatedImpact: "+150 followers this week",
+          "Based on general engagement patterns, posting between 12-3 PM on weekdays tends to get better visibility. Test different times to find your audience's peak activity.",
+        action: "Experiment with posting times this week",
+        priority: "medium",
+        estimatedImpact: "Find your optimal posting time",
       },
       {
         type: "success",
-        title: "Hashtag Strategy Working",
+        title: "Content Consistency",
         description:
-          "Your recent hashtag optimizations increased reach by 28%. Keep using #growthhacks and #contentcreator.",
-        priority: "low",
-        estimatedImpact: "Sustained 20% higher reach",
-      },
-      {
-        type: "warning",
-        title: "Engagement Rate Declining",
-        description:
-          "Your engagement rate dropped 0.5% this week. AI recommends more question-based posts and faster comment responses.",
-        action: "Enable aggressive auto-reply mode",
+          "Regular posting helps build audience expectations. Aim for a consistent schedule that you can maintain.",
         priority: "medium",
-        estimatedImpact: "Recover 0.8% engagement rate",
+        estimatedImpact: "Better audience retention",
       },
       {
         type: "opportunity",
-        title: "Viral Content Opportunity",
+        title: "Engagement Tip",
         description:
-          'Topic "AI in Social Media" is trending with 340% increase. Create content around this theme.',
-        action: "Schedule AI-themed post for maximum visibility",
-        priority: "high",
-        estimatedImpact: "+500 potential reach",
+          "Posts with questions and calls-to-action typically get more comments. Try ending posts with a question to encourage discussion.",
+        action: "Add a question to your next post",
+        priority: "low",
+        estimatedImpact: "Increased comment engagement",
       },
     ];
 
@@ -1137,11 +1087,8 @@ export default function GrowthAutopilot({
                         💡 {action.reason}
                       </p>
                       {action.content && (
-                        <div className="mt-3 p-3 bg-muted rounded-lg">
-                          <p className="text-sm font-medium mb-1 text-foreground">
-                            Suggested Content:
-                          </p>
-                          <p className="text-sm text-foreground whitespace-pre-wrap">
+                        <div className="mt-3 p-3 bg-muted rounded-lg border border-border">
+                          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                             {action.content}
                           </p>
                         </div>

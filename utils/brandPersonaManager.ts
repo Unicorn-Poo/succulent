@@ -1586,8 +1586,32 @@ export const saveBrandPersona = async (
  */
 export const loadBrandPersona = (accountGroup: any): BrandPersona | null => {
   try {
-    if (!accountGroup?.brandPersona) return null;
-    return convertJazzToPersonaFormat(accountGroup.brandPersona);
+    if (!accountGroup?.brandPersona) {
+      console.log('🔍 [BRAND-PERSONA-MANAGER] loadBrandPersona: No brandPersona found');
+      return null;
+    }
+    
+    // 🔍 DEBUG: Log what we're converting
+    console.log('🔍 [BRAND-PERSONA-MANAGER] loadBrandPersona input:', {
+      hasAccountGroup: !!accountGroup,
+      hasBrandPersona: !!accountGroup.brandPersona,
+      brandPersonaName: accountGroup.brandPersona?.name,
+      contentPillarsType: typeof accountGroup.brandPersona?.contentPillars,
+      contentPillarsIsArray: Array.isArray(accountGroup.brandPersona?.contentPillars),
+      contentPillarsLength: accountGroup.brandPersona?.contentPillars?.length,
+      contentPillars: accountGroup.brandPersona?.contentPillars,
+    });
+    
+    const result = convertJazzToPersonaFormat(accountGroup.brandPersona);
+    
+    // 🔍 DEBUG: Log what we converted to
+    console.log('🔍 [BRAND-PERSONA-MANAGER] loadBrandPersona output:', {
+      hasResult: !!result,
+      resultContentPillars: result?.messaging?.contentPillars,
+      resultContentPillarsLength: result?.messaging?.contentPillars?.length,
+    });
+    
+    return result;
   } catch (error) {
     console.error("Error loading brand persona:", error);
     return null;
