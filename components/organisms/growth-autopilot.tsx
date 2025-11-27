@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "../atoms/button";
 import { Input } from "../atoms/input";
 import ContentSuggestionCard from "./content-suggestion-card";
 import PostQueue from "./post-queue";
+import { QueuedPost } from "@/app/schema";
 
 interface AutopilotSettings {
   enabled: boolean;
@@ -116,10 +117,93 @@ export default function GrowthAutopilot({
     },
   });
 
+  // Track if we've loaded settings from Jazz to avoid overwriting
+  const settingsLoadedRef = useRef(false);
+
+  // Load settings from Jazz on mount
+  useEffect(() => {
+    if (accountGroup?.automationSettings && !settingsLoadedRef.current) {
+      const saved = accountGroup.automationSettings;
+      settingsLoadedRef.current = true;
+      setSettings({
+        enabled: saved.enabled ?? false,
+        aggressiveness: saved.aggressiveness ?? "moderate",
+        platforms: linkedPlatforms,
+        goals: {
+          followerGrowthTarget: saved.goals?.followerGrowthTarget ?? 15,
+          engagementRateTarget: saved.goals?.engagementRateTarget ?? 5,
+          postsPerWeek: saved.goals?.postsPerWeek ?? 7,
+        },
+        automation: {
+          autoReply: saved.automation?.autoReply ?? true,
+          autoDM: saved.automation?.autoDM ?? false,
+          autoSchedule: saved.automation?.autoSchedule ?? true,
+          autoHashtags: saved.automation?.autoHashtags ?? true,
+          autoContent: saved.automation?.autoContent ?? true,
+        },
+        approvals: {
+          requireApprovalForPosts:
+            saved.approvals?.requireApprovalForPosts ?? false,
+          requireApprovalForDMs: saved.approvals?.requireApprovalForDMs ?? true,
+          requireApprovalForReplies:
+            saved.approvals?.requireApprovalForReplies ?? false,
+        },
+      });
+    }
+  }, [accountGroup?.automationSettings, linkedPlatforms]);
+
   // Update platforms when linked accounts change
   React.useEffect(() => {
     setSettings((prev) => ({ ...prev, platforms: linkedPlatforms }));
   }, [linkedPlatforms]);
+
+  // Save settings to Jazz whenever they change
+  const saveSettingsToJazz = useCallback(
+    (newSettings: AutopilotSettings) => {
+      if (!accountGroup) return;
+
+      try {
+        accountGroup.automationSettings = {
+          enabled: newSettings.enabled,
+          aggressiveness: newSettings.aggressiveness,
+          automation: {
+            autoReply: newSettings.automation.autoReply,
+            autoDM: newSettings.automation.autoDM,
+            autoSchedule: newSettings.automation.autoSchedule,
+            autoHashtags: newSettings.automation.autoHashtags,
+            autoContent: newSettings.automation.autoContent,
+          },
+          approvals: {
+            requireApprovalForPosts:
+              newSettings.approvals.requireApprovalForPosts,
+            requireApprovalForDMs: newSettings.approvals.requireApprovalForDMs,
+            requireApprovalForReplies:
+              newSettings.approvals.requireApprovalForReplies,
+          },
+          goals: {
+            followerGrowthTarget: newSettings.goals.followerGrowthTarget,
+            engagementRateTarget: newSettings.goals.engagementRateTarget,
+            postsPerWeek: newSettings.goals.postsPerWeek,
+          },
+        };
+      } catch (error) {
+        console.error("Failed to save settings to Jazz:", error);
+      }
+    },
+    [accountGroup]
+  );
+
+  // Helper to update settings and persist to Jazz
+  const updateSettings = useCallback(
+    (updater: (prev: AutopilotSettings) => AutopilotSettings) => {
+      setSettings((prev) => {
+        const newSettings = updater(prev);
+        saveSettingsToJazz(newSettings);
+        return newSettings;
+      });
+    },
+    [saveSettingsToJazz]
+  );
 
   const [dashboard, setDashboard] = useState<AutopilotDashboard>({
     status: "learning",
@@ -142,6 +226,18 @@ export default function GrowthAutopilot({
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "actions" | "settings" | "insights"
   >("dashboard");
+  const [notification, setNotification] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Auto-clear notification after 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // Initialize autopilot with AI-generated actions
   useEffect(() => {
@@ -442,42 +538,117 @@ export default function GrowthAutopilot({
 
     setIsLoading(true);
 
-    // Simulate action execution
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // For post actions, schedule via the API
+      if (action.type === "post" && action.content) {
+        const response = await fetch("/api/automation/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: action.content,
+            platform: action.platform,
+            profileKey: profileKey,
+          }),
+        });
 
-    // Update action status
-    setPendingActions((prev) =>
-      prev.map((a) => (a.id === actionId ? { ...a, status: "executed" } : a))
-    );
+        if (!response.ok) {
+          const error = await response.json();
+          setNotification({
+            type: "error",
+            message: `Failed to schedule: ${error.error || "Unknown error"}`,
+          });
+          setIsLoading(false);
+          return;
+        }
 
-    // Update dashboard metrics
-    setDashboard((prev) => ({
-      ...prev,
-      actionsToday: prev.actionsToday + 1,
-      performance: {
-        ...prev.performance,
-        [action.type === "post"
-          ? "postsScheduled"
-          : action.type === "reply"
-          ? "commentsReplied"
-          : action.type === "dm"
-          ? "dmssSent"
-          : action.type === "hashtag"
-          ? "hashtagsOptimized"
-          : "postsScheduled"]:
-          prev.performance[
-            action.type === "post"
-              ? "postsScheduled"
-              : action.type === "reply"
-              ? "commentsReplied"
-              : action.type === "dm"
-              ? "dmssSent"
-              : action.type === "hashtag"
-              ? "hashtagsOptimized"
-              : "postsScheduled"
-          ] + 1,
-      },
-    }));
+        const result = await response.json();
+        setNotification({
+          type: "success",
+          message: `Post scheduled for ${action.platform}!`,
+        });
+      } else if (action.type === "reply" && action.content) {
+        // For reply actions
+        const response = await fetch("/api/automation/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            commentId: action.target || `comment-${Date.now()}`,
+            commentText: action.description,
+            commentAuthor: "user",
+            postId: action.target || "post",
+            platform: action.platform,
+            profileKey: profileKey,
+          }),
+        });
+
+        if (response.ok) {
+          setNotification({
+            type: "success",
+            message: `Reply sent on ${action.platform}!`,
+          });
+        }
+      } else if (action.type === "dm" && action.content) {
+        // For DM actions
+        const response = await fetch("/api/automation/dm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipientUsername: action.target || "user",
+            platform: action.platform,
+            profileKey: profileKey,
+            messageType: "custom",
+            customMessage: action.content,
+          }),
+        });
+
+        if (response.ok) {
+          setNotification({
+            type: "success",
+            message: `DM prepared for ${action.platform}!`,
+          });
+        }
+      }
+
+      // Update action status
+      setPendingActions((prev) =>
+        prev.map((a) => (a.id === actionId ? { ...a, status: "executed" } : a))
+      );
+
+      // Update dashboard metrics
+      setDashboard((prev) => ({
+        ...prev,
+        actionsToday: prev.actionsToday + 1,
+        performance: {
+          ...prev.performance,
+          [action.type === "post"
+            ? "postsScheduled"
+            : action.type === "reply"
+            ? "commentsReplied"
+            : action.type === "dm"
+            ? "dmssSent"
+            : action.type === "hashtag"
+            ? "hashtagsOptimized"
+            : "postsScheduled"]:
+            prev.performance[
+              action.type === "post"
+                ? "postsScheduled"
+                : action.type === "reply"
+                ? "commentsReplied"
+                : action.type === "dm"
+                ? "dmssSent"
+                : action.type === "hashtag"
+                ? "hashtagsOptimized"
+                : "postsScheduled"
+            ] + 1,
+        },
+      }));
+    } catch (error) {
+      console.error("Failed to execute action:", error);
+      setNotification({
+        type: "error",
+        message: "Failed to execute action. Please try again.",
+      });
+    }
 
     setIsLoading(false);
   };
@@ -494,16 +665,78 @@ export default function GrowthAutopilot({
     }
   };
 
-  const approveAction = (actionId: string) => {
+  // Add content to PostQueue for approval
+  const addToPostQueue = useCallback(
+    (action: AutopilotAction, content: string, edited?: string) => {
+      const finalContent = edited || content;
+
+      if (!accountGroup?.postQueue) {
+        setNotification({ type: "error", message: "Post queue not available" });
+        return;
+      }
+
+      try {
+        // Create a new QueuedPost and add to the queue
+        const newPost = QueuedPost.create(
+          {
+            content: finalContent,
+            platform: action.platform,
+            contentPillar: action.title
+              .split(":")[0]
+              ?.replace("🎯 ", "")
+              .trim(),
+            suggestedAt: new Date(),
+            status: "pending",
+            confidenceScore: action.confidence,
+            engagementPotential: action.confidence,
+            reasoning: action.reason,
+          },
+          { owner: accountGroup._owner }
+        );
+
+        accountGroup.postQueue.push(newPost);
+        setNotification({
+          type: "success",
+          message: "Content added to queue for review!",
+        });
+      } catch (error) {
+        console.error("Failed to add to post queue:", error);
+        setNotification({ type: "error", message: "Failed to add to queue" });
+      }
+    },
+    [accountGroup]
+  );
+
+  const approveAction = (
+    actionId: string,
+    content?: string,
+    edited?: string
+  ) => {
+    const action = pendingActions.find((a) => a.id === actionId);
+    if (action && action.content) {
+      // Add to PostQueue when approving
+      addToPostQueue(action, content || action.content, edited);
+    }
+
     setPendingActions((prev) =>
       prev.map((a) => (a.id === actionId ? { ...a, status: "approved" } : a))
     );
   };
 
-  const rejectAction = (actionId: string) => {
+  const rejectAction = (actionId: string, reason?: string) => {
     setPendingActions((prev) =>
       prev.map((a) => (a.id === actionId ? { ...a, status: "rejected" } : a))
     );
+
+    // Save feedback for learning
+    if (accountGroup?.contentFeedback && reason) {
+      try {
+        const action = pendingActions.find((a) => a.id === actionId);
+        // Could add to contentFeedback for AI learning
+      } catch (error) {
+        console.error("Failed to save rejection feedback:", error);
+      }
+    }
   };
 
   const getActionIcon = (type: string) => {
@@ -562,6 +795,27 @@ export default function GrowthAutopilot({
 
   return (
     <div className="bg-card rounded-lg shadow-sm border p-6">
+      {/* Notification Banner */}
+      {notification && (
+        <div
+          className={`mb-4 p-3 rounded-lg flex items-center justify-between ${
+            notification.type === "success"
+              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+              : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+          }`}
+        >
+          <span>
+            {notification.type === "success" ? "✓" : "✗"} {notification.message}
+          </span>
+          <button
+            onClick={() => setNotification(null)}
+            className="text-current opacity-70 hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <h3 className="text-lg font-semibold text-foreground">
@@ -590,7 +844,10 @@ export default function GrowthAutopilot({
               type="checkbox"
               checked={settings.enabled}
               onChange={(e) =>
-                setSettings((prev) => ({ ...prev, enabled: e.target.checked }))
+                updateSettings((prev) => ({
+                  ...prev,
+                  enabled: e.target.checked,
+                }))
               }
               className="rounded"
             />
@@ -731,7 +988,11 @@ export default function GrowthAutopilot({
           </div>
 
           {/* Post Queue Widget */}
-          <PostQueue accountGroup={accountGroup} compact={true} />
+          <PostQueue
+            accountGroup={accountGroup}
+            profileKey={profileKey}
+            compact={true}
+          />
 
           {/* Performance Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -841,10 +1102,10 @@ export default function GrowthAutopilot({
                 expectedEngagement={action.impact as "high" | "medium" | "low"}
                 accountGroup={accountGroup}
                 onAccept={(content, edited) => {
-                  approveAction(action.id);
+                  approveAction(action.id, content, edited);
                 }}
                 onReject={(reason) => {
-                  rejectAction(action.id);
+                  rejectAction(action.id, reason);
                 }}
                 onRegenerate={() => {
                   generateAutopilotActions();
@@ -1019,7 +1280,7 @@ export default function GrowthAutopilot({
                       value={level}
                       checked={settings.aggressiveness === level}
                       onChange={(e) =>
-                        setSettings((prev) => ({
+                        updateSettings((prev) => ({
                           ...prev,
                           aggressiveness: e.target.value as any,
                         }))
@@ -1053,11 +1314,11 @@ export default function GrowthAutopilot({
                   type="number"
                   value={settings.goals.followerGrowthTarget}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    updateSettings((prev) => ({
                       ...prev,
                       goals: {
                         ...prev.goals,
-                        followerGrowthTarget: parseInt(e.target.value),
+                        followerGrowthTarget: parseInt(e.target.value) || 0,
                       },
                     }))
                   }
@@ -1072,11 +1333,11 @@ export default function GrowthAutopilot({
                   step="0.1"
                   value={settings.goals.engagementRateTarget}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    updateSettings((prev) => ({
                       ...prev,
                       goals: {
                         ...prev.goals,
-                        engagementRateTarget: parseFloat(e.target.value),
+                        engagementRateTarget: parseFloat(e.target.value) || 0,
                       },
                     }))
                   }
@@ -1090,11 +1351,11 @@ export default function GrowthAutopilot({
                   type="number"
                   value={settings.goals.postsPerWeek}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    updateSettings((prev) => ({
                       ...prev,
                       goals: {
                         ...prev.goals,
-                        postsPerWeek: parseInt(e.target.value),
+                        postsPerWeek: parseInt(e.target.value) || 0,
                       },
                     }))
                   }
@@ -1115,7 +1376,7 @@ export default function GrowthAutopilot({
                     type="checkbox"
                     checked={value}
                     onChange={(e) =>
-                      setSettings((prev) => ({
+                      updateSettings((prev) => ({
                         ...prev,
                         automation: {
                           ...prev.automation,
@@ -1143,7 +1404,7 @@ export default function GrowthAutopilot({
                     type="checkbox"
                     checked={value}
                     onChange={(e) =>
-                      setSettings((prev) => ({
+                      updateSettings((prev) => ({
                         ...prev,
                         approvals: {
                           ...prev.approvals,

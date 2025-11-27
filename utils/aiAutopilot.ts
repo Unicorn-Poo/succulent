@@ -1,14 +1,17 @@
 /**
  * AI Autopilot System - Real-time AI decision making for social media automation
  * Integrates with existing AI Growth Engine and uses AI SDK for enhanced capabilities
+ *
+ * OPTIMIZED: Uses model tiering for cost efficiency
  */
 
-import { generateObject, generateText, streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { z } from 'zod';
-import { AIGrowthEngine } from './aiGrowthEngine';
-import { BrandPersonaManager } from './brandPersonaManager';
-import { getEnhancedOptimalTiming } from './optimalTimingEngine';
+import { generateObject, generateText, streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
+import { AIGrowthEngine } from "./aiGrowthEngine";
+import { BrandPersonaManager } from "./brandPersonaManager";
+import { getEnhancedOptimalTiming } from "./optimalTimingEngine";
+import { getModelForTask, usageTracker } from "./aiOptimizer";
 
 // AI Decision Schema
 const AIDecisionSchema = z.object({
@@ -16,30 +19,30 @@ const AIDecisionSchema = z.object({
   confidence: z.number().min(0).max(100),
   reasoning: z.string(),
   expectedImpact: z.string(),
-  priority: z.enum(['critical', 'high', 'medium', 'low']),
+  priority: z.enum(["critical", "high", "medium", "low"]),
   shouldExecute: z.boolean(),
   executionTime: z.string().optional(),
-  parameters: z.record(z.string(), z.any()).optional()
+  parameters: z.record(z.string(), z.any()).optional(),
 });
 
 const AutopilotAnalysisSchema = z.object({
   currentStatus: z.object({
-    engagementTrend: z.enum(['rising', 'stable', 'declining']),
+    engagementTrend: z.enum(["rising", "stable", "declining"]),
     contentPerformance: z.number().min(0).max(100),
-    audienceActivity: z.enum(['peak', 'moderate', 'low']),
-    competitorActivity: z.enum(['high', 'normal', 'low'])
+    audienceActivity: z.enum(["peak", "moderate", "low"]),
+    competitorActivity: z.enum(["high", "normal", "low"]),
   }),
   recommendations: z.array(AIDecisionSchema),
   autopilotActions: z.array(AIDecisionSchema),
   riskAssessment: z.object({
     overpostingRisk: z.number().min(0).max(100),
     brandConsistencyRisk: z.number().min(0).max(100),
-    engagementDropRisk: z.number().min(0).max(100)
-  })
+    engagementDropRisk: z.number().min(0).max(100),
+  }),
 });
 
 interface AutopilotConfig {
-  aggressiveness: 'conservative' | 'moderate' | 'aggressive';
+  aggressiveness: "conservative" | "moderate" | "aggressive";
   maxPostsPerDay: number;
   enableAutoPosting: boolean;
   enableAutoEngagement: boolean;
@@ -70,9 +73,9 @@ export class AIAutopilot {
       lastDecision: new Date(),
       totalActions: 0,
       successRate: 0,
-      currentStrategy: 'initialization'
+      currentStrategy: "initialization",
     };
-    
+
     // Initialize growth engine for each platform
     this.growthEngine = new AIGrowthEngine(
       config.platforms[0], // Primary platform
@@ -86,8 +89,8 @@ export class AIAutopilot {
    */
   async start(): Promise<void> {
     this.state.isActive = true;
-    this.state.currentStrategy = 'active_monitoring';
-    
+    this.state.currentStrategy = "active_monitoring";
+
     // Initialize brand manager if persona is configured
     // Note: BrandPersonaManager needs persona data passed in constructor
     // For now, we'll initialize it without persona if ID is provided
@@ -102,7 +105,7 @@ export class AIAutopilot {
    */
   stop(): void {
     this.state.isActive = false;
-    this.state.currentStrategy = 'paused';
+    this.state.currentStrategy = "paused";
   }
 
   /**
@@ -114,37 +117,40 @@ export class AIAutopilot {
     scheduledActions: number;
   }> {
     if (!this.state.isActive) {
-      throw new Error('Autopilot is not active');
+      throw new Error("Autopilot is not active");
     }
 
     // Gather current performance data
     const performanceData = await this.gatherPerformanceData();
-    
+
     // Create context for AI analysis
     const analysisContext = this.buildAnalysisContext(performanceData);
-    
+
     // Generate AI-powered analysis and recommendations with timeout
-    const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Autopilot analysis timeout after 60 seconds')), 60000)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Autopilot analysis timeout after 60 seconds")),
+        60000
+      )
     );
-    
+
     const analysisResult = await Promise.race([
       generateObject({
-        model: openai('gpt-4'),
+        model: getModelForTask("complex"),
         schema: AutopilotAnalysisSchema,
         prompt: `You are an AI social media autopilot system. Analyze the current state and provide actionable recommendations.
 
 CURRENT CONTEXT:
 ${analysisContext}
 
-BRAND PERSONA: ${this.brandManager ? 'Configured' : 'None configured'}
+BRAND PERSONA: ${this.brandManager ? "Configured" : "None configured"}
 
 AUTOPILOT CONFIG:
 - Aggressiveness: ${this.config.aggressiveness}
 - Max posts/day: ${this.config.maxPostsPerDay}
 - Auto posting: ${this.config.enableAutoPosting}
 - Auto engagement: ${this.config.enableAutoEngagement}
-- Platforms: ${this.config.platforms.join(', ')}
+- Platforms: ${this.config.platforms.join(", ")}
 
 Provide specific, actionable recommendations with high confidence scores. Focus on:
 1. Content optimization opportunities
@@ -153,14 +159,18 @@ Provide specific, actionable recommendations with high confidence scores. Focus 
 4. Risk mitigation strategies
 
 Be decisive and provide clear reasoning for each recommendation.`,
-        temperature: 0.7
+        temperature: 0.7,
       }),
-      timeoutPromise
-    ]).catch(error => {
-      console.error('❌ Autopilot analysis failed:', error);
-      throw new Error(`Autopilot analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      timeoutPromise,
+    ]).catch((error) => {
+      console.error("❌ Autopilot analysis failed:", error);
+      throw new Error(
+        `Autopilot analysis failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     });
-    
+
     const analysis = analysisResult.object;
 
     // Execute high-confidence autopilot actions
@@ -185,21 +195,24 @@ Be decisive and provide clear reasoning for each recommendation.`,
     // Update state
     this.state.lastDecision = new Date();
     this.state.totalActions += executedActions;
-    
+
     return {
       analysis,
       executedActions,
-      scheduledActions
+      scheduledActions,
     };
   }
 
   /**
    * Generate AI-powered content suggestions with streaming
    */
-  async generateContentWithStreaming(prompt: string): Promise<AsyncIterable<string>> {
-    const enhancedPrompt = `${this.brandManager ? 
-      `Brand Context: Brand persona is configured for this account\n\n` : 
-      ''
+  async generateContentWithStreaming(
+    prompt: string
+  ): Promise<AsyncIterable<string>> {
+    const enhancedPrompt = `${
+      this.brandManager
+        ? `Brand Context: Brand persona is configured for this account\n\n`
+        : ""
     }Content Request: ${prompt}
 
 Create engaging social media content that:
@@ -211,9 +224,9 @@ Create engaging social media content that:
 Format as ready-to-post content.`;
 
     const result = await streamText({
-      model: openai('gpt-4'),
+      model: getModelForTask("complex"),
       prompt: enhancedPrompt,
-      temperature: 0.8
+      temperature: 0.8,
     });
 
     return result.textStream;
@@ -229,12 +242,12 @@ Format as ready-to-post content.`;
     engagementPotential: number;
   }> {
     const analysisResult = await generateObject({
-      model: openai('gpt-4-vision-preview'),
+      model: openai("gpt-4-vision-preview"),
       schema: z.object({
         description: z.string(),
         suggestedCaption: z.string(),
         hashtags: z.array(z.string()),
-        engagementPotential: z.number().min(0).max(100)
+        engagementPotential: z.number().min(0).max(100),
       }),
       prompt: `Analyze this image and generate optimized social media content.
 
@@ -246,8 +259,12 @@ Provide:
 3. Relevant hashtags (mix of popular and niche)
 4. Engagement potential score (0-100)
 
-${this.brandManager ? `Brand Context: Brand persona is configured for this account` : ''}`,
-      temperature: 0.7
+${
+  this.brandManager
+    ? `Brand Context: Brand persona is configured for this account`
+    : ""
+}`,
+      temperature: 0.7,
     });
 
     return analysisResult.object;
@@ -262,13 +279,13 @@ ${this.brandManager ? `Brand Context: Brand persona is configured for this accou
     performanceScore: number;
   }> {
     const performanceData = await this.gatherPerformanceData();
-    
+
     const analysisResult = await generateObject({
-      model: openai('gpt-4'),
+      model: getModelForTask("complex"),
       schema: z.object({
         insights: z.array(z.string()),
         urgentActions: z.array(AIDecisionSchema),
-        performanceScore: z.number().min(0).max(100)
+        performanceScore: z.number().min(0).max(100),
       }),
       prompt: `Analyze current social media performance and provide AI insights.
 
@@ -280,7 +297,7 @@ Provide:
 2. Urgent actions needed (high confidence only)
 3. Overall performance score
 
-Focus on actionable insights that can be automated.`
+Focus on actionable insights that can be automated.`,
     });
 
     return analysisResult.object;
@@ -289,32 +306,37 @@ Focus on actionable insights that can be automated.`
   /**
    * Execute an autopilot action with error handling
    */
-  private async executeAutopilotAction(action: z.infer<typeof AIDecisionSchema>): Promise<void> {
+  private async executeAutopilotAction(
+    action: z.infer<typeof AIDecisionSchema>
+  ): Promise<void> {
     console.log(`🤖 Executing autopilot action: ${action.action}`);
 
     try {
       switch (action.action.toLowerCase()) {
-        case 'optimize_posting_time':
+        case "optimize_posting_time":
           await this.optimizePostingTime(action.parameters);
           break;
-        
-        case 'generate_content':
+
+        case "generate_content":
           await this.generateAndScheduleContent(action.parameters);
           break;
-        
-        case 'engage_with_audience':
+
+        case "engage_with_audience":
           await this.automateEngagement(action.parameters);
           break;
-        
-        case 'adjust_hashtag_strategy':
+
+        case "adjust_hashtag_strategy":
           await this.optimizeHashtagStrategy(action.parameters);
           break;
-        
+
         default:
           console.warn(`⚠️ Unknown autopilot action: ${action.action}`);
       }
     } catch (error) {
-      console.error(`❌ Failed to execute autopilot action ${action.action}:`, error);
+      console.error(
+        `❌ Failed to execute autopilot action ${action.action}:`,
+        error
+      );
       throw error; // Re-throw to allow caller to handle
     }
   }
@@ -322,9 +344,13 @@ Focus on actionable insights that can be automated.`
   /**
    * Schedule an autopilot action for later execution
    */
-  private async scheduleAutopilotAction(action: z.infer<typeof AIDecisionSchema>): Promise<void> {
+  private async scheduleAutopilotAction(
+    action: z.infer<typeof AIDecisionSchema>
+  ): Promise<void> {
     // This would integrate with your existing scheduling system
-    console.log(`📅 Scheduling autopilot action: ${action.action} for ${action.executionTime}`);
+    console.log(
+      `📅 Scheduling autopilot action: ${action.action} for ${action.executionTime}`
+    );
   }
 
   /**
@@ -338,7 +364,7 @@ Focus on actionable insights that can be automated.`
       recentPosts: [], // Would fetch from your post history
       engagementMetrics: {}, // Would fetch from analytics
       audienceInsights: {}, // Would fetch from audience data
-      competitorData: {} // Would fetch from competitor analysis
+      competitorData: {}, // Would fetch from competitor analysis
     };
   }
 
@@ -348,11 +374,11 @@ Focus on actionable insights that can be automated.`
   private buildAnalysisContext(performanceData: any): string {
     return `
 PERFORMANCE SUMMARY:
-- Platforms: ${this.config.platforms.join(', ')}
+- Platforms: ${this.config.platforms.join(", ")}
 - Recent activity: ${performanceData.recentPosts?.length || 0} posts
 - Autopilot mode: ${this.config.aggressiveness}
-- Auto posting: ${this.config.enableAutoPosting ? 'enabled' : 'disabled'}
-- Auto engagement: ${this.config.enableAutoEngagement ? 'enabled' : 'disabled'}
+- Auto posting: ${this.config.enableAutoPosting ? "enabled" : "disabled"}
+- Auto engagement: ${this.config.enableAutoEngagement ? "enabled" : "disabled"}
 
 CURRENT STRATEGY: ${this.state.currentStrategy}
 TOTAL ACTIONS TAKEN: ${this.state.totalActions}
@@ -364,12 +390,15 @@ TIMESTAMP: ${new Date().toISOString()}
 
   // Action execution methods
   private async optimizePostingTime(parameters: any): Promise<void> {
-    const optimalTimes = await getEnhancedOptimalTiming(this.config.platforms[0]);
+    const optimalTimes = await getEnhancedOptimalTiming(
+      this.config.platforms[0]
+    );
     console.log(`🕒 Optimized posting times:`, optimalTimes);
   }
 
   private async generateAndScheduleContent(parameters: any): Promise<void> {
-    const contentSuggestions = await this.growthEngine.generateContentSuggestions(1);
+    const contentSuggestions =
+      await this.growthEngine.generateContentSuggestions(1);
     console.log(`📝 Generated content:`, contentSuggestions[0]);
   }
 
@@ -387,7 +416,7 @@ TIMESTAMP: ${new Date().toISOString()}
   getStatus(): AutopilotState & { config: AutopilotConfig } {
     return {
       ...this.state,
-      config: this.config
+      config: this.config,
     };
   }
 }
@@ -395,7 +424,9 @@ TIMESTAMP: ${new Date().toISOString()}
 /**
  * Create and configure an AI autopilot instance
  */
-export async function createAIAutopilot(config: AutopilotConfig): Promise<AIAutopilot> {
+export async function createAIAutopilot(
+  config: AutopilotConfig
+): Promise<AIAutopilot> {
   const autopilot = new AIAutopilot(config);
   await autopilot.start();
   return autopilot;
@@ -409,20 +440,20 @@ export async function getQuickAutopilotDecision(
   options: string[]
 ): Promise<{ decision: string; confidence: number; reasoning: string }> {
   const result = await generateObject({
-    model: openai('gpt-4'),
+    model: getModelForTask("complex"),
     schema: z.object({
       decision: z.string(),
       confidence: z.number().min(0).max(100),
-      reasoning: z.string()
+      reasoning: z.string(),
     }),
     prompt: `You are an AI autopilot for social media. Make a quick decision.
 
 CONTEXT: ${context}
 
-OPTIONS: ${options.join(', ')}
+OPTIONS: ${options.join(", ")}
 
 Choose the best option and provide confidence level and reasoning.`,
-    temperature: 0.3 // Lower temperature for more focused decisions
+    temperature: 0.3, // Lower temperature for more focused decisions
   });
 
   return result.object;

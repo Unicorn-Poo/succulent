@@ -88,7 +88,7 @@ export function Navigation() {
           <div
             className={`hidden sm:block px-2 py-1 rounded-full text-xs font-medium ${
               currentTier === "free"
-                ? "bg-gray-100 dark:bg-gray-800 text-foreground"
+                ? "bg-muted text-foreground"
                 : currentTier === "premium"
                 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                 : currentTier === "business"
@@ -141,7 +141,7 @@ export function Navigation() {
                     <div
                       className={`sm:hidden mt-2 inline-block px-2 py-1 rounded-full text-xs font-medium ${
                         currentTier === "free"
-                          ? "bg-gray-100 dark:bg-gray-800 text-foreground"
+                          ? "bg-muted text-foreground"
                           : currentTier === "premium"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                           : currentTier === "business"
@@ -155,7 +155,7 @@ export function Navigation() {
 
                   <Link
                     href="/account"
-                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-muted"
                   >
                     <User size={16} className="mr-3" />
                     Account Settings
@@ -163,7 +163,7 @@ export function Navigation() {
 
                   <Link
                     href="/account?tab=subscription"
-                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center px-4 py-3 text-sm text-foreground hover:bg-muted"
                   >
                     <Settings size={16} className="mr-3" />
                     Subscription
@@ -173,7 +173,7 @@ export function Navigation() {
                   {isAdmin && (
                     <Link
                       href="/admin"
-                      className="sm:hidden flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="sm:hidden flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-muted"
                     >
                       <Shield size={16} className="mr-3" />
                       Admin Panel
@@ -182,7 +182,7 @@ export function Navigation() {
 
                   <button
                     onClick={logOut}
-                    className="flex items-center w-full px-4 py-3 text-sm text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="flex items-center w-full px-4 py-3 text-sm text-foreground hover:bg-muted"
                   >
                     <LogOut size={16} className="mr-3" />
                     Sign Out

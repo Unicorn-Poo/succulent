@@ -1,6 +1,13 @@
 import { isBusinessPlanMode } from "./ayrshareIntegration";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import {
+  getModelForTask,
+  compressBrandContext,
+  contextCache,
+  PLATFORM_RULES,
+  usageTracker,
+} from "./aiOptimizer";
 
 export interface BrandPersona {
   id: string;
@@ -73,7 +80,7 @@ export class BrandPersonaManager {
   }
 
   /**
-   * Generate content using GPT-4 with full brand persona context
+   * Generate content using optimized AI with caching and model tiering
    */
   async generateAIContent(
     topic: string,
@@ -85,12 +92,23 @@ export class BrandPersonaManager {
       return this.generateGenericContent(topic, contentType);
     }
 
-    const platformCustomization =
-      this.persona.platformCustomization[platform] || {};
+    // Determine task complexity for model selection
+    // Replies and DMs are simpler, posts need more creativity
+    const complexity = contentType === "post" ? "medium" : "simple";
 
-    // Build comprehensive brand context for GPT-4
-    const brandContext = this.buildBrandContext(platform);
-    const contentPrompt = this.buildContentPrompt(
+    // Try to get cached brand context first
+    const cacheKey = `brand_${this.persona.id}_${platform}`;
+    let brandContext = contextCache.get(cacheKey);
+
+    if (!brandContext) {
+      // Build and cache the compressed brand context
+      brandContext = this.buildOptimizedBrandContext(platform);
+      contextCache.set(cacheKey, brandContext, "brandPersona");
+    } else {
+      usageTracker.trackCall(complexity, true); // Cache hit
+    }
+
+    const contentPrompt = this.buildOptimizedPrompt(
       topic,
       contentType,
       platform,
@@ -99,18 +117,68 @@ export class BrandPersonaManager {
 
     try {
       const { text } = await generateText({
-        model: openai("gpt-4"),
+        model: getModelForTask(complexity),
         system: brandContext,
         prompt: contentPrompt,
-        temperature: 0.7,
+        temperature: complexity === "simple" ? 0.5 : 0.7,
       });
+
+      usageTracker.trackCall(complexity);
 
       // Apply emoji rules based on persona settings
       return this.applyEmojiRules(text.trim());
     } catch (error) {
+      console.error("AI content generation failed:", error);
       // Fallback to template-based generation if AI fails
       return this.generateBrandedContent(topic, contentType, platform, context);
     }
+  }
+
+  /**
+   * Build optimized (compressed) brand context for AI - ~60% fewer tokens
+   */
+  private buildOptimizedBrandContext(platform: string): string {
+    if (!this.persona) return "";
+
+    const platformRules = PLATFORM_RULES[platform.toLowerCase()] || "";
+    const compressed = compressBrandContext({
+      name: this.persona.name,
+      tone: this.persona.voice.tone,
+      writingStyle: this.persona.voice.writingStyle,
+      emojiUsage: this.persona.voice.emojiUsage,
+      contentPillars: this.persona.messaging.contentPillars,
+      targetAudience: this.persona.messaging.targetAudience,
+      uniqueValue: this.persona.messaging.valueProposition,
+      avoidTopics: this.persona.messaging.avoidTopics,
+      voice: {
+        personality: this.persona.voice.personality.join(","),
+        phrases: this.persona.examples.samplePosts.slice(0, 2),
+      },
+    });
+
+    return `${compressed}\nPlatform:${platform}|Rules:${platformRules}`;
+  }
+
+  /**
+   * Build optimized prompt - concise and focused
+   */
+  private buildOptimizedPrompt(
+    topic: string,
+    contentType: "post" | "reply" | "dm",
+    platform: string,
+    context?: { comment?: string; recipient?: string }
+  ): string {
+    const basePrompt = `Write a ${platform} ${contentType} about "${topic}".`;
+
+    if (contentType === "reply" && context?.comment) {
+      return `${basePrompt}\nReply to: "${context.comment.slice(0, 150)}"`;
+    }
+
+    if (contentType === "dm" && context?.recipient) {
+      return `${basePrompt}\nTo: ${context.recipient}`;
+    }
+
+    return `${basePrompt}\nMake it engaging, on-brand. Ready to post.`;
   }
 
   /**

@@ -23,6 +23,7 @@ import { co } from "jazz-tools";
 
 interface PostQueueProps {
   accountGroup: any;
+  profileKey?: string; // Ayrshare profile key for scheduling
   onApprove?: (post: any, scheduledTime: Date) => Promise<void>;
   onReject?: (post: any, reason: string) => Promise<void>;
   onEdit?: (post: any) => void;
@@ -32,6 +33,7 @@ interface PostQueueProps {
 
 export default function PostQueue({
   accountGroup,
+  profileKey,
   onApprove,
   onReject,
   onEdit,
@@ -45,6 +47,15 @@ export default function PostQueue({
   const [rejectReason, setRejectReason] = useState("");
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Auto-clear notification
+  React.useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // Get posts from the queue
   const queuedPosts: any[] = useMemo(() => {
@@ -101,8 +112,51 @@ export default function PostQueue({
         post.approvedAt = new Date().toISOString();
         post.scheduledFor = optimalTime.toISOString();
       }
+      setNotification({ type: "success", message: "Post approved!" });
     } catch (error) {
       console.error("Error approving post:", error);
+      setNotification({ type: "error", message: "Failed to approve post" });
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  // Schedule post now via Ayrshare API
+  const handleScheduleNow = async (post: any) => {
+    if (!profileKey) {
+      setNotification({ type: "error", message: "No profile key available for scheduling" });
+      return;
+    }
+
+    setIsProcessing(post.id);
+    try {
+      const response = await fetch("/api/automation/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: post.content,
+          platform: post.platform,
+          profileKey: profileKey,
+          scheduledDate: getOptimalTime().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to schedule");
+      }
+
+      const result = await response.json();
+      
+      // Update post status in Jazz
+      post.status = "scheduled";
+      post.scheduledFor = getOptimalTime().toISOString();
+      post.ayrsharePostId = result.postId;
+      
+      setNotification({ type: "success", message: `Post scheduled for ${post.platform}!` });
+    } catch (error) {
+      console.error("Error scheduling post:", error);
+      setNotification({ type: "error", message: error instanceof Error ? error.message : "Failed to schedule post" });
     } finally {
       setIsProcessing(null);
     }
@@ -207,6 +261,28 @@ export default function PostQueue({
     return icons[platform?.toLowerCase()] || "📱";
   };
 
+  // Notification component
+  const NotificationBanner = () =>
+    notification ? (
+      <div
+        className={`mb-4 p-3 rounded-lg flex items-center justify-between ${
+          notification.type === "success"
+            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+            : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+        }`}
+      >
+        <span>
+          {notification.type === "success" ? "✓" : "✗"} {notification.message}
+        </span>
+        <button
+          onClick={() => setNotification(null)}
+          className="text-current opacity-70 hover:opacity-100"
+        >
+          ✕
+        </button>
+      </div>
+    ) : null;
+
   // Compact widget view for Growth Autopilot
   if (compact) {
     const pendingCount = statusCounts.pending;
@@ -214,6 +290,7 @@ export default function PostQueue({
 
     return (
       <div className="bg-card border border-border rounded-lg p-4">
+        <NotificationBanner />
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <Inbox className="w-5 h-5 text-primary" />
@@ -273,6 +350,9 @@ export default function PostQueue({
   // Full queue view
   return (
     <div className="bg-card border border-border rounded-lg">
+      <div className="p-6 pb-0">
+        <NotificationBanner />
+      </div>
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
@@ -403,6 +483,7 @@ export default function PostQueue({
                             disabled={isProcessing === post?.id}
                             intent="success"
                             size="1"
+                            title="Approve"
                           >
                             {isProcessing === post?.id ? (
                               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -413,16 +494,43 @@ export default function PostQueue({
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleScheduleNow(post);
+                            }}
+                            disabled={isProcessing === post?.id || !profileKey}
+                            intent="primary"
+                            size="1"
+                            title="Approve & Schedule Now"
+                          >
+                            <Calendar className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setShowRejectModal(post?.id);
                             }}
                             disabled={isProcessing === post?.id}
                             intent="danger"
                             variant="outline"
                             size="1"
+                            title="Reject"
                           >
                             <XCircle className="w-4 h-4" />
                           </Button>
                         </>
+                      )}
+                      {post?.status === "approved" && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleScheduleNow(post);
+                          }}
+                          disabled={isProcessing === post?.id || !profileKey}
+                          intent="primary"
+                          size="1"
+                          title="Schedule Now"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Button>
                       )}
                       <button className="p-1 text-muted-foreground hover:text-foreground">
                         {expandedPost === post?.id ? (

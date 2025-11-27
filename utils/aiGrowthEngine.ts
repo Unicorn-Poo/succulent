@@ -13,6 +13,17 @@ import { AILearningSystem } from "./aiLearningSystem";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
+import {
+  getModelForTask,
+  batchGenerateContent,
+  compressBrandContext,
+  compressLearnedInsights,
+  contextCache,
+  usageTracker,
+  buildContextFile,
+  contextFileToPrompt,
+  type AIContextFile,
+} from "./aiOptimizer";
 
 // Learned insights structure for content generation
 interface LearnedInsights {
@@ -550,13 +561,16 @@ Generate 5 strategic recommendations for growing this ${this.platform} account. 
 Be specific with numbers and actionable steps. If real data is missing, note that the recommendation is based on best practices.`;
 
     try {
+      // Use optimized model for complex strategic analysis
       const result = await generateObject({
-        model: openai("gpt-4"),
+        model: getModelForTask("complex"), // GPT-4o for strategic analysis
         schema: AIRecommendationSchema,
         system: systemPrompt,
         prompt: userPrompt,
         temperature: 0.7,
       });
+
+      usageTracker.trackCall("complex");
 
       // Convert to AIDecision format
       return result.object.recommendations.map((rec) => ({
@@ -567,7 +581,8 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
         priority: rec.priority,
       }));
     } catch (error) {
-      // Fallback to basic recommendations if GPT-4 fails
+      console.error("AI recommendations failed:", error);
+      // Fallback to basic recommendations if AI fails
       return this.getFallbackRecommendations();
     }
   }
@@ -765,7 +780,8 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
   }
 
   /**
-   * Generate content suggestions using GPT-4 with brand persona context
+   * Generate content suggestions using BATCH AI generation (single API call)
+   * Optimized: 1 call instead of N calls, ~70% token savings
    */
   async generateContentSuggestions(count: number = 5): Promise<
     {
@@ -778,8 +794,6 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
       learnedFromFeedback: boolean;
     }[]
   > {
-    const suggestions = [];
-
     // Fetch learned insights to prioritize topics
     const learnedInsights = await this.fetchLearnedInsights();
 
@@ -790,7 +804,6 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
 
     // Prioritize topics based on learned performance
     if (learnedInsights.topPerformingPillars.length > 0) {
-      // Put top performing pillars first
       const topPillars = learnedInsights.topPerformingPillars;
       const remainingTopics = relevantTopics.filter(
         (t) => !topPillars.includes(t)
@@ -798,14 +811,114 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
       relevantTopics = [...topPillars, ...remainingTopics];
     }
 
-    // Generate content for each topic using AI
+    const topicsToGenerate = relevantTopics.slice(0, count);
+
+    try {
+      // Build compressed context for batch generation
+      const brandContext = this.brandPersona
+        ? compressBrandContext({
+            name: this.brandPersona.name,
+            tone: this.brandPersona.voice.tone,
+            writingStyle: this.brandPersona.voice.writingStyle,
+            emojiUsage: this.brandPersona.voice.emojiUsage,
+            contentPillars: this.brandPersona.messaging.contentPillars,
+            targetAudience: this.brandPersona.messaging.targetAudience,
+          })
+        : "No brand persona";
+
+      const learnedContext = compressLearnedInsights({
+        preferredTone: learnedInsights.recommendedAdjustments.slice(0, 3),
+        topPillars: learnedInsights.topPerformingPillars,
+        acceptanceRate: learnedInsights.acceptanceRate,
+        patterns: learnedInsights.patternsLearned.slice(0, 3),
+      });
+
+      // BATCH GENERATION: Single API call for all content
+      const batchResult = await batchGenerateContent({
+        brandContext,
+        learnedInsights: learnedContext,
+        platform: this.platform,
+        contentPillars: topicsToGenerate,
+        count: topicsToGenerate.length,
+      });
+
+      // Track the batch for usage stats
+      usageTracker.trackBatch(topicsToGenerate.length);
+
+      // Map batch results to suggestions
+      return batchResult.suggestions
+        .map((item, index) => {
+          const topic = topicsToGenerate[index] || "Content";
+          const isTopPerformer =
+            learnedInsights.topPerformingPillars.includes(topic);
+
+          let reasoning = this.brandPersona
+            ? `AI-generated content aligned with your "${
+                item.contentPillar || topic
+              }" pillar`
+            : `AI-generated content optimized for ${this.platform}`;
+
+          if (isTopPerformer) {
+            reasoning += ` • High-performing pillar`;
+          }
+          if (learnedInsights.patternsLearned.length > 0) {
+            reasoning += ` • Uses learned patterns`;
+          }
+
+          return {
+            title: `${
+              (item.contentPillar || topic).charAt(0).toUpperCase() +
+              (item.contentPillar || topic).slice(1)
+            } Content`,
+            content: item.content,
+            hashtags: item.hashtags,
+            bestTime: item.bestTimeToPost,
+            engagementPotential: isTopPerformer
+              ? Math.min(item.engagementScore + 10, 100)
+              : item.engagementScore,
+            reasoning,
+            learnedFromFeedback:
+              isTopPerformer || learnedInsights.patternsLearned.length > 0,
+          };
+        })
+        .sort((a, b) => b.engagementPotential - a.engagementPotential);
+    } catch (error) {
+      console.error("Batch content generation failed, falling back:", error);
+      // Fallback to individual generation if batch fails
+      return this.generateContentSuggestionsFallback(
+        count,
+        relevantTopics,
+        learnedInsights
+      );
+    }
+  }
+
+  /**
+   * Fallback method for individual content generation
+   */
+  private async generateContentSuggestionsFallback(
+    count: number,
+    relevantTopics: string[],
+    learnedInsights: LearnedInsights
+  ): Promise<
+    {
+      title: string;
+      content: string;
+      hashtags: string[];
+      bestTime: string;
+      engagementPotential: number;
+      reasoning: string;
+      learnedFromFeedback: boolean;
+    }[]
+  > {
+    const suggestions = [];
+
     for (let i = 0; i < Math.min(count, relevantTopics.length); i++) {
       const topic = relevantTopics[i];
       const isTopPerformer =
         learnedInsights.topPerformingPillars.includes(topic);
 
       try {
-        // Use GPT-4 for content generation if brand manager exists
         let content: string;
         if (this.brandManager) {
           content = await this.brandManager.generateAIContent(
@@ -814,46 +927,36 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
             this.platform
           );
         } else {
-          // Fallback to basic AI generation without brand context
           content = await this.generateBasicAIContent(topic);
         }
 
-        // Get brand-appropriate hashtags
         const hashtags = this.brandManager
           ? this.brandManager.getBrandedHashtags(topic, this.platform)
           : await this.generateOptimalHashtags(content, "educational");
 
         const analysis = await this.analyzeContent(content);
 
-        // Build reasoning with learning context
         let reasoning = this.brandPersona
-          ? `AI-generated content aligned with your "${topic}" pillar and ${this.brandPersona.voice.tone} voice`
-          : `AI-generated content about ${topic} optimized for ${this.platform}`;
+          ? `AI-generated content aligned with your "${topic}" pillar`
+          : `AI-generated content optimized for ${this.platform}`;
 
         if (isTopPerformer) {
-          reasoning += ` • This content pillar has high acceptance rate based on your feedback`;
+          reasoning += ` • High-performing pillar`;
         }
-        if (learnedInsights.patternsLearned.length > 0) {
-          reasoning += ` • Incorporates learned patterns from past content`;
-        }
-
-        // Boost engagement potential for content using learned patterns
-        const adjustedEngagement = isTopPerformer
-          ? Math.min(analysis.engagementPotential + 10, 100)
-          : analysis.engagementPotential;
 
         suggestions.push({
           title: `${topic.charAt(0).toUpperCase() + topic.slice(1)} Content`,
           content,
           hashtags,
           bestTime: analysis.bestPostingTime,
-          engagementPotential: adjustedEngagement,
+          engagementPotential: isTopPerformer
+            ? Math.min(analysis.engagementPotential + 10, 100)
+            : analysis.engagementPotential,
           reasoning,
           learnedFromFeedback:
             isTopPerformer || learnedInsights.patternsLearned.length > 0,
         });
       } catch (error) {
-        // Skip this topic if AI generation fails
         continue;
       }
     }
@@ -864,11 +967,10 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
   }
 
   /**
-   * Generate basic AI content without brand persona
+   * Generate basic AI content without brand persona (optimized with gpt-4o-mini)
    */
   private async generateBasicAIContent(topic: string): Promise<string> {
     const { generateText } = await import("ai");
-    const { openai } = await import("@ai-sdk/openai");
 
     const platformLimits: Record<string, number> = {
       twitter: 280,
@@ -881,22 +983,14 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
     const charLimit = platformLimits[this.platform.toLowerCase()] || 500;
 
     try {
+      // Use optimized model (gpt-4o-mini) for basic content
       const { text } = await generateText({
-        model: openai("gpt-4"),
-        prompt: `Write an engaging ${this.platform} post about "${topic}".
-
-Requirements:
-- Be authentic and engaging
-- Include a compelling hook
-- Add real value or insight
-- End with a natural call-to-action
-- Keep it under ${charLimit} characters
-- Sound human, not like AI
-
-Write ONLY the post content:`,
+        model: getModelForTask("medium"),
+        prompt: `Write a ${this.platform} post about "${topic}". Max ${charLimit} chars. Be engaging, include hook and CTA.`,
         temperature: 0.7,
       });
 
+      usageTracker.trackCall("medium");
       return text.trim();
     } catch (error) {
       // Ultimate fallback

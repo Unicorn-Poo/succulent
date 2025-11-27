@@ -339,7 +339,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="w-full max-w-4xl mx-auto p-6">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -413,7 +413,7 @@ export default function HomePage() {
                 return (
                   <Link key={groupId} href={`/account-group/${groupId}`}>
                     <div
-                      className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                      className="bg-card rounded-lg shadow-sm border border-border p-6 hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() =>
                         console.log(`🔗 Clicking on account group: ${groupId}`)
                       }
@@ -467,7 +467,7 @@ export default function HomePage() {
             {/* Create New Card */}
             <button
               onClick={() => setShowCreateAccountGroupDialog(true)}
-              className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 border-dashed p-6 hover:shadow-md hover:border-lime-300 transition-all text-center"
+              className="bg-card rounded-lg shadow-sm border border-border border-dashed p-6 hover:shadow-md hover:border-lime-300 transition-all text-center"
               disabled={!me?.root?.accountGroups}
             >
               <Plus className="w-8 h-8 text-lime-600 mx-auto mb-2" />
