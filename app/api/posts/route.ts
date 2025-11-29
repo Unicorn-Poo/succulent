@@ -1115,6 +1115,21 @@ export async function preparePublishRequests(
           redditOptions = { title: "Post" }; // Absolute fallback
         }
       }
+
+      // Ensure subreddit is clean (remove r/ prefix if included)
+      if (redditOptions.subreddit) {
+        redditOptions.subreddit = redditOptions.subreddit.replace(/^r\//, "");
+        console.log(`📢 Reddit: Posting to r/${redditOptions.subreddit}`);
+      } else {
+        // Only use env var as fallback, don't hardcode any default
+        const defaultSubreddit = process.env.REDDIT_DEFAULT_SUBREDDIT;
+        if (defaultSubreddit) {
+          redditOptions.subreddit = defaultSubreddit;
+          console.log(`📢 Reddit: Using env fallback r/${defaultSubreddit}`);
+        } else {
+          console.warn(`⚠️ Reddit: No subreddit specified in request!`);
+        }
+      }
     }
 
     if (platform === "pinterest") {
@@ -1379,6 +1394,27 @@ export async function preparePublishRequests(
           redditOptions = { title: firstLine.substring(0, 300) }; // Reddit title limit
         } else {
           redditOptions = { title: "Post" }; // Absolute fallback
+        }
+      }
+
+      // Ensure subreddit is clean (remove r/ prefix if included)
+      if (redditOptions.subreddit) {
+        redditOptions.subreddit = redditOptions.subreddit.replace(/^r\//, "");
+        console.log(
+          `📢 Reddit (grouped): Posting to r/${redditOptions.subreddit}`
+        );
+      } else {
+        // Only use env var as fallback, don't hardcode any default
+        const defaultSubreddit = process.env.REDDIT_DEFAULT_SUBREDDIT;
+        if (defaultSubreddit) {
+          redditOptions.subreddit = defaultSubreddit;
+          console.log(
+            `📢 Reddit (grouped): Using env fallback r/${defaultSubreddit}`
+          );
+        } else {
+          console.warn(
+            `⚠️ Reddit (grouped): No subreddit specified in request!`
+          );
         }
       }
     }

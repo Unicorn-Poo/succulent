@@ -159,8 +159,23 @@ ${rejectedReasons.map((r: string, i: number) => `${i + 1}. ${r}`).join("\n")}
 `;
 
           // 🔍 DEBUG: Log what we're sending to GPT-4
-          const promptForAI = `${brandContext}
+          // Add platform-specific formatting rules
+          const platformSpecificRules = platform.toLowerCase() === 'tiktok' 
+            ? `
+⚠️ TIKTOK-SPECIFIC RULES (CRITICAL):
+- MAX 150 characters per caption
+- This is a CAPTION to accompany a video, NOT a video script
+- NO "[Scene:]", NO "**Hook**:", NO "**Outro**:", NO script directions
+- Just write a catchy one-liner or question
+- Example good TikTok captions:
+  "this changes everything about how I work 👀"
+  "POV: when the code finally compiles"
+  "tell me you're a designer without telling me"
+` 
+            : '';
 
+          const promptForAI = `${brandContext}
+${platformSpecificRules}
 Generate 3 unique ${platform} posts. Each post MUST be about a DIFFERENT content pillar from the list above.
 
 Requirements:
@@ -174,6 +189,7 @@ Each post must:
 - Include relevant hashtags at the end
 - Be ready to copy-paste and post immediately
 - Sound human and natural, not AI-generated
+${platform.toLowerCase() === 'tiktok' ? '- BE UNDER 150 CHARACTERS - this is a caption, not a script!' : ''}
 
 Put timing suggestions in "bestTimeToPost" field, NOT in the content.`;
 

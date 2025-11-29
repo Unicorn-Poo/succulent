@@ -5,7 +5,8 @@ import { Button } from "../atoms/button";
 import { Input } from "../atoms/input";
 import ContentSuggestionCard from "./content-suggestion-card";
 import PostQueue from "./post-queue";
-import { QueuedPost } from "@/app/schema";
+import { QueuedPost, AutomationLog, ContentFeedback } from "@/app/schema";
+import { co } from "jazz-tools";
 
 interface AutopilotSettings {
   enabled: boolean;
@@ -156,6 +157,31 @@ export default function GrowthAutopilot({
   React.useEffect(() => {
     setSettings((prev) => ({ ...prev, platforms: linkedPlatforms }));
   }, [linkedPlatforms]);
+
+  // Initialize missing Jazz CoLists for automation features
+  // This handles older account groups that were created before these fields existed
+  useEffect(() => {
+    if (!accountGroup || !accountGroup._owner) return;
+
+    try {
+      // Initialize postQueue if missing
+      if (!accountGroup.postQueue) {
+        accountGroup.postQueue = co.list(QueuedPost).create([], { owner: accountGroup._owner });
+      }
+
+      // Initialize automationLogs if missing
+      if (!accountGroup.automationLogs) {
+        accountGroup.automationLogs = co.list(AutomationLog).create([], { owner: accountGroup._owner });
+      }
+
+      // Initialize contentFeedback if missing
+      if (!accountGroup.contentFeedback) {
+        accountGroup.contentFeedback = co.list(ContentFeedback).create([], { owner: accountGroup._owner });
+      }
+    } catch (error) {
+      console.error("Failed to initialize automation fields:", error);
+    }
+  }, [accountGroup]);
 
   // Save settings to Jazz whenever they change
   const saveSettingsToJazz = useCallback(

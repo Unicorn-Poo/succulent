@@ -277,6 +277,18 @@ export async function batchGenerateContent(options: {
   });
 
   const platformRules = PLATFORM_RULES[platform.toLowerCase()] || "";
+  
+  // Add TikTok-specific rules when platform is TikTok
+  const tiktokRules = platform.toLowerCase() === 'tiktok' 
+    ? `
+⚠️ TIKTOK-SPECIFIC (CRITICAL):
+- MAX 150 characters per caption
+- This is a CAPTION for a video, NOT a video script
+- NO "[Scene:]", "**Hook**:", "**Outro**:", or script directions
+- Just a catchy one-liner or question
+- Examples: "this changes everything 👀" or "POV: when code compiles"
+`
+    : '';
 
   const result = await generateObject({
     model: getModelForTask("medium"),
@@ -286,7 +298,7 @@ export async function batchGenerateContent(options: {
 Brand Context: ${brandContext}
 Learned Preferences: ${learnedInsights}
 Platform: ${platform} | Rules: ${platformRules}
-
+${tiktokRules}
 CRITICAL CONTENT PILLARS - YOU MUST ONLY CREATE CONTENT ABOUT THESE TOPICS:
 ${contentPillars.map((p, i) => `${i + 1}. ${p}`).join("\n")}
 
@@ -300,6 +312,7 @@ STRICT RULES:
 7. Be SPECIFIC to the topic - reference actual details from the content pillar
 8. Start with a scroll-stopping hook relevant to the pillar topic
 9. Sound human and authentic, not like generic AI content
+${platform.toLowerCase() === 'tiktok' ? '10. KEEP IT UNDER 150 CHARS - caption, not script!' : ''}
 
 FORMATTING RULES:
 - NO MARKDOWN (**bold**, *italic*, # headers) - platforms don't render it
@@ -317,7 +330,8 @@ Requirements:
 - Written in the brand's authentic voice
 - Ready to copy-paste and post immediately
 - Hashtags in "hashtags" array, timing in "bestTimeToPost" - NOT in content
-- NO generic advice - be specific to the actual topic`,
+- NO generic advice - be specific to the actual topic
+${platform.toLowerCase() === 'tiktok' ? '- MAX 150 CHARACTERS - this is a caption, not a video script!' : ''}`,
     temperature: 0.85,
   });
 

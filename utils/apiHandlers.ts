@@ -55,21 +55,68 @@ function proxyMediaUrlIfNeeded(url: string): string {
 }
 
 /**
- * Normalize media URLs (proxy Lunary URLs, deduplicate)
+ * Sanitize a media URL - handle encoded spaces and special characters
+ * Ayrshare doesn't handle %20 and other encoded chars well in some cases
+ */
+function sanitizeMediaUrl(url: string): string | null {
+  try {
+    // Try to decode and re-encode to normalize
+    let decoded = url;
+    try {
+      // Decode any existing encoding (handles %20, %2F, etc.)
+      decoded = decodeURIComponent(url);
+    } catch {
+      // URL might not be encoded, that's fine
+      decoded = url;
+    }
+
+    // Check for problematic characters that Ayrshare can't handle
+    if (decoded.includes(' ')) {
+      console.warn(`⚠️ Media URL contains space, replacing with hyphen: ${decoded}`);
+      // Replace spaces with hyphens (common URL-safe approach)
+      decoded = decoded.replace(/ /g, '-');
+    }
+
+    // Validate the URL is well-formed
+    const urlObj = new URL(decoded);
+    
+    // Return the sanitized URL
+    return urlObj.href;
+  } catch (error) {
+    console.error(`❌ Invalid media URL, skipping: ${url}`, error);
+    return null; // Skip invalid URLs instead of failing
+  }
+}
+
+/**
+ * Normalize media URLs (proxy Lunary URLs, deduplicate, sanitize)
  */
 function normalizeMediaUrls(urls?: string[]): string[] {
   if (!urls || urls.length === 0) return [];
   const normalized: string[] = [];
   const seen = new Set<string>();
+  const skipped: string[] = [];
 
   for (const rawUrl of urls) {
     if (typeof rawUrl !== "string") continue;
     const trimmed = rawUrl.trim();
     if (!trimmed) continue;
-    const proxied = proxyMediaUrlIfNeeded(trimmed);
+    
+    // First sanitize the URL (handle %20, spaces, etc.)
+    const sanitized = sanitizeMediaUrl(trimmed);
+    if (!sanitized) {
+      skipped.push(trimmed);
+      continue; // Skip invalid URLs, don't fail the whole post
+    }
+    
+    const proxied = proxyMediaUrlIfNeeded(sanitized);
     if (seen.has(proxied)) continue;
     seen.add(proxied);
     normalized.push(proxied);
+  }
+
+  if (skipped.length > 0) {
+    console.warn(`⚠️ Skipped ${skipped.length} invalid media URL(s):`, skipped);
   }
 
   return normalized;
