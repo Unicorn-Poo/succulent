@@ -992,12 +992,41 @@ Be specific with numbers and actionable steps. If real data is missing, note tha
       tiktok: 150,
     };
     const charLimit = platformLimits[this.platform.toLowerCase()] || 500;
+    const platform = this.platform.toLowerCase();
+
+    // Platform-specific formatting rules
+    const platformRules: Record<string, string> = {
+      tiktok: `CRITICAL TIKTOK RULES:
+- Write a SHORT caption (under 150 chars) - NOT a video script
+- NO "[Scene:]", "**Hook**:", "**Script**:", "[Outro]" or any script directions
+- Just write a catchy one-liner, question, or short caption
+- Example: "this changes everything 👀" or "POV: when it finally clicks"
+- NO markdown formatting, NO em-dashes`,
+      twitter: `Keep under 280 chars. Punchy and direct. 1-2 hashtags max.`,
+      x: `Keep under 280 chars. Punchy and direct. 1-2 hashtags max.`,
+      instagram: `Use line breaks for readability. No markdown. Hashtags at end.`,
+      linkedin: `Professional but personal. Use line breaks. 3-5 paragraphs.`,
+      facebook: `Conversational. Ask questions. 1-3 hashtags.`,
+    };
+
+    const rules = platformRules[platform] || "Be engaging and authentic.";
 
     try {
       // Use optimized model (gpt-4o-mini) for basic content
       const { text } = await generateText({
         model: getModelForTask("medium"),
-        prompt: `Write a ${this.platform} post about "${topic}". Max ${charLimit} chars. Be engaging, include hook and CTA.`,
+        prompt: `Write a ${this.platform} post about "${topic}".
+
+${rules}
+
+FORMATTING RULES (ALL PLATFORMS):
+- NO markdown (**bold**, *italic*, # headers) - platforms don't render it
+- NO em-dashes (—) - they scream AI
+- NO video scripts or scene directions
+- Use actual line breaks for formatting
+- Max ${charLimit} chars
+
+Write ONLY the post content, ready to copy-paste.`,
         temperature: 0.7,
       });
 

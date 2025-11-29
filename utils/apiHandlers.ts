@@ -71,15 +71,17 @@ function sanitizeMediaUrl(url: string): string | null {
     }
 
     // Check for problematic characters that Ayrshare can't handle
-    if (decoded.includes(' ')) {
-      console.warn(`⚠️ Media URL contains space, replacing with hyphen: ${decoded}`);
+    if (decoded.includes(" ")) {
+      console.warn(
+        `⚠️ Media URL contains space, replacing with hyphen: ${decoded}`
+      );
       // Replace spaces with hyphens (common URL-safe approach)
-      decoded = decoded.replace(/ /g, '-');
+      decoded = decoded.replace(/ /g, "-");
     }
 
     // Validate the URL is well-formed
     const urlObj = new URL(decoded);
-    
+
     // Return the sanitized URL
     return urlObj.href;
   } catch (error) {
@@ -101,14 +103,14 @@ function normalizeMediaUrls(urls?: string[]): string[] {
     if (typeof rawUrl !== "string") continue;
     const trimmed = rawUrl.trim();
     if (!trimmed) continue;
-    
+
     // First sanitize the URL (handle %20, spaces, etc.)
     const sanitized = sanitizeMediaUrl(trimmed);
     if (!sanitized) {
       skipped.push(trimmed);
       continue; // Skip invalid URLs, don't fail the whole post
     }
-    
+
     const proxied = proxyMediaUrlIfNeeded(sanitized);
     if (seen.has(proxied)) continue;
     seen.add(proxied);

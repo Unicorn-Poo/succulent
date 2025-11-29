@@ -329,11 +329,14 @@ ${samplePosts.slice(0, 2).map((p, i) => `Example ${i + 1}: "${p}"`).join("\n\n")
 - Share insights and lessons learned
 - 3-5 hashtags at end
 - Aim for 150-300 words`,
-      tiktok: `TikTok caption best practices:
-- Keep it SHORT (under 150 chars)
-- Use trending hashtags
-- Be casual and fun
-- Add a CTA`,
+      tiktok: `TikTok CAPTION (NOT VIDEO SCRIPT) best practices:
+- CRITICAL: Write a SHORT CAPTION (under 150 chars) - NOT a video script!
+- NO "[Scene:]", "**Hook**:", "**Script**:", "[Outro]" or any script formatting
+- Just write a catchy one-liner or question to accompany a video
+- Examples: "this changes everything 👀" or "POV: when the code finally works"
+- Be casual, fun, and relatable
+- Use trending hashtags (3-5 max)
+- NO markdown formatting, NO em-dashes`,
       facebook: `Facebook best practices:
 - Conversational tone
 - Ask questions to drive comments
@@ -356,6 +359,9 @@ ${platformGuidance[platform] || platformGuidance.instagram}
 5. Be specific and authentic - no generic fluff
 6. Include hashtags at the END of the content
 7. Make it sound human, not AI-generated
+8. NO video script formatting - no "[Scene:]", "**Hook**:", "[Outro]" etc.
+9. NO markdown formatting (**bold**, *italic*) - platforms don't render it
+10. NO em-dashes (—) - they scream AI-generated
 
 === WHAT MAKES CONTENT USABLE ===
 - Specific insights, not vague platitudes
