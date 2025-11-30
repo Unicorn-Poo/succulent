@@ -862,13 +862,16 @@ export const AccountGroup = co.map({
   brandPersona: co.optional(BrandPersona),
 
   // Content feedback for learning from accept/reject decisions
-  contentFeedback: co.list(ContentFeedback),
+  // Made optional for backwards compatibility with older account groups
+  contentFeedback: co.optional(co.list(ContentFeedback)),
 
   // 🤖 Automation Queue - AI-generated posts awaiting approval/scheduling
-  postQueue: co.list(QueuedPost),
+  // Made optional for backwards compatibility with older account groups
+  postQueue: co.optional(co.list(QueuedPost)),
 
   // 📊 Automation Activity Logs - track all automation actions
-  automationLogs: co.list(AutomationLog),
+  // Made optional for backwards compatibility with older account groups
+  automationLogs: co.optional(co.list(AutomationLog)),
 
   // 🎛️ Automation Settings
   automationSettings: z.optional(
@@ -913,9 +916,8 @@ export type AccountGroupType = co.loaded<
       postedProducts: { $each: true };
     };
     brandPersona: true;
-    contentFeedback: { $each: true };
-    postQueue: { $each: true };
-    automationLogs: { $each: true };
+    // These are optional - initialized on-demand when accessed
+    // contentFeedback, postQueue, automationLogs may be undefined on older accounts
   }
 >;
 
@@ -1168,8 +1170,8 @@ export type AccountRootLoaded = co.loaded<
         externalStore: {
           postedProducts: { $each: true };
         };
-        postQueue: { $each: true };
-        automationLogs: { $each: true };
+        // postQueue, automationLogs, contentFeedback are optional
+        // Initialized on-demand when accessed
       };
     };
   }

@@ -170,10 +170,9 @@ export default function AccountGroupPage() {
               avoidTopics: { $each: true },
               samplePosts: { $each: true },
             },
-            // CRITICAL: Load automation-related fields for growth autopilot
-            postQueue: { $each: true },
-            automationLogs: { $each: true },
-            contentFeedback: { $each: true },
+            // NOTE: postQueue, automationLogs, contentFeedback are optional
+            // They're initialized on-demand in growth-autopilot.tsx when accessed
+            // Don't request them in resolve to avoid errors on older account groups
           },
         },
       },
