@@ -33,7 +33,7 @@ interface AutopilotSettings {
 
 interface AutopilotAction {
   id: string;
-  type: "post" | "reply" | "dm" | "hashtag" | "schedule";
+  type: "post" | "reply" | "dm" | "hashtag" | "schedule" | "recommendation";
   title: string;
   description: string;
   confidence: number;
@@ -382,18 +382,21 @@ export default function GrowthAutopilot({
             const data = await aiResults.json();
 
             // Convert AI recommendations to autopilot actions
+            // NOTE: Recommendations are strategy tips, NOT actual posts with content
+            // They should be type "recommendation" not "post" to avoid 400 errors
             data.recommendations.forEach((rec: any, index: number) => {
+              // Determine action type - only use "post" if we have actual content
+              const actionType = rec.action.includes("reply")
+                ? "reply"
+                : rec.action.includes("hashtag")
+                ? "hashtag"
+                : rec.action.includes("DM")
+                ? "dm"
+                : "recommendation"; // NOT "post" - recommendations don't have content
+
               allActions.push({
                 id: `ai_action_${targetPlatform}_${index}`,
-                type: rec.action.includes("content")
-                  ? "post"
-                  : rec.action.includes("reply")
-                  ? "reply"
-                  : rec.action.includes("hashtag")
-                  ? "hashtag"
-                  : rec.action.includes("DM")
-                  ? "dm"
-                  : "schedule",
+                type: actionType,
                 title: rec.action,
                 description: rec.reasoning,
                 confidence: rec.confidence,
@@ -565,7 +568,14 @@ export default function GrowthAutopilot({
 
     try {
       // For post actions, schedule via the API
-      if (action.type === "post" && action.content) {
+      if (action.type === "post" && action.content && action.platform) {
+        // Validate before sending
+        if (!action.content.trim()) {
+          setNotification({ type: "error", message: "Cannot schedule empty content" });
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch("/api/automation/schedule", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -805,6 +815,8 @@ export default function GrowthAutopilot({
         return "🏷️";
       case "schedule":
         return "⏰";
+      case "recommendation":
+        return "💡";
       default:
         return "🤖";
     }

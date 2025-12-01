@@ -1,12 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePassphraseAuth } from "jazz-tools/react";
 import { Card, Tabs, Box, Heading, Text, Button, Badge, Flex, TextArea } from '@radix-ui/themes';
+
+// Clear corrupted Jazz auth storage
+function clearCorruptedAuthStorage() {
+  if (typeof window === 'undefined') return;
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.includes('jazz'))
+      .forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    console.error('Failed to clear Jazz storage:', e);
+  }
+}
 
 export function PassphraseAuthBasicUI(props: {
   appName: string;
   wordlist: string[];
   children?: React.ReactNode;
 }) {
+  const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Catch auth initialization errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message?.includes('Uint8Array expected') || 
+          event.message?.includes('length=0')) {
+        console.error('Jazz auth corrupted, clearing storage...');
+        clearCorruptedAuthStorage();
+        setAuthError('Session corrupted. Please refresh the page.');
+      }
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
   const auth = usePassphraseAuth({
     wordlist: props.wordlist,
   });
@@ -17,6 +45,23 @@ export function PassphraseAuthBasicUI(props: {
   const [currentPassphrase, setCurrentPassphrase] = useState(() =>
     auth.generateRandomPassphrase(),
   );
+
+  // Show error state with refresh button
+  if (authError) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Card className="min-w-[400px]">
+          <div className="flex flex-col gap-4">
+            <Heading>Session Error</Heading>
+            <Text>{authError}</Text>
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (auth.state === "signedIn") {
     return props.children ?? null;

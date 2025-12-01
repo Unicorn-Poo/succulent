@@ -128,6 +128,12 @@ export default function PostQueue({
       return;
     }
 
+    // Validate required fields
+    if (!post?.content || !post?.platform) {
+      setNotification({ type: "error", message: "Post is missing content or platform" });
+      return;
+    }
+
     setIsProcessing(post.id);
     try {
       const response = await fetch("/api/automation/schedule", {
