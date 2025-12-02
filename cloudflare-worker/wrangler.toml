@@ -1,0 +1,14 @@
+name = "succulent-autopilot-cron"
+main = "autopilot-cron.js"
+compatibility_date = "2024-01-01"
+
+# Cron trigger - runs every hour
+[triggers]
+crons = ["0 * * * *"]
+
+# Environment variables (set these in Cloudflare Dashboard for security)
+# [vars]
+# APP_URL = "https://succulent.vercel.app"
+# CRON_SECRET = "your-secret-here"
+# AUTOPILOT_TASKS = '[]'
+

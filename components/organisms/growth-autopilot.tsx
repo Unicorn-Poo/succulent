@@ -16,6 +16,7 @@ interface AutopilotSettings {
     followerGrowthTarget: number; // percentage per month
     engagementRateTarget: number; // percentage
     postsPerWeek: number;
+    postsPerDayPerPlatform: number; // max posts per day per platform
   };
   automation: {
     autoReply: boolean;
@@ -23,6 +24,7 @@ interface AutopilotSettings {
     autoSchedule: boolean;
     autoHashtags: boolean;
     autoContent: boolean;
+    autoExecuteThreshold: number; // 0-100, actions above this confidence execute automatically
   };
   approvals: {
     requireApprovalForPosts: boolean;
@@ -103,6 +105,7 @@ export default function GrowthAutopilot({
       followerGrowthTarget: 15, // 15% per month
       engagementRateTarget: 5, // 5% engagement rate
       postsPerWeek: 7,
+      postsPerDayPerPlatform: 2, // max 2 posts per day per platform
     },
     automation: {
       autoReply: true,
@@ -110,6 +113,7 @@ export default function GrowthAutopilot({
       autoSchedule: true,
       autoHashtags: true,
       autoContent: true,
+      autoExecuteThreshold: 85, // Auto-execute actions with 85%+ confidence
     },
     approvals: {
       requireApprovalForPosts: false,
@@ -134,6 +138,7 @@ export default function GrowthAutopilot({
           followerGrowthTarget: saved.goals?.followerGrowthTarget ?? 15,
           engagementRateTarget: saved.goals?.engagementRateTarget ?? 5,
           postsPerWeek: saved.goals?.postsPerWeek ?? 7,
+          postsPerDayPerPlatform: saved.goals?.postsPerDayPerPlatform ?? 2,
         },
         automation: {
           autoReply: saved.automation?.autoReply ?? true,
@@ -141,6 +146,7 @@ export default function GrowthAutopilot({
           autoSchedule: saved.automation?.autoSchedule ?? true,
           autoHashtags: saved.automation?.autoHashtags ?? true,
           autoContent: saved.automation?.autoContent ?? true,
+          autoExecuteThreshold: saved.automation?.autoExecuteThreshold ?? 85,
         },
         approvals: {
           requireApprovalForPosts:
@@ -198,6 +204,7 @@ export default function GrowthAutopilot({
             autoSchedule: newSettings.automation.autoSchedule,
             autoHashtags: newSettings.automation.autoHashtags,
             autoContent: newSettings.automation.autoContent,
+            autoExecuteThreshold: newSettings.automation.autoExecuteThreshold,
           },
           approvals: {
             requireApprovalForPosts:
@@ -210,6 +217,7 @@ export default function GrowthAutopilot({
             followerGrowthTarget: newSettings.goals.followerGrowthTarget,
             engagementRateTarget: newSettings.goals.engagementRateTarget,
             postsPerWeek: newSettings.goals.postsPerWeek,
+            postsPerDayPerPlatform: newSettings.goals.postsPerDayPerPlatform,
           },
         };
       } catch (error) {
@@ -261,6 +269,41 @@ export default function GrowthAutopilot({
     followerGrowth: 0,
   };
 
+  // Calculate posts this week across all platforms
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const postsThisWeek = automationLogs.filter((log: any) => {
+    if (!log?.timestamp || (log?.type !== "post" && log?.type !== "schedule")) return false;
+    const logDate = new Date(log.timestamp);
+    return logDate >= weekStart;
+  }).length;
+
+  const postsToday = persistedPerformance.postsScheduled;
+  const platformCount = settings.platforms.length || 1;
+
+  // Smart scheduling helpers
+  const shouldGenerateMorePosts = useCallback(() => {
+    // Check weekly limit
+    if (postsThisWeek >= settings.goals.postsPerWeek) {
+      return { allowed: false, reason: `Weekly goal reached (${postsThisWeek}/${settings.goals.postsPerWeek})` };
+    }
+    
+    // Check daily per-platform limit
+    const maxTodayAllPlatforms = settings.goals.postsPerDayPerPlatform * platformCount;
+    if (postsToday >= maxTodayAllPlatforms) {
+      return { allowed: false, reason: `Daily limit reached (${postsToday}/${maxTodayAllPlatforms})` };
+    }
+    
+    // Calculate how many more we can generate
+    const remainingWeekly = settings.goals.postsPerWeek - postsThisWeek;
+    const remainingDaily = maxTodayAllPlatforms - postsToday;
+    const canGenerate = Math.min(remainingWeekly, remainingDaily);
+    
+    return { allowed: true, canGenerate, remainingWeekly, remainingDaily };
+  }, [postsThisWeek, postsToday, settings.goals, platformCount]);
+
   const [dashboard, setDashboard] = useState<AutopilotDashboard>({
     status: settings.enabled ? "active" : "paused",
     actionsToday: todayLogs.length,
@@ -299,6 +342,17 @@ export default function GrowthAutopilot({
 
   const generateAutopilotActions = useCallback(async () => {
     setIsLoading(true);
+
+    // Check if we should generate more posts based on goals
+    const scheduleCheck = shouldGenerateMorePosts();
+    if (!scheduleCheck.allowed) {
+      setNotification({
+        type: "success",
+        message: scheduleCheck.reason || "Posting limit reached for this period",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Extract brand persona from account group for API
@@ -487,6 +541,24 @@ export default function GrowthAutopilot({
           status: "active",
         }));
 
+        // AUTO-EXECUTE: If approval not required, auto-execute high-confidence actions
+        if (!settings.approvals.requireApprovalForPosts && settings.automation.autoExecuteThreshold > 0) {
+          const threshold = settings.automation.autoExecuteThreshold;
+          const highConfidenceActions = allActions.filter(
+            (a) => a.type === "post" && a.content && a.confidence >= threshold
+          );
+          
+          if (highConfidenceActions.length > 0) {
+            // Execute high-confidence actions with delay between each
+            (async () => {
+              for (const action of highConfidenceActions) {
+                await executeAction(action.id);
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+              }
+            })();
+          }
+        }
+
         setIsLoading(false);
         return;
       }
@@ -520,7 +592,7 @@ export default function GrowthAutopilot({
     }));
 
     setIsLoading(false);
-  }, [platform, settings]);
+  }, [platform, settings, shouldGenerateMorePosts, executeAction]);
 
   const generateGrowthInsights = useCallback(() => {
     // Note: These insights are based on general best practices until real analytics are connected
@@ -771,15 +843,35 @@ export default function GrowthAutopilot({
     [accountGroup]
   );
 
-  const approveAction = (
+  const approveAction = async (
     actionId: string,
     content?: string,
     edited?: string
   ) => {
     const action = pendingActions.find((a) => a.id === actionId);
-    if (action && action.content) {
-      // Add to PostQueue when approving
-      addToPostQueue(action, content || action.content, edited);
+    if (!action) return;
+
+    // Update content if edited
+    if (content || edited) {
+      const updatedAction = {
+        ...action,
+        content: edited || content || action.content,
+      };
+      setPendingActions((prev) =>
+        prev.map((a) => (a.id === actionId ? updatedAction : a))
+      );
+    }
+
+    // If approval NOT required, execute directly (no double approval)
+    if (!settings.approvals.requireApprovalForPosts) {
+      // Execute immediately - schedules via Ayrshare
+      await executeAction(actionId);
+      return;
+    }
+
+    // Approval required - add to PostQueue for single review step
+    if (action.content) {
+      addToPostQueue(action, edited || content || action.content);
     }
 
     setPendingActions((prev) =>
@@ -1059,14 +1151,9 @@ export default function GrowthAutopilot({
                           className="bg-green-600 hover:bg-green-700"
                           disabled={isLoading}
                         >
-                          ✓ Approve & Queue
-                        </Button>
-                        <Button
-                          onClick={() => executeAction(action.id)}
-                          size="1"
-                          disabled={isLoading}
-                        >
-                          Schedule Now
+                          {settings.approvals.requireApprovalForPosts
+                            ? "✓ Approve & Queue"
+                            : "✓ Schedule Now"}
                         </Button>
                         <Button
                           onClick={() => setActiveTab("actions")}
@@ -1328,19 +1415,14 @@ export default function GrowthAutopilot({
                 {action.status === "pending" && (
                   <div className="flex items-center space-x-2">
                     <Button
-                      onClick={() => executeAction(action.id)}
+                      onClick={() => approveAction(action.id)}
                       size="1"
                       disabled={isLoading}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      Execute Now
-                    </Button>
-                    <Button
-                      onClick={() => approveAction(action.id)}
-                      size="1"
-                      variant="outline"
-                    >
-                      Approve
+                      {settings.approvals.requireApprovalForPosts
+                        ? "Approve & Queue"
+                        : "Schedule Now"}
                     </Button>
                     <Button
                       onClick={() => rejectAction(action.id)}
@@ -1513,6 +1595,26 @@ export default function GrowthAutopilot({
                   }
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Max Posts Per Day (per platform)
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={settings.goals.postsPerDayPerPlatform}
+                  onChange={(e) =>
+                    updateSettings((prev) => ({
+                      ...prev,
+                      goals: {
+                        ...prev.goals,
+                        postsPerDayPerPlatform: parseInt(e.target.value) || 1,
+                      },
+                    }))
+                  }
+                />
+              </div>
             </div>
           </div>
 
@@ -1522,11 +1624,13 @@ export default function GrowthAutopilot({
               Automation Features
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(settings.automation).map(([key, value]) => (
+              {Object.entries(settings.automation)
+                .filter(([key]) => key !== "autoExecuteThreshold") // Exclude threshold from checkboxes
+                .map(([key, value]) => (
                 <label key={key} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={value}
+                    checked={value as boolean}
                     onChange={(e) =>
                       updateSettings((prev) => ({
                         ...prev,
@@ -1543,6 +1647,35 @@ export default function GrowthAutopilot({
                   </span>
                 </label>
               ))}
+            </div>
+            
+            {/* Auto-Execute Threshold Slider */}
+            <div className="mt-4 pt-4 border-t border-border">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Auto-Execute Confidence Threshold: {settings.automation.autoExecuteThreshold}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={settings.automation.autoExecuteThreshold}
+                onChange={(e) =>
+                  updateSettings((prev) => ({
+                    ...prev,
+                    automation: {
+                      ...prev.automation,
+                      autoExecuteThreshold: parseInt(e.target.value),
+                    },
+                  }))
+                }
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {settings.automation.autoExecuteThreshold === 0
+                  ? "Auto-execute disabled - all posts require manual approval"
+                  : `Posts with ${settings.automation.autoExecuteThreshold}%+ confidence will be scheduled automatically`}
+              </p>
             </div>
           </div>
 
