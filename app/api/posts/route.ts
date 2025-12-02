@@ -560,6 +560,16 @@ async function createPostInAccountGroup(
     // Handle base media (from request.media or request.imageUrls for backward compat)
     const baseMediaUrls =
       request.media?.map((m) => m.url) || request.imageUrls || [];
+
+    console.log("📷 [CREATE POST] Base media from request:", {
+      hasRequestMedia: !!request.media,
+      requestMediaCount: request.media?.length || 0,
+      hasImageUrls: !!request.imageUrls,
+      imageUrlsCount: request.imageUrls?.length || 0,
+      baseMediaUrls,
+      baseMediaUrlsCount: baseMediaUrls.length,
+    });
+
     if (baseMediaUrls.length > 0) {
       const { URLImageMedia, URLVideoMedia } = await import("@/app/schema");
 
@@ -753,13 +763,12 @@ async function createPostInAccountGroup(
             request.alt
           );
         } else {
-          // Create a fresh media list and copy items from base
-          variantMediaList = co
-            .list(MediaItem)
-            .create([], { owner: groupOwner });
-          for (const item of Array.from(baseMediaList)) {
-            if (item) variantMediaList.push(item);
-          }
+          // Create a fresh media list with NEW media items from base URLs
+          // Don't just push references - create new items so each variant has its own
+          variantMediaList = await createMediaListFromUrls(
+            baseMediaUrls,
+            request.alt
+          );
         }
 
         // Merge platform options from variant override
@@ -774,10 +783,11 @@ async function createPostInAccountGroup(
           .create(baseVariant.text?.toString() || request.content, {
             owner: groupOwner,
           });
-        variantMediaList = co.list(MediaItem).create([], { owner: groupOwner });
-        for (const item of Array.from(baseMediaList)) {
-          if (item) variantMediaList.push(item);
-        }
+        // Create NEW media items from base URLs - don't just push references
+        variantMediaList = await createMediaListFromUrls(
+          baseMediaUrls,
+          request.alt
+        );
       }
 
       // Apply platform-specific options from request level if not already set
@@ -962,14 +972,31 @@ export async function preparePublishRequests(
   // When publishing an existing post, content may come from the saved variant
   const baseContent =
     requestData.content || post?.variants?.base?.text?.toString() || "";
-  // Prioritize requestData.media if it has items, otherwise fall back to imageUrls
+
+  // Prioritize requestData.media if it has items, otherwise fall back to imageUrls, then saved base variant
   const mediaUrlsFromMedia = requestData.media
     ?.map((m) => m.url)
     .filter(Boolean) as string[] | undefined;
+
+  // Try to extract from saved base variant if requestData doesn't have media
+  const savedBaseMediaUrls = post?.variants?.base
+    ? extractMediaUrlsFromVariant(post.variants.base)
+    : [];
+
   const baseMediaUrls =
     mediaUrlsFromMedia && mediaUrlsFromMedia.length > 0
       ? mediaUrlsFromMedia
-      : requestData.imageUrls || [];
+      : requestData.imageUrls && requestData.imageUrls.length > 0
+      ? requestData.imageUrls
+      : savedBaseMediaUrls;
+
+  console.log("📷 [BASE MEDIA RESOLUTION]", {
+    fromRequestMedia: mediaUrlsFromMedia?.length || 0,
+    fromImageUrls: requestData.imageUrls?.length || 0,
+    fromSavedBase: savedBaseMediaUrls.length,
+    finalBaseMediaUrls: baseMediaUrls.length,
+    baseMediaUrls,
+  });
 
   // Collect all platforms to process: from requestData.platforms AND post.variants
   // This ensures variant-only platforms (like Instagram) are included

@@ -1,16 +1,26 @@
 import { useState, useEffect } from "react";
 import { usePassphraseAuth } from "jazz-tools/react";
-import { Card, Tabs, Box, Heading, Text, Button, Badge, Flex, TextArea } from '@radix-ui/themes';
+import {
+  Card,
+  Tabs,
+  Box,
+  Heading,
+  Text,
+  Button,
+  Badge,
+  Flex,
+  TextArea,
+} from "@radix-ui/themes";
 
 // Clear corrupted Jazz auth storage
 function clearCorruptedAuthStorage() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     Object.keys(localStorage)
-      .filter(k => k.includes('jazz'))
-      .forEach(k => localStorage.removeItem(k));
+      .filter((k) => k.includes("jazz"))
+      .forEach((k) => localStorage.removeItem(k));
   } catch (e) {
-    console.error('Failed to clear Jazz storage:', e);
+    console.error("Failed to clear Jazz storage:", e);
   }
 }
 
@@ -20,19 +30,21 @@ export function PassphraseAuthBasicUI(props: {
   children?: React.ReactNode;
 }) {
   const [authError, setAuthError] = useState<string | null>(null);
-  
+
   // Catch auth initialization errors
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
-      if (event.message?.includes('Uint8Array expected') || 
-          event.message?.includes('length=0')) {
-        console.error('Jazz auth corrupted, clearing storage...');
+      if (
+        event.message?.includes("Uint8Array expected") ||
+        event.message?.includes("length=0")
+      ) {
+        console.error("Jazz auth corrupted, clearing storage...");
         clearCorruptedAuthStorage();
-        setAuthError('Session corrupted. Please refresh the page.');
+        setAuthError("Session corrupted. Please refresh the page.");
       }
     };
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
   }, []);
 
   const auth = usePassphraseAuth({
@@ -43,7 +55,7 @@ export function PassphraseAuthBasicUI(props: {
   const [loginPassphrase, setLoginPassphrase] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [currentPassphrase, setCurrentPassphrase] = useState(() =>
-    auth.generateRandomPassphrase(),
+    auth.generateRandomPassphrase()
   );
 
   // Show error state with refresh button
@@ -144,9 +156,7 @@ export function PassphraseAuthBasicUI(props: {
               <Button onClick={handleReroll} variant="soft">
                 Generate New Passphrase
               </Button>
-              <Button onClick={handleNext}>
-                Register
-              </Button>
+              <Button onClick={handleNext}>Register</Button>
             </div>
           </div>
         )}
@@ -165,11 +175,7 @@ export function PassphraseAuthBasicUI(props: {
               <Button onClick={handleBack} variant="soft">
                 Back
               </Button>
-              <Button
-                onClick={handleLoginSubmit}
-              >
-                Log In
-              </Button>
+              <Button onClick={handleLoginSubmit}>Log In</Button>
             </div>
           </div>
         )}
