@@ -1,11 +1,8 @@
 /**
  * Unit tests for base media being applied to all platform variants
  * 
- * Run with: npx vitest run tests/media-variants.test.ts
- * Or: npx vitest tests/media-variants.test.ts --watch
+ * Run with: pnpm test tests/media-variants.test.ts
  */
-
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the extractMediaUrlsFromVariant function (same logic as in posts/route.ts)
 function extractMediaUrlsFromVariant(variant: any): string[] {
