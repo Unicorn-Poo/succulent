@@ -132,7 +132,7 @@ export default function AccountGroupPage() {
   const [postsFilter, setPostsFilter] = useState<
     "all" | "draft" | "scheduled" | "published"
   >("all");
-  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [platformFilter, setPlatformFilter] = useState<string[]>([]);
   const [copiedAccountGroupId, setCopiedAccountGroupId] = useState(false);
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -446,7 +446,8 @@ export default function AccountGroupPage() {
 
   // Helper function to check if post matches platform filter
   const postMatchesPlatformFilter = (post: any) => {
-    if (platformFilter === "all") return true;
+    // Empty array means "all platforms"
+    if (platformFilter.length === 0) return true;
 
     const variantPlatforms = post.variants
       ? Object.keys(post.variants).filter((key: string) => key !== "base")
@@ -454,11 +455,17 @@ export default function AccountGroupPage() {
     const postPlatforms =
       variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
-    if (platformFilter === "none") {
-      return postPlatforms.length === 0;
-    }
+    // Check if post has any of the selected platforms
+    return platformFilter.some((p) => postPlatforms.includes(p));
+  };
 
-    return postPlatforms.includes(platformFilter);
+  // Toggle platform in filter
+  const togglePlatformFilter = (platform: string) => {
+    setPlatformFilter((prev) =>
+      prev.includes(platform)
+        ? prev.filter((p) => p !== platform)
+        : [...prev, platform]
+    );
   };
 
   // Select all filtered posts
@@ -815,25 +822,47 @@ export default function AccountGroupPage() {
                       ))}
                     </div>
 
-                    {/* Platform Filter */}
-                    <Select.Root
-                      value={platformFilter}
-                      onValueChange={setPlatformFilter}
-                    >
-                      <Select.Trigger placeholder="All Platforms" />
-                      <Select.Content>
-                        <Select.Item value="all">All Platforms</Select.Item>
-                        <Select.Item value="none">No Platform</Select.Item>
-                        <Select.Separator />
-                        {connectedPlatforms.map((platform) => (
-                          <Select.Item key={platform} value={platform}>
-                            {platformLabels[
+                    {/* Platform Filter - Multi-select */}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {connectedPlatforms.map((platform) => (
+                        <button
+                          key={platform}
+                          onClick={() => togglePlatformFilter(platform)}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                            platformFilter.length === 0 ||
+                            platformFilter.includes(platform)
+                              ? "bg-lime-500 ring-2 ring-lime-400"
+                              : "bg-muted opacity-50 hover:opacity-75"
+                          }`}
+                          title={
+                            platformLabels[
                               platform as keyof typeof platformLabels
-                            ] || platform}
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select.Root>
+                            ] || platform
+                          }
+                        >
+                          <Image
+                            src={getPlatformIcon(platform)}
+                            alt={platform}
+                            width={14}
+                            height={14}
+                            className={
+                              platformFilter.length === 0 ||
+                              platformFilter.includes(platform)
+                                ? "invert"
+                                : ""
+                            }
+                          />
+                        </button>
+                      ))}
+                      {platformFilter.length > 0 && (
+                        <button
+                          onClick={() => setPlatformFilter([])}
+                          className="text-xs text-muted-foreground hover:text-foreground ml-1"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
 
                     {/* View Selector */}
                     <PostViewSelector
@@ -938,7 +967,7 @@ export default function AccountGroupPage() {
                   if (!postMatchesPlatformFilter(post)) return false;
                   return true;
                 }).length === 0 &&
-                  (postsFilter !== "all" || platformFilter !== "all") && (
+                  (postsFilter !== "all" || platformFilter.length > 0) && (
                     <div className="text-center py-8">
                       <div className="text-muted-foreground mb-2">
                         <MessageCircle className="w-8 h-8 mx-auto mb-2" />
@@ -946,14 +975,15 @@ export default function AccountGroupPage() {
                       <p className="text-muted-foreground">
                         No {postsFilter !== "all" ? postsFilter : ""} posts
                         found
-                        {platformFilter !== "all" &&
-                          platformFilter !== "none" &&
-                          ` for ${
-                            platformLabels[
-                              platformFilter as keyof typeof platformLabels
-                            ] || platformFilter
-                          }`}
-                        {platformFilter === "none" && " without a platform"}
+                        {platformFilter.length > 0 &&
+                          ` for ${platformFilter
+                            .map(
+                              (p) =>
+                                platformLabels[
+                                  p as keyof typeof platformLabels
+                                ] || p
+                            )
+                            .join(", ")}`}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
                         {postsFilter === "draft" &&

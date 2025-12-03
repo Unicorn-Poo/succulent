@@ -460,7 +460,8 @@ export default function GrowthAutopilot({
       if (supportedPlatforms.length === 0) {
         setNotification({
           type: "info",
-          message: "YouTube requires video content - use main post creator for this platform.",
+          message:
+            "YouTube requires video content - use main post creator for this platform.",
         });
         setIsLoading(false);
         return;
@@ -1590,7 +1591,9 @@ export default function GrowthAutopilot({
                             let mediaUrls: string[] = [];
 
                             // Generate AI image for Pinterest and TikTok (photo posts)
-                            if (["pinterest", "tiktok"].includes(platformLower)) {
+                            if (
+                              ["pinterest", "tiktok"].includes(platformLower)
+                            ) {
                               setStatusMessage(
                                 `Generating AI image for ${post.platform}...`
                               );
@@ -1602,7 +1605,9 @@ export default function GrowthAutopilot({
                                     "Content-Type": "application/json",
                                   },
                                   body: JSON.stringify({
-                                    prompt: `${post.contentPillar || "creative"}: ${post.content.slice(0, 200)}`,
+                                    prompt: `${
+                                      post.contentPillar || "creative"
+                                    }: ${post.content.slice(0, 200)}`,
                                     platform: post.platform,
                                   }),
                                 }
@@ -1640,7 +1645,9 @@ export default function GrowthAutopilot({
                                   autoHashtag: settings.automation.autoHashtags,
                                   shortenLinks: true,
                                   mediaUrls:
-                                    mediaUrls.length > 0 ? mediaUrls : undefined,
+                                    mediaUrls.length > 0
+                                      ? mediaUrls
+                                      : undefined,
                                 }),
                               }
                             );

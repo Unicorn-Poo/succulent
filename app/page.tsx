@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import AccountGroupCreation from "@/components/organisms/account-group-creation";
+import { getPlatformIcon } from "@/utils/platformIcons";
 import {
   AccountGroup,
   PlatformAccount,
@@ -443,17 +444,20 @@ export default function HomePage() {
                           .map((account: any, accountIndex: number) => (
                             <div
                               key={account?.id || accountIndex}
-                              className="w-8 h-8 rounded-full border-2 border-white bg-lime-100 flex items-center justify-center"
+                              className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center p-1.5"
                             >
-                              <span className="text-xs font-medium text-lime-700">
-                                {account?.platform?.charAt(0).toUpperCase() ||
-                                  "?"}
-                              </span>
+                              <Image
+                                src={getPlatformIcon(account?.platform || "")}
+                                alt={account?.platform || "Platform"}
+                                width={16}
+                                height={16}
+                                className="opacity-80"
+                              />
                             </div>
                           ))}
                         {(group.accounts?.length || 0) > 3 && (
-                          <div className="w-8 h-8 rounded-full border-2 border-white bg-lime-200 flex items-center justify-center">
-                            <span className="text-xs font-medium text-lime-700">
+                          <div className="w-8 h-8 rounded-full border-2 border-card bg-lime-500 flex items-center justify-center">
+                            <span className="text-xs font-medium text-black">
                               +{(group.accounts?.length || 0) - 3}
                             </span>
                           </div>

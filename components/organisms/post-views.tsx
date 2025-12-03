@@ -20,7 +20,7 @@ interface PostViewsProps {
   accountGroupId: string;
   accountGroupName: string;
   postsFilter: "all" | "draft" | "scheduled" | "published";
-  platformFilter?: string;
+  platformFilter?: string[];
   selectedPosts: Set<string>;
   onPostSelect: (postId: string, selected: boolean) => void;
   onSelectAll?: () => void;
@@ -58,7 +58,9 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
           <div className="text-center p-2">
-            <span className="text-muted-foreground text-2xl block mb-1">📷</span>
+            <span className="text-muted-foreground text-2xl block mb-1">
+              📷
+            </span>
             <span className="text-muted-foreground text-xs block">
               Image unavailable
             </span>
@@ -176,10 +178,11 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 // Helper function to check if post matches platform filter
 function postMatchesPlatformFilter(
   post: any,
-  platformFilter: string,
+  platformFilter: string[],
   connectedPlatforms: string[]
 ): boolean {
-  if (platformFilter === "all") return true;
+  // Empty array means "all platforms"
+  if (platformFilter.length === 0) return true;
 
   const variantPlatforms = post.variants
     ? Object.keys(post.variants).filter((key) => key !== "base")
@@ -187,11 +190,8 @@ function postMatchesPlatformFilter(
   const postPlatforms =
     variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
-  if (platformFilter === "none") {
-    return postPlatforms.length === 0;
-  }
-
-  return postPlatforms.includes(platformFilter);
+  // Check if post has any of the selected platforms
+  return platformFilter.some((p) => postPlatforms.includes(p));
 }
 
 // Grid View (existing default view)
@@ -200,7 +200,7 @@ export function PostGridView({
   accountGroupId,
   accountGroupName,
   postsFilter,
-  platformFilter = "all",
+  platformFilter = [],
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
@@ -538,7 +538,7 @@ export function PostImageView({
   accountGroupId,
   accountGroupName,
   postsFilter,
-  platformFilter = "all",
+  platformFilter = [],
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
@@ -759,7 +759,7 @@ export function PostSuccinctView({
   accountGroupId,
   accountGroupName,
   postsFilter,
-  platformFilter = "all",
+  platformFilter = [],
   selectedPosts,
   onPostSelect,
   onSelectAll,
