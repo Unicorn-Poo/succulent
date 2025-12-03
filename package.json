@@ -27,6 +27,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/themes": "^3.2.1",
+    "@types/sharp": "^0.32.0",
     "@vercel/og": "^0.8.5",
     "ai": "^5.0.82",
     "clsx": "^2.1.1",

@@ -385,7 +385,7 @@ export default function GrowthAutopilot({
         setStatusMessage(
           `Last updated ${Math.round(hoursSinceGenerated)} hours ago`
         );
-        generateGrowthInsights();
+      generateGrowthInsights();
         return;
       }
     }
@@ -514,11 +514,11 @@ export default function GrowthAutopilot({
             data.recommendations.forEach((rec: any, index: number) => {
               // Determine action type - only use "post" if we have actual content
               const actionType = rec.action.includes("reply")
-                ? "reply"
-                : rec.action.includes("hashtag")
-                ? "hashtag"
-                : rec.action.includes("DM")
-                ? "dm"
+                  ? "reply"
+                  : rec.action.includes("hashtag")
+                  ? "hashtag"
+                  : rec.action.includes("DM")
+                  ? "dm"
                 : "recommendation"; // NOT "post" - recommendations don't have content
 
               allActions.push({
@@ -760,22 +760,23 @@ export default function GrowthAutopilot({
 
         let mediaUrls: string[] = [];
 
-        // Generate AI image for Pinterest and TikTok (photo posts)
-        // Platforms that require images
+        // Generate text-based image for platforms that require media
         const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
         if (mediaRequiredPlatforms.includes(platformLower)) {
           setNotification({
             type: "info",
-            message: "Generating AI image for Pinterest...",
+            message: `Creating image for ${action.platform}...`,
           });
 
           try {
-            const imageResponse = await fetch("/api/generate-image", {
+            const imageResponse = await fetch("/api/generate-text-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                prompt: `${action.title}: ${action.content?.slice(0, 200)}`,
+                text: action.content,
                 platform: action.platform,
+                style: "gradient",
+                brandName: accountGroup?.brandPersona?.name,
               }),
             });
 
@@ -999,19 +1000,22 @@ export default function GrowthAutopilot({
     [accountGroup]
   );
 
-  // Generate AI image and show preview before scheduling
+  // Generate text-based image and show preview before scheduling
   const generateImagePreview = useCallback(
     async (post: any) => {
       setIsGeneratingImage(post.id);
-      setNotification({ type: "info", message: "Generating AI image..." });
+      setNotification({ type: "info", message: "Generating image..." });
 
       try {
-        const imageResponse = await fetch("/api/generate-image", {
+        // Use text-based image generator (faster & more reliable than DALL-E)
+        const imageResponse = await fetch("/api/generate-text-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `${post.contentPillar || "creative"}: ${post.content.slice(0, 200)}`,
+            text: post.content,
             platform: post.platform,
+            style: "gradient", // Options: quote, bold, minimal, gradient
+            brandName: accountGroup?.brandPersona?.name,
           }),
         });
 
@@ -1024,7 +1028,7 @@ export default function GrowthAutopilot({
               content: post.content,
               platform: post.platform,
             });
-            setNotification({ type: "success", message: "Image generated! Review before posting." });
+            setNotification({ type: "success", message: "Image ready! Review before posting." });
           } else {
             setNotification({ type: "error", message: "No image URL returned" });
           }
@@ -1037,7 +1041,7 @@ export default function GrowthAutopilot({
       }
       setIsGeneratingImage(null);
     },
-    []
+    [accountGroup?.brandPersona?.name]
   );
 
   // Track used time slots to avoid scheduling multiple posts at same time
@@ -1212,18 +1216,21 @@ export default function GrowthAutopilot({
 
       let mediaUrls: string[] = [];
 
-      // Generate AI image for platforms that require media
+      // Generate text-based image for platforms that require media
       const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
       if (mediaRequiredPlatforms.includes(platformLower)) {
-        setStatusMessage(`Generating image for ${post.platform} (${i + 1}/${orderedPosts.length})...`);
+        setStatusMessage(`Creating image for ${post.platform} (${i + 1}/${orderedPosts.length})...`);
 
         try {
-          const imageResponse = await fetch("/api/generate-image", {
+          // Use text-based image generator (faster & more reliable)
+          const imageResponse = await fetch("/api/generate-text-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              prompt: `${post.contentPillar || "creative visual"}: ${post.content.slice(0, 200)}`,
+              text: post.content,
               platform: post.platform,
+              style: "gradient",
+              brandName: accountGroup?.brandPersona?.name,
             }),
           });
 
@@ -1232,10 +1239,9 @@ export default function GrowthAutopilot({
             if (imageData.imageUrl) {
               mediaUrls = [imageData.imageUrl];
             } else {
-              // Skip if no image for platforms that require it
               setNotification({
                 type: "error",
-                message: `${post.platform}: Failed to generate required image`,
+                message: `${post.platform}: Failed to generate image`,
               });
               continue;
             }
@@ -1863,49 +1869,49 @@ export default function GrowthAutopilot({
             <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
               <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-3">
                 💡 Growth Tips & Recommendations
-              </h4>
-              <div className="space-y-3">
+            </h4>
+            <div className="space-y-3">
                 {dashboard.nextActions
                   .filter((a) => !a.content)
                   .slice(0, 3)
                   .map((action) => (
-                    <div
-                      key={action.id}
-                      className="flex items-center justify-between p-3 bg-card rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">
-                          {getActionIcon(action.type)}
-                        </span>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {action.title}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {action.description}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${getImpactColor(
-                            action.impact
-                          )}`}
-                        >
-                          {action.confidence}% confidence
-                        </span>
-                        <Button
-                          onClick={() => executeAction(action.id)}
-                          size="1"
-                          disabled={isLoading}
-                        >
-                          Execute
-                        </Button>
-                      </div>
+                <div
+                  key={action.id}
+                  className="flex items-center justify-between p-3 bg-card rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">
+                      {getActionIcon(action.type)}
+                    </span>
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {action.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {action.description}
+                      </p>
                     </div>
-                  ))}
-              </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${getImpactColor(
+                        action.impact
+                      )}`}
+                    >
+                      {action.confidence}% confidence
+                    </span>
+                    <Button
+                      onClick={() => executeAction(action.id)}
+                      size="1"
+                      disabled={isLoading}
+                    >
+                      Execute
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
           )}
 
           {/* Post Queue Widget */}
@@ -2476,8 +2482,8 @@ export default function GrowthAutopilot({
                   onClick={() => {
                     const isManual = opt.mode === "manual";
                     const isFullAuto = opt.mode === "full-auto";
-                    updateSettings((prev) => ({
-                      ...prev,
+                        updateSettings((prev) => ({
+                          ...prev,
                       aggressiveness: isFullAuto
                         ? "aggressive"
                         : isManual
@@ -2515,7 +2521,7 @@ export default function GrowthAutopilot({
                     <span className="font-medium text-foreground">
                       {opt.label}
                     </span>
-                  </div>
+            </div>
                   <p className="text-sm text-muted-foreground">{opt.desc}</p>
                 </button>
               ))}
@@ -2613,26 +2619,26 @@ export default function GrowthAutopilot({
               {Object.entries(settings.automation)
                 .filter(([key]) => key !== "autoExecuteThreshold") // Exclude threshold from checkboxes
                 .map(([key, value]) => (
-                  <label key={key} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
+                <label key={key} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
                       checked={value as boolean}
-                      onChange={(e) =>
-                        updateSettings((prev) => ({
-                          ...prev,
-                          automation: {
-                            ...prev.automation,
-                            [key]: e.target.checked,
-                          },
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <span className="capitalize text-foreground">
-                      {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                    </span>
-                  </label>
-                ))}
+                    onChange={(e) =>
+                      updateSettings((prev) => ({
+                        ...prev,
+                        automation: {
+                          ...prev.automation,
+                          [key]: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <span className="capitalize text-foreground">
+                    {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+                  </span>
+                </label>
+              ))}
             </div>
 
             {/* Auto-Execute Threshold Slider */}
