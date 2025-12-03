@@ -124,7 +124,7 @@ export default function GrowthQuickAccess({
                   onToolSelect('tools-overview');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300 font-medium"
+                className="w-full text-center text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 font-medium"
               >
                 View All Growth Tools →
               </button>

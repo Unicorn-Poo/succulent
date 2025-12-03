@@ -216,11 +216,11 @@ export function EnhancedTimePicker({
 
       {/* Current selection display */}
       {value && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+        <div className="bg-lime-50 dark:bg-lime-900/20 rounded-lg p-3">
+          <div className="text-sm font-medium text-lime-900 dark:text-lime-100">
             Scheduled for:
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-200">
+          <div className="text-sm text-lime-700 dark:text-lime-300 dark:text-lime-200">
             {value.toLocaleDateString('en-US', {
               weekday: 'long',
               year: 'numeric',
@@ -228,7 +228,7 @@ export function EnhancedTimePicker({
               day: 'numeric'
             })}
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-200">
+          <div className="text-sm text-lime-700 dark:text-lime-300 dark:text-lime-200">
             at {value.toLocaleTimeString('en-US', {
               hour: 'numeric',
               minute: '2-digit',

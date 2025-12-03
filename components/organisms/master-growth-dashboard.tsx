@@ -135,7 +135,7 @@ export default function MasterGrowthDashboard({
               <p className="text-xs text-muted-foreground">Growth Rate</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{quickStats.engagementRate.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">{quickStats.engagementRate.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">Engagement</p>
             </div>
             <div className="text-center">
@@ -162,7 +162,7 @@ export default function MasterGrowthDashboard({
                   onClick={() => setActiveComponent(component.id)}
                   className={`w-full text-left p-4 rounded-lg border transition-colors ${
                     activeComponent === component.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300'
                       : 'border-border hover:border-border hover:bg-muted'
                   }`}
                 >
@@ -221,7 +221,7 @@ export default function MasterGrowthDashboard({
               </div>
               <div className="flex items-center justify-between">
                 <span>Competitor Monitoring</span>
-                <span className="text-blue-600 dark:text-blue-400">🔄 Running</span>
+                <span className="text-lime-600 dark:text-lime-400">🔄 Running</span>
               </div>
             </div>
           </div>

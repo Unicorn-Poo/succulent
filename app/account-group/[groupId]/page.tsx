@@ -60,6 +60,8 @@ import {
 } from "@/components/organisms";
 import { getPostStatus } from "@/utils/postValidation";
 import { platformLabels } from "@/utils/postConstants";
+import { getPlatformIcon, getPlatformLabel } from "@/utils/platformIcons";
+import Image from "next/image";
 import CSVPostUpload from "@/components/organisms/csv-post-upload";
 import PostViewSelector, {
   PostViewType,
@@ -611,7 +613,7 @@ export default function AccountGroupPage() {
                 }}
                 intent="secondary"
                 variant="outline"
-                className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                className="bg-lime-50 hover:bg-lime-100 border-lime-200 text-lime-700"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Bulk Upload
@@ -1047,7 +1049,7 @@ export default function AccountGroupPage() {
               {/* Growth Tools Section */}
               <div>
                 <div className="flex items-center space-x-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <TrendingUp className="w-5 h-5 text-lime-600" />
                   <h2 className="text-xl font-semibold text-foreground">
                     Growth Automation Tools
                   </h2>
@@ -1140,17 +1142,21 @@ export default function AccountGroupPage() {
                       className="bg-card rounded-lg p-6 border border-border"
                     >
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
-                          <Text size="2" weight="bold">
-                            {account.platform?.charAt(0).toUpperCase()}
-                          </Text>
+                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center p-2">
+                          <Image
+                            src={getPlatformIcon(account.platform || "")}
+                            alt={account.platform || "Platform"}
+                            width={24}
+                            height={24}
+                            className="dark:invert"
+                          />
                         </div>
                         <div>
                           <Text size="3" weight="medium" className="block">
                             {account.name}
                           </Text>
                           <Text size="2" color="gray">
-                            {account.platform}
+                            {getPlatformLabel(account.platform || "")}
                           </Text>
                         </div>
                       </div>

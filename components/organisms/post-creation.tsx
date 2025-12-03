@@ -291,17 +291,17 @@ const ProdigiTemplateSelector = ({
 						<label
 							key={template.id}
 							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 ${
-								isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+								isSelected ? 'bg-lime-50 dark:bg-lime-900/20' : ''
 							}`}
 						>
 							<input
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-blue-600 dark:text-blue-400 border-border rounded focus:ring-blue-500"
+								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-border rounded focus:ring-lime-500"
 							/>
 							<div className="flex-1">
-								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-blue-800 dark:text-blue-300" : ""}>
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800 dark:text-lime-300" : ""}>
 									{template.displayName || template.name}
 								</Text>
 								{template.productType && (
@@ -2018,7 +2018,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Text size="2" weight="medium">Product Creation Options</Text>
 							<button
 								onClick={() => setShowProdigiSection(!showProdigiSection)}
-								className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300"
+								className="text-xs text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300"
 							>
 								{showProdigiSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -2070,7 +2070,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Template Details */}
 										{selectedProdigiTemplates.length > 0 && (
-											<div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+											<div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
 													Selected Templates ({selectedProdigiTemplates.length}):
 												</Text>
@@ -2102,7 +2102,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 												</Text>
 												<div className="space-y-3">
 													{selectedProdigiTemplates.map((template) => (
-														<div key={template.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+														<div key={template.id} className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
 															<Text size="1" weight="medium" className="block mb-2">
 																{template.displayName || template.name}:
 															</Text>
@@ -2113,7 +2113,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																	[template.id]: e.target.value
 																}))}
 																placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
-																className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+																className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
 															/>
 														</div>
 													))}
@@ -2181,7 +2181,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					<div className="p-4">
 						<div className="flex items-center justify-between mb-4">
 							<div className="flex items-center gap-2">
-								<BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+								<BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />
 								<Text weight="medium" size="3">Content Optimization</Text>
 							</div>
 						</div>
@@ -2215,7 +2215,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											<button
 												onClick={fetchOptimalTimes}
 												disabled={isLoadingTimes}
-												className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm hover:bg-blue-100 dark:bg-blue-900/30 disabled:opacity-50"
+												className="flex items-center gap-2 px-3 py-1 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 rounded-lg text-sm hover:bg-lime-100 dark:bg-lime-900/30 disabled:opacity-50"
 											>
 												{isLoadingTimes ? (
 													<Loader2 className="w-4 h-4 animate-spin" />
@@ -2228,7 +2228,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{optimalTimes ? (
 											<div className="space-y-3">
-												<div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+												<div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
 													<Text size="2" weight="medium" className="block mb-2">
 														Best times for {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
 													</Text>
@@ -2287,7 +2287,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						</div>
 						<button
 							onClick={() => window.open('https://www.ayrshare.com/pricing', '_blank')}
-							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+							className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-lg text-sm"
 						>
 							Upgrade to Business Plan
 						</button>

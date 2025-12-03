@@ -172,17 +172,23 @@ export default function GrowthAutopilot({
     try {
       // Initialize postQueue if missing
       if (!accountGroup.postQueue) {
-        accountGroup.postQueue = co.list(QueuedPost).create([], { owner: accountGroup._owner });
+        accountGroup.postQueue = co
+          .list(QueuedPost)
+          .create([], { owner: accountGroup._owner });
       }
 
       // Initialize automationLogs if missing
       if (!accountGroup.automationLogs) {
-        accountGroup.automationLogs = co.list(AutomationLog).create([], { owner: accountGroup._owner });
+        accountGroup.automationLogs = co
+          .list(AutomationLog)
+          .create([], { owner: accountGroup._owner });
       }
 
       // Initialize contentFeedback if missing
       if (!accountGroup.contentFeedback) {
-        accountGroup.contentFeedback = co.list(ContentFeedback).create([], { owner: accountGroup._owner });
+        accountGroup.contentFeedback = co
+          .list(ContentFeedback)
+          .create([], { owner: accountGroup._owner });
       }
     } catch (error) {
       console.error("Failed to initialize automation fields:", error);
@@ -243,15 +249,17 @@ export default function GrowthAutopilot({
   // Handle case where automationLogs doesn't exist on older account groups
   const automationLogs: any[] = (() => {
     try {
-      return accountGroup?.automationLogs ? Array.from(accountGroup.automationLogs) : [];
+      return accountGroup?.automationLogs
+        ? Array.from(accountGroup.automationLogs)
+        : [];
     } catch {
       return [];
     }
   })();
-  
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  
+
   const todayLogs = automationLogs.filter((log: any) => {
     if (!log?.timestamp) return false;
     const logDate = new Date(log.timestamp);
@@ -273,9 +281,10 @@ export default function GrowthAutopilot({
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
   weekStart.setHours(0, 0, 0, 0);
-  
+
   const postsThisWeek = automationLogs.filter((log: any) => {
-    if (!log?.timestamp || (log?.type !== "post" && log?.type !== "schedule")) return false;
+    if (!log?.timestamp || (log?.type !== "post" && log?.type !== "schedule"))
+      return false;
     const logDate = new Date(log.timestamp);
     return logDate >= weekStart;
   }).length;
@@ -287,20 +296,27 @@ export default function GrowthAutopilot({
   const shouldGenerateMorePosts = useCallback(() => {
     // Check weekly limit
     if (postsThisWeek >= settings.goals.postsPerWeek) {
-      return { allowed: false, reason: `Weekly goal reached (${postsThisWeek}/${settings.goals.postsPerWeek})` };
+      return {
+        allowed: false,
+        reason: `Weekly goal reached (${postsThisWeek}/${settings.goals.postsPerWeek})`,
+      };
     }
-    
+
     // Check daily per-platform limit
-    const maxTodayAllPlatforms = settings.goals.postsPerDayPerPlatform * platformCount;
+    const maxTodayAllPlatforms =
+      settings.goals.postsPerDayPerPlatform * platformCount;
     if (postsToday >= maxTodayAllPlatforms) {
-      return { allowed: false, reason: `Daily limit reached (${postsToday}/${maxTodayAllPlatforms})` };
+      return {
+        allowed: false,
+        reason: `Daily limit reached (${postsToday}/${maxTodayAllPlatforms})`,
+      };
     }
-    
+
     // Calculate how many more we can generate
     const remainingWeekly = settings.goals.postsPerWeek - postsThisWeek;
     const remainingDaily = maxTodayAllPlatforms - postsToday;
     const canGenerate = Math.min(remainingWeekly, remainingDaily);
-    
+
     return { allowed: true, canGenerate, remainingWeekly, remainingDaily };
   }, [postsThisWeek, postsToday, settings.goals, platformCount]);
 
@@ -317,12 +333,15 @@ export default function GrowthAutopilot({
   const [pendingActions, setPendingActions] = useState<AutopilotAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "actions" | "settings" | "insights"
+    "dashboard" | "posts" | "actions" | "settings" | "insights"
   >("dashboard");
   const [notification, setNotification] = useState<{
-    type: "success" | "error";
+    type: "success" | "error" | "info";
     message: string;
   } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string>("");
+  const [generatedPosts, setGeneratedPosts] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   // Auto-clear notification after 3 seconds
   useEffect(() => {
@@ -332,13 +351,33 @@ export default function GrowthAutopilot({
     }
   }, [notification]);
 
-  // Initialize autopilot with AI-generated actions
+  // Load cached content first, then only regenerate if stale or empty
   useEffect(() => {
-    if (settings.enabled) {
-      generateAutopilotActions();
-      generateGrowthInsights();
+    if (!settings.enabled) return;
+
+    // Try to load from cache first
+    const cached = accountGroup?.cachedAutopilotContent;
+    if (cached && cached.generatedAt) {
+      const generatedTime = new Date(cached.generatedAt);
+      const hoursSinceGenerated =
+        (Date.now() - generatedTime.getTime()) / (1000 * 60 * 60);
+
+      // Use cache if less than 24 hours old
+      if (hoursSinceGenerated < 24) {
+        setGeneratedPosts(cached.posts || []);
+        setRecommendations(cached.recommendations || []);
+        setStatusMessage(
+          `Last updated ${Math.round(hoursSinceGenerated)} hours ago`
+        );
+        generateGrowthInsights();
+        return;
+      }
     }
-  }, [settings.enabled, settings.aggressiveness]);
+
+    // No valid cache, generate fresh content
+    generateAutopilotActions();
+    generateGrowthInsights();
+  }, [settings.enabled]);
 
   const generateAutopilotActions = useCallback(async () => {
     setIsLoading(true);
@@ -348,7 +387,8 @@ export default function GrowthAutopilot({
     if (!scheduleCheck.allowed) {
       setNotification({
         type: "success",
-        message: scheduleCheck.reason || "Posting limit reached for this period",
+        message:
+          scheduleCheck.reason || "Posting limit reached for this period",
       });
       setIsLoading(false);
       return;
@@ -387,7 +427,10 @@ export default function GrowthAutopilot({
         : null;
 
       // 🔍 DEBUG: Log what we're sending to API
-      console.log("🔍 [GROWTH-AUTOPILOT] Raw accountGroup.brandPersona:", accountGroup?.brandPersona);
+      console.log(
+        "🔍 [GROWTH-AUTOPILOT] Raw accountGroup.brandPersona:",
+        accountGroup?.brandPersona
+      );
       console.log("🔍 [GROWTH-AUTOPILOT] Sending to API:", {
         hasBrandPersona: !!brandPersona,
         hasRawBrandPersona: !!accountGroup?.brandPersona,
@@ -525,14 +568,54 @@ export default function GrowthAutopilot({
       if (allActions.length > 0) {
         setPendingActions(allActions);
 
-        // Prioritize showing ACTUAL POST CONTENT (not generic tips) in the dashboard
-        // Filter for actions that have actual content to post
-        const postActions = allActions.filter(
-          (a) => a.type === "post" && a.content
-        );
+        // Separate posts from recommendations
+        const posts = allActions
+          .filter((a) => a.type === "post" && a.content)
+          .map((a) => ({
+            id: a.id,
+            content: a.content || "",
+            platform: a.platform,
+            confidence: a.confidence,
+            contentPillar: a.title.split(":")[0]?.replace("🎯 ", ""),
+            hashtags: [],
+            bestTimeToPost: a.scheduledFor,
+            status: "pending" as const,
+          }));
+
+        const recs = allActions
+          .filter((a) => a.type === "recommendation" || !a.content)
+          .map((a) => ({
+            id: a.id,
+            title: a.title,
+            description: a.description,
+            type: a.type,
+            priority: a.impact as "high" | "medium" | "low",
+          }));
+
+        setGeneratedPosts(posts);
+        setRecommendations(recs);
+        setStatusMessage(`Generated ${posts.length} posts`);
+
+        // Save to cache
+        if (accountGroup) {
+          try {
+            accountGroup.cachedAutopilotContent = {
+              generatedAt: new Date().toISOString(),
+              platform: platform,
+              posts: posts,
+              recommendations: recs,
+            };
+          } catch (cacheError) {
+            // Cache save failed, continue anyway
+          }
+        }
+
+        // Prioritize showing ACTUAL POST CONTENT in the dashboard
         const nextActionsToShow =
-          postActions.length > 0
-            ? postActions.slice(0, 3)
+          posts.length > 0
+            ? allActions
+                .filter((a) => a.type === "post" && a.content)
+                .slice(0, 3)
             : allActions.slice(0, 3);
 
         setDashboard((prev) => ({
@@ -540,24 +623,6 @@ export default function GrowthAutopilot({
           nextActions: nextActionsToShow,
           status: "active",
         }));
-
-        // AUTO-EXECUTE: If approval not required, auto-execute high-confidence actions
-        if (!settings.approvals.requireApprovalForPosts && settings.automation.autoExecuteThreshold > 0) {
-          const threshold = settings.automation.autoExecuteThreshold;
-          const highConfidenceActions = allActions.filter(
-            (a) => a.type === "post" && a.content && a.confidence >= threshold
-          );
-          
-          if (highConfidenceActions.length > 0) {
-            // Execute high-confidence actions with delay between each
-            (async () => {
-              for (const action of highConfidenceActions) {
-                await executeAction(action.id);
-                await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
-              }
-            })();
-          }
-        }
 
         setIsLoading(false);
         return;
@@ -592,7 +657,8 @@ export default function GrowthAutopilot({
     }));
 
     setIsLoading(false);
-  }, [platform, settings, shouldGenerateMorePosts, executeAction]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform, settings, shouldGenerateMorePosts]);
 
   const generateGrowthInsights = useCallback(() => {
     // Note: These insights are based on general best practices until real analytics are connected
@@ -643,7 +709,10 @@ export default function GrowthAutopilot({
       if (action.type === "post" && action.content && action.platform) {
         // Validate before sending
         if (!action.content.trim()) {
-          setNotification({ type: "error", message: "Cannot schedule empty content" });
+          setNotification({
+            type: "error",
+            message: "Cannot schedule empty content",
+          });
           setIsLoading(false);
           return;
         }
@@ -921,7 +990,7 @@ export default function GrowthAutopilot({
       case "medium":
         return "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20";
       default:
-        return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20";
+        return "text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20";
     }
   };
 
@@ -941,7 +1010,7 @@ export default function GrowthAutopilot({
   const getInsightColor = (type: string) => {
     switch (type) {
       case "opportunity":
-        return "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20";
+        return "border-lime-200 dark:border-lime-800 bg-lime-50 dark:bg-lime-900/20";
       case "warning":
         return "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20";
       case "success":
@@ -984,7 +1053,7 @@ export default function GrowthAutopilot({
               dashboard.status === "active"
                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                 : isLoading
-                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                 : "bg-muted text-foreground"
             }`}
           >
@@ -1031,11 +1100,11 @@ export default function GrowthAutopilot({
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+        <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg text-center">
+          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
             {dashboard.actionsToday}
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-lime-700 dark:text-lime-300">
             Actions Today
           </p>
         </div>
@@ -1065,30 +1134,47 @@ export default function GrowthAutopilot({
         </div>
       </div>
 
+      {/* Status Message */}
+      {statusMessage && (
+        <div className="mb-4 px-3 py-2 bg-muted rounded-lg text-sm text-muted-foreground flex items-center justify-between">
+          <span>{statusMessage}</span>
+          <button
+            onClick={() => {
+              setStatusMessage("Refreshing...");
+              generateAutopilotActions();
+            }}
+            className="text-lime-600 hover:text-lime-700 font-medium"
+            disabled={isLoading}
+          >
+            {isLoading ? "Generating..." : "Refresh"}
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-6">
-        <div className="flex space-x-1 border-b">
+        <div className="flex space-x-1 border-b overflow-x-auto">
           {[
-            { key: "dashboard", label: "Dashboard" },
+            { key: "dashboard", label: "Overview" },
             {
-              key: "actions",
-              label: `Actions (${
-                pendingActions.filter((a) => a.status === "pending").length
+              key: "posts",
+              label: `Posts (${
+                generatedPosts.filter((p) => p.status === "pending").length
               })`,
             },
             {
-              key: "insights",
-              label: `Insights (${dashboard.insights.length})`,
+              key: "actions",
+              label: `Tips (${recommendations.length})`,
             },
             { key: "settings", label: "Settings" },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-muted-foreground hover:text-muted-foreground"
+                  ? "border-lime-500 text-lime-600 dark:text-lime-400"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {tab.label}
@@ -1181,8 +1267,8 @@ export default function GrowthAutopilot({
 
           {/* Tips & Recommendations (non-content actions) */}
           {dashboard.nextActions.filter((a) => !a.content).length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-3">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+              <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-3">
                 💡 Growth Tips & Recommendations
               </h4>
               <div className="space-y-3">
@@ -1247,7 +1333,7 @@ export default function GrowthAutopilot({
                   <span className="text-sm text-foreground">
                     Posts Scheduled
                   </span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                  <span className="font-bold text-lime-600 dark:text-lime-400">
                     {dashboard.performance.postsScheduled}
                   </span>
                 </div>
@@ -1293,7 +1379,7 @@ export default function GrowthAutopilot({
                   <span className="text-sm text-foreground">
                     Target Growth Rate
                   </span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                  <span className="font-bold text-lime-600 dark:text-lime-400">
                     {settings.goals.followerGrowthTarget}%/month
                   </span>
                 </div>
@@ -1324,10 +1410,222 @@ export default function GrowthAutopilot({
         </div>
       )}
 
-      {/* Actions Tab */}
+      {/* Posts Tab - Generated content ready to publish */}
+      {activeTab === "posts" && (
+        <div className="space-y-4">
+          {generatedPosts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg mb-2">No posts generated yet</p>
+              <p className="text-sm mb-4">
+                Click refresh to generate content based on your brand persona
+              </p>
+              <Button
+                onClick={() => generateAutopilotActions()}
+                disabled={isLoading}
+              >
+                {isLoading ? "Generating..." : "Generate Posts"}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {generatedPosts
+                .filter((p) => p.status === "pending")
+                .map((post) => (
+                  <div
+                    key={post.id}
+                    className="p-4 bg-card border border-border rounded-lg"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-muted text-xs rounded font-medium">
+                          {post.platform}
+                        </span>
+                        {post.contentPillar && (
+                          <span className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 text-xs rounded">
+                            {post.contentPillar}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          post.confidence >= 85
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                            : post.confidence >= 70
+                            ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                        }`}
+                      >
+                        {post.confidence}% confidence
+                      </span>
+                    </div>
+
+                    <div className="bg-muted p-4 rounded-lg mb-4">
+                      <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                        {post.content}
+                      </p>
+                    </div>
+
+                    {post.hashtags && post.hashtags.length > 0 && (
+                      <div className="mb-4 flex flex-wrap gap-1">
+                        {post.hashtags.map((tag: string, i: number) => (
+                          <span
+                            key={i}
+                            className="text-xs text-lime-600 dark:text-lime-400"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {post.bestTimeToPost && (
+                      <p className="text-xs text-muted-foreground mb-4">
+                        🕐 Best time to post: {post.bestTimeToPost}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={async () => {
+                          setStatusMessage(`Scheduling to ${post.platform}...`);
+                          try {
+                            const response = await fetch(
+                              "/api/automation/schedule",
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  content: post.content,
+                                  platform: post.platform,
+                                  profileKey: profileKey,
+                                  autoHashtag: settings.automation.autoHashtags,
+                                  shortenLinks: true,
+                                }),
+                              }
+                            );
+                            if (response.ok) {
+                              setGeneratedPosts((prev) =>
+                                prev.map((p) =>
+                                  p.id === post.id
+                                    ? { ...p, status: "scheduled" }
+                                    : p
+                                )
+                              );
+                              setNotification({
+                                type: "success",
+                                message: `Posted to ${post.platform}!`,
+                              });
+                            } else {
+                              const err = await response.json();
+                              setNotification({
+                                type: "error",
+                                message: err.error || "Failed to schedule",
+                              });
+                            }
+                          } catch (error) {
+                            setNotification({
+                              type: "error",
+                              message: "Failed to schedule post",
+                            });
+                          }
+                          setStatusMessage("");
+                        }}
+                        disabled={isLoading}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Schedule Now
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setGeneratedPosts((prev) =>
+                            prev.map((p) =>
+                              p.id === post.id
+                                ? { ...p, status: "rejected" }
+                                : p
+                            )
+                          );
+                        }}
+                        variant="outline"
+                      >
+                        Skip
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+              {generatedPosts.filter((p) => p.status === "scheduled").length >
+                0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">
+                    ✓ Scheduled (
+                    {
+                      generatedPosts.filter((p) => p.status === "scheduled")
+                        .length
+                    }
+                    )
+                  </h4>
+                  {generatedPosts
+                    .filter((p) => p.status === "scheduled")
+                    .map((post) => (
+                      <div
+                        key={post.id}
+                        className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mb-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-green-700 dark:text-green-300">
+                            ✓ Scheduled to {post.platform}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {post.content.slice(0, 50)}...
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Actions Tab - Recommendations only */}
       {activeTab === "actions" && (
         <div className="space-y-4">
-          {/* Brand-aware content suggestions with accept/reject */}
+          {recommendations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No recommendations available</p>
+              <p className="text-sm mt-1">
+                Tips and suggestions will appear here
+              </p>
+            </div>
+          ) : (
+            recommendations.map((rec) => (
+              <div key={rec.id} className="p-4 border border-border rounded-lg">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💡</span>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-foreground">{rec.title}</h4>
+                    <p className="text-muted-foreground mt-1">
+                      {rec.description}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      rec.priority === "high"
+                        ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                        : rec.priority === "medium"
+                        ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {rec.priority}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Legacy actions for backwards compatibility */}
           {pendingActions
             .filter(
               (action) =>
@@ -1375,7 +1673,7 @@ export default function GrowthAutopilot({
                       <p className="text-foreground mt-1">
                         {action.description}
                       </p>
-                      <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                      <p className="text-sm text-lime-600 dark:text-lime-400 mt-2">
                         💡 {action.reason}
                       </p>
                       {action.content && (
@@ -1401,7 +1699,7 @@ export default function GrowthAutopilot({
                         action.status === "executed"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                           : action.status === "approved"
-                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                          ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                           : action.status === "rejected"
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                           : "bg-muted text-foreground"
@@ -1469,7 +1767,7 @@ export default function GrowthAutopilot({
                   </h4>
                   <p className="text-foreground mt-1">{insight.description}</p>
                   {insight.action && (
-                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
+                    <p className="text-sm font-medium text-lime-600 dark:text-lime-400 mt-2">
                       Recommended Action: {insight.action}
                     </p>
                   )}
@@ -1480,7 +1778,7 @@ export default function GrowthAutopilot({
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                           : insight.priority === "medium"
                           ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                          : "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                          : "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                       }`}
                     >
                       {insight.priority} priority
@@ -1499,41 +1797,79 @@ export default function GrowthAutopilot({
       {/* Settings Tab */}
       {activeTab === "settings" && (
         <div className="space-y-6">
-          {/* Aggressiveness Level */}
+          {/* Posting Mode - Simplified */}
           <div className="p-4 border border-border rounded-lg">
-            <h4 className="font-medium mb-3 text-foreground">
-              Automation Aggressiveness
-            </h4>
-            <div className="flex space-x-4">
-              {(["conservative", "moderate", "aggressive"] as const).map(
-                (level) => (
-                  <label key={level} className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="aggressiveness"
-                      value={level}
-                      checked={settings.aggressiveness === level}
-                      onChange={(e) =>
-                        updateSettings((prev) => ({
-                          ...prev,
-                          aggressiveness: e.target.value as any,
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <span className="capitalize text-foreground">{level}</span>
-                  </label>
-                )
-              )}
+            <h4 className="font-medium mb-3 text-foreground">Posting Mode</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                {
+                  mode: "manual",
+                  label: "Manual",
+                  desc: "I approve every post before it goes live",
+                  icon: "✋",
+                },
+                {
+                  mode: "semi-auto",
+                  label: "Semi-Auto",
+                  desc: "Auto-post high-confidence content, review the rest",
+                  icon: "⚡",
+                },
+                {
+                  mode: "full-auto",
+                  label: "Full Auto",
+                  desc: "Generate and post automatically based on my schedule",
+                  icon: "🚀",
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.mode}
+                  onClick={() => {
+                    const isManual = opt.mode === "manual";
+                    const isFullAuto = opt.mode === "full-auto";
+                    updateSettings((prev) => ({
+                      ...prev,
+                      aggressiveness: isFullAuto
+                        ? "aggressive"
+                        : isManual
+                        ? "conservative"
+                        : "moderate",
+                      approvals: {
+                        ...prev.approvals,
+                        requireApprovalForPosts: isManual,
+                      },
+                      automation: {
+                        ...prev.automation,
+                        autoExecuteThreshold: isFullAuto
+                          ? 70
+                          : isManual
+                          ? 0
+                          : 85,
+                      },
+                    }));
+                  }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    (opt.mode === "manual" &&
+                      settings.approvals.requireApprovalForPosts) ||
+                    (opt.mode === "full-auto" &&
+                      settings.aggressiveness === "aggressive" &&
+                      !settings.approvals.requireApprovalForPosts) ||
+                    (opt.mode === "semi-auto" &&
+                      settings.aggressiveness === "moderate" &&
+                      !settings.approvals.requireApprovalForPosts)
+                      ? "border-lime-500 bg-lime-50 dark:bg-lime-900/20"
+                      : "border-border hover:border-muted-foreground"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">{opt.icon}</span>
+                    <span className="font-medium text-foreground">
+                      {opt.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{opt.desc}</p>
+                </button>
+              ))}
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              {settings.aggressiveness === "conservative" &&
-                "Minimal automation, requires approval for most actions"}
-              {settings.aggressiveness === "moderate" &&
-                "Balanced automation with smart decision making"}
-              {settings.aggressiveness === "aggressive" &&
-                "Maximum automation for rapid growth"}
-            </p>
           </div>
 
           {/* Growth Goals */}
@@ -1627,32 +1963,33 @@ export default function GrowthAutopilot({
               {Object.entries(settings.automation)
                 .filter(([key]) => key !== "autoExecuteThreshold") // Exclude threshold from checkboxes
                 .map(([key, value]) => (
-                <label key={key} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={value as boolean}
-                    onChange={(e) =>
-                      updateSettings((prev) => ({
-                        ...prev,
-                        automation: {
-                          ...prev.automation,
-                          [key]: e.target.checked,
-                        },
-                      }))
-                    }
-                    className="rounded"
-                  />
-                  <span className="capitalize text-foreground">
-                    {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                  </span>
-                </label>
-              ))}
+                  <label key={key} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={value as boolean}
+                      onChange={(e) =>
+                        updateSettings((prev) => ({
+                          ...prev,
+                          automation: {
+                            ...prev.automation,
+                            [key]: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    <span className="capitalize text-foreground">
+                      {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+                    </span>
+                  </label>
+                ))}
             </div>
-            
+
             {/* Auto-Execute Threshold Slider */}
             <div className="mt-4 pt-4 border-t border-border">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Auto-Execute Confidence Threshold: {settings.automation.autoExecuteThreshold}%
+                Auto-Execute Confidence Threshold:{" "}
+                {settings.automation.autoExecuteThreshold}%
               </label>
               <input
                 type="range"

@@ -6,6 +6,8 @@ import { useSubscription } from "@/utils/subscriptionManager";
 import { Card, Text, Badge, Button } from "@radix-ui/themes";
 import { Crown, Users, Lock } from "lucide-react";
 import { ReactNode } from "react";
+import Image from "next/image";
+import { getPlatformIcon, getPlatformLabel } from "@/utils/platformIcons";
 
 // =============================================================================
 // 🎯 PLATFORM ACCOUNT GUARD
@@ -63,13 +65,17 @@ export function PlatformAccountGuard({
       <div className="space-y-3 mb-4">
         <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
-              <Text size="1" weight="bold" className="text-lime-700">
-                {platform.charAt(0).toUpperCase()}
-              </Text>
+            <div className="w-6 h-6 rounded bg-muted flex items-center justify-center p-1">
+              <Image
+                src={getPlatformIcon(platform)}
+                alt={platform}
+                width={16}
+                height={16}
+                className="dark:invert"
+              />
             </div>
-            <Text size="2" weight="medium" className="capitalize">
-              {platform}
+            <Text size="2" weight="medium">
+              {getPlatformLabel(platform)}
             </Text>
           </div>
           <div className="flex items-center gap-2">
@@ -89,11 +95,11 @@ export function PlatformAccountGuard({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <Text size="2" weight="medium" className="text-blue-800 dark:text-blue-300 block mb-1">
+        <div className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+          <Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300 block mb-1">
             💡 What you can do:
           </Text>
-          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+          <ul className="text-sm text-lime-700 dark:text-lime-300 space-y-1">
             <li>• Connect accounts on different platforms</li>
             <li>• Upgrade to Business plan for unlimited accounts per platform</li>
             <li>• Remove an existing {platform} account to add a new one</li>
@@ -208,11 +214,11 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
         })}
       </div>
 
-      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
-        <Text size="2" weight="medium" className="text-blue-800 dark:text-blue-300 block mb-1">
+      <div className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg mb-4">
+        <Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300 block mb-1">
           💡 Platform Strategy Tips
         </Text>
-        <Text size="1" className="text-blue-700 dark:text-blue-300">
+        <Text size="1" className="text-lime-700 dark:text-lime-300">
           Focus on 3-5 platforms where your audience is most active. 
           Quality engagement beats quantity every time!
         </Text>

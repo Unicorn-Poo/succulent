@@ -299,7 +299,7 @@ export default function InstagramProfileView({
                 </Text>
               )}
               {profileInfo?.website && (
-                <Link href={profileInfo.website} target="_blank" className="text-blue-600 dark:text-blue-400 hover:underline">
+                <Link href={profileInfo.website} target="_blank" className="text-lime-600 dark:text-lime-400 hover:underline">
                   <Text size="2" className="flex items-center gap-1">
                     {profileInfo.website}
                     <ExternalLink className="w-3 h-3" />
@@ -313,7 +313,7 @@ export default function InstagramProfileView({
               {onCreatePost && (
                 <Button
                   onClick={() => onCreatePost('instagram')}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  className="flex-1 bg-lime-500 hover:bg-lime-600 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Post
@@ -331,7 +331,7 @@ export default function InstagramProfileView({
 
         {/* Sync Results */}
         {syncResults && (
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mt-4 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
             <Text size="2" color="blue">{syncResults}</Text>
           </div>
         )}
@@ -423,7 +423,7 @@ export default function InstagramProfileView({
                 {onCreatePost && (
                   <Button
                     onClick={() => onCreatePost('instagram')}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    className="bg-lime-500 hover:bg-lime-600 text-white"
                   >
                     Share your first photo
                   </Button>

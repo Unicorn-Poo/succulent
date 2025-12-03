@@ -32,7 +32,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
   const getCategoryColor = () => {
     switch (category) {
       case 'trending': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
-      case 'relevant': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      case 'relevant': return 'bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-800';
       case 'competitive': return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
       default: return 'bg-muted text-foreground border-border';
     }

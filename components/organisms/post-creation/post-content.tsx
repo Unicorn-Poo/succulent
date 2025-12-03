@@ -176,7 +176,7 @@ export const PostContent = ({
 					{/* Character count and thread indicator */}
 					<div className="absolute bottom-3 right-3 flex items-center space-x-2">
 						{(isImplicitThread || isExplicitThread) && (
-							<div className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 dark:text-blue-400 px-2 py-1 rounded-full text-xs">
+							<div className="flex items-center bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 dark:text-lime-400 px-2 py-1 rounded-full text-xs">
 								<FileText className="w-3 h-3 mr-1" />
 								Thread
 							</div>

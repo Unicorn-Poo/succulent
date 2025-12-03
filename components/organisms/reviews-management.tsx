@@ -428,7 +428,7 @@ export default function ReviewsManagement({ profileKey, brandPersona }: ReviewsM
 
                 {/* Existing Reply */}
                 {review.replied && review.replyContent && (
-                  <div className="ml-6 p-3 bg-muted rounded-lg border-l-2 border-blue-500">
+                  <div className="ml-6 p-3 bg-muted rounded-lg border-l-2 border-lime-500">
                     <Text size="1" color="gray" className="block mb-1">
                       Your Reply ({review.replyTimestamp && formatDate(review.replyTimestamp)})
                     </Text>
@@ -527,7 +527,7 @@ export default function ReviewsManagement({ profileKey, brandPersona }: ReviewsM
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Write your reply..."
                   rows={4}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-lime-500"
                 />
               </div>
 

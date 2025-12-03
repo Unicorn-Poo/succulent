@@ -429,7 +429,7 @@ export default function CSVPostUpload({
 
         <div className="space-y-6 mt-4">
           {/* Template Section */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <Text size="3" weight="medium" className="block mb-1">

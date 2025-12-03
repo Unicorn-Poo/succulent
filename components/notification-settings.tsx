@@ -185,17 +185,17 @@ export const NotificationSettings = ({ accountGroup }: NotificationSettingsProps
         {isEditing && (
           <div className="space-y-6">
             {/* Setup Instructions */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg">
               <div className="flex items-start gap-3">
-                <ExternalLink className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <ExternalLink className="w-5 h-5 text-lime-600 dark:text-lime-400 mt-0.5" />
                 <div>
-                  <Text size="2" weight="medium" className="text-blue-900 block mb-2">
+                  <Text size="2" weight="medium" className="text-lime-900 block mb-2">
                     Pushover Setup Required
                   </Text>
-                  <Text size="2" className="text-blue-800 dark:text-blue-300 mb-3 block">
+                  <Text size="2" className="text-lime-800 dark:text-lime-300 mb-3 block">
                     To receive notifications, you&apos;ll need a Pushover account and app token:
                   </Text>
-                  <ol className="text-sm text-blue-800 dark:text-blue-300 space-y-1 ml-4">
+                  <ol className="text-sm text-lime-800 dark:text-lime-300 space-y-1 ml-4">
                     <li>1. Sign up at <a href="https://pushover.net" target="_blank" rel="noopener noreferrer" className="underline">pushover.net</a></li>
                     <li>2. Create an application to get your API Token</li>
                     <li>3. Find your User Key in your account dashboard</li>

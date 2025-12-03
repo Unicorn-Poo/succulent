@@ -428,7 +428,7 @@ function UsersTab() {
                         user.tier === "free"
                           ? "bg-muted text-foreground"
                           : user.tier === "premium"
-                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                          ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                           : user.tier === "business"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                           : "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"
@@ -456,7 +456,7 @@ function UsersTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEditUser(user)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      className="text-lime-600 hover:text-lime-900 mr-3"
                     >
                       Edit
                     </button>
@@ -569,7 +569,7 @@ function UsersTab() {
               </button>
               <button
                 onClick={handleUpdateUser}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-lime-600 rounded-md hover:bg-lime-700"
               >
                 Update User
               </button>
@@ -728,7 +728,7 @@ function SubscriptionsTab() {
                         subscription.plan === "Free"
                           ? "bg-muted text-foreground"
                           : subscription.plan === "Premium"
-                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                          ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                           : subscription.plan === "Business"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                           : "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"

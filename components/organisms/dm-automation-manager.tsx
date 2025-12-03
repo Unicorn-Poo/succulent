@@ -295,7 +295,7 @@ export default function DMAutomationManager({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -309,7 +309,7 @@ export default function DMAutomationManager({
       {activeTab === 'conversations' && (
         <div>
           {selectedConversations.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="mb-4 p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-foreground">{selectedConversations.length} conversations selected</span>
                 <div className="flex items-center space-x-2">
@@ -338,7 +338,7 @@ export default function DMAutomationManager({
               <div
                 key={conversation.id}
                 className={`p-4 border rounded-lg ${
-                  selectedConversations.includes(conversation.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border'
+                  selectedConversations.includes(conversation.id) ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20' : 'border-border'
                 }`}
               >
                 <div className="flex items-start space-x-3">
@@ -470,7 +470,7 @@ export default function DMAutomationManager({
                   <h4 className="font-medium text-foreground">{campaign.name}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     campaign.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                    campaign.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                    campaign.status === 'active' ? 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300' :
                     campaign.status === 'paused' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
                     'bg-muted text-foreground'
                   }`}>
@@ -480,7 +480,7 @@ export default function DMAutomationManager({
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{campaign.targets.length}</p>
+                    <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">{campaign.targets.length}</p>
                     <p className="text-xs text-muted-foreground">Targets</p>
                   </div>
                   <div className="text-center">
@@ -526,7 +526,7 @@ export default function DMAutomationManager({
                   <div
                     key={template.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedTemplate === template.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-border'
+                      selectedTemplate === template.id ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20' : 'border-border hover:border-border'
                     }`}
                     onClick={() => setSelectedTemplate(template.id)}
                   >

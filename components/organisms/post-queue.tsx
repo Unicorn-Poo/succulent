@@ -222,7 +222,7 @@ export default function PostQueue({
         );
       case "approved":
         return (
-          <span className="px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+          <span className="px-2 py-1 rounded-full text-xs bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300">
             Approved
           </span>
         );

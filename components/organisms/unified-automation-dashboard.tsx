@@ -220,7 +220,7 @@ export default function UnifiedAutomationDashboard({
     switch (type) {
       case "post":
       case "schedule":
-        return "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400";
+        return "bg-lime-100 dark:bg-lime-900/30 text-lime-600 dark:text-lime-400";
       case "reply":
         return "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400";
       case "dm":
@@ -413,14 +413,14 @@ export default function UnifiedAutomationDashboard({
 
       {/* Today's Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
+        <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg text-center">
           <div className="flex items-center justify-center mb-2">
-            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Clock className="w-5 h-5 text-lime-600 dark:text-lime-400" />
           </div>
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
             {metrics.today.postsScheduled}
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-lime-700 dark:text-lime-300">
             Posts Scheduled
           </p>
         </div>
@@ -473,14 +473,14 @@ export default function UnifiedAutomationDashboard({
           </p>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg text-center border border-blue-200 dark:border-blue-800">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg text-center border border-lime-200 dark:border-lime-800">
           <div className="flex items-center justify-center mb-2">
-            <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Activity className="w-5 h-5 text-lime-600 dark:text-lime-400" />
           </div>
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
             {metrics.today.totalActions}
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-lime-700 dark:text-lime-300">
             Total Actions
           </p>
         </div>
@@ -502,16 +502,16 @@ export default function UnifiedAutomationDashboard({
           </p>
         </div>
 
-        <div className="bg-card border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">
+        <div className="bg-card border border-lime-200 dark:border-lime-800 p-4 rounded-lg">
+          <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">
             Engagement Boost
           </h4>
-          <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">
+          <p className="text-3xl font-bold text-lime-900 dark:text-lime-300">
             {metrics.thisWeek.engagementIncrease > 0
               ? `${metrics.thisWeek.engagementIncrease.toFixed(1)}%`
               : "—"}
           </p>
-          <p className="text-sm text-blue-600 dark:text-blue-400">
+          <p className="text-sm text-lime-600 dark:text-lime-400">
             {metrics.thisWeek.engagementIncrease > 0
               ? "vs last week"
               : "No data yet"}
@@ -626,7 +626,7 @@ export default function UnifiedAutomationDashboard({
                 }
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   activeFilter === filter.key
-                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                    ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >

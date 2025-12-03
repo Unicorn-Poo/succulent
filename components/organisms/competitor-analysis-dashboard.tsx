@@ -171,12 +171,12 @@ export default function CompetitorAnalysisDashboard({
             {competitors.map(competitor => (
               <span
                 key={competitor}
-                className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center space-x-1"
+                className="px-3 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-sm flex items-center space-x-1"
               >
                 <span>@{competitor}</span>
                 <button
                   onClick={() => removeCompetitor(competitor)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300"
+                  className="text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300"
                 >
                   ✕
                 </button>
@@ -188,7 +188,7 @@ export default function CompetitorAnalysisDashboard({
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
           <span className="ml-2 text-muted-foreground">Analyzing competitors...</span>
         </div>
       )}
@@ -209,7 +209,7 @@ export default function CompetitorAnalysisDashboard({
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      ? 'border-lime-500 text-lime-600 dark:text-lime-400'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -224,12 +224,12 @@ export default function CompetitorAnalysisDashboard({
             <div className="space-y-6">
               {/* Your Performance vs Competitors */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Your Engagement Rate</h4>
-                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+                <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+                  <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">Your Engagement Rate</h4>
+                  <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
                     {analysis.yourMetrics.engagementRate}%
                   </p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="text-sm text-lime-700 dark:text-lime-300">
                     vs {(analysis.competitors.reduce((sum, c) => sum + c.metrics.engagementRate, 0) / analysis.competitors.length).toFixed(1)}% avg
                   </p>
                 </div>
@@ -284,7 +284,7 @@ export default function CompetitorAnalysisDashboard({
                   <ul className="space-y-2">
                     {analysis.insights.commonStrategies.map((strategy, index) => (
                       <li key={index} className="flex items-start space-x-2 text-sm">
-                        <span className="text-blue-500 mt-1">•</span>
+                        <span className="text-lime-500 mt-1">•</span>
                         <span>{strategy}</span>
                       </li>
                     ))}
@@ -319,12 +319,12 @@ export default function CompetitorAnalysisDashboard({
                     )}
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       selectedCompetitor === comp.competitor.username
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                        ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300'
                         : 'border-border hover:border-border'
                     }`}
                   >
                     @{comp.competitor.username}
-                    {comp.competitor.verified && <span className="ml-1 text-blue-500">✓</span>}
+                    {comp.competitor.verified && <span className="ml-1 text-lime-500">✓</span>}
                   </button>
                 ))}
               </div>
@@ -352,7 +352,7 @@ export default function CompetitorAnalysisDashboard({
                             <div>
                               <h4 className="font-bold text-lg">
                                 {comp.competitor.displayName}
-                                {comp.competitor.verified && <span className="ml-2 text-blue-500">✓</span>}
+                                {comp.competitor.verified && <span className="ml-2 text-lime-500">✓</span>}
                               </h4>
                               <p className="text-muted-foreground">@{comp.competitor.username}</p>
                               <p className="text-sm text-muted-foreground mt-1">{comp.competitor.bio}</p>
@@ -361,7 +361,7 @@ export default function CompetitorAnalysisDashboard({
 
                           <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">
                                 {formatNumber(comp.competitor.followersCount)}
                               </p>
                               <p className="text-sm text-muted-foreground">Followers</p>
@@ -383,9 +383,9 @@ export default function CompetitorAnalysisDashboard({
 
                         {/* Metrics */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{comp.metrics.engagementRate}%</p>
-                            <p className="text-sm text-blue-700 dark:text-blue-300">Engagement Rate</p>
+                          <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">{comp.metrics.engagementRate}%</p>
+                            <p className="text-sm text-lime-700 dark:text-lime-300">Engagement Rate</p>
                           </div>
                           <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                             <p className="text-2xl font-bold text-green-900 dark:text-green-300">{formatNumber(comp.metrics.avgLikes)}</p>
@@ -408,7 +408,7 @@ export default function CompetitorAnalysisDashboard({
                             {comp.metrics.topHashtags.slice(0, 10).map(hashtag => (
                               <span
                                 key={hashtag.hashtag}
-                                className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm"
+                                className="px-3 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-sm"
                               >
                                 #{hashtag.hashtag} ({formatNumber(hashtag.avgEngagement)} avg)
                               </span>
@@ -530,7 +530,7 @@ export default function CompetitorAnalysisDashboard({
                     <h5 className="font-medium mb-2">Best Posting Times</h5>
                     <div className="flex flex-wrap gap-2">
                       {comp.metrics.bestPostingTimes.map(time => (
-                        <span key={time} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-sm">
+                        <span key={time} className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded text-sm">
                           {time}
                         </span>
                       ))}

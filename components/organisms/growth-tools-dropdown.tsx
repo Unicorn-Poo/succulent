@@ -180,7 +180,7 @@ export default function GrowthToolsDropdown({
     switch (impact) {
       case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
       case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      default: return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
+      default: return 'text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20';
     }
   };
 
@@ -227,9 +227,9 @@ export default function GrowthToolsDropdown({
   return (
     <div className="space-y-6">
       {/* Growth Tools Overview */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-lime-600 rounded-lg flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -244,7 +244,7 @@ export default function GrowthToolsDropdown({
             <p className="text-sm text-muted-foreground">Engagement Increase</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">2-5x</p>
+            <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">2-5x</p>
             <p className="text-sm text-muted-foreground">Faster Growth Rate</p>
           </div>
           <div className="text-center">
@@ -312,13 +312,13 @@ export default function GrowthToolsDropdown({
           <h4 className="font-medium text-foreground mb-3">🎯 Quick Start Recommendations</h4>
           <div className="space-y-3">
             <div 
-              className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:bg-blue-900/30 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg cursor-pointer hover:bg-lime-100 dark:bg-lime-900/30 transition-colors"
               onClick={() => onToolSelect?.('dashboard')}
             >
-              <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />
               <div>
-                <p className="font-medium text-blue-800 dark:text-blue-300">View Activity Dashboard</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">Monitor all automated actions</p>
+                <p className="font-medium text-lime-800 dark:text-lime-300">View Activity Dashboard</p>
+                <p className="text-sm text-lime-600 dark:text-lime-400">Monitor all automated actions</p>
               </div>
             </div>
             
@@ -334,13 +334,13 @@ export default function GrowthToolsDropdown({
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:bg-blue-900/30 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg cursor-pointer hover:bg-lime-100 dark:bg-lime-900/30 transition-colors"
                 onClick={() => onToolSelect?.('comments')}
             >
-              <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <MessageCircle className="w-5 h-5 text-lime-600 dark:text-lime-400" />
               <div>
-                <p className="font-medium text-blue-800 dark:text-blue-300">Enable Comment Automation</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">24/7 community engagement</p>
+                <p className="font-medium text-lime-800 dark:text-lime-300">Enable Comment Automation</p>
+                <p className="text-sm text-lime-600 dark:text-lime-400">24/7 community engagement</p>
               </div>
             </div>
             

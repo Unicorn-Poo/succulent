@@ -142,7 +142,7 @@ export default function HashtagResearchDashboard({
           key={index}
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag.hashtag)
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20'
               : 'border-border hover:border-border'
           }`}
           onClick={() => handleHashtagToggle(hashtag.hashtag)}
@@ -189,7 +189,7 @@ export default function HashtagResearchDashboard({
           key={index}
           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
             selectedHashtags.includes(hashtag)
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20'
               : 'border-border hover:border-border'
           }`}
           onClick={() => handleHashtagToggle(hashtag)}
@@ -231,7 +231,7 @@ export default function HashtagResearchDashboard({
       )}
 
       {selectedHashtags.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="mb-6 p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium text-foreground">Selected Hashtags ({selectedHashtags.length})</span>
             <Button onClick={handleCopyHashtags} size="sm" variant="outline">
@@ -242,7 +242,7 @@ export default function HashtagResearchDashboard({
             {selectedHashtags.map(hashtag => (
               <span
                 key={hashtag}
-                className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-sm cursor-pointer"
+                className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded text-sm cursor-pointer"
                 onClick={() => handleHashtagToggle(hashtag)}
               >
                 #{hashtag} ✕
@@ -298,7 +298,7 @@ export default function HashtagResearchDashboard({
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      ? 'border-lime-500 text-lime-600 dark:text-lime-400'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -320,7 +320,7 @@ export default function HashtagResearchDashboard({
 
       {isLoading && (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
           <span className="ml-2 text-muted-foreground">Researching hashtags...</span>
         </div>
       )}

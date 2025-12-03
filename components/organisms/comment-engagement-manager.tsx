@@ -224,7 +224,7 @@ export default function CommentEngagementManager({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -238,7 +238,7 @@ export default function CommentEngagementManager({
       {activeTab === 'comments' && (
         <div>
           {selectedComments.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="mb-4 p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-foreground">{selectedComments.length} comments selected</span>
                 <Button 
@@ -257,7 +257,7 @@ export default function CommentEngagementManager({
               <div
                 key={comment.id}
                 className={`p-4 border rounded-lg ${
-                  selectedComments.includes(comment.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border'
+                  selectedComments.includes(comment.id) ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20' : 'border-border'
                 } ${comment.isSpam ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-start space-x-3">
@@ -383,9 +383,9 @@ export default function CommentEngagementManager({
       {activeTab === 'metrics' && metrics && (
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-800 dark:text-blue-300">Total Comments</h4>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{metrics.totalComments}</p>
+            <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-lime-800 dark:text-lime-300">Total Comments</h4>
+              <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">{metrics.totalComments}</p>
             </div>
             
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">

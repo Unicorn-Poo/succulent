@@ -186,7 +186,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
   if (loading && !analytics) {
     return (
       <div className="mt-6 text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600 mb-4"></div>
         <Text size="2" color="gray">Loading analytics for {account.platform}...</Text>
       </div>
     );
@@ -261,9 +261,9 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-lime-200 dark:border-lime-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-lime-500 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>

@@ -878,12 +878,14 @@ export const AccountGroup = co.map({
     z.object({
       enabled: z.boolean(),
       aggressiveness: z.enum(["conservative", "moderate", "aggressive"]),
+      postingMode: z.optional(z.enum(["manual", "semi-auto", "full-auto"])),
       automation: z.object({
         autoReply: z.boolean(),
         autoDM: z.boolean(),
         autoSchedule: z.boolean(),
         autoHashtags: z.boolean(),
         autoContent: z.boolean(),
+        autoExecuteThreshold: z.optional(z.number()),
       }),
       approvals: z.object({
         requireApprovalForPosts: z.boolean(),
@@ -894,7 +896,37 @@ export const AccountGroup = co.map({
         followerGrowthTarget: z.number(),
         engagementRateTarget: z.number(),
         postsPerWeek: z.number(),
+        postsPerDayPerPlatform: z.optional(z.number()),
       }),
+    })
+  ),
+
+  // 📦 Cached Autopilot Content - avoid regenerating on every page load
+  cachedAutopilotContent: z.optional(
+    z.object({
+      generatedAt: z.string(),
+      platform: z.string(),
+      posts: z.array(
+        z.object({
+          id: z.string(),
+          content: z.string(),
+          platform: z.string(),
+          confidence: z.number(),
+          contentPillar: z.optional(z.string()),
+          hashtags: z.optional(z.array(z.string())),
+          bestTimeToPost: z.optional(z.string()),
+          status: z.enum(["pending", "approved", "scheduled", "rejected"]),
+        })
+      ),
+      recommendations: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          description: z.string(),
+          type: z.string(),
+          priority: z.enum(["high", "medium", "low"]),
+        })
+      ),
     })
   ),
 });

@@ -7,6 +7,8 @@ import { PlatformPreview } from "@/components/organisms/platform-previews";
 import { Post, PostVariant, ReplyTo, MediaItem, ImageMedia, VideoMedia } from '@/app/schema';
 import { co, z } from 'jazz-tools';
 import { syncProfileAvatar } from '@/utils/ayrshareSync';
+import Image from 'next/image';
+import { getPlatformIcon, getPlatformLabel } from '@/utils/platformIcons';
 
 // =============================================================================
 // 📱 PLATFORM FEED VIEW WITH HISTORICAL DATA
@@ -495,12 +497,18 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
       {/* Feed Header */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
-          <div className="w-8 h-8 bg-lime-100 dark:bg-lime-900/30 rounded-lg flex items-center justify-center">
-            <Text size="2" weight="bold">{account.platform?.charAt(0).toUpperCase()}</Text>
+          <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center p-1.5">
+            <Image
+              src={getPlatformIcon(account.platform || "")}
+              alt={account.platform || "Platform"}
+              width={20}
+              height={20}
+              className="dark:invert"
+            />
           </div>
           <div>
             <Text size="3" weight="medium">{account.name}</Text>
-            <Text size="2" color="gray" className="capitalize">{account.platform} Feed</Text>
+            <Text size="2" color="gray">{getPlatformLabel(account.platform || "")} Feed</Text>
           </div>
         </div>
       </div>
@@ -539,7 +547,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
                 <div key={post.ayrshareId || post.id} className="relative">
                   {/* Historical post indicator */}
                   <div className="absolute top-2 right-2 z-10">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                    <div className="bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 px-2 py-1 rounded-full text-xs flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {formatDate(post.created)}
                     </div>

@@ -579,7 +579,7 @@ export default function APIKeyManagement() {
                       {key.permissions.map((permission) => (
                         <span
                           key={permission}
-                          className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-md"
+                          className="px-2 py-1 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 text-xs rounded-md"
                         >
                           {permission}
                         </span>

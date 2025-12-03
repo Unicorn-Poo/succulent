@@ -263,7 +263,7 @@ export default function ContentSuggestionCard({
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full p-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             rows={6}
             placeholder="Edit the content..."
           />
@@ -279,7 +279,7 @@ export default function ContentSuggestionCard({
             {hashtags.map((tag, i) => (
               <span
                 key={i}
-                className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full"
+                className="text-xs px-2 py-1 bg-lime-50 dark:bg-lime-900/20 text-lime-600 dark:text-lime-400 rounded-full"
               >
                 #{tag}
               </span>
@@ -448,7 +448,7 @@ export default function ContentSuggestionCard({
                 <Button
                   onClick={handleSchedule}
                   size="1"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-lime-600 hover:bg-lime-700"
                   disabled={isSubmitting}
                 >
                   <Calendar className="w-4 h-4 mr-1" />

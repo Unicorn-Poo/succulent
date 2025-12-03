@@ -228,3 +228,53 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Radix UI Tabs - Dark Mode Fix with Lime Accent */
+.rt-TabsList {
+  background: transparent !important;
+}
+
+.rt-TabsTrigger {
+  color: var(--muted-foreground) !important;
+  border-bottom: 2px solid transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+.rt-TabsTrigger:hover {
+  color: var(--foreground) !important;
+  background: var(--muted) !important;
+}
+
+.rt-TabsTrigger[data-state="active"] {
+  color: rgb(163 230 53) !important; /* Lime-400 */
+  border-bottom-color: rgb(163 230 53) !important;
+  background: transparent !important;
+}
+
+.dark .rt-TabsTrigger[data-state="active"],
+@media (prefers-color-scheme: dark) {
+  .rt-TabsTrigger[data-state="active"] {
+    color: rgb(190 242 100) !important; /* Lime-300 for better visibility */
+    border-bottom-color: rgb(190 242 100) !important;
+  }
+}
+
+/* Fix Radix Select and other components in dark mode */
+.dark .rt-SelectTrigger,
+.dark .rt-TextFieldInput,
+.dark .rt-TextAreaInput {
+  color: var(--foreground) !important;
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+/* Ensure text is readable in dark mode for all Radix components */
+.dark .rt-Text,
+.dark .rt-Heading,
+.dark .rt-Link {
+  color: var(--foreground);
+}
+
+.dark .rt-Text[data-accent-color] {
+  color: rgb(190 242 100); /* Lime accent in dark mode */
+}

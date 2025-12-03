@@ -432,13 +432,13 @@ Return ONLY the JSON, no additional text or markdown.`;
           {defaultPersonas.map(persona => (
             <div
               key={persona.id}
-              className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-muted"
+              className="p-4 border border-border rounded-lg hover:border-lime-300 dark:hover:border-lime-600 cursor-pointer transition-colors dark:bg-muted"
               onClick={() => handleUseTemplate(persona.id)}
             >
               <h4 className="font-medium text-foreground mb-2">{persona.name}</h4>
               <p className="text-sm text-muted-foreground mb-3">{persona.description}</p>
               <div className="flex items-center space-x-2 text-xs">
-                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
+                <span className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full">
                   {persona.voice.tone}
                 </span>
                 <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full">
@@ -575,9 +575,9 @@ Return ONLY the JSON, no additional text or markdown.`;
         <div className="space-y-6">
           {/* Quick Examples */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">🚀 Quick Setup (30 seconds)</h4>
-              <p className="text-sm text-blue-600 dark:text-blue-400 dark:text-blue-400 mb-3">Just fill in the basics and get a simple prompt</p>
+            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+              <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">🚀 Quick Setup (30 seconds)</h4>
+              <p className="text-sm text-lime-600 dark:text-lime-400 dark:text-lime-400 mb-3">Just fill in the basics and get a simple prompt</p>
               <div className="space-y-3">
                 <Input
                   placeholder="Brand name (e.g., 'Wellness With Sarah')"
@@ -624,7 +624,7 @@ Return ONLY the JSON, no additional text or markdown.`;
               {promptExamples.slice(0, 4).map((example, index) => (
                 <div
                   key={index}
-                  className="p-4 border border-border rounded-lg hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors dark:bg-muted"
+                  className="p-4 border border-border rounded-lg hover:border-lime-300 dark:hover:border-lime-600 cursor-pointer transition-colors dark:bg-muted"
                   onClick={() => handleUseExample(example)}
                 >
                   <h5 className="font-medium text-foreground mb-2">{example.brandName}</h5>
@@ -711,8 +711,8 @@ Return ONLY the JSON, no additional text or markdown.`;
               <pre className="text-sm whitespace-pre-wrap text-foreground">{generatedPrompt}</pre>
             </div>
             
-            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="mt-3 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+              <p className="text-sm text-lime-700 dark:text-lime-300">
                 <strong>Instructions:</strong>
                 1. Copy the prompt above
                 2. Paste it into ChatGPT
@@ -866,9 +866,9 @@ Return ONLY the JSON, no additional text or markdown.`;
           // Display Mode
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <h4 className="font-medium text-blue-800 dark:text-blue-300">Voice Tone</h4>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 capitalize">{currentPersona.voice.tone}</p>
+              <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+                <h4 className="font-medium text-lime-800 dark:text-lime-300">Voice Tone</h4>
+                <p className="text-2xl font-bold text-lime-900 dark:text-lime-100 capitalize">{currentPersona.voice.tone}</p>
               </div>
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <h4 className="font-medium text-green-800 dark:text-green-300">Writing Style</h4>
@@ -889,7 +889,7 @@ Return ONLY the JSON, no additional text or markdown.`;
                 <h4 className="font-medium mb-3 dark:text-foreground">Content Pillars</h4>
                 <div className="flex flex-wrap gap-2">
                   {currentPersona.messaging.contentPillars.map(pillar => (
-                    <span key={pillar} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm">
+                    <span key={pillar} className="px-3 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-sm">
                       {pillar}
                     </span>
                   ))}
@@ -1143,9 +1143,9 @@ Return ONLY the JSON, no additional text or markdown.`;
         )}
 
         {/* AI Integration Notice */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">🤖 AI Integration</h4>
-          <p className="text-sm text-blue-700 dark:text-blue-300 dark:text-blue-400">
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+          <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">🤖 AI Integration</h4>
+          <p className="text-sm text-lime-700 dark:text-lime-300 dark:text-lime-400">
             This persona will guide all AI automation tools including auto-replies, content generation, 
             hashtag selection, and DM campaigns to ensure consistent brand voice across all platforms.
           </p>

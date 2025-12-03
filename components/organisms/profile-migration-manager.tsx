@@ -243,10 +243,10 @@ export default function ProfileMigrationManager({
           </div>
 
           {/* Info */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
             <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div className="text-sm text-blue-800 dark:text-blue-300">
+              <Info className="w-4 h-4 text-lime-600 dark:text-lime-400 mt-0.5" />
+              <div className="text-sm text-lime-800 dark:text-lime-300">
                 <Text size="2" weight="medium" className="block mb-1">Business Plan Upgrade</Text>
                 <Text size="2">
                   To use Business Plan features, each account group needs an Ayrshare user profile. 
@@ -282,7 +282,7 @@ export default function ProfileMigrationManager({
                     
                     <div className="flex items-center gap-2">
                       {status === 'creating' && (
-                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <div className="flex items-center gap-2 text-lime-600 dark:text-lime-400">
                           <RefreshCw className="w-4 h-4 animate-spin" />
                           <Text size="1">Creating...</Text>
                         </div>
@@ -404,8 +404,8 @@ export default function ProfileMigrationManager({
             </div>
 
             {isLoadingProfiles && (
-              <div className="flex items-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
-                <RefreshCw className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="flex items-center gap-2 p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg mb-4">
+                <RefreshCw className="w-4 h-4 animate-spin text-lime-600 dark:text-lime-400" />
                 <Text size="2" color="blue">Loading profiles...</Text>
               </div>
             )}

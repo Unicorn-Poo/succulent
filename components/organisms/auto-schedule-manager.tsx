@@ -348,7 +348,7 @@ export default function AutoScheduleManager({
       case 'posted': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'failed': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
       case 'cancelled': return 'bg-muted text-foreground';
-      default: return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+      default: return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
     }
   };
 
@@ -385,7 +385,7 @@ export default function AutoScheduleManager({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -600,9 +600,9 @@ export default function AutoScheduleManager({
         <div className="space-y-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">{metrics.totalRules}</p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Total Rules</p>
+            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg text-center">
+              <p className="text-3xl font-bold text-lime-900 dark:text-lime-300">{metrics.totalRules}</p>
+              <p className="text-sm text-lime-700 dark:text-lime-300">Total Rules</p>
             </div>
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
               <p className="text-3xl font-bold text-green-900 dark:text-green-300">{metrics.activeRules}</p>
@@ -620,20 +620,20 @@ export default function AutoScheduleManager({
 
           {/* Next Scheduled Post */}
           {metrics.nextScheduledPost && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Next Scheduled Post</h4>
+            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+              <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">Next Scheduled Post</h4>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">{metrics.nextScheduledPost.title}</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="text-sm text-lime-700 dark:text-lime-300">
                     {formatDateTime(metrics.nextScheduledPost.scheduledDate)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                  <p className="text-sm text-lime-600 dark:text-lime-400">
                     {metrics.nextScheduledPost.engagementPotential}% potential
                   </p>
-                  <p className="text-xs text-blue-500">
+                  <p className="text-xs text-lime-500">
                     {metrics.nextScheduledPost.platforms.join(', ')}
                   </p>
                 </div>
@@ -683,7 +683,7 @@ export default function AutoScheduleManager({
             <h4 className="font-medium mb-3">Optimal Times for {platform}</h4>
             <div className="flex flex-wrap gap-2">
               {optimalTimes.map(time => (
-                <span key={time} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm">
+                <span key={time} className="px-3 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-sm">
                   {time}
                 </span>
               ))}

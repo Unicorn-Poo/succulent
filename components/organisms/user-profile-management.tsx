@@ -229,7 +229,7 @@ export default function UserProfileManagement({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <User className="w-4 h-4 text-lime-600 dark:text-lime-400" />
                       <Text size="3" weight="medium">{profile.title}</Text>
                     </div>
                     <Badge 
@@ -352,13 +352,13 @@ export default function UserProfileManagement({
                 value={newProfileTitle}
                 onChange={(e) => setNewProfileTitle(e.target.value)}
                 placeholder="e.g., Client Name or Project Name"
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
                 disabled={isCreating}
               />
             </div>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <Text size="2" className="text-blue-800 dark:text-blue-300">
+            <div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+              <Text size="2" className="text-lime-800 dark:text-lime-300">
                 <strong>Note:</strong> Each profile gets its own set of social media accounts and analytics data.
               </Text>
             </div>
@@ -388,14 +388,14 @@ export default function UserProfileManagement({
 
       {/* Info Card */}
       <Card>
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
           <div className="flex items-start gap-3">
-            <Key className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <Key className="w-5 h-5 text-lime-600 dark:text-lime-400 mt-0.5" />
             <div className="flex-1">
-              <Text size="2" weight="medium" className="block mb-1 text-blue-800 dark:text-blue-300">
+              <Text size="2" weight="medium" className="block mb-1 text-lime-800 dark:text-lime-300">
                 About Profile Keys
               </Text>
-              <Text size="2" className="text-blue-700 dark:text-blue-300 mb-3">
+              <Text size="2" className="text-lime-700 dark:text-lime-300 mb-3">
                 Profile Keys are unique identifiers that allow you to manage multiple sets of social media accounts. 
                 Each profile operates independently with its own analytics and settings.
               </Text>

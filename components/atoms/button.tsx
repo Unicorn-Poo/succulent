@@ -43,10 +43,10 @@ const intentStyles = {
     ghost: 'text-amber-600 hover:bg-amber-50 bg-transparent border-transparent dark:text-amber-400 dark:hover:bg-amber-900/30'
   },
   info: {
-    solid: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white border-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600',
-    soft: 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 text-blue-800 dark:text-blue-300 border-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-900/30',
-    outline: 'border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900/20 bg-transparent dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/30',
-    ghost: 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:bg-blue-900/20 bg-transparent border-transparent dark:text-blue-400 dark:hover:bg-blue-900/30'
+    solid: 'bg-lime-600 hover:bg-lime-700 active:bg-lime-800 text-white border-lime-600 dark:bg-lime-500 dark:hover:bg-lime-600',
+    soft: 'bg-lime-100 dark:bg-lime-900/30 hover:bg-lime-200 text-lime-800 dark:text-lime-300 border-lime-100 dark:bg-lime-900/30 dark:hover:bg-lime-900/50 dark:text-lime-300 dark:border-lime-900/30',
+    outline: 'border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50 dark:bg-lime-900/20 bg-transparent dark:border-lime-400 dark:text-lime-400 dark:hover:bg-lime-900/30',
+    ghost: 'text-lime-600 dark:text-lime-400 hover:bg-lime-50 dark:bg-lime-900/20 bg-transparent border-transparent dark:text-lime-400 dark:hover:bg-lime-900/30'
   },
   light: {
     solid: 'bg-muted hover:bg-muted/80 active:bg-muted-foreground/30 text-foreground border-border',
@@ -99,7 +99,7 @@ export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
             'focus:ring-green-500': intent === 'success',
             'focus:ring-red-500': intent === 'danger',
             'focus:ring-amber-500': intent === 'warning',
-            'focus:ring-blue-500': intent === 'info',
+            'focus:ring-lime-500': intent === 'info',
             'focus:ring-gray-300': intent === 'light',
             'focus:ring-gray-700': intent === 'dark',
           },

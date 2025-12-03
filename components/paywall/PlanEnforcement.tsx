@@ -315,14 +315,14 @@ export function MultiMediaGuard({ children }: { children: ReactNode }) {
     <PlanEnforcement 
       feature="multiple-media"
       fallback={
-        <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="p-4 bg-lime-50 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800">
           <div className="flex items-center gap-2 mb-2">
-            <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <Text size="2" weight="bold" className="text-blue-800 dark:text-blue-300">
+            <Lock className="w-4 h-4 text-lime-600 dark:text-lime-400" />
+            <Text size="2" weight="bold" className="text-lime-800 dark:text-lime-300">
               Single Image Only
             </Text>
           </div>
-          <Text size="1" className="text-blue-700 dark:text-blue-300">
+          <Text size="1" className="text-lime-700 dark:text-lime-300">
             Multiple images and videos require a premium plan
           </Text>
         </Card>
