@@ -7,12 +7,15 @@ interface ScheduleRequest {
   content: string;
   platform: string;
   profileKey?: string;
-  scheduledFor?: string; // ISO date string - if not provided, we calculate optimal time
+  scheduledFor?: string; // ISO date string - if provided, use this exact time
   mediaUrls?: string[];
   hashtags?: string[];
   // Ayrshare enhanced features
-  autoHashtag?: boolean; // Automatically add trending hashtags
-  shortenLinks?: boolean; // Automatically shorten URLs
+  autoHashtag?: boolean;
+  shortenLinks?: boolean;
+  // Smart scheduling
+  slotIndex?: number; // Which slot in the queue (0 = next available, 1 = after that, etc.)
+  avoidSlots?: string[]; // ISO date strings of slots already taken
 }
 
 interface OptimalTimeResult {
@@ -20,43 +23,78 @@ interface OptimalTimeResult {
   reason: string;
 }
 
+// Platform-specific optimal hours (based on general engagement data)
+const PLATFORM_OPTIMAL_HOURS: Record<string, number[]> = {
+  instagram: [9, 12, 14, 17, 20],
+  facebook: [9, 13, 16, 19],
+  twitter: [8, 12, 17, 21],
+  x: [8, 12, 17, 21],
+  linkedin: [8, 10, 12, 17],
+  tiktok: [12, 15, 19, 21],
+  youtube: [14, 16, 21],
+  pinterest: [12, 14, 20, 21],
+  reddit: [9, 12, 17, 20],
+  bluesky: [9, 12, 17, 20],
+  threads: [9, 12, 17, 20],
+};
+
 /**
- * Calculate optimal posting time based on platform and current time
+ * Get all optimal time slots for the next N days
  */
-function calculateOptimalTime(platform: string): OptimalTimeResult {
+function getOptimalSlots(platform: string, daysAhead: number = 7): Date[] {
+  const slots: Date[] = [];
   const now = new Date();
+  const hours = PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [9, 12, 17, 20];
 
-  // Platform-specific optimal hours (based on general engagement data)
-  const platformOptimalHours: Record<string, number[]> = {
-    instagram: [9, 12, 14, 17, 20], // 9am, 12pm, 2pm, 5pm, 8pm
-    facebook: [9, 13, 16, 19], // 9am, 1pm, 4pm, 7pm
-    twitter: [8, 12, 17, 21], // 8am, 12pm, 5pm, 9pm
-    x: [8, 12, 17, 21],
-    linkedin: [8, 10, 12, 17], // 8am, 10am, 12pm, 5pm (business hours)
-    tiktok: [12, 15, 19, 21], // 12pm, 3pm, 7pm, 9pm
-    youtube: [14, 16, 21], // 2pm, 4pm, 9pm
-  };
+  for (let day = 0; day < daysAhead; day++) {
+    for (const hour of hours) {
+      const slotTime = new Date(now);
+      slotTime.setDate(slotTime.getDate() + day);
+      slotTime.setHours(hour, 0, 0, 0);
 
-  const optimalHours = platformOptimalHours[platform.toLowerCase()] || [
-    9, 12, 17, 20,
-  ];
-  const currentHour = now.getHours();
-
-  // Find next optimal hour
-  let nextOptimalHour = optimalHours.find((h) => h > currentHour);
-  const scheduledTime = new Date(now);
-
-  if (!nextOptimalHour) {
-    // No more optimal hours today, schedule for tomorrow's first optimal hour
-    nextOptimalHour = optimalHours[0];
-    scheduledTime.setDate(scheduledTime.getDate() + 1);
+      // Only include future slots (at least 10 minutes from now)
+      if (slotTime.getTime() > now.getTime() + 10 * 60 * 1000) {
+        slots.push(slotTime);
+      }
+    }
   }
 
-  scheduledTime.setHours(nextOptimalHour, 0, 0, 0);
+  return slots.sort((a, b) => a.getTime() - b.getTime());
+}
 
-  const reason = `Scheduled for ${nextOptimalHour}:00 - optimal engagement time for ${platform}`;
+/**
+ * Calculate the next available optimal time, avoiding already-taken slots
+ */
+function calculateOptimalTime(
+  platform: string,
+  slotIndex: number = 0,
+  avoidSlots: string[] = []
+): OptimalTimeResult {
+  const allSlots = getOptimalSlots(platform, 14); // Look 2 weeks ahead
+  const avoidSet = new Set(avoidSlots.map(s => new Date(s).toISOString()));
 
-  return { scheduledTime, reason };
+  // Filter out taken slots
+  const availableSlots = allSlots.filter(
+    slot => !avoidSet.has(slot.toISOString())
+  );
+
+  if (availableSlots.length === 0) {
+    // Fallback: schedule for tomorrow at noon
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + 1);
+    fallback.setHours(12, 0, 0, 0);
+    return { scheduledTime: fallback, reason: "Fallback slot - all optimal times taken" };
+  }
+
+  const selectedSlot = availableSlots[Math.min(slotIndex, availableSlots.length - 1)];
+  
+  const dayName = selectedSlot.toLocaleDateString('en-US', { weekday: 'long' });
+  const timeStr = selectedSlot.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  
+  return {
+    scheduledTime: selectedSlot,
+    reason: `Optimal time for ${platform}: ${dayName} at ${timeStr}`,
+  };
 }
 
 /**
@@ -66,8 +104,18 @@ function calculateOptimalTime(platform: string): OptimalTimeResult {
 export async function POST(request: NextRequest) {
   try {
     const body: ScheduleRequest = await request.json();
-    const { content, platform, profileKey, scheduledFor, mediaUrls, hashtags, autoHashtag, shortenLinks } =
-      body;
+    const {
+      content,
+      platform,
+      profileKey,
+      scheduledFor,
+      mediaUrls,
+      hashtags,
+      autoHashtag,
+      shortenLinks,
+      slotIndex = 0,
+      avoidSlots = [],
+    } = body;
 
     console.log("📬 [SCHEDULE API] Request received:", {
       hasContent: !!content,
@@ -75,47 +123,61 @@ export async function POST(request: NextRequest) {
       platform,
       hasProfileKey: !!profileKey,
       hasMediaUrls: !!mediaUrls && mediaUrls.length > 0,
+      slotIndex,
+      avoidSlotsCount: avoidSlots.length,
     });
 
-    if (!content || !platform) {
-      console.error("❌ [SCHEDULE API] Missing required fields:", { content: !!content, platform: !!platform });
+    // Validate required fields
+    if (!content?.trim()) {
+      console.error("❌ [SCHEDULE API] Missing content");
       return NextResponse.json(
-        { error: "Content and platform are required", details: `content: ${!!content}, platform: ${!!platform}` },
+        { error: "Content is required", details: "Post content cannot be empty" },
+        { status: 400 }
+      );
+    }
+    
+    if (!platform) {
+      console.error("❌ [SCHEDULE API] Missing platform");
+      return NextResponse.json(
+        { error: "Platform is required", details: "Specify which platform to post to" },
         { status: 400 }
       );
     }
 
     // Platform-specific validation
     const platformLower = platform.toLowerCase();
-    if (platformLower === "pinterest" && (!mediaUrls || mediaUrls.length === 0)) {
+    
+    // Platforms that REQUIRE media
+    const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
+    if (mediaRequiredPlatforms.includes(platformLower) && (!mediaUrls || mediaUrls.length === 0)) {
+      const platformName = platformLower.charAt(0).toUpperCase() + platformLower.slice(1);
       return NextResponse.json(
-        { error: "Pinterest requires an image", details: "Add at least one image URL to post to Pinterest" },
+        { 
+          error: `${platformName} requires an image`, 
+          details: `Add at least one image URL to post to ${platformName}. This is a platform requirement.`,
+          requiresMedia: true,
+          platform: platformLower
+        },
         { status: 400 }
       );
     }
-    if (platformLower === "tiktok" && (!mediaUrls || mediaUrls.length === 0)) {
+    if (platformLower === "youtube") {
       return NextResponse.json(
-        { error: "TikTok requires an image or video", details: "Add media to post to TikTok" },
-        { status: 400 }
-      );
-    }
-    if (platformLower === "youtube" && (!mediaUrls || mediaUrls.length === 0)) {
-      return NextResponse.json(
-        { error: "YouTube requires a video", details: "Add a video URL to post to YouTube" },
+        { error: "YouTube requires video upload", details: "Use the main post creator with video upload for YouTube" },
         { status: 400 }
       );
     }
 
-    // Get API key from environment - check both possible variable names
+    // Get API key
     const apiKey = process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Ayrshare API key not configured. Set AYRSHARE_API_KEY or NEXT_PUBLIC_AYRSHARE_API_KEY in environment." },
+        { error: "Ayrshare API key not configured" },
         { status: 500 }
       );
     }
 
-    // Calculate optimal time if not provided
+    // Calculate schedule time
     let scheduleTime: Date;
     let scheduleReason: string;
 
@@ -123,15 +185,20 @@ export async function POST(request: NextRequest) {
       scheduleTime = new Date(scheduledFor);
       scheduleReason = "User-specified time";
     } else {
-      const optimal = calculateOptimalTime(platform);
+      const optimal = calculateOptimalTime(platform, slotIndex, avoidSlots);
       scheduleTime = optimal.scheduledTime;
       scheduleReason = optimal.reason;
     }
 
+    console.log("📅 [SCHEDULE API] Scheduling for:", {
+      time: scheduleTime.toISOString(),
+      reason: scheduleReason,
+    });
+
     // Build Ayrshare post payload
     const postPayload: any = {
       post: content,
-      platforms: [platform],
+      platforms: [platformLower],
       scheduleDate: scheduleTime.toISOString(),
     };
 
@@ -142,18 +209,54 @@ export async function POST(request: NextRequest) {
 
     // Add media if provided
     if (mediaUrls && mediaUrls.length > 0) {
-      postPayload.mediaUrls = mediaUrls;
+      // Validate and clean media URLs
+      const cleanMediaUrls = mediaUrls
+        .filter(url => url && typeof url === 'string')
+        .map(url => {
+          // Decode any URL-encoded characters
+          try {
+            return decodeURIComponent(url);
+          } catch {
+            return url;
+          }
+        });
+      
+      if (cleanMediaUrls.length > 0) {
+        postPayload.mediaUrls = cleanMediaUrls;
+      }
+    }
+
+    // Platform-specific options
+    if (platformLower === "pinterest") {
+      postPayload.pinterestOptions = {
+        title: content.split('\n')[0]?.slice(0, 100) || "Pin",
+        // Note: boardId should be set up in Ayrshare dashboard
+      };
+    }
+
+    if (platformLower === "tiktok") {
+      postPayload.tikTokOptions = {
+        // TikTok photo post mode when using images
+        postType: "photo",
+      };
+    }
+
+    if (platformLower === "reddit") {
+      postPayload.redditOptions = {
+        title: content.split('\n')[0]?.slice(0, 300) || "Post",
+        // Subreddit should be configured in Ayrshare dashboard
+      };
     }
 
     // Ayrshare enhanced features
     if (autoHashtag) {
-      postPayload.autoHashtag = true; // Let Ayrshare add trending hashtags
+      postPayload.autoHashtag = true;
     }
     if (shortenLinks) {
-      postPayload.shortenLinks = true; // Let Ayrshare shorten URLs
+      postPayload.shortenLinks = true;
     }
 
-    // Add hashtags if provided (append to post) - only if not using autoHashtag
+    // Add hashtags if provided
     if (hashtags && hashtags.length > 0 && !autoHashtag) {
       const hashtagString = hashtags
         .map((h) => (h.startsWith("#") ? h : `#${h}`))
@@ -161,7 +264,14 @@ export async function POST(request: NextRequest) {
       postPayload.post = `${content}\n\n${hashtagString}`;
     }
 
-    // Call Ayrshare API to schedule the post
+    console.log("📤 [SCHEDULE API] Sending to Ayrshare:", {
+      platforms: postPayload.platforms,
+      scheduleDate: postPayload.scheduleDate,
+      hasMedia: !!postPayload.mediaUrls,
+      mediaCount: postPayload.mediaUrls?.length || 0,
+    });
+
+    // Call Ayrshare API
     const response = await fetch(`${AYRSHARE_API_URL}/post`, {
       method: "POST",
       headers: {
@@ -173,12 +283,19 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
+    console.log("📥 [SCHEDULE API] Ayrshare response:", {
+      status: response.status,
+      ok: response.ok,
+      result: JSON.stringify(result).slice(0, 500),
+    });
+
     if (!response.ok) {
-      console.error("Ayrshare schedule error:", result);
+      console.error("❌ [SCHEDULE API] Ayrshare error:", result);
       return NextResponse.json(
         {
           error: "Failed to schedule post",
-          details: result.message || result.error,
+          details: result.message || result.error || JSON.stringify(result),
+          ayrshareError: result,
         },
         { status: response.status }
       );
@@ -197,7 +314,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Schedule API error:", error);
+    console.error("❌ [SCHEDULE API] Error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",
@@ -210,57 +327,31 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/automation/schedule
- * Get optimal posting times for a platform
+ * Get optimal posting times for platforms
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get("platform") || "instagram";
+  const count = parseInt(searchParams.get("count") || "10");
 
-  const optimal = calculateOptimalTime(platform);
-
-  // Also return next 5 optimal times
-  const now = new Date();
-  const platformOptimalHours: Record<string, number[]> = {
-    instagram: [9, 12, 14, 17, 20],
-    facebook: [9, 13, 16, 19],
-    twitter: [8, 12, 17, 21],
-    x: [8, 12, 17, 21],
-    linkedin: [8, 10, 12, 17],
-    tiktok: [12, 15, 19, 21],
-    youtube: [14, 16, 21],
-  };
-
-  const hours = platformOptimalHours[platform.toLowerCase()] || [9, 12, 17, 20];
-  const currentHour = now.getHours();
-
-  const upcomingTimes: { time: string; label: string }[] = [];
-  let day = 0;
-
-  for (let i = 0; i < 5; i++) {
-    const hourIndex =
-      (hours.findIndex((h) => h > currentHour) + i) % hours.length;
-    if (hourIndex <= i && i > 0) day++;
-
-    const slotTime = new Date(now);
-    slotTime.setDate(slotTime.getDate() + day);
-    slotTime.setHours(hours[hourIndex], 0, 0, 0);
-
-    upcomingTimes.push({
-      time: slotTime.toISOString(),
-      label: slotTime.toLocaleString("en-US", {
-        weekday: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-    });
-  }
+  const slots = getOptimalSlots(platform, 7);
+  
+  const upcomingSlots = slots.slice(0, count).map(slot => ({
+    time: slot.toISOString(),
+    label: slot.toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+    dayOfWeek: slot.toLocaleDateString("en-US", { weekday: "long" }),
+    hour: slot.getHours(),
+  }));
 
   return NextResponse.json({
     platform,
-    nextOptimal: {
-      time: optimal.scheduledTime.toISOString(),
-      reason: optimal.reason,
-    },
-    upcomingSlots: upcomingTimes,
+    optimalHours: PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [9, 12, 17, 20],
+    upcomingSlots,
   });
 }

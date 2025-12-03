@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const profileKey = searchParams.get('profileKey');
     
     const AYRSHARE_API_KEY = process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
-    const AYRSHARE_API_URL = "https://api.ayrshare.com/api";
+    const AYRSHARE_API_URL = "https://app.ayrshare.com/api";
 
     if (!AYRSHARE_API_KEY) {
       return NextResponse.json(

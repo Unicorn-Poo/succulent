@@ -98,7 +98,7 @@ export default function GrowthAutopilot({
   }, [accountGroup?.accounts, platform]);
 
   const [settings, setSettings] = useState<AutopilotSettings>({
-    enabled: false,
+    enabled: true, // Default to enabled for better UX
     aggressiveness: "moderate",
     platforms: linkedPlatforms,
     goals: {
@@ -342,6 +342,18 @@ export default function GrowthAutopilot({
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [generatedPosts, setGeneratedPosts] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [imagePreview, setImagePreview] = useState<{
+    postId: string;
+    url: string;
+    content: string;
+    platform: string;
+  } | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState<string | null>(null);
+  const [scheduleAllProgress, setScheduleAllProgress] = useState<{
+    current: number;
+    total: number;
+    currentPlatform: string;
+  } | null>(null);
 
   // Auto-clear notification after 3 seconds
   useEffect(() => {
@@ -364,7 +376,11 @@ export default function GrowthAutopilot({
 
       // Use cache if less than 24 hours old
       if (hoursSinceGenerated < 24) {
-        setGeneratedPosts(cached.posts || []);
+        // Filter out invalid posts (missing content or platform)
+        const validPosts = (cached.posts || []).filter(
+          (p: any) => p?.content?.trim() && p?.platform
+        );
+        setGeneratedPosts(validPosts);
         setRecommendations(cached.recommendations || []);
         setStatusMessage(
           `Last updated ${Math.round(hoursSinceGenerated)} hours ago`
@@ -745,7 +761,9 @@ export default function GrowthAutopilot({
         let mediaUrls: string[] = [];
 
         // Generate AI image for Pinterest and TikTok (photo posts)
-        if (["pinterest", "tiktok"].includes(platformLower)) {
+        // Platforms that require images
+        const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
+        if (mediaRequiredPlatforms.includes(platformLower)) {
           setNotification({
             type: "info",
             message: "Generating AI image for Pinterest...",
@@ -981,6 +999,384 @@ export default function GrowthAutopilot({
     [accountGroup]
   );
 
+  // Generate AI image and show preview before scheduling
+  const generateImagePreview = useCallback(
+    async (post: any) => {
+      setIsGeneratingImage(post.id);
+      setNotification({ type: "info", message: "Generating AI image..." });
+
+      try {
+        const imageResponse = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `${post.contentPillar || "creative"}: ${post.content.slice(0, 200)}`,
+            platform: post.platform,
+          }),
+        });
+
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          if (imageData.imageUrl) {
+            setImagePreview({
+              postId: post.id,
+              url: imageData.imageUrl,
+              content: post.content,
+              platform: post.platform,
+            });
+            setNotification({ type: "success", message: "Image generated! Review before posting." });
+          } else {
+            setNotification({ type: "error", message: "No image URL returned" });
+          }
+        } else {
+          const err = await imageResponse.json();
+          setNotification({ type: "error", message: err.error || "Failed to generate image" });
+        }
+      } catch (error) {
+        setNotification({ type: "error", message: "Failed to generate image" });
+      }
+      setIsGeneratingImage(null);
+    },
+    []
+  );
+
+  // Track used time slots to avoid scheduling multiple posts at same time
+  const usedSlotsRef = useRef<Map<string, string[]>>(new Map());
+
+  // Schedule a single post with smart time slot selection
+  const schedulePost = useCallback(
+    async (
+      post: any,
+      mediaUrls?: string[],
+      slotIndex: number = 0
+    ): Promise<{ success: boolean; scheduledFor?: string }> => {
+      // Validate content and platform
+      if (!post.content?.trim()) {
+        setNotification({ type: "error", message: `Invalid post: missing content` });
+        return { success: false };
+      }
+      if (!post.platform) {
+        setNotification({ type: "error", message: `Invalid post: missing platform` });
+        return { success: false };
+      }
+
+      const platformLower = post.platform.toLowerCase();
+
+      // Skip YouTube (requires video)
+      if (platformLower === "youtube") {
+        setNotification({ type: "info", message: "YouTube requires video - skipped" });
+        return { success: false };
+      }
+
+      // Get already used slots for this platform
+      const platformUsedSlots = usedSlotsRef.current.get(platformLower) || [];
+
+      try {
+        const response = await fetch("/api/automation/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: post.content,
+            platform: post.platform,
+            profileKey: profileKey,
+            autoHashtag: settings.automation.autoHashtags,
+            shortenLinks: true,
+            mediaUrls: mediaUrls && mediaUrls.length > 0 ? mediaUrls : undefined,
+            slotIndex: slotIndex,
+            avoidSlots: platformUsedSlots,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Track this slot as used
+          const scheduledTime = result.scheduledFor;
+          if (scheduledTime) {
+            const updatedSlots = [...platformUsedSlots, scheduledTime];
+            usedSlotsRef.current.set(platformLower, updatedSlots);
+          }
+
+          // Update post status with scheduled time
+          setGeneratedPosts((prev) =>
+            prev.map((p) =>
+              p.id === post.id
+                ? { ...p, status: "scheduled", scheduledFor: scheduledTime }
+                : p
+            )
+          );
+
+          // Log to automationLogs
+          try {
+            if (accountGroup?.automationLogs && accountGroup._owner) {
+              const { AutomationLog } = await import("@/app/schema");
+              const scheduledDate = new Date(scheduledTime);
+              const newLog = AutomationLog.create(
+                {
+                  type: "post",
+                  action: `Scheduled: ${post.contentPillar || post.platform} for ${scheduledDate.toLocaleString()}`,
+                  platform: post.platform,
+                  status: "success",
+                  timestamp: new Date(),
+                  details: JSON.stringify({
+                    contentPreview: post.content.slice(0, 200),
+                    scheduledFor: scheduledTime,
+                  }),
+                },
+                { owner: accountGroup._owner }
+              );
+              accountGroup.automationLogs.push(newLog);
+            }
+          } catch (logError) {
+            // Continue even if logging fails
+          }
+
+          return { success: true, scheduledFor: scheduledTime };
+        } else {
+          setNotification({
+            type: "error",
+            message: `${post.platform}: ${result.details || result.error || "Failed to schedule"}`,
+          });
+          return { success: false };
+        }
+      } catch (error) {
+        console.error("Schedule error:", error);
+        return { success: false };
+      }
+    },
+    [profileKey, settings.automation.autoHashtags, accountGroup]
+  );
+
+  // Schedule All pending posts with smart distribution
+  const scheduleAllPending = useCallback(async () => {
+    // Reset used slots for fresh scheduling
+    usedSlotsRef.current.clear();
+
+    const pendingPosts = generatedPosts.filter(
+      (p) =>
+        p.status === "pending" &&
+        p.content?.trim() &&
+        p.platform &&
+        p.platform.toLowerCase() !== "youtube"
+    );
+
+    if (pendingPosts.length === 0) {
+      setNotification({ type: "info", message: "No valid posts to schedule" });
+      return;
+    }
+
+    // Group posts by platform for smart distribution
+    const postsByPlatform: Record<string, typeof pendingPosts> = {};
+    pendingPosts.forEach((post) => {
+      const platform = post.platform.toLowerCase();
+      if (!postsByPlatform[platform]) {
+        postsByPlatform[platform] = [];
+      }
+      postsByPlatform[platform].push(post);
+    });
+
+    // Interleave posts from different platforms for better distribution
+    // This ensures we don't schedule all X posts, then all Instagram, etc.
+    const orderedPosts: typeof pendingPosts = [];
+    const platforms = Object.keys(postsByPlatform);
+    const maxPosts = Math.max(...platforms.map((p) => postsByPlatform[p].length));
+    
+    for (let i = 0; i < maxPosts; i++) {
+      for (const platform of platforms) {
+        if (postsByPlatform[platform][i]) {
+          orderedPosts.push(postsByPlatform[platform][i]);
+        }
+      }
+    }
+
+    setScheduleAllProgress({ current: 0, total: orderedPosts.length, currentPlatform: "" });
+    let successCount = 0;
+    const scheduledTimes: string[] = [];
+
+    // Track slot index per platform for smart scheduling
+    const platformSlotIndex: Record<string, number> = {};
+
+    for (let i = 0; i < orderedPosts.length; i++) {
+      const post = orderedPosts[i];
+      const platformLower = post.platform.toLowerCase();
+
+      // Get and increment slot index for this platform
+      const slotIndex = platformSlotIndex[platformLower] || 0;
+      platformSlotIndex[platformLower] = slotIndex + 1;
+
+      setScheduleAllProgress({
+        current: i + 1,
+        total: orderedPosts.length,
+        currentPlatform: post.platform,
+      });
+
+      let mediaUrls: string[] = [];
+
+      // Generate AI image for platforms that require media
+      const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
+      if (mediaRequiredPlatforms.includes(platformLower)) {
+        setStatusMessage(`Generating image for ${post.platform} (${i + 1}/${orderedPosts.length})...`);
+
+        try {
+          const imageResponse = await fetch("/api/generate-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: `${post.contentPillar || "creative visual"}: ${post.content.slice(0, 200)}`,
+              platform: post.platform,
+            }),
+          });
+
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            if (imageData.imageUrl) {
+              mediaUrls = [imageData.imageUrl];
+            } else {
+              // Skip if no image for platforms that require it
+              setNotification({
+                type: "error",
+                message: `${post.platform}: Failed to generate required image`,
+              });
+              continue;
+            }
+          } else {
+            const err = await imageResponse.json();
+            setNotification({
+              type: "error",
+              message: `${post.platform}: ${err.error || "Image generation failed"}`,
+            });
+            continue;
+          }
+        } catch (imgError) {
+          setNotification({
+            type: "error",
+            message: `${post.platform}: Image generation error`,
+          });
+          continue;
+        }
+      }
+
+      setStatusMessage(`Scheduling to ${post.platform} (${i + 1}/${orderedPosts.length})...`);
+
+      const result = await schedulePost(post, mediaUrls, slotIndex);
+      if (result.success) {
+        successCount++;
+        if (result.scheduledFor) {
+          scheduledTimes.push(result.scheduledFor);
+        }
+      }
+
+      // Small delay between posts to avoid rate limiting
+      if (i < orderedPosts.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+
+    setScheduleAllProgress(null);
+    setStatusMessage("");
+
+    // Show summary with time range
+    if (successCount > 0 && scheduledTimes.length > 0) {
+      const sortedTimes = scheduledTimes.sort();
+      const firstTime = new Date(sortedTimes[0]);
+      const lastTime = new Date(sortedTimes[sortedTimes.length - 1]);
+      
+      const formatTime = (d: Date) =>
+        d.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+
+      setNotification({
+        type: "success",
+        message: `✓ Scheduled ${successCount} posts from ${formatTime(firstTime)} to ${formatTime(lastTime)}`,
+      });
+    } else if (successCount > 0) {
+      setNotification({
+        type: "success",
+        message: `✓ Scheduled ${successCount}/${orderedPosts.length} posts`,
+      });
+    } else {
+      setNotification({
+        type: "error",
+        message: `Failed to schedule posts. Check platform connections.`,
+      });
+    }
+  }, [generatedPosts, schedulePost]);
+
+  // Execute a recommendation by generating posts from it
+  const executeRecommendation = useCallback(
+    async (rec: any) => {
+      setIsLoading(true);
+      setStatusMessage(`Generating content from recommendation...`);
+
+      try {
+        // Extract brand persona
+        const brandPersona = accountGroup?.brandPersona
+          ? {
+              name: accountGroup.brandPersona.name,
+              description: accountGroup.brandPersona.description,
+              tone: accountGroup.brandPersona.tone,
+              contentPillars: accountGroup.brandPersona.contentPillars
+                ? Array.from(accountGroup.brandPersona.contentPillars)
+                : [],
+            }
+          : null;
+
+        // Call AI to generate posts based on this recommendation
+        const response = await fetch("/api/ai-autopilot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "generate",
+            platform: settings.platforms[0] || "twitter",
+            context: rec.title + ": " + rec.description,
+            brandPersona,
+            count: 2, // Generate 2 posts from this recommendation
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.content || data.posts) {
+            const newPosts = (data.posts || [{ content: data.content }]).map(
+              (p: any, idx: number) => ({
+                id: `rec_${rec.id}_${Date.now()}_${idx}`,
+                content: p.content || p,
+                platform: p.platform || settings.platforms[0] || "twitter",
+                confidence: 80,
+                contentPillar: rec.title.split(":")[0],
+                status: "pending" as const,
+              })
+            );
+
+            setGeneratedPosts((prev) => [...newPosts, ...prev]);
+            setActiveTab("posts");
+            setNotification({
+              type: "success",
+              message: `Generated ${newPosts.length} posts from recommendation!`,
+            });
+
+            // Remove the recommendation after actioning
+            setRecommendations((prev) => prev.filter((r) => r.id !== rec.id));
+          }
+        } else {
+          setNotification({ type: "error", message: "Failed to generate content" });
+        }
+      } catch (error) {
+        setNotification({ type: "error", message: "Failed to execute recommendation" });
+      }
+
+      setIsLoading(false);
+      setStatusMessage("");
+    },
+    [accountGroup, settings.platforms]
+  );
+
   const approveAction = async (
     actionId: string,
     content?: string,
@@ -1091,17 +1487,46 @@ export default function GrowthAutopilot({
 
   return (
     <div className="bg-card rounded-lg shadow-sm border p-6">
+      {/* Disabled Banner - Prominent warning when autopilot is off */}
+      {!settings.enabled && (
+        <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⏸️</span>
+              <div>
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  Autopilot is Paused
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Enable autopilot to start generating and scheduling content automatically.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() =>
+                updateSettings((prev) => ({ ...prev, enabled: true }))
+              }
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              ▶️ Enable Autopilot
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Notification Banner */}
       {notification && (
         <div
           className={`mb-4 p-3 rounded-lg flex items-center justify-between ${
             notification.type === "success"
               ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+              : notification.type === "info"
+              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
               : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
           }`}
         >
           <span>
-            {notification.type === "success" ? "✓" : "✗"} {notification.message}
+            {notification.type === "success" ? "✓" : notification.type === "info" ? "ℹ" : "✗"} {notification.message}
           </span>
           <button
             onClick={() => setNotification(null)}
@@ -1109,6 +1534,105 @@ export default function GrowthAutopilot({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {imagePreview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground">Preview Generated Image</h3>
+                <button
+                  onClick={() => setImagePreview(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <img
+                src={imagePreview.url}
+                alt="Generated preview"
+                className="w-full rounded-lg mb-4"
+              />
+              <div className="bg-muted p-3 rounded-lg mb-4">
+                <p className="text-sm text-foreground whitespace-pre-wrap">
+                  {imagePreview.content.length > 200
+                    ? imagePreview.content.slice(0, 200) + "..."
+                    : imagePreview.content}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={async () => {
+                    const post = generatedPosts.find((p) => p.id === imagePreview.postId);
+                    if (post) {
+                      setStatusMessage(`Scheduling to ${imagePreview.platform}...`);
+                      const result = await schedulePost(post, [imagePreview.url]);
+                      if (result.success) {
+                        const scheduledDate = result.scheduledFor
+                          ? new Date(result.scheduledFor).toLocaleString()
+                          : "soon";
+                        setNotification({
+                          type: "success",
+                          message: `✓ Scheduled for ${imagePreview.platform} at ${scheduledDate}`,
+                        });
+                      }
+                      setStatusMessage("");
+                    }
+                    setImagePreview(null);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isLoading}
+                >
+                  ✓ Approve & Schedule
+                </Button>
+                <Button
+                  onClick={() => {
+                    const post = generatedPosts.find((p) => p.id === imagePreview.postId);
+                    if (post) {
+                      generateImagePreview(post);
+                    }
+                  }}
+                  variant="outline"
+                  disabled={isGeneratingImage !== null}
+                >
+                  🔄 Regenerate Image
+                </Button>
+                <Button onClick={() => setImagePreview(null)} variant="ghost">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule All Progress */}
+      {scheduleAllProgress && (
+        <div className="mb-4 p-4 bg-lime-100 dark:bg-lime-900/30 border border-lime-300 dark:border-lime-700 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin">🔄</div>
+            <div className="flex-1">
+              <p className="font-medium text-lime-800 dark:text-lime-200">
+                Scheduling Posts ({scheduleAllProgress.current}/{scheduleAllProgress.total})
+              </p>
+              <p className="text-sm text-lime-700 dark:text-lime-300">
+                Currently: {scheduleAllProgress.currentPlatform}
+              </p>
+              <div className="mt-2 w-full bg-lime-200 dark:bg-lime-800 rounded-full h-2">
+                <div
+                  className="bg-lime-600 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${(scheduleAllProgress.current / scheduleAllProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1497,6 +2021,28 @@ export default function GrowthAutopilot({
             </div>
           ) : (
             <>
+              {/* Schedule All Button */}
+              {generatedPosts.filter((p) => p.status === "pending").length > 0 && (
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-lime-50 dark:from-green-900/20 dark:to-lime-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div>
+                    <p className="font-medium text-green-800 dark:text-green-300">
+                      {generatedPosts.filter((p) => p.status === "pending").length} posts ready to schedule
+                    </p>
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      YouTube posts skipped (require video). Pinterest/TikTok will generate AI images.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={scheduleAllPending}
+                    disabled={isLoading || scheduleAllProgress !== null}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {scheduleAllProgress
+                      ? `Scheduling ${scheduleAllProgress.current}/${scheduleAllProgress.total}...`
+                      : `🚀 Schedule All (${generatedPosts.filter((p) => p.status === "pending" && p.platform.toLowerCase() !== "youtube").length})`}
+                  </Button>
+                </div>
+              )}
               {generatedPosts
                 .filter((p) => p.status === "pending")
                 .map((post) => (
@@ -1554,7 +2100,7 @@ export default function GrowthAutopilot({
                     )}
 
                     {/* Platform-specific info */}
-                    {["pinterest", "tiktok"].includes(
+                    {["pinterest", "tiktok", "instagram"].includes(
                       post.platform.toLowerCase()
                     ) && (
                       <div className="mb-4 p-2 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded text-xs text-lime-700 dark:text-lime-300">
@@ -1570,129 +2116,65 @@ export default function GrowthAutopilot({
                     )}
 
                     <div className="flex items-center gap-2">
-                      <Button
-                        onClick={async () => {
-                          const platformLower = post.platform.toLowerCase();
-                          const requiresVideo = ["youtube"].includes(
-                            platformLower
-                          );
-
-                          if (requiresVideo) {
-                            setNotification({
-                              type: "error",
-                              message: `${post.platform} requires video. Use the main post creator.`,
-                            });
-                            return;
-                          }
-
-                          setStatusMessage(`Scheduling to ${post.platform}...`);
-
-                          try {
-                            let mediaUrls: string[] = [];
-
-                            // Generate AI image for Pinterest and TikTok (photo posts)
-                            if (
-                              ["pinterest", "tiktok"].includes(platformLower)
-                            ) {
-                              setStatusMessage(
-                                `Generating AI image for ${post.platform}...`
-                              );
-                              const imageResponse = await fetch(
-                                "/api/generate-image",
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    prompt: `${
-                                      post.contentPillar || "creative"
-                                    }: ${post.content.slice(0, 200)}`,
-                                    platform: post.platform,
-                                  }),
-                                }
-                              );
-
-                              if (imageResponse.ok) {
-                                const imageData = await imageResponse.json();
-                                if (imageData.imageUrl) {
-                                  mediaUrls = [imageData.imageUrl];
-                                  setStatusMessage(
-                                    `Image generated! Scheduling...`
-                                  );
-                                }
-                              } else {
-                                const err = await imageResponse.json();
-                                setNotification({
-                                  type: "error",
-                                  message:
-                                    err.error || "Failed to generate image",
-                                });
-                                setStatusMessage("");
-                                return;
-                              }
-                            }
-
-                            const response = await fetch(
-                              "/api/automation/schedule",
-                              {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  content: post.content,
-                                  platform: post.platform,
-                                  profileKey: profileKey,
-                                  autoHashtag: settings.automation.autoHashtags,
-                                  shortenLinks: true,
-                                  mediaUrls:
-                                    mediaUrls.length > 0
-                                      ? mediaUrls
-                                      : undefined,
-                                }),
-                              }
-                            );
-                            if (response.ok) {
-                              setGeneratedPosts((prev) =>
-                                prev.map((p) =>
-                                  p.id === post.id
-                                    ? { ...p, status: "scheduled" }
-                                    : p
-                                )
-                              );
-                              setNotification({
-                                type: "success",
-                                message: `Posted to ${post.platform}!`,
-                              });
-                            } else {
-                              const err = await response.json();
+                      {/* For platforms requiring images: Generate Image first, then preview */}
+                      {["pinterest", "tiktok", "instagram"].includes(post.platform.toLowerCase()) ? (
+                        <Button
+                          onClick={() => generateImagePreview(post)}
+                          disabled={isLoading || isGeneratingImage === post.id}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          {isGeneratingImage === post.id
+                            ? "🔄 Generating..."
+                            : "🎨 Generate Image & Preview"}
+                        </Button>
+                      ) : post.platform.toLowerCase() === "youtube" ? (
+                        <Button disabled className="opacity-50">
+                          ⚠️ Requires Video
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={async () => {
+                            // Validate before scheduling
+                            if (!post.content?.trim()) {
                               setNotification({
                                 type: "error",
-                                message:
-                                  err.details ||
-                                  err.error ||
-                                  "Failed to schedule",
+                                message: "Invalid post: missing content",
+                              });
+                              return;
+                            }
+                            if (!post.platform) {
+                              setNotification({
+                                type: "error",
+                                message: "Invalid post: missing platform",
+                              });
+                              return;
+                            }
+
+                            setStatusMessage(`Scheduling to ${post.platform}...`);
+                            const result = await schedulePost(post);
+                            if (result.success) {
+                              const scheduledDate = result.scheduledFor
+                                ? new Date(result.scheduledFor).toLocaleString("en-US", {
+                                    weekday: "short",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                  })
+                                : "optimal time";
+                              setNotification({
+                                type: "success",
+                                message: `✓ Scheduled for ${post.platform} at ${scheduledDate}`,
                               });
                             }
-                          } catch (error) {
-                            setNotification({
-                              type: "error",
-                              message: "Failed to schedule post",
-                            });
-                          }
-                          setStatusMessage("");
-                        }}
-                        disabled={
-                          isLoading ||
-                          ["youtube"].includes(post.platform.toLowerCase())
-                        }
-                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {["pinterest", "tiktok"].includes(
-                          post.platform.toLowerCase()
-                        )
-                          ? "Generate Image & Post"
-                          : "Schedule Now"}
-                      </Button>
+                            setStatusMessage("");
+                          }}
+                          disabled={isLoading}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Schedule Now
+                        </Button>
+                      )}
                       <Button
                         onClick={() => {
                           setGeneratedPosts((prev) =>
@@ -1766,6 +2248,16 @@ export default function GrowthAutopilot({
                     <p className="text-muted-foreground mt-1">
                       {rec.description}
                     </p>
+                    <div className="mt-3">
+                      <Button
+                        onClick={() => executeRecommendation(rec)}
+                        disabled={isLoading}
+                        size="1"
+                        className="bg-lime-600 hover:bg-lime-700"
+                      >
+                        {isLoading ? "Generating..." : "⚡ Generate Posts from This"}
+                      </Button>
+                    </div>
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${
