@@ -450,10 +450,23 @@ export default function GrowthAutopilot({
           }))
         : [];
 
-      // Generate content for ALL linked platforms
+      // Generate content for supported platforms
+      // (Pinterest/TikTok: will generate AI image, YouTube: requires video - not supported)
+      const supportedPlatforms = settings.platforms.filter(
+        (p) => !["youtube"].includes(p.toLowerCase())
+      );
       const allActions: AutopilotAction[] = [];
 
-      for (const targetPlatform of settings.platforms) {
+      if (supportedPlatforms.length === 0) {
+        setNotification({
+          type: "info",
+          message: "YouTube requires video content - use main post creator for this platform.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      for (const targetPlatform of supportedPlatforms) {
         try {
           const aiResults = await fetch("/api/ai-growth-autopilot", {
             method: "POST",
@@ -717,6 +730,60 @@ export default function GrowthAutopilot({
           return;
         }
 
+        // Check if platform requires video (not supported)
+        const platformLower = action.platform.toLowerCase();
+        if (["youtube"].includes(platformLower)) {
+          setNotification({
+            type: "error",
+            message: `${action.platform} requires video. Use the main post creator.`,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        let mediaUrls: string[] = [];
+
+        // Generate AI image for Pinterest and TikTok (photo posts)
+        if (["pinterest", "tiktok"].includes(platformLower)) {
+          setNotification({
+            type: "info",
+            message: "Generating AI image for Pinterest...",
+          });
+
+          try {
+            const imageResponse = await fetch("/api/generate-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                prompt: `${action.title}: ${action.content?.slice(0, 200)}`,
+                platform: action.platform,
+              }),
+            });
+
+            if (imageResponse.ok) {
+              const imageData = await imageResponse.json();
+              if (imageData.imageUrl) {
+                mediaUrls = [imageData.imageUrl];
+              }
+            } else {
+              const err = await imageResponse.json();
+              setNotification({
+                type: "error",
+                message: err.error || "Failed to generate image",
+              });
+              setIsLoading(false);
+              return;
+            }
+          } catch (imgError) {
+            setNotification({
+              type: "error",
+              message: "Failed to generate image",
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
+
         const response = await fetch("/api/automation/schedule", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -727,6 +794,7 @@ export default function GrowthAutopilot({
             // Use Ayrshare enhanced features based on automation settings
             autoHashtag: settings.automation.autoHashtags,
             shortenLinks: true, // Always shorten links for cleaner posts
+            mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
           }),
         });
 
@@ -1484,11 +1552,82 @@ export default function GrowthAutopilot({
                       </p>
                     )}
 
+                    {/* Platform-specific info */}
+                    {["pinterest", "tiktok"].includes(
+                      post.platform.toLowerCase()
+                    ) && (
+                      <div className="mb-4 p-2 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded text-xs text-lime-700 dark:text-lime-300">
+                        🎨 Will generate AI image for {post.platform}
+                        {post.platform.toLowerCase() === "tiktok" &&
+                          " (photo post)"}
+                      </div>
+                    )}
+                    {["youtube"].includes(post.platform.toLowerCase()) && (
+                      <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-700 dark:text-amber-300">
+                        ⚠️ YouTube requires video. Use the main post creator.
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2">
                       <Button
                         onClick={async () => {
+                          const platformLower = post.platform.toLowerCase();
+                          const requiresVideo = ["youtube"].includes(
+                            platformLower
+                          );
+
+                          if (requiresVideo) {
+                            setNotification({
+                              type: "error",
+                              message: `${post.platform} requires video. Use the main post creator.`,
+                            });
+                            return;
+                          }
+
                           setStatusMessage(`Scheduling to ${post.platform}...`);
+
                           try {
+                            let mediaUrls: string[] = [];
+
+                            // Generate AI image for Pinterest and TikTok (photo posts)
+                            if (["pinterest", "tiktok"].includes(platformLower)) {
+                              setStatusMessage(
+                                `Generating AI image for ${post.platform}...`
+                              );
+                              const imageResponse = await fetch(
+                                "/api/generate-image",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    prompt: `${post.contentPillar || "creative"}: ${post.content.slice(0, 200)}`,
+                                    platform: post.platform,
+                                  }),
+                                }
+                              );
+
+                              if (imageResponse.ok) {
+                                const imageData = await imageResponse.json();
+                                if (imageData.imageUrl) {
+                                  mediaUrls = [imageData.imageUrl];
+                                  setStatusMessage(
+                                    `Image generated! Scheduling...`
+                                  );
+                                }
+                              } else {
+                                const err = await imageResponse.json();
+                                setNotification({
+                                  type: "error",
+                                  message:
+                                    err.error || "Failed to generate image",
+                                });
+                                setStatusMessage("");
+                                return;
+                              }
+                            }
+
                             const response = await fetch(
                               "/api/automation/schedule",
                               {
@@ -1500,6 +1639,8 @@ export default function GrowthAutopilot({
                                   profileKey: profileKey,
                                   autoHashtag: settings.automation.autoHashtags,
                                   shortenLinks: true,
+                                  mediaUrls:
+                                    mediaUrls.length > 0 ? mediaUrls : undefined,
                                 }),
                               }
                             );
@@ -1519,7 +1660,10 @@ export default function GrowthAutopilot({
                               const err = await response.json();
                               setNotification({
                                 type: "error",
-                                message: err.error || "Failed to schedule",
+                                message:
+                                  err.details ||
+                                  err.error ||
+                                  "Failed to schedule",
                               });
                             }
                           } catch (error) {
@@ -1530,10 +1674,17 @@ export default function GrowthAutopilot({
                           }
                           setStatusMessage("");
                         }}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700"
+                        disabled={
+                          isLoading ||
+                          ["youtube"].includes(post.platform.toLowerCase())
+                        }
+                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
                       >
-                        Schedule Now
+                        {["pinterest", "tiktok"].includes(
+                          post.platform.toLowerCase()
+                        )
+                          ? "Generate Image & Post"
+                          : "Schedule Now"}
                       </Button>
                       <Button
                         onClick={() => {

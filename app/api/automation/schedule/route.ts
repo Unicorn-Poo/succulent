@@ -69,9 +69,39 @@ export async function POST(request: NextRequest) {
     const { content, platform, profileKey, scheduledFor, mediaUrls, hashtags, autoHashtag, shortenLinks } =
       body;
 
+    console.log("📬 [SCHEDULE API] Request received:", {
+      hasContent: !!content,
+      contentLength: content?.length,
+      platform,
+      hasProfileKey: !!profileKey,
+      hasMediaUrls: !!mediaUrls && mediaUrls.length > 0,
+    });
+
     if (!content || !platform) {
+      console.error("❌ [SCHEDULE API] Missing required fields:", { content: !!content, platform: !!platform });
       return NextResponse.json(
-        { error: "Content and platform are required" },
+        { error: "Content and platform are required", details: `content: ${!!content}, platform: ${!!platform}` },
+        { status: 400 }
+      );
+    }
+
+    // Platform-specific validation
+    const platformLower = platform.toLowerCase();
+    if (platformLower === "pinterest" && (!mediaUrls || mediaUrls.length === 0)) {
+      return NextResponse.json(
+        { error: "Pinterest requires an image", details: "Add at least one image URL to post to Pinterest" },
+        { status: 400 }
+      );
+    }
+    if (platformLower === "tiktok" && (!mediaUrls || mediaUrls.length === 0)) {
+      return NextResponse.json(
+        { error: "TikTok requires an image or video", details: "Add media to post to TikTok" },
+        { status: 400 }
+      );
+    }
+    if (platformLower === "youtube" && (!mediaUrls || mediaUrls.length === 0)) {
+      return NextResponse.json(
+        { error: "YouTube requires a video", details: "Add a video URL to post to YouTube" },
         { status: 400 }
       );
     }
