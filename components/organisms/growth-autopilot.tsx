@@ -599,18 +599,34 @@ export default function GrowthAutopilot({
         setPendingActions(allActions);
 
         // Separate posts from recommendations
+        // Get base URL for image generation
+        const baseUrl = window.location.origin;
+        
         const posts = allActions
           .filter((a) => a.type === "post" && a.content)
-          .map((a) => ({
-            id: a.id,
-            content: a.content || "",
-            platform: a.platform,
-            confidence: a.confidence,
-            contentPillar: a.title.split(":")[0]?.replace("🎯 ", ""),
-            hashtags: [],
-            bestTimeToPost: a.scheduledFor,
-            status: "pending" as const,
-          }));
+          .map((a, idx) => {
+            // Auto-generate image URL for platforms that need images
+            const needsImage = ["instagram", "pinterest", "tiktok"].includes(
+              a.platform.toLowerCase()
+            );
+            const imageUrl = needsImage
+              ? `${baseUrl}/api/text-image?text=${encodeURIComponent(
+                  a.content?.slice(0, 150) || ""
+                )}&platform=${a.platform.toLowerCase()}&scheme=${idx % 9}`
+              : undefined;
+
+            return {
+              id: a.id,
+              content: a.content || "",
+              platform: a.platform,
+              confidence: a.confidence,
+              contentPillar: a.title.split(":")[0]?.replace("🎯 ", ""),
+              hashtags: [],
+              bestTimeToPost: a.scheduledFor,
+              status: "pending" as const,
+              imageUrl,
+            };
+          });
 
         const recs = allActions
           .filter((a) => a.type === "recommendation" || !a.content)
@@ -2080,8 +2096,19 @@ export default function GrowthAutopilot({
                       </span>
                     </div>
 
+                    {/* Auto-generated image preview for visual platforms */}
+                    {post.imageUrl && (
+                      <div className="mb-4 rounded-lg overflow-hidden border border-border">
+                        <img
+                          src={post.imageUrl}
+                          alt="Generated post image"
+                          className="w-full h-auto max-h-64 object-contain bg-zinc-900"
+                        />
+                      </div>
+                    )}
+
                     <div className="bg-muted p-4 rounded-lg mb-4">
-                      <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                      <p className="text-foreground whitespace-pre-wrap leading-relaxed text-sm">
                         {post.content}
                       </p>
                     </div>
@@ -2104,17 +2131,6 @@ export default function GrowthAutopilot({
                         🕐 Best time to post: {post.bestTimeToPost}
                       </p>
                     )}
-
-                    {/* Platform-specific info */}
-                    {["pinterest", "tiktok", "instagram"].includes(
-                      post.platform.toLowerCase()
-                    ) && (
-                      <div className="mb-4 p-2 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded text-xs text-lime-700 dark:text-lime-300">
-                        🎨 Will generate AI image for {post.platform}
-                        {post.platform.toLowerCase() === "tiktok" &&
-                          " (photo post)"}
-                      </div>
-                    )}
                     {["youtube"].includes(post.platform.toLowerCase()) && (
                       <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-700 dark:text-amber-300">
                         ⚠️ YouTube requires video. Use the main post creator.
@@ -2122,64 +2138,77 @@ export default function GrowthAutopilot({
                     )}
 
                     <div className="flex items-center gap-2">
-                      {/* For platforms requiring images: Generate Image first, then preview */}
-                      {["pinterest", "tiktok", "instagram"].includes(post.platform.toLowerCase()) ? (
-                        <Button
-                          onClick={() => generateImagePreview(post)}
-                          disabled={isLoading || isGeneratingImage === post.id}
-                          className="bg-purple-600 hover:bg-purple-700"
-                        >
-                          {isGeneratingImage === post.id
-                            ? "🔄 Generating..."
-                            : "🎨 Generate Image & Preview"}
-                        </Button>
-                      ) : post.platform.toLowerCase() === "youtube" ? (
+                      {post.platform.toLowerCase() === "youtube" ? (
                         <Button disabled className="opacity-50">
                           ⚠️ Requires Video
                         </Button>
                       ) : (
-                        <Button
-                          onClick={async () => {
-                            // Validate before scheduling
-                            if (!post.content?.trim()) {
-                              setNotification({
-                                type: "error",
-                                message: "Invalid post: missing content",
-                              });
-                              return;
-                            }
-                            if (!post.platform) {
-                              setNotification({
-                                type: "error",
-                                message: "Invalid post: missing platform",
-                              });
-                              return;
-                            }
+                        <>
+                          <Button
+                            onClick={async () => {
+                              // Validate before scheduling
+                              if (!post.content?.trim()) {
+                                setNotification({
+                                  type: "error",
+                                  message: "Invalid post: missing content",
+                                });
+                                return;
+                              }
+                              if (!post.platform) {
+                                setNotification({
+                                  type: "error",
+                                  message: "Invalid post: missing platform",
+                                });
+                                return;
+                              }
 
-                            setStatusMessage(`Scheduling to ${post.platform}...`);
-                            const result = await schedulePost(post);
-                            if (result.success) {
-                              const scheduledDate = result.scheduledFor
-                                ? new Date(result.scheduledFor).toLocaleString("en-US", {
-                                    weekday: "short",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                  })
-                                : "optimal time";
-                              setNotification({
-                                type: "success",
-                                message: `✓ Scheduled for ${post.platform} at ${scheduledDate}`,
-                              });
-                            }
-                            setStatusMessage("");
-                          }}
-                          disabled={isLoading}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Schedule Now
-                        </Button>
+                              setStatusMessage(`Scheduling to ${post.platform}...`);
+                              const result = await schedulePost(post);
+                              if (result.success) {
+                                const scheduledDate = result.scheduledFor
+                                  ? new Date(result.scheduledFor).toLocaleString("en-US", {
+                                      weekday: "short",
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  : "optimal time";
+                                setNotification({
+                                  type: "success",
+                                  message: `✓ Scheduled for ${post.platform} at ${scheduledDate}`,
+                                });
+                              }
+                              setStatusMessage("");
+                            }}
+                            disabled={isLoading}
+                            className="bg-lime-600 hover:bg-lime-700"
+                          >
+                            Schedule
+                          </Button>
+                          {/* Regenerate different image style */}
+                          {post.imageUrl && (
+                            <Button
+                              onClick={() => {
+                                // Regenerate with different scheme
+                                const newScheme = Math.floor(Math.random() * 9);
+                                const baseUrl = window.location.origin;
+                                const newImageUrl = `${baseUrl}/api/text-image?text=${encodeURIComponent(
+                                  post.content?.slice(0, 150) || ""
+                                )}&platform=${post.platform.toLowerCase()}&scheme=${newScheme}&style=${Math.floor(Math.random() * 8)}`;
+                                setGeneratedPosts((prev) =>
+                                  prev.map((p) =>
+                                    p.id === post.id ? { ...p, imageUrl: newImageUrl } : p
+                                  )
+                                );
+                              }}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              🔄 New Style
+                            </Button>
+                          )}
+                        </>
                       )}
                       <Button
                         onClick={() => {

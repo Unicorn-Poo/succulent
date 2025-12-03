@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 interface TextImageRequest {
   text: string;
   platform?: string;
-  brandName?: string;
   scheme?: number;
 }
 
@@ -19,14 +18,69 @@ const PLATFORM_SIZES: Record<string, { width: number; height: number }> = {
 };
 
 /**
+ * Extract the key message from post content
+ * Removes hashtags, mentions, URLs, emojis, and CTAs
+ * Returns a clean, punchy quote for the image
+ */
+function extractImageText(fullContent: string): string {
+  let text = fullContent;
+  
+  // Remove hashtags
+  text = text.replace(/#\w+/g, "");
+  
+  // Remove URLs
+  text = text.replace(/https?:\/\/\S+/g, "");
+  
+  // Remove mentions
+  text = text.replace(/@\w+/g, "");
+  
+  // Remove emojis
+  text = text.replace(/[\u{1F300}-\u{1F9FF}]/gu, "");
+  text = text.replace(/[\u{2600}-\u{26FF}]/gu, "");
+  text = text.replace(/[\u{2700}-\u{27BF}]/gu, "");
+  
+  // Remove common CTA phrases
+  const ctaPhrases = [
+    /check out .*/i,
+    /click the link .*/i,
+    /link in bio.*/i,
+    /follow for more.*/i,
+    /share this.*/i,
+    /tag someone.*/i,
+    /download .*/i,
+    /try .* today.*/i,
+    /sign up.*/i,
+    /learn more.*/i,
+  ];
+  for (const phrase of ctaPhrases) {
+    text = text.replace(phrase, "");
+  }
+  
+  // Clean up whitespace
+  text = text.replace(/\s+/g, " ").trim();
+  
+  // Get first sentence or first 100 chars if no sentence ending
+  const firstSentence = text.match(/^[^.!?]+[.!?]/);
+  if (firstSentence && firstSentence[0].length > 20) {
+    text = firstSentence[0].trim();
+  } else if (text.length > 100) {
+    // Find a good break point
+    const breakPoint = text.lastIndexOf(" ", 100);
+    text = text.slice(0, breakPoint > 50 ? breakPoint : 100) + "...";
+  }
+  
+  return text;
+}
+
+/**
  * POST /api/generate-text-image
  * Returns a URL to the Vercel OG text image endpoint
- * The URL itself IS the image - Ayrshare can fetch it directly
+ * Extracts a clean quote from the full post content for the image
  */
 export async function POST(request: NextRequest) {
   try {
     const body: TextImageRequest = await request.json();
-    const { text, platform = "instagram", brandName, scheme } = body;
+    const { text, platform = "instagram", scheme } = body;
 
     if (!text?.trim()) {
       return NextResponse.json(
@@ -35,6 +89,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Extract clean image text from full content
+    const imageText = extractImageText(text);
+
     // Get the base URL (works in both dev and production)
     const host = request.headers.get("host") || "localhost:3000";
     const protocol = request.headers.get("x-forwarded-proto") || "http";
@@ -42,13 +99,9 @@ export async function POST(request: NextRequest) {
 
     // Build the image URL with query params
     const params = new URLSearchParams({
-      text: text.slice(0, 200), // Limit text length
+      text: imageText,
       platform: platform.toLowerCase(),
     });
-    
-    if (brandName) {
-      params.set("brand", brandName);
-    }
     
     if (scheme !== undefined) {
       params.set("scheme", scheme.toString());
@@ -62,6 +115,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       imageUrl,
+      imageText,  // Return the extracted text so UI can show it
       format: "png",
       width: dimensions.width,
       height: dimensions.height,
