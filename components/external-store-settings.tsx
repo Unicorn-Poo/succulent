@@ -421,7 +421,7 @@ export const ExternalStoreSettings = ({ accountGroup }: ExternalStoreSettingsPro
 													href={product.externalProductUrl} 
 													target="_blank" 
 													rel="noopener noreferrer"
-													className="flex items-center gap-1 text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 text-sm"
+													className="flex items-center gap-1 text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint text-sm"
 												>
 													<ExternalLink className="w-3 h-3" />
 													View in Store

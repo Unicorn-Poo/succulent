@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { usePassphraseAuth } from "jazz-tools/react";
 import {
   Card,
@@ -11,6 +11,20 @@ import {
   Flex,
   TextArea,
 } from "@radix-ui/themes";
+
+// Context to expose auth actions to child components
+type AuthContextType = {
+  showAuthModal: boolean;
+  setShowAuthModal: (show: boolean) => void;
+  authState: "signedIn" | "anonymous" | "loading";
+};
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuthModal() {
+  const ctx = useContext(AuthContext);
+  return ctx;
+}
 
 // Clear corrupted Jazz auth storage
 function clearCorruptedAuthStorage() {
@@ -57,6 +71,7 @@ export function PassphraseAuthBasicUI(props: {
   const [currentPassphrase, setCurrentPassphrase] = useState(() =>
     auth.generateRandomPassphrase()
   );
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Show error state with refresh button
   if (authError) {
@@ -73,10 +88,6 @@ export function PassphraseAuthBasicUI(props: {
         </Card>
       </div>
     );
-  }
-
-  if (auth.state === "signedIn") {
-    return props.children ?? null;
   }
 
   const handleCreateAccount = async () => {
@@ -107,79 +118,96 @@ export function PassphraseAuthBasicUI(props: {
     await auth.logIn(loginPassphrase);
     setStep("initial");
     setLoginPassphrase("");
+    setShowAuthModal(false);
   };
 
   const handleNext = async () => {
     await auth.registerNewAccount(currentPassphrase, "My Account");
     setStep("initial");
     setLoginPassphrase("");
+    setShowAuthModal(false);
   };
 
+  const authContextValue: AuthContextType = {
+    showAuthModal,
+    setShowAuthModal,
+    authState: auth.state === "signedIn" ? "signedIn" : "anonymous",
+  };
+
+  // Always render children - pages can check auth state themselves
+  // Show auth modal when explicitly triggered via context
   return (
-    <div className="flex justify-center items-center h-screen">
-      <Card className="min-w-[400px]">
-        {step === "initial" && (
-          <div className="flex flex-col gap-4">
-            <Heading>{props.appName}</Heading>
-            <Button
-              onClick={handleCreateAccount}
-              className="auth-button-primary"
-            >
-              Create new account
-            </Button>
-            <Button onClick={handleLogin} className="auth-button-secondary">
-              Log in
-            </Button>
-          </div>
-        )}
+    <AuthContext.Provider value={authContextValue}>
+      {props.children}
+      
+      {/* Auth Modal - shown when not signed in and modal is requested */}
+      {auth.state !== "signedIn" && showAuthModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50" onClick={() => setShowAuthModal(false)}>
+          <Card className="min-w-[400px]" onClick={(e) => e.stopPropagation()}>
+            {step === "initial" && (
+              <div className="flex flex-col gap-4">
+                <Heading>{props.appName}</Heading>
+                <Button
+                  onClick={handleCreateAccount}
+                  className="auth-button-primary"
+                >
+                  Create new account
+                </Button>
+                <Button onClick={handleLogin} className="auth-button-secondary">
+                  Log in
+                </Button>
+              </div>
+            )}
 
-        {step === "create" && (
-          <div className="flex flex-col gap-4">
-            <h1 className="auth-heading">Your Passphrase</h1>
-            <p className="auth-description">
-              Please copy and store this passphrase somewhere safe. You'll need
-              it to log in.
-            </p>
-            <textarea
-              readOnly
-              value={currentPassphrase}
-              className="auth-textarea"
-              rows={5}
-            />
-            <Button onClick={handleCopy} className="auth-button-primary">
-              {isCopied ? "Copied!" : "Copy"}
-            </Button>
-            <div className="flex gap-2">
-              <Button onClick={handleBack} variant="soft">
-                Back
-              </Button>
-              <Button onClick={handleReroll} variant="soft">
-                Generate New Passphrase
-              </Button>
-              <Button onClick={handleNext}>Register</Button>
-            </div>
-          </div>
-        )}
+            {step === "create" && (
+              <div className="flex flex-col gap-4">
+                <h1 className="auth-heading">Your Passphrase</h1>
+                <p className="auth-description">
+                  Please copy and store this passphrase somewhere safe. You'll need
+                  it to log in.
+                </p>
+                <textarea
+                  readOnly
+                  value={currentPassphrase}
+                  className="auth-textarea"
+                  rows={5}
+                />
+                <Button onClick={handleCopy} className="auth-button-primary">
+                  {isCopied ? "Copied!" : "Copy"}
+                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleBack} variant="soft">
+                    Back
+                  </Button>
+                  <Button onClick={handleReroll} variant="soft">
+                    Generate New Passphrase
+                  </Button>
+                  <Button onClick={handleNext}>Register</Button>
+                </div>
+              </div>
+            )}
 
-        {step === "login" && (
-          <div className="flex flex-col gap-4">
-            <h1 className="auth-heading">Log In</h1>
-            <TextArea
-              value={loginPassphrase}
-              onChange={(e) => setLoginPassphrase(e.target.value)}
-              placeholder="Enter your passphrase"
-              className="auth-textarea"
-              rows={5}
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleBack} variant="soft">
-                Back
-              </Button>
-              <Button onClick={handleLoginSubmit}>Log In</Button>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
+            {step === "login" && (
+              <div className="flex flex-col gap-4">
+                <h1 className="auth-heading">Log In</h1>
+                <TextArea
+                  value={loginPassphrase}
+                  onChange={(e) => setLoginPassphrase(e.target.value)}
+                  placeholder="Enter your passphrase"
+                  className="auth-textarea"
+                  rows={5}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleBack} variant="soft">
+                    Back
+                  </Button>
+                  <Button onClick={handleLoginSubmit}>Log In</Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+    </AuthContext.Provider>
   );
 }

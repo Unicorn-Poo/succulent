@@ -92,7 +92,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 				return {
 					icon: <RefreshCw className="w-4 h-4 animate-spin" />,
 					label: 'Syncing...',
-					color: 'text-lime-600 dark:text-lime-400 bg-lime-100 dark:bg-lime-900/30'
+					color: 'text-brand-seafoam dark:text-brand-mint bg-brand-mint/20 dark:bg-brand-seafoam/20'
 				};
 			case 'synced':
 				return {
@@ -215,7 +215,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 													href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
+													className="text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint underline"
 												>
 													View in Shopify Admin →
 												</a>
@@ -228,7 +228,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 										<button
 											onClick={() => retryShopifySync(product?.productId, product?.publishingChannels || [])}
 											disabled={isRetrying}
-											className="ml-4 flex items-center gap-1 text-xs bg-lime-500 hover:bg-lime-600 disabled:bg-muted-foreground text-white px-3 py-1 rounded"
+											className="ml-4 flex items-center gap-1 text-xs bg-brand-seafoam hover:bg-brand-seafoam disabled:bg-muted-foreground text-white px-3 py-1 rounded"
 										>
 											{isRetrying ? (
 												<RefreshCw className="w-3 h-3 animate-spin" />
@@ -260,7 +260,7 @@ export default function GelatoProductsOverview({ accountGroup }: GelatoProductsO
 							<Text size="1" color="gray">Synced</Text>
 						</div>
 						<div>
-							<Text weight="medium" size="2" className="block text-lime-600 dark:text-lime-400">
+							<Text weight="medium" size="2" className="block text-brand-seafoam dark:text-brand-mint">
 								{createdProducts.filter((p: any) => p?.shopifyStatus === 'syncing').length}
 							</Text>
 							<Text size="1" color="gray">Syncing</Text>

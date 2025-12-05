@@ -13,10 +13,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Bas
 
 const intentStyles = {
   primary: {
-    solid: 'bg-lime-600 hover:bg-lime-700 active:bg-lime-800 text-white border-lime-600 dark:bg-lime-500 dark:hover:bg-lime-600 dark:active:bg-lime-700',
-    soft: 'bg-lime-100 dark:bg-lime-900/30 hover:bg-lime-200 text-lime-800 dark:text-lime-300 border-lime-100 dark:bg-lime-900/30 dark:hover:bg-lime-900/50 dark:text-lime-300 dark:border-lime-900/30',
-    outline: 'border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50 bg-transparent dark:border-lime-400 dark:text-lime-400 dark:hover:bg-lime-900/30',
-    ghost: 'text-lime-600 dark:text-lime-400 hover:bg-lime-50 bg-transparent border-transparent dark:text-lime-400 dark:hover:bg-lime-900/30'
+    solid: 'bg-brand-seafoam hover:bg-brand-seafoam active:bg-brand-seafoam text-white border-brand-seafoam dark:bg-brand-seafoam dark:hover:bg-brand-seafoam dark:active:bg-brand-seafoam',
+    soft: 'bg-brand-mint/20 dark:bg-brand-seafoam/20 hover:bg-brand-mint/30 text-brand-seafoam dark:text-brand-mint border-brand-mint/30 dark:bg-brand-seafoam/20 dark:hover:bg-brand-seafoam/50 dark:text-brand-mint dark:border-brand-seafoam/30',
+    outline: 'border-brand-seafoam text-brand-seafoam dark:text-brand-mint hover:bg-brand-mint/10 bg-transparent dark:border-brand-mint dark:text-brand-mint dark:hover:bg-brand-seafoam/20',
+    ghost: 'text-brand-seafoam dark:text-brand-mint hover:bg-brand-mint/10 bg-transparent border-transparent dark:text-brand-mint dark:hover:bg-brand-seafoam/20'
   },
   secondary: {
     solid: 'bg-muted-foreground/80 hover:bg-muted-foreground active:bg-muted-foreground text-white border-muted-foreground/80',
@@ -43,10 +43,10 @@ const intentStyles = {
     ghost: 'text-amber-600 hover:bg-amber-50 bg-transparent border-transparent dark:text-amber-400 dark:hover:bg-amber-900/30'
   },
   info: {
-    solid: 'bg-lime-600 hover:bg-lime-700 active:bg-lime-800 text-white border-lime-600 dark:bg-lime-500 dark:hover:bg-lime-600',
-    soft: 'bg-lime-100 dark:bg-lime-900/30 hover:bg-lime-200 text-lime-800 dark:text-lime-300 border-lime-100 dark:bg-lime-900/30 dark:hover:bg-lime-900/50 dark:text-lime-300 dark:border-lime-900/30',
-    outline: 'border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50 dark:bg-lime-900/20 bg-transparent dark:border-lime-400 dark:text-lime-400 dark:hover:bg-lime-900/30',
-    ghost: 'text-lime-600 dark:text-lime-400 hover:bg-lime-50 dark:bg-lime-900/20 bg-transparent border-transparent dark:text-lime-400 dark:hover:bg-lime-900/30'
+    solid: 'bg-brand-seafoam hover:bg-brand-seafoam active:bg-brand-seafoam text-white border-brand-seafoam dark:bg-brand-seafoam dark:hover:bg-brand-seafoam',
+    soft: 'bg-brand-mint/20 dark:bg-brand-seafoam/20 hover:bg-brand-mint/30 text-brand-seafoam dark:text-brand-mint border-brand-mint/30 dark:bg-brand-seafoam/20 dark:hover:bg-brand-seafoam/50 dark:text-brand-mint dark:border-brand-seafoam/30',
+    outline: 'border-brand-seafoam text-brand-seafoam dark:text-brand-mint hover:bg-brand-mint/10 dark:bg-brand-seafoam/20 bg-transparent dark:border-brand-mint dark:text-brand-mint dark:hover:bg-brand-seafoam/20',
+    ghost: 'text-brand-seafoam dark:text-brand-mint hover:bg-brand-mint/10 dark:bg-brand-seafoam/20 bg-transparent border-transparent dark:text-brand-mint dark:hover:bg-brand-seafoam/20'
   },
   light: {
     solid: 'bg-muted hover:bg-muted/80 active:bg-muted-foreground/30 text-foreground border-border',
@@ -94,12 +94,12 @@ export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
           intentClasses,
           // Focus ring color based on intent
           {
-            'focus:ring-lime-500': intent === 'primary',
+            'focus:ring-brand-seafoam': intent === 'primary',
             'focus:ring-gray-500': intent === 'secondary',
             'focus:ring-green-500': intent === 'success',
             'focus:ring-red-500': intent === 'danger',
             'focus:ring-amber-500': intent === 'warning',
-            'focus:ring-lime-500': intent === 'info',
+            'focus:ring-brand-seafoam': intent === 'info',
             'focus:ring-gray-300': intent === 'light',
             'focus:ring-gray-700': intent === 'dark',
           },

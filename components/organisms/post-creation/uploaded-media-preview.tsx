@@ -227,7 +227,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 								onClick={() => setCurrentIndex(index)}
 								className={`w-2 h-2 rounded-full transition-all duration-200 ${
 									index === currentIndex
-										? 'bg-lime-500 w-4'
+										? 'bg-brand-seafoam w-4'
 										: 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
 								}`}
 								aria-label={`Go to image ${index + 1}`}
@@ -243,7 +243,7 @@ export const UploadedMediaPreview = ({ post, activeTab, handleImageUpload }: Upl
 							variant="outline"
 							size="2"
 							onClick={handleImageUpload}
-							className="flex items-center gap-2 text-foreground hover:text-lime-600 dark:text-lime-400 hover:border-lime-500 transition-colors duration-200"
+							className="flex items-center gap-2 text-foreground hover:text-brand-seafoam dark:text-brand-mint hover:border-brand-seafoam transition-colors duration-200"
 						>
 							<Plus className="w-4 h-4" />
 							Add More
@@ -338,7 +338,7 @@ const MediaComponent = ({ mediaItem }: { mediaItem: any }) => {
 		return (
 			<div className="w-full h-[400px] bg-muted dark:bg-muted flex items-center justify-center">
 				<div className="text-center">
-					<div className="w-8 h-8 border-2 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+					<div className="w-8 h-8 border-2 border-brand-seafoam border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
 					<p className="text-muted-foreground text-sm">Loading...</p>
 				</div>
 			</div>

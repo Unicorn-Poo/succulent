@@ -159,7 +159,7 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 				{allMedia.length > 1 && (
 					<div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
 						<div 
-							className="h-full bg-lime-500 transition-all duration-300 ease-out"
+							className="h-full bg-brand-seafoam transition-all duration-300 ease-out"
 							style={{ width: `${((currentIndex + 1) / allMedia.length) * 100}%` }}
 						/>
 					</div>
@@ -175,13 +175,13 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 							onClick={() => handleGoToSlide(index)}
 							className={`relative w-3 h-3 rounded-full transition-all duration-300 ${
 								currentIndex === index 
-									? 'bg-lime-500 shadow-lg shadow-lime-500/50 scale-125' 
+									? 'bg-brand-seafoam shadow-lg shadow-brand-seafoam/50 scale-125' 
 									: 'bg-muted-foreground/30 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-muted0'
 							}`}
 							aria-label={`Go to slide ${index + 1}`}
 						>
 							{currentIndex === index && (
-								<div className="absolute inset-0 rounded-full bg-lime-500 animate-ping" />
+								<div className="absolute inset-0 rounded-full bg-brand-seafoam animate-ping" />
 							)}
 						</button>
 					))}
@@ -305,10 +305,10 @@ const MediaComponent = ({ mediaItem, onRemove, showDeleteButton = false, index }
 					return (
 						<div className="w-full h-full flex items-center justify-center">
 							<div className="text-center">
-								<div className="w-12 h-12 border-4 border-lime-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+								<div className="w-12 h-12 border-4 border-brand-seafoam border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
 								<p className="text-muted-foreground text-sm font-medium">Loading media...</p>
 								<div className="mt-2 w-24 h-1 bg-muted-foreground/30 dark:bg-gray-600 rounded-full overflow-hidden">
-									<div className="h-full bg-lime-500 rounded-full animate-pulse" style={{ width: '60%' }} />
+									<div className="h-full bg-brand-seafoam rounded-full animate-pulse" style={{ width: '60%' }} />
 								</div>
 							</div>
 						</div>

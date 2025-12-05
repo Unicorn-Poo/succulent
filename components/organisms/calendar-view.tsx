@@ -126,7 +126,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published': return 'bg-green-500 border-green-600';
-      case 'scheduled': return 'bg-lime-500 border-lime-600';
+      case 'scheduled': return 'bg-brand-seafoam border-brand-seafoam';
       case 'draft': return 'bg-muted0 border-gray-600';
       default: return 'bg-muted0 border-gray-600';
     }
@@ -135,7 +135,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
   const getStatusTextColor = (status: string) => {
     switch (status) {
       case 'published': return 'text-green-100';
-      case 'scheduled': return 'text-lime-100';
+      case 'scheduled': return 'text-brand-mint';
       case 'draft': return 'text-gray-100';
       default: return 'text-gray-100';
     }
@@ -176,7 +176,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
               <span className="text-sm text-muted-foreground">Published</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-brand-seafoam rounded-full"></div>
               <span className="text-sm text-muted-foreground">Scheduled</span>
             </div>
             <div className="flex items-center gap-1">
@@ -218,7 +218,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
               key={index}
               className={`bg-card p-2 min-h-[120px] ${
                 !calendarDay.isCurrentMonth ? 'opacity-30' : ''
-              } ${isToday ? 'ring-2 ring-lime-500 ring-inset' : ''}`}
+              } ${isToday ? 'ring-2 ring-brand-seafoam ring-inset' : ''}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className={`text-sm ${
@@ -227,7 +227,7 @@ export default function CalendarView({ posts, accountGroupId }: CalendarViewProp
                   {calendarDay.day}
                 </span>
                 {isToday && (
-                  <div className="w-2 h-2 bg-lime-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-brand-seafoam rounded-full"></div>
                 )}
               </div>
               

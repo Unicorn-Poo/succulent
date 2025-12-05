@@ -239,7 +239,7 @@ export default function AccountGroupTools({
               }}
             >
               <div className="text-center">
-                <ToolIcon className="w-8 h-8 text-lime-500 mx-auto mb-3" />
+                <ToolIcon className="w-8 h-8 text-brand-seafoam mx-auto mb-3" />
                 <Text size="3" weight="medium" className="mb-2 block">
                   {tool.name}
                 </Text>
@@ -391,7 +391,7 @@ function BrandManager({
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-lime-50 rounded-lg">
+          <div className="p-3 bg-brand-mint/10 rounded-lg">
             <Text size="2" weight="medium" className="mb-1 block">
               Brand Colors
             </Text>

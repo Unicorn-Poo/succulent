@@ -712,10 +712,10 @@ export default function AccountLinkingManager({
 
           {/* Polling Progress Indicator */}
           {isPolling && (
-            <div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+            <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-lime-500 animate-spin" />
+                  <RefreshCw className="w-4 h-4 text-brand-seafoam animate-spin" />
                   <Text size="2" color="blue" weight="medium">
                     Auto-detecting linked accounts...
                   </Text>
@@ -724,9 +724,9 @@ export default function AccountLinkingManager({
                   {pollProgress.current}/{pollProgress.max}
                 </Badge>
               </div>
-              <div className="w-full bg-lime-200 rounded-full h-2">
+              <div className="w-full bg-brand-mint/30 rounded-full h-2">
                 <div 
-                  className="bg-lime-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-brand-seafoam h-2 rounded-full transition-all duration-300"
                   style={{ width: `${(pollProgress.current / pollProgress.max) * 100}%` }}
                 />
               </div>
@@ -738,13 +738,13 @@ export default function AccountLinkingManager({
 
           {/* Force Refresh Section */}
           {connectedAccounts.length === 0 && (
-            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+            <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <Text size="2" weight="medium" className="block text-lime-800 dark:text-lime-300 mb-1">
+                  <Text size="2" weight="medium" className="block text-brand-seafoam dark:text-brand-mint mb-1">
                     Just linked accounts in Ayrshare?
                   </Text>
-                  <Text size="2" className="text-lime-700 dark:text-lime-300">
+                  <Text size="2" className="text-brand-seafoam dark:text-brand-mint">
                     If you just connected accounts, click refresh to update the status.
                   </Text>
                 </div>
@@ -951,15 +951,15 @@ export default function AccountLinkingManager({
 
 
           {/* Profile Information */}
-          <div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+          <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
             <div className="flex items-start gap-3">
-              <Settings className="w-4 h-4 text-lime-600 dark:text-lime-400 mt-0.5" />
+              <Settings className="w-4 h-4 text-brand-seafoam dark:text-brand-mint mt-0.5" />
               <div className="flex-1">
-                <Text size="2" weight="medium" className="block mb-1 text-lime-800 dark:text-lime-300">
+                <Text size="2" weight="medium" className="block mb-1 text-brand-seafoam dark:text-brand-mint">
                   Profile Key Management
                 </Text>
-                <Text size="1" className="text-lime-700 dark:text-lime-300 mb-2">
-                  This account group uses Ayrshare user profile: <code className="bg-lime-100 dark:bg-lime-900/30 px-1 rounded">{profileKey?.substring(0, 12)}...</code>
+                <Text size="1" className="text-brand-seafoam dark:text-brand-mint mb-2">
+                  This account group uses Ayrshare user profile: <code className="bg-brand-mint/20 dark:bg-brand-seafoam/20 px-1 rounded">{profileKey?.substring(0, 12)}...</code>
                 </Text>
                 <Button 
                   size="1" 
@@ -1062,7 +1062,7 @@ export default function AccountLinkingManager({
       <Dialog.Root open={showChangeProfileKey} onOpenChange={setShowChangeProfileKey}>
         <Dialog.Content className="max-w-md">
           <Dialog.Title className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-lime-500" />
+            <Settings className="w-5 h-5 text-brand-seafoam" />
             Change Ayrshare Profile Key
           </Dialog.Title>
           <div className="space-y-4 mt-4">

@@ -531,8 +531,8 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
 					<div className="flex items-center gap-3">
-						<div className="flex items-center justify-center w-10 h-10 bg-lime-100 dark:bg-lime-900/30 rounded-lg">
-							<Store className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+						<div className="flex items-center justify-center w-10 h-10 bg-brand-mint/20 dark:bg-brand-seafoam/20 rounded-lg">
+							<Store className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
 						</div>
 						<div>
 							<Text weight="medium" size="4">Gelato Store Connection</Text>
@@ -590,16 +590,16 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 				{/* Setup Instructions */}
 				{!isConfigured && !isEditing && (
-					<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg mb-6">
-						<Text weight="medium" size="3" className="text-lime-800 dark:text-lime-300 block mb-2">
+					<div className="p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg mb-6">
+						<Text weight="medium" size="3" className="text-brand-seafoam dark:text-brand-mint block mb-2">
 							🔒 Secure Gelato Integration
 						</Text>
-						<Text size="2" className="text-lime-700 block mb-3">
+						<Text size="2" className="text-brand-seafoam block mb-3">
 							Your Gelato API credentials will be encrypted and stored securely for this account group. 
 							Each account group can have its own Gelato store connection.
 						</Text>
 						<div className="space-y-2">
-							<Text size="2" className="text-lime-700 block">
+							<Text size="2" className="text-brand-seafoam block">
 								<strong>Step 1:</strong> Get your API credentials from{' '}
 								<a 
 									href="https://gelato.com/developers" 
@@ -609,10 +609,10 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 									Gelato Developers <ExternalLink className="w-3 h-3" />
 								</a>
 							</Text>
-							<Text size="2" className="text-lime-700 block">
+							<Text size="2" className="text-brand-seafoam block">
 								<strong>Step 2:</strong> Click "Configure" to enter your credentials
 							</Text>
-							<Text size="2" className="text-lime-700 block">
+							<Text size="2" className="text-brand-seafoam block">
 								<strong>Step 3:</strong> Test the connection and save
 							</Text>
 						</div>
@@ -632,7 +632,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								value={formData.apiKey}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
 								type="password"
-								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 							/>
 							<Text size="1" color="gray" className="block mt-1">
 								This will be encrypted and stored securely for this account group
@@ -648,7 +648,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								placeholder="Your internal store identifier (optional)"
 								value={formData.storeId}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, storeId: e.target.value }))}
-								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 							/>
 							<Text size="1" color="gray" className="block mt-1">
 								This is for your own reference and organization purposes
@@ -663,7 +663,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 								placeholder="My Awesome Store"
 								value={formData.storeName}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, storeName: e.target.value }))}
-								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+								className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 							/>
 						</div>
 
@@ -854,7 +854,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 																value={tempTags[templateId] || ''}
 																onChange={(e) => setTempTags(prev => ({ ...prev, [templateId]: e.target.value }))}
 																placeholder="Enter tags separated by commas"
-																className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-lime-500"
+																className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-brand-seafoam"
 															/>
 															<div className="flex gap-2">
 																<Button
@@ -937,13 +937,13 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 
 				{/* Shopify Integration Section */}
 				{isConfigured && !isEditing && (
-					<div className="mt-6 p-4 bg-lime-50 border border-lime-200 rounded-lg">
+					<div className="mt-6 p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
 						<div className="flex items-center justify-between mb-4">
 							<div>
-								<Text weight="medium" size="3" className="text-lime-800 dark:text-lime-300 block">
+								<Text weight="medium" size="3" className="text-brand-seafoam dark:text-brand-mint block">
 									🛒 Shopify Integration
 								</Text>
-								<Text size="2" className="text-lime-700 block mt-1">
+								<Text size="2" className="text-brand-seafoam block mt-1">
 									Connect your Shopify store to manage product publishing and sales channels
 								</Text>
 							</div>
@@ -1018,7 +1018,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
 											setShopifyFormData(prev => ({ ...prev, storeUrl: e.target.value }))
 										}
-										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 									/>
 									<Text size="1" color="gray" className="block mt-1">
 										Your Shopify store domain (with or without https://)
@@ -1036,7 +1036,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 											setShopifyFormData(prev => ({ ...prev, accessToken: e.target.value }))
 										}
 										type="password"
-										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 									/>
 									<Text size="1" color="gray" className="block mt-1">
 										<strong>NOT</strong> the same as API key! Get this from Apps → Private apps → Admin API access token
@@ -1053,7 +1053,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
 											setShopifyFormData(prev => ({ ...prev, storeName: e.target.value }))
 										}
-										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+										className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 									/>
 								</div>
 
@@ -1107,10 +1107,10 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 			<div className="mb-4">
 				<div className="flex items-center justify-between mb-3">
 					<div>
-						<Text weight="medium" size="2" className="text-lime-800 dark:text-lime-300 block">
+						<Text weight="medium" size="2" className="text-brand-seafoam dark:text-brand-mint block">
 							📡 Publishing Channels ({publishingChannels.length} channels)
 						</Text>
-						<Text size="1" className="text-lime-700 block mt-1">
+						<Text size="1" className="text-brand-seafoam block mt-1">
 							{channelsLastFetched 
 								? `Last updated: ${channelsLastFetched.toLocaleDateString()}`
 								: 'Channels available from your store'
@@ -1126,7 +1126,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 						<RefreshCw className={`w-3 h-3 ${isTestingShopify ? 'animate-spin' : ''}`} />
 					</Button>
 				</div>
-				<Text size="1" className="text-lime-700 block mb-3">
+				<Text size="1" className="text-brand-seafoam block mb-3">
 					Select which channels should be preselected when creating new products:
 				</Text>
 				<div className="space-y-2">
@@ -1150,7 +1150,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 										
 										handleDefaultChannelsChange(newChannels);
 									}}
-									className="w-4 h-4 text-lime-600 dark:text-lime-400 border-border rounded focus:ring-lime-500"
+									className="w-4 h-4 text-brand-seafoam dark:text-brand-mint border-border rounded focus:ring-brand-seafoam"
 								/>
 								<label htmlFor={`channel-${channel.id}`} className="cursor-pointer">
 									<Text size="2" weight="medium">{channel.name}</Text>
@@ -1264,7 +1264,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 									value={templateIdToImport}
 									onChange={(e) => setTemplateIdToImport(e.target.value)}
 									placeholder="e.g., abc123-def456-ghi789"
-									className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500"
+									className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
 									disabled={isImporting}
 								/>
 								<Text size="1" color="gray" className="block mt-1">

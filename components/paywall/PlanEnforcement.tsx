@@ -315,14 +315,14 @@ export function MultiMediaGuard({ children }: { children: ReactNode }) {
     <PlanEnforcement 
       feature="multiple-media"
       fallback={
-        <Card className="p-4 bg-lime-50 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800">
+        <Card className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 border-brand-mint/40 dark:border-brand-seafoam/40">
           <div className="flex items-center gap-2 mb-2">
-            <Lock className="w-4 h-4 text-lime-600 dark:text-lime-400" />
-            <Text size="2" weight="bold" className="text-lime-800 dark:text-lime-300">
+            <Lock className="w-4 h-4 text-brand-seafoam dark:text-brand-mint" />
+            <Text size="2" weight="bold" className="text-brand-seafoam dark:text-brand-mint">
               Single Image Only
             </Text>
           </div>
-          <Text size="1" className="text-lime-700 dark:text-lime-300">
+          <Text size="1" className="text-brand-seafoam dark:text-brand-mint">
             Multiple images and videos require a premium plan
           </Text>
         </Card>
@@ -371,24 +371,24 @@ export function TrialBanner() {
   const trialInfo = getTrialInfo();
 
   return (
-    <Card className="p-4 mb-4 bg-gradient-to-r from-lime-50 to-green-50 border-lime-200">
+    <Card className="p-4 mb-4 bg-gradient-to-r from-brand-mint/10 to-green-50 border-brand-mint/40">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
-            <Star className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+          <div className="w-10 h-10 rounded-full bg-brand-mint/20 dark:bg-brand-seafoam/20 flex items-center justify-center">
+            <Star className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
           </div>
           <div>
-            <Text size="3" weight="bold" className="text-lime-800 dark:text-lime-300">
+            <Text size="3" weight="bold" className="text-brand-seafoam dark:text-brand-mint">
               Free Trial Active
             </Text>
-            <Text size="2" className="text-lime-700">
+            <Text size="2" className="text-brand-seafoam">
               {trialInfo.tier} plan • {trialInfo.daysRemaining} days remaining
             </Text>
           </div>
         </div>
         <Button 
           size="2" 
-          className="bg-lime-600 hover:bg-lime-700 text-white"
+          className="bg-brand-seafoam hover:bg-brand-seafoam text-white"
           onClick={() => window.open('/pricing', '_blank')}
         >
           Upgrade Now
@@ -474,7 +474,7 @@ export function UsageDashboard() {
       {currentTier === 'free' && (
         <div className="mt-4 pt-4 border-t">
           <Button 
-            className="w-full bg-gradient-to-r from-lime-500 to-green-500 hover:from-lime-600 hover:to-green-600 text-white"
+            className="w-full bg-gradient-to-r from-brand-seafoam to-brand-mint hover:from-brand-seafoam hover:to-brand-mint text-white"
             onClick={() => window.open('/pricing', '_blank')}
           >
             <Crown className="w-4 h-4 mr-2" />

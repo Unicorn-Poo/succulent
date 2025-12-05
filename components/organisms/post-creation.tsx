@@ -103,7 +103,7 @@ const GelatoTemplateSelector = ({
 				{onRetry && (
 					<button
 						onClick={onRetry}
-						className="mt-2 text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
+						className="mt-2 text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint underline"
 					>
 						Try Again
 					</button>
@@ -192,17 +192,17 @@ const GelatoTemplateSelector = ({
 						<label
 							key={template.id}
 							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 ${
-								isSelected ? 'bg-lime-50' : ''
+								isSelected ? 'bg-brand-mint/10' : ''
 							}`}
 						>
 							<input
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-border rounded focus:ring-lime-500"
+								className="w-4 h-4 text-brand-seafoam dark:text-brand-mint border-border rounded focus:ring-brand-seafoam"
 							/>
 							<div className="flex-1">
-								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800 dark:text-lime-300" : ""}>
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-brand-seafoam dark:text-brand-mint" : ""}>
 									{formatTemplateTitle(template)}
 								</Text>
 								{template.productType && (
@@ -253,7 +253,7 @@ const ProdigiTemplateSelector = ({
 				{onRetry && (
 					<button
 						onClick={onRetry}
-						className="mt-2 text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
+						className="mt-2 text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint underline"
 					>
 						Try Again
 					</button>
@@ -291,17 +291,17 @@ const ProdigiTemplateSelector = ({
 						<label
 							key={template.id}
 							className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 ${
-								isSelected ? 'bg-lime-50 dark:bg-lime-900/20' : ''
+								isSelected ? 'bg-brand-mint/10 dark:bg-brand-seafoam/20' : ''
 							}`}
 						>
 							<input
 								type="checkbox"
 								checked={isSelected}
 								onChange={() => handleTemplateToggle(template)}
-								className="w-4 h-4 text-lime-600 dark:text-lime-400 border-border rounded focus:ring-lime-500"
+								className="w-4 h-4 text-brand-seafoam dark:text-brand-mint border-border rounded focus:ring-brand-seafoam"
 							/>
 							<div className="flex-1">
-								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-lime-800 dark:text-lime-300" : ""}>
+								<Text size="2" weight={isSelected ? "medium" : "regular"} className={isSelected ? "text-brand-seafoam dark:text-brand-mint" : ""}>
 									{template.displayName || template.name}
 								</Text>
 								{template.productType && (
@@ -1445,7 +1445,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 													</span>
 												)}
 												{product?.shopifyStatus === 'syncing' && (
-													<span className="inline-flex items-center gap-1 text-xs text-lime-600 dark:text-lime-400 bg-lime-100 dark:bg-lime-900/30 px-2 py-1 rounded-full">
+													<span className="inline-flex items-center gap-1 text-xs text-brand-seafoam dark:text-brand-mint bg-brand-mint/20 dark:bg-brand-seafoam/20 px-2 py-1 rounded-full">
 														🔄 Syncing to Shopify...
 													</span>
 												)}
@@ -1480,7 +1480,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														href={`${shopifyConfig.storeUrl}/admin/products/${product.shopifyProductId}`}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 underline"
+														className="text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint underline"
 													>
 														View in Shopify Admin →
 													</a>
@@ -1519,7 +1519,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 														console.log('Retry sync with channels:', product?.publishingChannels);
 														handleShopifyManagement(productResult);
 													}}
-													className="text-xs bg-lime-500 hover:bg-lime-600 text-white px-3 py-1 rounded"
+													className="text-xs bg-brand-seafoam hover:bg-brand-seafoam text-white px-3 py-1 rounded"
 												>
 													{product?.shopifyStatus === 'partial' ? 'Fix Channels' : 'Retry Sync'}
 												</button>
@@ -1572,7 +1572,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				<div className="p-4">
 					<div className="flex items-center justify-between mb-4">
 						<div className="flex items-center gap-2">
-																<Package className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+																<Package className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
 							<Text weight="medium" size="3">Auto-Create Gelato Product</Text>
 							{hasImages && (
 								<span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
@@ -1593,8 +1593,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</Text>
 							<button
 								onClick={handleAutoCreateToggle}
-								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 ${
-									autoCreateOnPublish ? 'bg-lime-600' : 'bg-muted'
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-seafoam focus:ring-offset-2 ${
+									autoCreateOnPublish ? 'bg-brand-seafoam' : 'bg-muted'
 								}`}
 							>
 								<span
@@ -1688,7 +1688,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</Text>
 							<button
 								onClick={() => setShowGelatoSection(!showGelatoSection)}
-								className="text-sm text-lime-600 dark:text-lime-400 hover:text-lime-700 font-medium"
+								className="text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam font-medium"
 							>
 								{showGelatoSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -1699,24 +1699,24 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						<div className="space-y-4">
 							{/* Setup Instructions when credentials are missing */}
 							{!isGelatoConfigured && (
-															<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
-								<Text size="2" weight="medium" className="block mb-2 text-lime-800 dark:text-lime-300">
+															<div className="p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
+								<Text size="2" weight="medium" className="block mb-2 text-brand-seafoam dark:text-brand-mint">
 									🔧 Gelato Store Setup Required
 								</Text>
-								<Text size="2" className="block mb-3 text-lime-700">
+								<Text size="2" className="block mb-3 text-brand-seafoam">
 									Connect your Gelato store to create print-on-demand products from your posts.
 								</Text>
 								<div className="space-y-2">
-									<Text size="2" className="block text-lime-700">
+									<Text size="2" className="block text-brand-seafoam">
 										<strong>Step 1:</strong> Get your API credentials from{' '}
 										<a href="https://gelato.com/developers" target="_blank" className="underline">
 											gelato.com/developers
 										</a>
 									</Text>
-									<Text size="2" className="block text-lime-700">
+									<Text size="2" className="block text-brand-seafoam">
 										<strong>Step 2:</strong> Go to the &quot;Settings&quot; tab in this account group
 									</Text>
-									<Text size="2" className="block text-lime-700">
+									<Text size="2" className="block text-brand-seafoam">
 										<strong>Step 3:</strong> Enter your credentials and test the connection
 									</Text>
 								</div>
@@ -1807,7 +1807,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																[template.id]: e.target.value
 															}))}
 															placeholder={`${template.displayName || template.name}`}
-															className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+															className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-seafoam focus:border-transparent"
 														/>
 													</div>
 												))}
@@ -1820,14 +1820,14 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 									{/* Shopify Integration Options */}
 									{isShopifyConfigured && selectedTemplates.length > 0 && (
-										<div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
+										<div className="p-3 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
 											<div className="flex items-center justify-between mb-3">
-												<Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300">
+												<Text size="2" weight="medium" className="text-brand-seafoam dark:text-brand-mint">
 													🛒 Shopify Publishing Options
 												</Text>
 												<button
 													onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-													className="text-xs text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300"
+													className="text-xs text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint"
 												>
 													{showAdvancedOptions ? 'Simple' : 'Advanced'}
 												</button>
@@ -1891,12 +1891,12 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 											{!showAdvancedOptions && (
 												<div className="space-y-2">
-													<Text size="1" className="text-lime-700">
+													<Text size="1" className="text-brand-seafoam">
 														✅ Publishing to: {selectedPublishingChannels.map(id => 
 															availableChannels.find((c: any) => c.id === id)?.name || id
 														).join(', ') || 'Online Store'}
 													</Text>
-													<Text size="1" className="text-lime-700">
+													<Text size="1" className="text-brand-seafoam">
 														🏷️ Using combined tags from selected templates
 													</Text>
 												</div>
@@ -1919,7 +1919,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 									<GelatoButton
 										disabled={selectedTemplates.length === 0 || !hasImages}
 										onClick={createRealGelatoProducts}
-										className="w-full bg-lime-600 hover:bg-lime-700 text-white py-3 px-4 rounded-lg font-medium disabled:bg-muted-foreground/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+										className="w-full bg-brand-seafoam hover:bg-brand-seafoam text-white py-3 px-4 rounded-lg font-medium disabled:bg-muted-foreground/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 									>
 										<Package className="w-4 h-4" />
 										Create {selectedTemplates.length === 1 ? selectedTemplates[0]?.displayName || selectedTemplates[0]?.name || 'Product' : `${selectedTemplates.length} Products`}
@@ -2020,7 +2020,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							<Text size="2" weight="medium">Product Creation Options</Text>
 							<button
 								onClick={() => setShowProdigiSection(!showProdigiSection)}
-								className="text-xs text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300"
+								className="text-xs text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint"
 							>
 								{showProdigiSection ? 'Hide Options' : 'Show Options'}
 							</button>
@@ -2072,7 +2072,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{/* Template Details */}
 										{selectedProdigiTemplates.length > 0 && (
-											<div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+											<div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
 												<Text size="2" weight="medium" className="block mb-2">
 													Selected Templates ({selectedProdigiTemplates.length}):
 												</Text>
@@ -2104,7 +2104,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 												</Text>
 												<div className="space-y-3">
 													{selectedProdigiTemplates.map((template) => (
-														<div key={template.id} className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+														<div key={template.id} className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
 															<Text size="1" weight="medium" className="block mb-2">
 																{template.displayName || template.name}:
 															</Text>
@@ -2115,7 +2115,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 																	[template.id]: e.target.value
 																}))}
 																placeholder={`${template.displayName || template.name} - ${new Date().toLocaleDateString()}`}
-																className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+																className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-seafoam focus:border-transparent"
 															/>
 														</div>
 													))}
@@ -2183,7 +2183,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 					<div className="p-4">
 						<div className="flex items-center justify-between mb-4">
 							<div className="flex items-center gap-2">
-								<BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+								<BarChart3 className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
 								<Text weight="medium" size="3">Content Optimization</Text>
 							</div>
 						</div>
@@ -2217,7 +2217,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 											<button
 												onClick={fetchOptimalTimes}
 												disabled={isLoadingTimes}
-												className="flex items-center gap-2 px-3 py-1 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 rounded-lg text-sm hover:bg-lime-100 dark:bg-lime-900/30 disabled:opacity-50"
+												className="flex items-center gap-2 px-3 py-1 bg-brand-mint/10 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint rounded-lg text-sm hover:bg-brand-mint/20 dark:bg-brand-seafoam/20 disabled:opacity-50"
 											>
 												{isLoadingTimes ? (
 													<Loader2 className="w-4 h-4 animate-spin" />
@@ -2230,7 +2230,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 										{optimalTimes ? (
 											<div className="space-y-3">
-												<div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+												<div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
 													<Text size="2" weight="medium" className="block mb-2">
 														Best times for {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
 													</Text>
@@ -2289,7 +2289,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 						</div>
 						<button
 							onClick={() => window.open('https://www.ayrshare.com/pricing', '_blank')}
-							className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-lg text-sm"
+							className="bg-brand-seafoam hover:bg-brand-seafoam text-white px-4 py-2 rounded-lg text-sm"
 						>
 							Upgrade to Business Plan
 						</button>

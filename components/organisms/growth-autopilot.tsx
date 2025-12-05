@@ -1479,7 +1479,7 @@ export default function GrowthAutopilot({
       case "medium":
         return "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20";
       default:
-        return "text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20";
+        return "text-brand-seafoam dark:text-brand-mint bg-brand-mint/10 dark:bg-brand-seafoam/20";
     }
   };
 
@@ -1499,7 +1499,7 @@ export default function GrowthAutopilot({
   const getInsightColor = (type: string) => {
     switch (type) {
       case "opportunity":
-        return "border-lime-200 dark:border-lime-800 bg-lime-50 dark:bg-lime-900/20";
+        return "border-brand-mint/40 dark:border-brand-seafoam/40 bg-brand-mint/10 dark:bg-brand-seafoam/20";
       case "warning":
         return "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20";
       case "success":
@@ -1637,19 +1637,19 @@ export default function GrowthAutopilot({
 
       {/* Schedule All Progress */}
       {scheduleAllProgress && (
-        <div className="mb-4 p-4 bg-lime-100 dark:bg-lime-900/30 border border-lime-300 dark:border-lime-700 rounded-lg">
+        <div className="mb-4 p-4 bg-brand-mint/20 dark:bg-brand-seafoam/20 border border-brand-mint dark:border-brand-seafoam/50 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="animate-spin">🔄</div>
             <div className="flex-1">
-              <p className="font-medium text-lime-800 dark:text-lime-200">
+              <p className="font-medium text-brand-seafoam dark:text-brand-mint/50">
                 Scheduling Posts ({scheduleAllProgress.current}/{scheduleAllProgress.total})
               </p>
-              <p className="text-sm text-lime-700 dark:text-lime-300">
+              <p className="text-sm text-brand-seafoam dark:text-brand-mint">
                 Currently: {scheduleAllProgress.currentPlatform}
               </p>
-              <div className="mt-2 w-full bg-lime-200 dark:bg-lime-800 rounded-full h-2">
+              <div className="mt-2 w-full bg-brand-mint/30 dark:bg-brand-seafoam/30 rounded-full h-2">
                 <div
-                  className="bg-lime-600 h-2 rounded-full transition-all"
+                  className="bg-brand-seafoam h-2 rounded-full transition-all"
                   style={{
                     width: `${(scheduleAllProgress.current / scheduleAllProgress.total) * 100}%`,
                   }}
@@ -1670,7 +1670,7 @@ export default function GrowthAutopilot({
               dashboard.status === "active"
                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                 : isLoading
-                ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
+                ? "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint"
                 : "bg-muted text-foreground"
             }`}
           >
@@ -1717,11 +1717,11 @@ export default function GrowthAutopilot({
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg text-center">
-          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+        <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg text-center">
+          <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
             {dashboard.actionsToday}
           </p>
-          <p className="text-sm text-lime-700 dark:text-lime-300">
+          <p className="text-sm text-brand-seafoam dark:text-brand-mint">
             Actions Today
           </p>
         </div>
@@ -1760,7 +1760,7 @@ export default function GrowthAutopilot({
               setStatusMessage("Refreshing...");
               generateAutopilotActions();
             }}
-            className="text-lime-600 hover:text-lime-700 font-medium"
+            className="text-brand-seafoam hover:text-brand-seafoam font-medium"
             disabled={isLoading}
           >
             {isLoading ? "Generating..." : "Refresh"}
@@ -1790,7 +1790,7 @@ export default function GrowthAutopilot({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
-                  ? "border-lime-500 text-lime-600 dark:text-lime-400"
+                  ? "border-brand-seafoam text-brand-seafoam dark:text-brand-mint"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1805,7 +1805,7 @@ export default function GrowthAutopilot({
         <div className="space-y-6">
           {/* Generated Posts Preview */}
           {dashboard.nextActions.filter((a) => a.content).length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-green-50 to-lime-50 dark:from-green-900/20 dark:to-lime-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="p-4 bg-gradient-to-r from-green-50 to-brand-mint/10 dark:from-green-900/20 dark:to-brand-seafoam/20/20 border border-green-200 dark:border-green-800 rounded-lg">
               <h4 className="font-medium text-green-800 dark:text-green-300 mb-3">
                 📝 Generated Posts Ready to Publish
               </h4>
@@ -1884,8 +1884,8 @@ export default function GrowthAutopilot({
 
           {/* Tips & Recommendations (non-content actions) */}
           {dashboard.nextActions.filter((a) => !a.content).length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
-              <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-3">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
+              <h4 className="font-medium text-brand-seafoam dark:text-brand-mint mb-3">
                 💡 Growth Tips & Recommendations
             </h4>
             <div className="space-y-3">
@@ -1950,7 +1950,7 @@ export default function GrowthAutopilot({
                   <span className="text-sm text-foreground">
                     Posts Scheduled
                   </span>
-                  <span className="font-bold text-lime-600 dark:text-lime-400">
+                  <span className="font-bold text-brand-seafoam dark:text-brand-mint">
                     {dashboard.performance.postsScheduled}
                   </span>
                 </div>
@@ -1996,7 +1996,7 @@ export default function GrowthAutopilot({
                   <span className="text-sm text-foreground">
                     Target Growth Rate
                   </span>
-                  <span className="font-bold text-lime-600 dark:text-lime-400">
+                  <span className="font-bold text-brand-seafoam dark:text-brand-mint">
                     {settings.goals.followerGrowthTarget}%/month
                   </span>
                 </div>
@@ -2047,7 +2047,7 @@ export default function GrowthAutopilot({
             <>
               {/* Schedule All Button */}
               {generatedPosts.filter((p) => p.status === "pending").length > 0 && (
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-lime-50 dark:from-green-900/20 dark:to-lime-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-brand-mint/10 dark:from-green-900/20 dark:to-brand-seafoam/20/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <div>
                     <p className="font-medium text-green-800 dark:text-green-300">
                       {generatedPosts.filter((p) => p.status === "pending").length} posts ready to schedule
@@ -2080,7 +2080,7 @@ export default function GrowthAutopilot({
                           {post.platform}
                         </span>
                         {post.contentPillar && (
-                          <span className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 text-xs rounded">
+                          <span className="px-2 py-1 bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint text-xs rounded">
                             {post.contentPillar}
                           </span>
                         )}
@@ -2120,7 +2120,7 @@ export default function GrowthAutopilot({
                         {post.hashtags.map((tag: string, i: number) => (
                           <span
                             key={i}
-                            className="text-xs text-lime-600 dark:text-lime-400"
+                            className="text-xs text-brand-seafoam dark:text-brand-mint"
                           >
                             #{tag}
                           </span>
@@ -2184,7 +2184,7 @@ export default function GrowthAutopilot({
                               setStatusMessage("");
                             }}
                             disabled={isLoading}
-                            className="bg-lime-600 hover:bg-lime-700"
+                            className="bg-brand-seafoam hover:bg-brand-seafoam"
                           >
                             Schedule
                           </Button>
@@ -2290,7 +2290,7 @@ export default function GrowthAutopilot({
                         onClick={() => executeRecommendation(rec)}
                         disabled={isLoading}
                         size="1"
-                        className="bg-lime-600 hover:bg-lime-700"
+                        className="bg-brand-seafoam hover:bg-brand-seafoam"
                       >
                         {isLoading ? "Generating..." : "⚡ Generate Posts from This"}
                       </Button>
@@ -2360,7 +2360,7 @@ export default function GrowthAutopilot({
                       <p className="text-foreground mt-1">
                         {action.description}
                       </p>
-                      <p className="text-sm text-lime-600 dark:text-lime-400 mt-2">
+                      <p className="text-sm text-brand-seafoam dark:text-brand-mint mt-2">
                         💡 {action.reason}
                       </p>
                       {action.content && (
@@ -2386,7 +2386,7 @@ export default function GrowthAutopilot({
                         action.status === "executed"
                           ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                           : action.status === "approved"
-                          ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
+                          ? "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint"
                           : action.status === "rejected"
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                           : "bg-muted text-foreground"
@@ -2454,7 +2454,7 @@ export default function GrowthAutopilot({
                   </h4>
                   <p className="text-foreground mt-1">{insight.description}</p>
                   {insight.action && (
-                    <p className="text-sm font-medium text-lime-600 dark:text-lime-400 mt-2">
+                    <p className="text-sm font-medium text-brand-seafoam dark:text-brand-mint mt-2">
                       Recommended Action: {insight.action}
                     </p>
                   )}
@@ -2465,7 +2465,7 @@ export default function GrowthAutopilot({
                           ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                           : insight.priority === "medium"
                           ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                          : "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
+                          : "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint"
                       }`}
                     >
                       {insight.priority} priority
@@ -2543,7 +2543,7 @@ export default function GrowthAutopilot({
                     (opt.mode === "semi-auto" &&
                       settings.aggressiveness === "moderate" &&
                       !settings.approvals.requireApprovalForPosts)
-                      ? "border-lime-500 bg-lime-50 dark:bg-lime-900/20"
+                      ? "border-brand-seafoam bg-brand-mint/10 dark:bg-brand-seafoam/20"
                       : "border-border hover:border-muted-foreground"
                   }`}
                 >

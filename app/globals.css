@@ -5,21 +5,35 @@
 
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
-/* Radix UI Color System Override - Lime Theme */
+/* ============================================
+   BRAND COLORS - Succulent Logo Palette
+   ============================================ */
 :root {
-  /* Lime color scale for Radix UI */
-  --accent-1: rgb(247 254 231);
-  --accent-2: rgb(236 252 203);
-  --accent-3: rgb(217 249 157);
-  --accent-4: rgb(196 245 101);
-  --accent-5: rgb(163 230 53);
-  --accent-6: rgb(132 204 22);
-  --accent-7: rgb(101 163 13);
-  --accent-8: rgb(77 124 15);
-  --accent-9: rgb(101 163 13); /* Primary lime color */
-  --accent-10: rgb(77 124 15);
-  --accent-11: rgb(54 83 20);
-  --accent-12: rgb(26 46 5);
+  /* Primary brand colors from logo */
+  --brand-mint: #8FD3B6;      /* Lighter mint - leaves */
+  --brand-seafoam: #6BC9A3;   /* Deeper seafoam - pot rim/accents */
+  --brand-lavender: #C4A8D8;  /* Soft lavender - pot body */
+  --brand-plum: #B794C7;      /* Deeper plum - pot accent */
+  
+  /* Extended palette for differentiation - more saturated */
+  --brand-coral: #E5917A;     /* Warm coral - more saturated */
+  --brand-slate: #7A8FA3;     /* Muted slate - neutral accent */
+  --brand-sand: #C4AA82;      /* Warm sand - richer tone */
+  --brand-rose: #D4849E;      /* Dusty rose - more saturated */
+  
+  /* Mint/Seafoam color scale for Radix UI */
+  --accent-1: rgb(240 253 247);
+  --accent-2: rgb(220 248 235);
+  --accent-3: rgb(187 240 215);
+  --accent-4: rgb(153 230 195);
+  --accent-5: rgb(143 211 182); /* brand-mint */
+  --accent-6: rgb(107 201 163); /* brand-seafoam */
+  --accent-7: rgb(85 170 138);
+  --accent-8: rgb(68 140 115);
+  --accent-9: rgb(107 201 163); /* Primary - brand-seafoam */
+  --accent-10: rgb(85 170 138);
+  --accent-11: rgb(50 110 85);
+  --accent-12: rgb(25 60 45);
   
   /* Contrast colors */
   --accent-contrast: white;
@@ -27,26 +41,46 @@
 }
 
 .dark {
-  /* Dark mode lime colors */
-  --accent-1: rgb(20 26 5);
-  --accent-2: rgb(26 46 5);
-  --accent-3: rgb(54 83 20);
-  --accent-4: rgb(77 124 15);
-  --accent-5: rgb(101 163 13);
-  --accent-6: rgb(132 204 22);
-  --accent-7: rgb(163 230 53);
-  --accent-8: rgb(196 245 101);
-  --accent-9: rgb(163 230 53); /* Primary lime color for dark mode */
-  --accent-10: rgb(196 245 101);
-  --accent-11: rgb(217 249 157);
-  --accent-12: rgb(247 254 231);
+  /* Brand colors (same in dark mode) */
+  --brand-mint: #8FD3B6;
+  --brand-seafoam: #6BC9A3;
+  --brand-lavender: #C4A8D8;
+  --brand-plum: #B794C7;
+  --brand-coral: #E5917A;
+  --brand-slate: #7A8FA3;
+  --brand-sand: #C4AA82;
+  --brand-rose: #D4849E;
+  
+  /* Dark mode mint/seafoam colors (inverted scale) */
+  --accent-1: rgb(15 30 25);
+  --accent-2: rgb(25 50 40);
+  --accent-3: rgb(40 75 60);
+  --accent-4: rgb(55 100 80);
+  --accent-5: rgb(70 130 105);
+  --accent-6: rgb(85 160 130);
+  --accent-7: rgb(107 201 163); /* brand-seafoam */
+  --accent-8: rgb(143 211 182); /* brand-mint */
+  --accent-9: rgb(143 211 182); /* Primary - brand-mint for dark mode */
+  --accent-10: rgb(170 225 200);
+  --accent-11: rgb(200 240 220);
+  --accent-12: rgb(235 252 245);
   
   /* Contrast colors */
-  --accent-contrast: rgb(26 46 5);
+  --accent-contrast: rgb(15 30 25);
   --accent-surface: var(--accent-2);
 }
 
 @theme inline {
+  /* Brand colors - use as text-brand-mint, bg-brand-seafoam, border-brand-lavender, etc. */
+  --color-brand-mint: var(--brand-mint);
+  --color-brand-seafoam: var(--brand-seafoam);
+  --color-brand-lavender: var(--brand-lavender);
+  --color-brand-plum: var(--brand-plum);
+  --color-brand-coral: var(--brand-coral);
+  --color-brand-slate: var(--brand-slate);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-rose: var(--brand-rose);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -94,33 +128,33 @@
   --card-foreground: oklch(0.147 0.004 49.25);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.605 0.148 121.5);
+  --primary: oklch(0.72 0.1 165);           /* brand-seafoam */
   --primary-foreground: oklch(0.985 0.001 106.423);
   --secondary: oklch(0.97 0.001 106.424);
   --secondary-foreground: oklch(0.216 0.006 56.043);
   --muted: oklch(0.97 0.001 106.424);
   --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.976 0.009 109.8);
-  --accent-foreground: oklch(0.605 0.148 121.5);
+  --accent: oklch(0.95 0.03 165);           /* light mint tint */
+  --accent-foreground: oklch(0.72 0.1 165); /* brand-seafoam */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0.001 106.423);
   --border: oklch(0.923 0.003 48.717);
   --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.605 0.148 121.5);
-  --chart-1: oklch(0.605 0.148 121.5);
-  --chart-2: oklch(0.7 0.1 85);
+  --ring: oklch(0.72 0.1 165);              /* brand-seafoam */
+  --chart-1: oklch(0.72 0.1 165);           /* brand-seafoam */
+  --chart-2: oklch(0.78 0.08 165);          /* brand-mint */
   --chart-3: oklch(0.55 0.15 75);
   --chart-4: oklch(0.65 0.12 135);
   --chart-5: oklch(0.6 0.14 105);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0.001 106.423);
   --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.605 0.148 121.5);
+  --sidebar-primary: oklch(0.72 0.1 165);   /* brand-seafoam */
   --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-accent: oklch(0.976 0.009 109.8);
-  --sidebar-accent-foreground: oklch(0.605 0.148 121.5);
+  --sidebar-accent: oklch(0.95 0.03 165);   /* light mint tint */
+  --sidebar-accent-foreground: oklch(0.72 0.1 165);
   --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.605 0.148 121.5);
+  --sidebar-ring: oklch(0.72 0.1 165);      /* brand-seafoam */
 }
 
 .dark {
@@ -130,52 +164,62 @@
   --card-foreground: oklch(0.985 0.001 106.423);
   --popover: oklch(0.147 0.004 49.25);
   --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.74 0.17 123);
+  --primary: oklch(0.78 0.08 165);          /* brand-mint for dark mode */
   --primary-foreground: oklch(0.147 0.004 49.25);
   --secondary: oklch(0.268 0.007 34.298);
   --secondary-foreground: oklch(0.985 0.001 106.423);
   --muted: oklch(0.268 0.007 34.298);
   --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.015 120);
-  --accent-foreground: oklch(0.74 0.17 123);
+  --accent: oklch(0.25 0.03 165);           /* dark mint tint */
+  --accent-foreground: oklch(0.78 0.08 165);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.268 0.007 34.298);
   --input: oklch(0.268 0.007 34.298);
-  --ring: oklch(0.74 0.17 123);
-  --chart-1: oklch(0.74 0.17 123);
-  --chart-2: oklch(0.8 0.12 85);
+  --ring: oklch(0.78 0.08 165);             /* brand-mint */
+  --chart-1: oklch(0.78 0.08 165);          /* brand-mint */
+  --chart-2: oklch(0.72 0.1 165);           /* brand-seafoam */
   --chart-3: oklch(0.65 0.18 75);
   --chart-4: oklch(0.75 0.15 135);
   --chart-5: oklch(0.7 0.16 105);
   --sidebar: oklch(0.216 0.006 56.043);
   --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.74 0.17 123);
+  --sidebar-primary: oklch(0.78 0.08 165);  /* brand-mint */
   --sidebar-primary-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-accent: oklch(0.268 0.015 120);
-  --sidebar-accent-foreground: oklch(0.74 0.17 123);
+  --sidebar-accent: oklch(0.25 0.03 165);   /* dark mint tint */
+  --sidebar-accent-foreground: oklch(0.78 0.08 165);
   --sidebar-border: oklch(0.268 0.007 34.298);
-  --sidebar-ring: oklch(0.74 0.17 123);
+  --sidebar-ring: oklch(0.78 0.08 165);     /* brand-mint */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Radix UI Dark Mode Lime Colors */
-    --accent-1: rgb(20 26 5);
-    --accent-2: rgb(26 46 5);
-    --accent-3: rgb(54 83 20);
-    --accent-4: rgb(77 124 15);
-    --accent-5: rgb(101 163 13);
-    --accent-6: rgb(132 204 22);
-    --accent-7: rgb(163 230 53);
-    --accent-8: rgb(196 245 101);
-    --accent-9: rgb(163 230 53); /* Primary lime color for dark mode */
-    --accent-10: rgb(196 245 101);
-    --accent-11: rgb(217 249 157);
-    --accent-12: rgb(247 254 231);
+    /* Brand colors */
+    --brand-mint: #8FD3B6;
+    --brand-seafoam: #6BC9A3;
+    --brand-lavender: #C4A8D8;
+    --brand-plum: #B794C7;
+    --brand-coral: #E8B4A8;
+    --brand-slate: #8B9DAE;
+    --brand-sand: #D4C5B0;
+    --brand-rose: #D4A5B8;
+    
+    /* Radix UI Dark Mode Mint/Seafoam Colors */
+    --accent-1: rgb(15 30 25);
+    --accent-2: rgb(25 50 40);
+    --accent-3: rgb(40 75 60);
+    --accent-4: rgb(55 100 80);
+    --accent-5: rgb(70 130 105);
+    --accent-6: rgb(85 160 130);
+    --accent-7: rgb(107 201 163); /* brand-seafoam */
+    --accent-8: rgb(143 211 182); /* brand-mint */
+    --accent-9: rgb(143 211 182); /* Primary - brand-mint for dark mode */
+    --accent-10: rgb(170 225 200);
+    --accent-11: rgb(200 240 220);
+    --accent-12: rgb(235 252 245);
     
     /* Contrast colors */
-    --accent-contrast: rgb(26 46 5);
+    --accent-contrast: rgb(15 30 25);
     --accent-surface: var(--accent-2);
     
     /* Main color system */
@@ -185,32 +229,32 @@
     --card-foreground: oklch(0.985 0.001 106.423);
     --popover: oklch(0.147 0.004 49.25);
     --popover-foreground: oklch(0.985 0.001 106.423);
-    --primary: oklch(0.74 0.17 123);
+    --primary: oklch(0.78 0.08 165);        /* brand-mint */
     --primary-foreground: oklch(0.147 0.004 49.25);
     --secondary: oklch(0.268 0.007 34.298);
     --secondary-foreground: oklch(0.985 0.001 106.423);
     --muted: oklch(0.268 0.007 34.298);
     --muted-foreground: oklch(0.709 0.01 56.259);
-    --accent: oklch(0.268 0.015 120);
-    --accent-foreground: oklch(0.74 0.17 123);
+    --accent: oklch(0.25 0.03 165);         /* dark mint tint */
+    --accent-foreground: oklch(0.78 0.08 165);
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
     --border: oklch(0.268 0.007 34.298);
     --input: oklch(0.268 0.007 34.298);
-    --ring: oklch(0.74 0.17 123);
-    --chart-1: oklch(0.74 0.17 123);
-    --chart-2: oklch(0.8 0.12 85);
+    --ring: oklch(0.78 0.08 165);           /* brand-mint */
+    --chart-1: oklch(0.78 0.08 165);
+    --chart-2: oklch(0.72 0.1 165);
     --chart-3: oklch(0.65 0.18 75);
     --chart-4: oklch(0.75 0.15 135);
     --chart-5: oklch(0.7 0.16 105);
     --sidebar: oklch(0.216 0.006 56.043);
     --sidebar-foreground: oklch(0.985 0.001 106.423);
-    --sidebar-primary: oklch(0.74 0.17 123);
+    --sidebar-primary: oklch(0.78 0.08 165);
     --sidebar-primary-foreground: oklch(0.147 0.004 49.25);
-    --sidebar-accent: oklch(0.268 0.015 120);
-    --sidebar-accent-foreground: oklch(0.74 0.17 123);
+    --sidebar-accent: oklch(0.25 0.03 165);
+    --sidebar-accent-foreground: oklch(0.78 0.08 165);
     --sidebar-border: oklch(0.268 0.007 34.298);
-    --sidebar-ring: oklch(0.74 0.17 123);
+    --sidebar-ring: oklch(0.78 0.08 165);
   }
 }
 
@@ -229,9 +273,42 @@ body {
   }
 }
 
-/* Radix UI Tabs - Dark Mode Fix with Lime Accent */
+/* Radix UI Tabs - Brand Mint/Seafoam Accent - ABSOLUTELY NO BLUE */
 .rt-TabsList {
   background: transparent !important;
+}
+
+/* Nuclear option: kill ALL possible indicator/underline elements */
+.rt-TabsIndicator,
+.rt-TabsList::after,
+.rt-TabsList::before,
+[data-radix-collection-item]::after,
+.rt-TabsTrigger::after {
+  background-color: var(--brand-seafoam) !important;
+  background: var(--brand-seafoam) !important;
+  border-color: var(--brand-seafoam) !important;
+}
+
+.dark .rt-TabsIndicator,
+.dark .rt-TabsList::after,
+.dark .rt-TabsList::before,
+.dark [data-radix-collection-item]::after,
+.dark .rt-TabsTrigger::after {
+  background-color: var(--brand-mint) !important;
+  background: var(--brand-mint) !important;
+  border-color: var(--brand-mint) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-TabsIndicator,
+  .rt-TabsList::after,
+  .rt-TabsList::before,
+  [data-radix-collection-item]::after,
+  .rt-TabsTrigger::after {
+    background-color: var(--brand-mint) !important;
+    background: var(--brand-mint) !important;
+    border-color: var(--brand-mint) !important;
+  }
 }
 
 .rt-TabsTrigger {
@@ -246,20 +323,20 @@ body {
 }
 
 .rt-TabsTrigger[data-state="active"] {
-  color: rgb(163 230 53) !important; /* Lime-400 */
-  border-bottom-color: rgb(163 230 53) !important;
+  color: var(--brand-seafoam) !important;
+  border-bottom-color: var(--brand-seafoam) !important;
   background: transparent !important;
 }
 
 .dark .rt-TabsTrigger[data-state="active"] {
-  color: rgb(190 242 100) !important; /* Lime-300 for better visibility */
-  border-bottom-color: rgb(190 242 100) !important;
+  color: var(--brand-mint) !important;
+  border-bottom-color: var(--brand-mint) !important;
 }
 
 @media (prefers-color-scheme: dark) {
   .rt-TabsTrigger[data-state="active"] {
-    color: rgb(190 242 100) !important; /* Lime-300 for better visibility */
-    border-bottom-color: rgb(190 242 100) !important;
+    color: var(--brand-mint) !important;
+    border-bottom-color: var(--brand-mint) !important;
   }
 }
 
@@ -280,7 +357,7 @@ body {
 }
 
 .dark .rt-Text[data-accent-color] {
-  color: rgb(190 242 100); /* Lime accent in dark mode */
+  color: var(--brand-mint); /* Brand mint accent in dark mode */
 }
 
 /* Radix UI Card - Dark Mode Support */
@@ -300,27 +377,27 @@ body {
   }
 }
 
-/* Radix UI Button - Lime Color Scheme */
+/* Radix UI Button - Brand Mint/Seafoam Color Scheme */
 .rt-Button[data-accent-color="blue"],
 .rt-Button:not([data-accent-color]) {
-  --accent-9: rgb(132 204 22) !important;
-  --accent-10: rgb(101 163 13) !important;
-  --accent-a3: rgba(132, 204, 22, 0.15) !important;
+  --accent-9: rgb(107 201 163) !important;  /* brand-seafoam */
+  --accent-10: rgb(85 170 138) !important;
+  --accent-a3: rgba(107, 201, 163, 0.15) !important;
 }
 
 .dark .rt-Button[data-accent-color="blue"],
 .dark .rt-Button:not([data-accent-color]) {
-  --accent-9: rgb(163 230 53) !important;
-  --accent-10: rgb(190 242 100) !important;
-  --accent-a3: rgba(163, 230, 53, 0.2) !important;
+  --accent-9: rgb(143 211 182) !important;  /* brand-mint */
+  --accent-10: rgb(170 225 200) !important;
+  --accent-a3: rgba(143, 211, 182, 0.2) !important;
 }
 
 @media (prefers-color-scheme: dark) {
   .rt-Button[data-accent-color="blue"],
   .rt-Button:not([data-accent-color]) {
-    --accent-9: rgb(163 230 53) !important;
-    --accent-10: rgb(190 242 100) !important;
-    --accent-a3: rgba(163, 230, 53, 0.2) !important;
+    --accent-9: rgb(143 211 182) !important;  /* brand-mint */
+    --accent-10: rgb(170 225 200) !important;
+    --accent-a3: rgba(143, 211, 182, 0.2) !important;
   }
 }
 

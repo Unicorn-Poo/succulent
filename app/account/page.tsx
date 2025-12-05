@@ -1,7 +1,8 @@
 "use client";
 
 import { useAccount } from "jazz-tools/react";
-import { MyAppAccount, MyAppAccountLoaded } from "@/app/schema";
+import { MyAppAccount, MyAppAccountLoaded, AccountGroup, PlatformAccount, Post, AccountRoot } from "@/app/schema";
+import { Group, co } from "jazz-tools";
 import {
   Card,
   Tabs,
@@ -20,12 +21,19 @@ import {
   Shield,
   Bell,
   Key,
+  Users,
+  Plus,
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useSubscription } from "@/utils/subscriptionManager";
 import { usePaymentManager } from "@/utils/paymentIntegration";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import FreeTierDashboard from "@/components/organisms/free-tier-dashboard";
 import APIKeyManagement from "@/components/organisms/api-key-management";
+import AccountGroupCreation from "@/components/organisms/account-group-creation";
 
 // =============================================================================
 // 🏠 MAIN DASHBOARD COMPONENT
@@ -33,7 +41,7 @@ import APIKeyManagement from "@/components/organisms/api-key-management";
 
 export default function AccountDashboard() {
   const { me } = useAccount(MyAppAccount);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("account-groups");
 
   if (!me) {
     return (
@@ -60,6 +68,10 @@ export default function AccountDashboard() {
         className="w-full"
       >
         <Tabs.List className="mb-6">
+          <Tabs.Trigger value="account-groups" className="flex items-center gap-2">
+            <Users size={16} />
+            Account Groups
+          </Tabs.Trigger>
           <Tabs.Trigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             Profile
@@ -84,6 +96,10 @@ export default function AccountDashboard() {
             Settings
           </Tabs.Trigger>
         </Tabs.List>
+
+        <Tabs.Content value="account-groups">
+          <AccountGroupsTab account={me} />
+        </Tabs.Content>
 
         <Tabs.Content value="profile">
           <ProfileTab account={me} />
@@ -252,28 +268,28 @@ function SubscriptionTab({ account }: { account: MyAppAccountLoaded }) {
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <Text size="2" color="gray">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="space-y-1">
+              <Text size="2" color="gray" className="block">
                 Status
               </Text>
-              <Text size="4" weight="medium">
+              <Text size="4" weight="medium" className="block">
                 {subscription?.status || "Free"}
               </Text>
             </div>
-            <div>
-              <Text size="2" color="gray">
+            <div className="space-y-1">
+              <Text size="2" color="gray" className="block">
                 Price
               </Text>
-              <Text size="4" weight="medium">
+              <Text size="4" weight="medium" className="block">
                 ${currentPlan.price.monthly}/month
               </Text>
             </div>
-            <div>
-              <Text size="2" color="gray">
+            <div className="space-y-1">
+              <Text size="2" color="gray" className="block">
                 Next Billing
               </Text>
-              <Text size="4" weight="medium">
+              <Text size="4" weight="medium" className="block">
                 {subscription?.endDate
                   ? new Date(subscription.endDate).toLocaleDateString()
                   : "N/A"}
@@ -412,7 +428,7 @@ function UsageTab({ account }: { account: MyAppAccountLoaded }) {
 
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-lime-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-brand-seafoam h-2 rounded-full transition-all duration-300"
                       style={{ width: `${Math.min(usage.percentage, 100)}%` }}
                     />
                   </div>
@@ -449,31 +465,31 @@ function SettingsTab({
             Account Settings
           </Heading>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Text weight="medium">Email Notifications</Text>
-                <Text size="2" color="gray">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-1">
+                <Text weight="medium" className="block">Email Notifications</Text>
+                <Text size="2" color="gray" className="block">
                   Receive updates about your account
                 </Text>
               </div>
               <Button variant="outline">Configure</Button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Text weight="medium">Privacy Settings</Text>
-                <Text size="2" color="gray">
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-1">
+                <Text weight="medium" className="block">Privacy Settings</Text>
+                <Text size="2" color="gray" className="block">
                   Control your data and privacy
                 </Text>
               </div>
               <Button variant="outline">Manage</Button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Text weight="medium">API Keys</Text>
-                <Text size="2" color="gray">
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-1">
+                <Text weight="medium" className="block">API Keys</Text>
+                <Text size="2" color="gray" className="block">
                   Manage your API access
                 </Text>
               </div>
@@ -487,12 +503,12 @@ function SettingsTab({
               </Button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Text weight="medium" color="red">
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-1">
+                <Text weight="medium" color="red" className="block">
                   Delete Account
                 </Text>
-                <Text size="2" color="gray">
+                <Text size="2" color="gray" className="block">
                   Permanently delete your account
                 </Text>
               </div>
@@ -503,6 +519,165 @@ function SettingsTab({
           </div>
         </Box>
       </Card>
+    </div>
+  );
+}
+
+// =============================================================================
+// 👥 ACCOUNT GROUPS TAB
+// =============================================================================
+
+function AccountGroupsTab({ account }: { account: MyAppAccountLoaded }) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const router = useRouter();
+
+  const accountGroups = account.root?.accountGroups || [];
+
+  const handleCreateGroup = async (groupData: {
+    name: string;
+    accounts: Array<{
+      platform: string;
+      name: string;
+      profileKey?: string;
+      isLinked: boolean;
+      status: "pending" | "linked" | "error" | "expired";
+      lastError?: string;
+    }>;
+    ayrshareProfileKey?: string;
+    ayrshareProfileTitle?: string;
+  }) => {
+    setIsCreating(true);
+    try {
+      // Create the account group using Jazz with a Group owner
+      const group = Group.create();
+      
+      const newAccountGroup = AccountGroup.create(
+        {
+          name: groupData.name,
+          accounts: co.list(PlatformAccount).create([], { owner: group }),
+          posts: co.list(Post).create([], { owner: group }),
+          ayrshareProfileKey: groupData.ayrshareProfileKey,
+          ayrshareProfileTitle: groupData.ayrshareProfileTitle,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { owner: group }
+      );
+
+      // Add accounts to the group
+      for (const accountData of groupData.accounts) {
+        const platformAccount = PlatformAccount.create({
+          platform: accountData.platform as any,
+          name: accountData.name,
+          profileKey: accountData.profileKey,
+          isLinked: accountData.isLinked,
+          status: accountData.status,
+          lastError: accountData.lastError,
+          historicalAnalytics: co.list(co.map({})).create([], { owner: group }),
+        }, { owner: group });
+        newAccountGroup.accounts?.push(platformAccount);
+      }
+
+      // Ensure root exists with account groups
+      if (!account.root) {
+        const rootGroup = Group.create();
+        account.root = AccountRoot.create(
+          {
+            accountGroups: co.list(AccountGroup).create([], { owner: rootGroup }),
+          },
+          { owner: rootGroup }
+        );
+      }
+      
+      // Add the new account group
+      account.root.accountGroups?.push(newAccountGroup);
+
+      setShowCreateDialog(false);
+      
+      // Navigate to the new account group
+      router.push(`/account-group/${newAccountGroup.id}`);
+    } catch (error) {
+      console.error("Failed to create account group:", error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <Box p="6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <Heading size="5">Account Groups</Heading>
+              <Text size="2" color="gray">
+                Organize your social media accounts into groups
+              </Text>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus size={16} className="mr-2" />
+              Create Account Group
+            </Button>
+          </div>
+        </Box>
+      </Card>
+
+      {/* Account Groups List */}
+      {accountGroups.length === 0 ? (
+        <Card>
+          <Box p="8" className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-mint/20 flex items-center justify-center">
+              <Users size={32} className="text-brand-seafoam" />
+            </div>
+            <Heading size="4" className="mb-2">No Account Groups Yet</Heading>
+            <Text size="3" color="gray" className="mb-6 block">
+              Create your first account group to start managing your social media accounts.
+            </Text>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus size={16} className="mr-2" />
+              Create Your First Account Group
+            </Button>
+          </Box>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {accountGroups.map((group) => (
+            group && (
+              <Link key={group.id} href={`/account-group/${group.id}`}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Box p="6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-brand-lavender/20 flex items-center justify-center">
+                          <Users size={24} className="text-brand-plum" />
+                        </div>
+                        <div>
+                          <Text size="4" weight="medium" className="block">
+                            {group.name || "Unnamed Group"}
+                          </Text>
+                          <Text size="2" color="gray">
+                            {group.accounts?.length || 0} accounts • {group.posts?.length || 0} posts
+                          </Text>
+                        </div>
+                      </div>
+                      <ArrowRight size={20} className="text-muted-foreground" />
+                    </div>
+                  </Box>
+                </Card>
+              </Link>
+            )
+          ))}
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <AccountGroupCreation
+        isOpen={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSave={handleCreateGroup}
+      />
     </div>
   );
 }

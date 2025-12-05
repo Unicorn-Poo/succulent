@@ -3,26 +3,29 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button, Card, Text, TextField, Badge } from "@radix-ui/themes";
-import { 
-  MessageCircle, 
-  Send, 
-  AlertCircle, 
+import {
+  MessageCircle,
+  Send,
+  AlertCircle,
   CheckCircle,
   ExternalLink,
   Loader2,
   Instagram,
   Facebook,
   Linkedin,
-  Youtube
+  Youtube,
 } from "lucide-react";
 import {
   getPostComments,
   replyToComment,
   CommentData,
-  isFeatureAvailable
+  isFeatureAvailable,
 } from "@/utils/ayrshareAnalytics";
 import { handleCommentPost } from "@/utils/apiHandlers";
-import { detectPlatformFromUrl, extractPostIdFromUrl } from "@/utils/postValidation";
+import {
+  detectPlatformFromUrl,
+  extractPostIdFromUrl,
+} from "@/utils/postValidation";
 
 interface EnhancedReplyHandlerProps {
   postUrl?: string;
@@ -30,16 +33,18 @@ interface EnhancedReplyHandlerProps {
   accountProfileKey?: string;
 }
 
-export default function EnhancedReplyHandler({ 
-  postUrl = "", 
+export default function EnhancedReplyHandler({
+  postUrl = "",
   onReplySuccess,
-  accountProfileKey 
+  accountProfileKey,
 }: EnhancedReplyHandlerProps) {
   // State management
   const [url, setUrl] = useState(postUrl);
   const [replyText, setReplyText] = useState("");
   const [comments, setComments] = useState<CommentData[]>([]);
-  const [selectedComment, setSelectedComment] = useState<CommentData | null>(null);
+  const [selectedComment, setSelectedComment] = useState<CommentData | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
@@ -57,45 +62,48 @@ export default function EnhancedReplyHandler({
       icon: Instagram,
       color: "purple",
       supportsComments: true,
-      description: "Reply to Instagram posts and comments"
+      description: "Reply to Instagram posts and comments",
     },
     facebook: {
-      name: "Facebook", 
+      name: "Facebook",
       icon: Facebook,
       color: "lime",
       supportsComments: true,
-      description: "Reply to Facebook posts and comments"
+      description: "Reply to Facebook posts and comments",
     },
     linkedin: {
       name: "LinkedIn",
       icon: Linkedin,
       color: "lime",
       supportsComments: true,
-      description: "Reply to LinkedIn posts and comments"
+      description: "Reply to LinkedIn posts and comments",
     },
     youtube: {
       name: "YouTube",
       icon: Youtube,
       color: "red",
       supportsComments: true,
-      description: "Reply to YouTube videos and comments"
+      description: "Reply to YouTube videos and comments",
     },
     x: {
       name: "X (Twitter)",
       icon: MessageCircle,
       color: "gray",
       supportsComments: false,
-      description: "Use native Twitter reply functionality"
-    }
+      description: "Use native Twitter reply functionality",
+    },
   };
 
-  const currentPlatform = detectedPlatform ? platformConfig[detectedPlatform as keyof typeof platformConfig] : null;
+  const currentPlatform = detectedPlatform
+    ? platformConfig[detectedPlatform as keyof typeof platformConfig]
+    : null;
 
   /**
    * Fetch existing comments for the post
    */
   const fetchComments = async () => {
-    if (!isValidUrl || !currentPlatform?.supportsComments || !detectedPlatform) return;
+    if (!isValidUrl || !currentPlatform?.supportsComments || !detectedPlatform)
+      return;
 
     setLoading(true);
     setError("");
@@ -108,8 +116,8 @@ export default function EnhancedReplyHandler({
       );
       setComments(fetchedComments);
     } catch (err) {
-      console.error('Error fetching comments:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch comments');
+      console.error("Error fetching comments:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch comments");
     } finally {
       setLoading(false);
     }
@@ -143,7 +151,7 @@ export default function EnhancedReplyHandler({
           {
             post: replyText,
             platforms: [detectedPlatform!],
-            profileKey: accountProfileKey
+            profileKey: accountProfileKey,
           },
           postId!,
           detectedPlatform!
@@ -153,16 +161,15 @@ export default function EnhancedReplyHandler({
       setSuccess(`Reply posted successfully on ${currentPlatform?.name}!`);
       setReplyText("");
       setSelectedComment(null);
-      
+
       // Refresh comments to show the new reply
       await fetchComments();
-      
+
       // Notify parent component
       onReplySuccess?.(result);
-
     } catch (err) {
-      console.error('Error posting reply:', err);
-      setError(err instanceof Error ? err.message : 'Failed to post reply');
+      console.error("Error posting reply:", err);
+      setError(err instanceof Error ? err.message : "Failed to post reply");
     } finally {
       setPosting(false);
     }
@@ -178,26 +185,28 @@ export default function EnhancedReplyHandler({
       setComments([]);
       setSelectedComment(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, detectedPlatform]);
 
   /**
    * Format comment display
    */
   const formatComment = (comment: CommentData) => (
-    <div 
+    <div
       key={comment.id}
       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-        selectedComment?.id === comment.id 
-          ? 'border-lime-500 bg-lime-50' 
-          : 'border-border hover:border-border'
+        selectedComment?.id === comment.id
+          ? "border-brand-seafoam bg-brand-mint/10"
+          : "border-border hover:border-border"
       }`}
-      onClick={() => setSelectedComment(selectedComment?.id === comment.id ? null : comment)}
+      onClick={() =>
+        setSelectedComment(selectedComment?.id === comment.id ? null : comment)
+      }
     >
       <div className="flex items-start gap-3">
         {comment.authorAvatar && (
-          <Image 
-            src={comment.authorAvatar} 
+          <Image
+            src={comment.authorAvatar}
             alt={comment.author}
             width={32}
             height={32}
@@ -243,20 +252,23 @@ export default function EnhancedReplyHandler({
             Enhanced Reply Handler
           </Text>
           <Text size="2" color="gray">
-            Use Ayrshare Comments API to reply to posts on Instagram, Facebook, LinkedIn, and YouTube
+            Use Ayrshare Comments API to reply to posts on Instagram, Facebook,
+            LinkedIn, and YouTube
           </Text>
         </div>
 
         {/* URL Input */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Post URL</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Post URL
+          </label>
           <TextField.Root
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste Instagram, Facebook, LinkedIn, or YouTube post URL..."
             className="w-full"
           />
-          
+
           {/* Platform Detection */}
           {url && (
             <div className="mt-2 flex items-center gap-2">
@@ -267,15 +279,21 @@ export default function EnhancedReplyHandler({
                     {currentPlatform.name} detected
                   </Text>
                   {currentPlatform.supportsComments ? (
-                    <Badge color="green" size="1">Comments supported</Badge>
+                    <Badge color="green" size="1">
+                      Comments supported
+                    </Badge>
                   ) : (
-                    <Badge color="orange" size="1">Use native Twitter reply</Badge>
+                    <Badge color="orange" size="1">
+                      Use native Twitter reply
+                    </Badge>
                   )}
                 </>
               ) : (
                 <>
                   <AlertCircle className="w-4 h-4 text-red-500" />
-                  <Text size="2" color="red">Invalid or unsupported URL</Text>
+                  <Text size="2" color="red">
+                    Invalid or unsupported URL
+                  </Text>
                 </>
               )}
             </div>
@@ -287,14 +305,17 @@ export default function EnhancedReplyHandler({
           <div className="p-4 bg-muted rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <currentPlatform.icon className="w-5 h-5" />
-              <Text size="3" weight="medium">{currentPlatform.name}</Text>
+              <Text size="3" weight="medium">
+                {currentPlatform.name}
+              </Text>
             </div>
             <Text size="2" color="gray">
               {currentPlatform.description}
             </Text>
             {!currentPlatform.supportsComments && (
               <Text size="2" color="orange" className="mt-2 block">
-                ⚠️ For Twitter/X posts, use the native reply functionality in your post creation component
+                ⚠️ For Twitter/X posts, use the native reply functionality in
+                your post creation component
               </Text>
             )}
           </div>
@@ -304,21 +325,29 @@ export default function EnhancedReplyHandler({
         {isValidUrl && currentPlatform?.supportsComments && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <Text size="3" weight="medium">Existing Comments</Text>
-              <Button 
-                size="2" 
-                variant="soft" 
+              <Text size="3" weight="medium">
+                Existing Comments
+              </Text>
+              <Button
+                size="2"
+                variant="soft"
                 onClick={fetchComments}
                 disabled={loading}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Refresh"
+                )}
               </Button>
             </div>
 
             {loading ? (
               <div className="text-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                <Text size="2" color="gray">Loading comments...</Text>
+                <Text size="2" color="gray">
+                  Loading comments...
+                </Text>
               </div>
             ) : comments.length > 0 ? (
               <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -344,9 +373,9 @@ export default function EnhancedReplyHandler({
                 {selectedComment ? "Reply to Comment" : "Reply to Post"}
               </Text>
               {selectedComment && (
-                <Button 
-                  size="1" 
-                  variant="soft" 
+                <Button
+                  size="1"
+                  variant="soft"
                   onClick={() => setSelectedComment(null)}
                 >
                   Clear Selection
@@ -355,8 +384,13 @@ export default function EnhancedReplyHandler({
             </div>
 
             {selectedComment && (
-              <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg mb-3">
-                <Text size="2" color="lime" weight="medium" className="mb-1 block">
+              <div className="p-3 bg-brand-mint/10 border border-brand-mint/40 rounded-lg mb-3">
+                <Text
+                  size="2"
+                  color="lime"
+                  weight="medium"
+                  className="mb-1 block"
+                >
                   Replying to:
                 </Text>
                 <Text size="2" className="break-words">
@@ -372,11 +406,15 @@ export default function EnhancedReplyHandler({
               <TextField.Root
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                placeholder={selectedComment ? "Write your reply..." : "Write your comment..."}
+                placeholder={
+                  selectedComment
+                    ? "Write your reply..."
+                    : "Write your comment..."
+                }
                 className="w-full"
               />
-              
-              <Button 
+
+              <Button
                 onClick={handleReply}
                 disabled={!replyText.trim() || posting}
                 className="w-full"
@@ -402,7 +440,9 @@ export default function EnhancedReplyHandler({
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
-              <Text size="2" color="red">{error}</Text>
+              <Text size="2" color="red">
+                {error}
+              </Text>
             </div>
           </div>
         )}
@@ -411,16 +451,18 @@ export default function EnhancedReplyHandler({
           <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <Text size="2" color="green">{success}</Text>
+              <Text size="2" color="green">
+                {success}
+              </Text>
             </div>
           </div>
         )}
 
         {/* Feature Availability Notice */}
-        {!isFeatureAvailable('advanced-comments') && (
+        {!isFeatureAvailable("advanced-comments") && (
           <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <Text size="2" color="orange">
-              ℹ️ Enhanced comment features require a premium Ayrshare plan. 
+              ℹ️ Enhanced comment features require a premium Ayrshare plan.
               Basic commenting is available on the free plan.
             </Text>
           </div>
@@ -428,10 +470,15 @@ export default function EnhancedReplyHandler({
 
         {/* Documentation Link */}
         <div className="text-center">
-          <Button 
-            variant="soft" 
+          <Button
+            variant="soft"
             size="2"
-            onClick={() => window.open('https://www.ayrshare.com/docs/apis/comments/post-comment', '_blank')}
+            onClick={() =>
+              window.open(
+                "https://www.ayrshare.com/docs/apis/comments/post-comment",
+                "_blank"
+              )
+            }
           >
             <ExternalLink className="w-4 h-4 mr-2" />
             View Comments API Documentation
@@ -440,4 +487,4 @@ export default function EnhancedReplyHandler({
       </div>
     </Card>
   );
-} 
+}

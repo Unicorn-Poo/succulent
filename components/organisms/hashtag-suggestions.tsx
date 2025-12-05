@@ -32,7 +32,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
   const getCategoryColor = () => {
     switch (category) {
       case 'trending': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
-      case 'relevant': return 'bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-800';
+      case 'relevant': return 'bg-brand-mint/10 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint border-brand-mint/40 dark:border-brand-seafoam/40';
       case 'competitive': return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
       default: return 'bg-muted text-foreground border-border';
     }
@@ -53,7 +53,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
     <div 
       className={`p-3 rounded-lg border cursor-pointer transition-all ${
         selected 
-          ? 'bg-lime-50 border-lime-300 ring-2 ring-lime-200' 
+          ? 'bg-brand-mint/10 border-brand-mint ring-2 ring-brand-mint/40' 
           : getCategoryColor()
       }`}
       onClick={() => onToggle(hashtag)}
@@ -61,7 +61,7 @@ const HashtagItem = ({ hashtag, performance, category, selected, onToggle }: Has
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground">#{hashtag}</span>
-          {selected && <Check className="w-4 h-4 text-lime-600 dark:text-lime-400" />}
+          {selected && <Check className="w-4 h-4 text-brand-seafoam dark:text-brand-mint" />}
         </div>
         <div className="flex items-center gap-1 text-xs">
           {categoryInfo.icon}
@@ -259,7 +259,7 @@ export default function HashtagSuggestions({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Hash className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+            <Hash className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
             <Text size="3" weight="medium">Hashtag Suggestions</Text>
             <Badge variant="soft" className="capitalize">{platform}</Badge>
           </div>
@@ -286,7 +286,7 @@ export default function HashtagSuggestions({
 
         {/* Selected Hashtags Summary */}
         {selectedHashtags.length > 0 && (
-          <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
+          <div className="p-3 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
             <Text size="2" weight="medium" className="block mb-2">
               Selected ({selectedHashtags.length})
             </Text>
@@ -295,7 +295,7 @@ export default function HashtagSuggestions({
                 <Badge 
                   key={hashtag} 
                   variant="solid" 
-                  className="bg-lime-600 text-white cursor-pointer"
+                  className="bg-brand-seafoam text-white cursor-pointer"
                   onClick={() => handleHashtagToggle(hashtag)}
                 >
                   #{hashtag} ×

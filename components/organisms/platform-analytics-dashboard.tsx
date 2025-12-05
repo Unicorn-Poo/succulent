@@ -221,7 +221,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
   if (loading && !analytics) {
     return (
       <div className="mt-6 text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600 mb-4"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-seafoam mb-4"></div>
         <Text size="2" color="gray">Loading analytics for {account.platform}...</Text>
       </div>
     );
@@ -299,7 +299,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
         {/* Followers - Live Data */}
         <div className="bg-card p-4 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lime-500 dark:bg-lime-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-brand-seafoam dark:bg-brand-seafoam rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -423,7 +423,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
                     ~{analytics.liveData?.avgComments || '?'} comments
                   </span>
                   {analytics.liveData && (
-                    <span className="flex items-center gap-1 text-lime-600 dark:text-lime-400">
+                    <span className="flex items-center gap-1 text-brand-seafoam dark:text-brand-mint">
                       <TrendingUp className="w-3 h-3" />
                       {analytics.liveData.engagementRate}% rate
                     </span>

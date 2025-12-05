@@ -114,7 +114,7 @@ export function CollaborationPanel({ account, postId }: CollaborationPanelProps)
         <Card>
           <Box p="4">
             <div className="flex items-center gap-2 mb-4">
-              <Users size={16} className="text-lime-500" />
+              <Users size={16} className="text-brand-seafoam" />
               <Text weight="medium">Member Of</Text>
               <Badge size="1" color="blue">{groups.member.length}</Badge>
             </div>
@@ -191,7 +191,7 @@ function GroupCard({ group, isOwner, onInvite, onShare }: GroupCardProps) {
     const userMember = group.members?.find((m: any) => m.accountId === 'current-user-id');
     switch (userMember?.role) {
       case 'admin': return <Settings size={14} className="text-purple-500" />;
-      case 'editor': return <Edit3 size={14} className="text-lime-500" />;
+      case 'editor': return <Edit3 size={14} className="text-brand-seafoam" />;
       case 'viewer': return <Eye size={14} className="text-muted-foreground" />;
       default: return <Users size={14} className="text-muted-foreground" />;
     }
@@ -200,8 +200,8 @@ function GroupCard({ group, isOwner, onInvite, onShare }: GroupCardProps) {
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-lime-100 dark:bg-lime-900/30 rounded-lg flex items-center justify-center">
-          <Users size={20} className="text-lime-600 dark:text-lime-400" />
+        <div className="w-10 h-10 bg-brand-mint/20 dark:bg-brand-seafoam/20 rounded-lg flex items-center justify-center">
+          <Users size={20} className="text-brand-seafoam dark:text-brand-mint" />
         </div>
         <div>
           <div className="flex items-center gap-2">

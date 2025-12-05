@@ -570,8 +570,8 @@ function SecurityTab({ account }: { account: MyAppAccountLoaded }) {
 
             <div className="flex items-center justify-between p-4 border border-border rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
-                  <Database size={20} className="text-lime-600" />
+                <div className="w-10 h-10 bg-brand-mint/20 rounded-lg flex items-center justify-center">
+                  <Database size={20} className="text-brand-seafoam" />
                 </div>
                 <div>
                   <Text weight="medium">Database Encryption</Text>

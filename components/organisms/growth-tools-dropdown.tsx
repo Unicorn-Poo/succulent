@@ -180,7 +180,7 @@ export default function GrowthToolsDropdown({
     switch (impact) {
       case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
       case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      default: return 'text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20';
+      default: return 'text-brand-seafoam dark:text-brand-mint bg-brand-mint/10 dark:bg-brand-seafoam/20';
     }
   };
 
@@ -227,9 +227,9 @@ export default function GrowthToolsDropdown({
   return (
     <div className="space-y-6">
       {/* Growth Tools Overview */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-lime-200 dark:border-lime-800 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-lime-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-brand-seafoam rounded-lg flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -244,7 +244,7 @@ export default function GrowthToolsDropdown({
             <p className="text-sm text-muted-foreground">Engagement Increase</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">2-5x</p>
+            <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">2-5x</p>
             <p className="text-sm text-muted-foreground">Faster Growth Rate</p>
           </div>
           <div className="text-center">
@@ -256,7 +256,7 @@ export default function GrowthToolsDropdown({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Button
               onClick={() => onToolSelect?.('dashboard')}
-              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+              className="bg-gradient-to-r from-brand-seafoam to-blue-600 hover:from-green-700 hover:to-blue-700"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               📊 Activity Dashboard
@@ -312,13 +312,13 @@ export default function GrowthToolsDropdown({
           <h4 className="font-medium text-foreground mb-3">🎯 Quick Start Recommendations</h4>
           <div className="space-y-3">
             <div 
-              className="flex items-center space-x-3 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg cursor-pointer hover:bg-lime-100 dark:bg-lime-900/30 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg cursor-pointer hover:bg-brand-mint/20 dark:bg-brand-seafoam/20 transition-colors"
               onClick={() => onToolSelect?.('dashboard')}
             >
-              <BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+              <BarChart3 className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
               <div>
-                <p className="font-medium text-lime-800 dark:text-lime-300">View Activity Dashboard</p>
-                <p className="text-sm text-lime-600 dark:text-lime-400">Monitor all automated actions</p>
+                <p className="font-medium text-brand-seafoam dark:text-brand-mint">View Activity Dashboard</p>
+                <p className="text-sm text-brand-seafoam dark:text-brand-mint">Monitor all automated actions</p>
               </div>
             </div>
             
@@ -334,13 +334,13 @@ export default function GrowthToolsDropdown({
             </div>
             
             <div 
-              className="flex items-center space-x-3 p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg cursor-pointer hover:bg-lime-100 dark:bg-lime-900/30 transition-colors"
+              className="flex items-center space-x-3 p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg cursor-pointer hover:bg-brand-mint/20 dark:bg-brand-seafoam/20 transition-colors"
                 onClick={() => onToolSelect?.('comments')}
             >
-              <MessageCircle className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+              <MessageCircle className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
               <div>
-                <p className="font-medium text-lime-800 dark:text-lime-300">Enable Comment Automation</p>
-                <p className="text-sm text-lime-600 dark:text-lime-400">24/7 community engagement</p>
+                <p className="font-medium text-brand-seafoam dark:text-brand-mint">Enable Comment Automation</p>
+                <p className="text-sm text-brand-seafoam dark:text-brand-mint">24/7 community engagement</p>
               </div>
             </div>
             

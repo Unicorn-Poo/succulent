@@ -22,7 +22,7 @@ export default function PostViewSelector({ currentView, onViewChange }: PostView
           onClick={() => onViewChange(key)}
           className={`flex items-center gap-1 px-3 py-1 transition-all rounded-md text-xs font-medium ${
             currentView === key 
-              ? 'bg-card shadow-sm text-lime-700 border border-lime-200' 
+              ? 'bg-card shadow-sm text-brand-seafoam border border-brand-mint/40' 
               : 'text-muted-foreground hover:text-foreground dark:text-foreground hover:bg-muted'
           }`}
           title={description}

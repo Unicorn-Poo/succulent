@@ -143,7 +143,7 @@ export default function GrowthAnalyticsDashboard({
     return (
       <div className="bg-card rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-seafoam"></div>
           <span className="ml-2 text-muted-foreground">Loading growth analytics...</span>
         </div>
       </div>
@@ -196,14 +196,14 @@ export default function GrowthAnalyticsDashboard({
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg">
+        <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-lime-800 dark:text-lime-300">Followers</h4>
+            <h4 className="font-medium text-brand-seafoam dark:text-brand-mint">Followers</h4>
             <span className={`text-sm ${getTrendColor(metrics.followerGrowth.trend)}`}>
               {getTrendIcon(metrics.followerGrowth.trend)}
             </span>
           </div>
-          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+          <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
             {formatNumber(metrics.followerGrowth.current)}
           </p>
           <p className={`text-sm ${getTrendColor(metrics.followerGrowth.trend)}`}>
@@ -264,7 +264,7 @@ export default function GrowthAnalyticsDashboard({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
+                  ? 'border-brand-seafoam text-brand-seafoam dark:text-brand-mint'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -278,12 +278,12 @@ export default function GrowthAnalyticsDashboard({
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Recommendations */}
-          <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg">
-            <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-3">Growth Recommendations</h4>
+          <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-4 rounded-lg">
+            <h4 className="font-medium text-brand-seafoam dark:text-brand-mint mb-3">Growth Recommendations</h4>
             <ul className="space-y-2">
               {metrics.recommendations.map((rec, index) => (
-                <li key={index} className="flex items-start space-x-2 text-lime-700 dark:text-lime-300">
-                  <span className="text-lime-500 mt-1">•</span>
+                <li key={index} className="flex items-start space-x-2 text-brand-seafoam dark:text-brand-mint">
+                  <span className="text-brand-seafoam mt-1">•</span>
                   <span className="text-sm">{rec}</span>
                 </li>
               ))}
@@ -298,7 +298,7 @@ export default function GrowthAnalyticsDashboard({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span>Your Rate</span>
-                    <span className="font-bold text-lime-600 dark:text-lime-400">
+                    <span className="font-bold text-brand-seafoam dark:text-brand-mint">
                       {metrics.competitorComparison.yourEngagementRate}%
                     </span>
                   </div>
@@ -336,7 +336,7 @@ export default function GrowthAnalyticsDashboard({
                     </span>
                   </div>
                   <div className="pt-2 border-t">
-                    <span className="text-sm text-lime-600 dark:text-lime-400">
+                    <span className="text-sm text-brand-seafoam dark:text-brand-mint">
                       Ranking: #{metrics.competitorComparison.ranking} of {metrics.competitorComparison.totalCompetitors}
                     </span>
                   </div>
@@ -364,9 +364,9 @@ export default function GrowthAnalyticsDashboard({
               </p>
             </div>
             
-            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
-              <h4 className="font-medium text-lime-800 dark:text-lime-300">Net Growth</h4>
-              <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+            <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
+              <h4 className="font-medium text-brand-seafoam dark:text-brand-mint">Net Growth</h4>
+              <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
                 {metrics.followerAnalytics.netGrowth > 0 ? '+' : ''}{formatNumber(metrics.followerAnalytics.netGrowth)}
               </p>
             </div>
@@ -430,9 +430,9 @@ export default function GrowthAnalyticsDashboard({
               </p>
             </div>
             
-            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
-              <h4 className="font-medium text-lime-800 dark:text-lime-300">Average Comments</h4>
-              <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+            <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
+              <h4 className="font-medium text-brand-seafoam dark:text-brand-mint">Average Comments</h4>
+              <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
                 {formatNumber(metrics.contentPerformance.avgComments)}
               </p>
             </div>
@@ -491,7 +491,7 @@ export default function GrowthAnalyticsDashboard({
             <h4 className="font-medium mb-3">Content Performance Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">
+                <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
                   {metrics.contentPerformance.totalPosts}
                 </p>
                 <p className="text-sm text-muted-foreground">Total Posts</p>
@@ -556,7 +556,7 @@ export default function GrowthAnalyticsDashboard({
               {metrics.audienceInsights.topInterests.map(interest => (
                 <span 
                   key={interest}
-                  className="px-3 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-sm"
+                  className="px-3 py-1 bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint rounded-full text-sm"
                 >
                   {interest}
                 </span>

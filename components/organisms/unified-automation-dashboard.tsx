@@ -220,7 +220,7 @@ export default function UnifiedAutomationDashboard({
     switch (type) {
       case "post":
       case "schedule":
-        return "bg-lime-100 dark:bg-lime-900/30 text-lime-600 dark:text-lime-400";
+        return "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint";
       case "reply":
         return "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400";
       case "dm":
@@ -228,7 +228,7 @@ export default function UnifiedAutomationDashboard({
       case "hashtag":
         return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600";
       case "approval":
-        return "bg-lime-100 dark:bg-lime-900/30 text-lime-600 dark:text-lime-400";
+        return "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -413,14 +413,14 @@ export default function UnifiedAutomationDashboard({
 
       {/* Today's Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg text-center">
+        <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-4 rounded-lg text-center">
           <div className="flex items-center justify-center mb-2">
-            <Clock className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+            <Clock className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
           </div>
-          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+          <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
             {metrics.today.postsScheduled}
           </p>
-          <p className="text-sm text-lime-700 dark:text-lime-300">
+          <p className="text-sm text-brand-seafoam dark:text-brand-mint">
             Posts Scheduled
           </p>
         </div>
@@ -473,14 +473,14 @@ export default function UnifiedAutomationDashboard({
           </p>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg text-center border border-lime-200 dark:border-lime-800">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg text-center border border-brand-mint/40 dark:border-brand-seafoam/40">
           <div className="flex items-center justify-center mb-2">
-            <Activity className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+            <Activity className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
           </div>
-          <p className="text-2xl font-bold text-lime-900 dark:text-lime-300">
+          <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">
             {metrics.today.totalActions}
           </p>
-          <p className="text-sm text-lime-700 dark:text-lime-300">
+          <p className="text-sm text-brand-seafoam dark:text-brand-mint">
             Total Actions
           </p>
         </div>
@@ -502,16 +502,16 @@ export default function UnifiedAutomationDashboard({
           </p>
         </div>
 
-        <div className="bg-card border border-lime-200 dark:border-lime-800 p-4 rounded-lg">
-          <h4 className="font-medium text-lime-800 dark:text-lime-300 mb-2">
+        <div className="bg-card border border-brand-mint/40 dark:border-brand-seafoam/40 p-4 rounded-lg">
+          <h4 className="font-medium text-brand-seafoam dark:text-brand-mint mb-2">
             Engagement Boost
           </h4>
-          <p className="text-3xl font-bold text-lime-900 dark:text-lime-300">
+          <p className="text-3xl font-bold text-brand-seafoam dark:text-brand-mint">
             {metrics.thisWeek.engagementIncrease > 0
               ? `${metrics.thisWeek.engagementIncrease.toFixed(1)}%`
               : "—"}
           </p>
-          <p className="text-sm text-lime-600 dark:text-lime-400">
+          <p className="text-sm text-brand-seafoam dark:text-brand-mint">
             {metrics.thisWeek.engagementIncrease > 0
               ? "vs last week"
               : "No data yet"}
@@ -626,7 +626,7 @@ export default function UnifiedAutomationDashboard({
                 }
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   activeFilter === filter.key
-                    ? "bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300"
+                    ? "bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >

@@ -112,7 +112,7 @@ export const PostActions = ({
                                                 onClick={handlePreview}
                                                 disabled={!hasSelectedAccounts}
                                                 className={hasSelectedAccounts 
-                                                    ? "border-lime-600 text-lime-600 dark:text-lime-400 hover:bg-lime-50" 
+                                                    ? "border-brand-seafoam text-brand-seafoam dark:text-brand-mint hover:bg-brand-mint/10" 
                                                     : "border-border text-muted-foreground cursor-not-allowed"
                                                 }
                                             >
@@ -168,7 +168,7 @@ export const PostActions = ({
                                                 <Button
                     onClick={handlePublishPost}
                     disabled={isScheduling}
-                    className="flex items-center gap-2 bg-lime-600 hover:bg-lime-700 text-white disabled:bg-muted-foreground"
+                    className="flex items-center gap-2 bg-brand-seafoam hover:bg-brand-seafoam text-white disabled:bg-muted-foreground"
                 >
                                     {isScheduling ? (
                                         <>
@@ -189,7 +189,7 @@ export const PostActions = ({
 
                 {/* Post Type Descriptions */}
                 {seriesType === "reply" && (
-                    <Box className="bg-lime-50 p-3 rounded-lg mt-4">
+                    <Box className="bg-brand-mint/10 p-3 rounded-lg mt-4">
                         <Text size="2" color="lime">
                             {getReplyDescription()} Replies do not support media.
                         </Text>

@@ -224,10 +224,10 @@ export default function PostDebugPanel() {
           {/* Recommendations */}
           {debugResult.recommendations.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-lime-600 dark:text-lime-400">Recommendations</h4>
-              <ul className="bg-lime-50 dark:bg-lime-900/20 p-2 rounded text-sm space-y-1">
+              <h4 className="font-medium mb-2 text-brand-seafoam dark:text-brand-mint">Recommendations</h4>
+              <ul className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-2 rounded text-sm space-y-1">
                 {debugResult.recommendations.map((rec, i) => (
-                  <li key={i} className="text-lime-700 dark:text-lime-300">• {rec}</li>
+                  <li key={i} className="text-brand-seafoam dark:text-brand-mint">• {rec}</li>
                 ))}
               </ul>
             </div>
@@ -286,10 +286,10 @@ export default function PostDebugPanel() {
           {/* Recommendations */}
           {testResult.recommendations.length > 0 && (
             <div className="mb-4">
-              <h4 className="font-medium mb-2 text-lime-600 dark:text-lime-400">Recommendations</h4>
-              <ul className="bg-lime-50 dark:bg-lime-900/20 p-2 rounded text-sm space-y-1">
+              <h4 className="font-medium mb-2 text-brand-seafoam dark:text-brand-mint">Recommendations</h4>
+              <ul className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-2 rounded text-sm space-y-1">
                 {testResult.recommendations.map((rec, i) => (
-                  <li key={i} className="text-lime-700 dark:text-lime-300">• {rec}</li>
+                  <li key={i} className="text-brand-seafoam dark:text-brand-mint">• {rec}</li>
                 ))}
               </ul>
             </div>
@@ -298,9 +298,9 @@ export default function PostDebugPanel() {
       )}
 
       {/* Instructions */}
-      <div className="bg-lime-50 dark:bg-lime-900/20 p-4 rounded-lg border border-lime-200 dark:border-lime-800">
-        <h4 className="font-medium mb-2 text-lime-800 dark:text-lime-300">How to Use This Panel</h4>
-        <ul className="text-sm text-lime-700 dark:text-lime-300 space-y-1">
+      <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20 p-4 rounded-lg border border-brand-mint/40 dark:border-brand-seafoam/40">
+        <h4 className="font-medium mb-2 text-brand-seafoam dark:text-brand-mint">How to Use This Panel</h4>
+        <ul className="text-sm text-brand-seafoam dark:text-brand-mint space-y-1">
           <li>• <strong>Full Debug Check:</strong> Comprehensive analysis of Ayrshare connection and recent posts</li>
           <li>• <strong>Ayrshare Only:</strong> Tests API connectivity and connected accounts</li>
           <li>• <strong>Platform Specific:</strong> Debug issues with a specific social media platform</li>

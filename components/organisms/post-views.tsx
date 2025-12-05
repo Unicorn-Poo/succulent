@@ -298,8 +298,8 @@ export function PostGridView({
               key={postId}
               className={`bg-card border-2 rounded-lg p-4 hover:shadow-md transition-all duration-200 group relative ${
                 isSelected
-                  ? "border-lime-400 bg-lime-50"
-                  : "border-border hover:border-lime-300"
+                  ? "border-brand-mint bg-brand-mint/10"
+                  : "border-border hover:border-brand-mint"
               }`}
               style={{ minHeight: "200px" }}
             >
@@ -313,7 +313,7 @@ export function PostGridView({
                 }}
               >
                 {isSelected ? (
-                  <CheckSquare className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+                  <CheckSquare className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
                 ) : (
                   <Square className="w-5 h-5 text-muted-foreground hover:text-muted-foreground" />
                 )}
@@ -340,7 +340,7 @@ export function PostGridView({
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-lime-600 dark:text-lime-400 transition-colors">
+                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-brand-seafoam dark:text-brand-mint transition-colors">
                   {postTitle}
                 </h3>
 
@@ -383,8 +383,8 @@ export function PostGridView({
                         })}
                       </div>
                     )}
-                    <MessageCircle className="w-3 h-3 text-muted-foreground group-hover:text-lime-500 transition-colors" />
-                    <span className="text-xs text-muted-foreground group-hover:text-lime-600 dark:text-lime-400">
+                    <MessageCircle className="w-3 h-3 text-muted-foreground group-hover:text-brand-seafoam transition-colors" />
+                    <span className="text-xs text-muted-foreground group-hover:text-brand-seafoam dark:text-brand-mint">
                       Edit
                     </span>
                   </div>
@@ -633,8 +633,8 @@ export function PostImageView({
               key={postId}
               className={`aspect-square relative group cursor-pointer rounded-lg overflow-hidden ${
                 isSelected
-                  ? "ring-2 ring-lime-400 ring-offset-2"
-                  : "hover:ring-2 hover:ring-lime-300"
+                  ? "ring-2 ring-brand-mint ring-offset-2"
+                  : "hover:ring-2 hover:ring-brand-mint/60"
               }`}
             >
               {/* Selection Checkbox */}
@@ -649,7 +649,7 @@ export function PostImageView({
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
                     isSelected
-                      ? "bg-lime-600 border-2 border-white"
+                      ? "bg-brand-seafoam border-2 border-white"
                       : "bg-black bg-opacity-70 border-2 border-white"
                   }`}
                 >
@@ -906,8 +906,8 @@ export function PostSuccinctView({
             key={postId}
             className={`bg-card border-2 rounded-lg p-4 hover:shadow-sm transition-all duration-200 group ${
               isSelected
-                ? "border-lime-400 bg-lime-50"
-                : "border-border hover:border-lime-300"
+                ? "border-brand-mint bg-brand-mint/10"
+                : "border-border hover:border-brand-mint"
             }`}
           >
             <div className="flex items-center gap-4">
@@ -921,7 +921,7 @@ export function PostSuccinctView({
                 }}
               >
                 {isSelected ? (
-                  <CheckSquare className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+                  <CheckSquare className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
                 ) : (
                   <Square className="w-5 h-5 text-muted-foreground hover:text-muted-foreground" />
                 )}
@@ -937,11 +937,11 @@ export function PostSuccinctView({
               {/* Post content */}
               <Link
                 href={`/account-group/${accountGroupId}/post/${postId}`}
-                className="flex-1 min-w-0 group-hover:text-lime-600 dark:text-lime-400 transition-colors"
+                className="flex-1 min-w-0 group-hover:text-brand-seafoam dark:text-brand-mint transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground group-hover:text-lime-600 dark:text-lime-400 line-clamp-1 mb-1">
+                    <h3 className="font-medium text-foreground group-hover:text-brand-seafoam dark:text-brand-mint line-clamp-1 mb-1">
                       {postTitle}
                     </h3>
                     <p className="text-sm text-muted-foreground line-clamp-1 mb-2">

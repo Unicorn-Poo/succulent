@@ -635,7 +635,7 @@ export default function AccountGroupPage() {
                 }}
                 intent="secondary"
                 variant="outline"
-                className="bg-lime-50 hover:bg-lime-100 border-lime-200 text-lime-700"
+                className="bg-brand-mint/10 hover:bg-brand-mint/20 border-brand-mint/40 text-brand-seafoam"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Bulk Upload
@@ -795,7 +795,7 @@ export default function AccountGroupPage() {
                           className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                             platformFilter.length === 0 ||
                             platformFilter.includes(platform)
-                              ? "bg-lime-500 ring-2 ring-lime-400"
+                              ? "bg-brand-seafoam ring-2 ring-brand-mint"
                               : "bg-muted opacity-50 hover:opacity-75"
                           }`}
                           title={
@@ -838,11 +838,11 @@ export default function AccountGroupPage() {
 
                 {/* Bulk Selection Controls */}
                 {selectedPosts.size > 0 && (
-                  <div className="flex items-center justify-between bg-lime-50 border border-lime-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between bg-brand-mint/10 border border-brand-mint/40 rounded-lg p-4">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <CheckSquare className="w-4 h-4 text-lime-600" />
-                        <span className="text-sm font-medium text-lime-800">
+                        <CheckSquare className="w-4 h-4 text-brand-seafoam" />
+                        <span className="text-sm font-medium text-brand-seafoam">
                           {selectedPosts.size} post
                           {selectedPosts.size !== 1 ? "s" : ""} selected
                         </span>
@@ -1043,7 +1043,7 @@ export default function AccountGroupPage() {
               {/* Growth Tools Section */}
               <div>
                 <div className="flex items-center space-x-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-lime-600" />
+                  <TrendingUp className="w-5 h-5 text-brand-seafoam" />
                   <h2 className="text-xl font-semibold text-foreground">
                     Growth Automation Tools
                   </h2>
@@ -1325,7 +1325,7 @@ export default function AccountGroupPage() {
                         </div>
                       </div>
                       <Button
-                        className="bg-lime-600 hover:bg-lime-700 text-white"
+                        className="bg-brand-seafoam hover:bg-brand-seafoam text-white"
                         onClick={async () => {
                           try {
                             const { createAyrshareProfile } = await import(
@@ -1644,7 +1644,7 @@ export default function AccountGroupPage() {
             </Button>
             <Button
               onClick={handleCreatePost}
-              className="bg-lime-600 hover:bg-lime-700 text-white"
+              className="bg-brand-seafoam hover:bg-brand-seafoam text-white"
             >
               Create Post
             </Button>

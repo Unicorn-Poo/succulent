@@ -259,7 +259,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
     return (
       <Card className="p-6">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-lime-500" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-brand-seafoam" />
           <Text>Loading Instagram account data...</Text>
         </div>
       </Card>
@@ -319,9 +319,9 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
       {/* Sync Results Display */}
       {syncResults && (
         <Card>
-          <div className="p-4 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+          <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-lime-500" />
+              <AlertCircle className="w-4 h-4 text-brand-seafoam" />
               <Text size="2" color="blue">{syncResults}</Text>
             </div>
           </div>
@@ -410,8 +410,8 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-lime-50 rounded-lg">
-              <Eye className="w-6 h-6 text-lime-500 mx-auto mb-2" />
+            <div className="text-center p-4 bg-brand-mint/10 rounded-lg">
+              <Eye className="w-6 h-6 text-brand-seafoam mx-auto mb-2" />
               <Text size="3" weight="bold" className="block">
                 {formatNumber(analytics.impressions)}
               </Text>

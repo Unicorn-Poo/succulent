@@ -281,7 +281,7 @@ export default function BrandManagementDashboard({
     switch (severity) {
       case 'high': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
       case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
-      default: return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 border-lime-200 dark:border-lime-800';
+      default: return 'bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint border-brand-mint/40 dark:border-brand-seafoam/40';
     }
   };
 
@@ -289,7 +289,7 @@ export default function BrandManagementDashboard({
     return (
       <div className="bg-card rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-seafoam"></div>
           <span className="ml-2 text-muted-foreground">Loading brand settings...</span>
         </div>
       </div>
@@ -322,7 +322,7 @@ export default function BrandManagementDashboard({
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
+                  ? 'border-brand-seafoam text-brand-seafoam dark:text-brand-mint'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -426,7 +426,7 @@ export default function BrandManagementDashboard({
                         category === 'forbidden' 
                           ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                           : category === 'primary'
-                            ? 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300'
+                            ? 'bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint'
                             : 'bg-muted text-foreground'
                       }`}
                     >
@@ -490,7 +490,7 @@ export default function BrandManagementDashboard({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <h4 className="font-medium text-foreground">{template.name}</h4>
-                    <span className="px-2 py-1 bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 rounded-full text-xs">
+                    <span className="px-2 py-1 bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint rounded-full text-xs">
                       {template.category}
                     </span>
                   </div>
@@ -523,7 +523,7 @@ export default function BrandManagementDashboard({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(brandSettings.guidelines.postingFrequency).map(([platform, frequency]) => (
                 <div key={platform} className="text-center">
-                  <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">{frequency}</p>
+                  <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">{frequency}</p>
                   <p className="text-sm text-muted-foreground capitalize">{platform}</p>
                 </div>
               ))}
@@ -563,11 +563,11 @@ export default function BrandManagementDashboard({
         <div className="space-y-6">
           {/* Overall Score */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg text-center">
+            <div className="p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg text-center">
               <p className={`text-3xl font-bold ${getScoreColor(consistencyReport.overallScore)}`}>
                 {consistencyReport.overallScore}%
               </p>
-              <p className="text-sm text-lime-700 dark:text-lime-300">Overall Score</p>
+              <p className="text-sm text-brand-seafoam dark:text-brand-mint">Overall Score</p>
             </div>
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
               <p className={`text-3xl font-bold ${getScoreColor(consistencyReport.hashtagConsistency)}`}>

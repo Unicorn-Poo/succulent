@@ -549,7 +549,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
                 <div key={post.ayrshareId || post.id} className="relative">
                   {/* Historical post indicator */}
                   <div className="absolute top-2 right-2 z-10">
-                    <div className="bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                    <div className="bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint px-2 py-1 rounded-full text-xs flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {formatDate(post.created)}
                     </div>

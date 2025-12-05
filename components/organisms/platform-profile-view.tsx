@@ -233,7 +233,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
   const getPlatformColor = (platform: string) => {
     switch (platform) {
       case 'instagram': return 'from-purple-500 to-pink-500';
-      case 'x': return 'from-lime-500 to-purple-500';
+      case 'x': return 'from-brand-seafoam to-purple-500';
       case 'youtube': return 'from-red-500 to-pink-500';
       default: return 'from-gray-500 to-gray-600';
     }
@@ -457,7 +457,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
                 <p className="text-sm text-muted-foreground">Published</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-lime-600 dark:text-lime-400">{statusCounts.scheduled}</p>
+                <p className="text-2xl font-bold text-brand-seafoam dark:text-brand-mint">{statusCounts.scheduled}</p>
                 <p className="text-sm text-muted-foreground">Scheduled</p>
               </div>
               <div className="text-center">
@@ -471,7 +471,7 @@ export default function PlatformProfileView({ account, posts, onBack, accountGro
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="border border-border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500"
+                className="border border-border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
               >
                 <option value="all">All Posts ({statusCounts.all})</option>
                 <option value="published">Published ({statusCounts.published})</option>

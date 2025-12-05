@@ -75,8 +75,8 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
     }
     if (postStatus === 'scheduled') {
       return (
-        <div className="absolute inset-0 bg-lime-900 bg-opacity-60 flex items-center justify-center">
-          <span className="text-white text-xs font-medium px-2 py-1 bg-lime-700 rounded">
+        <div className="absolute inset-0 bg-brand-seafoam bg-opacity-60 flex items-center justify-center">
+          <span className="text-white text-xs font-medium px-2 py-1 bg-brand-seafoam rounded">
             SCHEDULED
           </span>
         </div>
@@ -211,7 +211,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
         {/* Profile Header */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-brand-seafoam to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xl font-semibold">
                 {account.name.charAt(0).toUpperCase()}
               </span>
@@ -241,7 +241,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                   <div className="p-4 border-b border-border hover:bg-muted transition-colors relative cursor-pointer">
                     <div className="flex space-x-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-brand-seafoam to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-sm font-semibold">
                           {account.name.charAt(0).toUpperCase()}
                         </span>
@@ -287,7 +287,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
                       const postStatus = getPostStatus(post);
                       return (postStatus === 'draft' || postStatus === 'scheduled') && (
                         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                          postStatus === 'draft' ? 'bg-muted text-foreground' : 'bg-lime-100 dark:bg-lime-900/30 text-lime-700'
+                          postStatus === 'draft' ? 'bg-muted text-foreground' : 'bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam'
                         }`}>
                           {postStatus.toUpperCase()}
                         </div>
@@ -302,7 +302,7 @@ export default function PlatformTimelineView({ account, posts, accountGroupId, o
             Array.from({ length: 3 }, (_, index) => (
               <div key={`sample-${index}`} className="p-4 border-b border-border">
                 <div className="flex space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-brand-seafoam to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-sm font-semibold">
                       {account.name.charAt(0).toUpperCase()}
                     </span>

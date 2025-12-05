@@ -454,7 +454,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-lime-600" />
+              <MessageSquare className="w-5 h-5 text-brand-seafoam" />
               <Text size="4" weight="bold">
                 Messages
               </Text>
@@ -480,8 +480,8 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
 
           {/* Bulk Actions Bar */}
           {selectedConversations.size > 0 && (
-            <div className="flex items-center justify-between bg-lime-50 dark:bg-lime-950 rounded-md p-2 mb-3">
-              <Text size="1" weight="medium" className="text-lime-700 dark:text-lime-300">
+            <div className="flex items-center justify-between bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-md p-2 mb-3">
+              <Text size="1" weight="medium" className="text-brand-seafoam dark:text-brand-mint">
                 {selectedConversations.size} selected
               </Text>
               <div className="flex gap-1">
@@ -532,7 +532,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   filter === f
-                    ? "bg-lime-600 text-white"
+                    ? "bg-brand-seafoam text-white"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >
@@ -597,7 +597,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                   className="mt-1 text-muted-foreground hover:text-foreground"
                 >
                   {selectedConversations.has(conv.id) ? (
-                    <CheckSquare className="w-4 h-4 text-lime-600" />
+                    <CheckSquare className="w-4 h-4 text-brand-seafoam" />
                   ) : (
                     <Square className="w-4 h-4" />
                   )}
@@ -623,7 +623,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                             ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
                             : conv.platform === "facebook"
                             ? "bg-blue-600 text-white"
-                            : "bg-lime-700 text-white"
+                            : "bg-brand-seafoam text-white"
                         }`}
                       >
                         {PLATFORM_ICONS[conv.platform] || "?"}
@@ -713,7 +713,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                   <div
                     className={`max-w-[70%] p-3 rounded-2xl ${
                       msg.senderId === "me"
-                        ? "bg-lime-600 text-white rounded-br-sm"
+                        ? "bg-brand-seafoam text-white rounded-br-sm"
                         : "bg-muted rounded-bl-sm"
                     }`}
                   >
@@ -727,12 +727,12 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                     >
                       <Text
                         size="1"
-                        className={msg.senderId === "me" ? "text-lime-200" : "text-muted-foreground"}
+                        className={msg.senderId === "me" ? "text-brand-mint/50" : "text-muted-foreground"}
                       >
                         {formatTime(msg.timestamp)}
                       </Text>
                       {msg.senderId === "me" && (
-                        <CheckCheck className="w-3 h-3 text-lime-200" />
+                        <CheckCheck className="w-3 h-3 text-brand-mint/50" />
                       )}
                     </div>
                   </div>
@@ -742,11 +742,11 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
 
             {/* AI Suggestions Panel */}
             {showSuggestions && suggestedReplies.length > 0 && (
-              <div className="px-4 pb-2 border-t border-border bg-gradient-to-b from-lime-50/50 to-transparent dark:from-lime-950/30">
+              <div className="px-4 pb-2 border-t border-border bg-gradient-to-b from-brand-mint/10/50 to-transparent dark:from-brand-seafoam/20/30">
                 <div className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-lime-600" />
-                    <Text size="2" weight="medium" className="text-lime-700 dark:text-lime-300">
+                    <Sparkles className="w-4 h-4 text-brand-seafoam" />
+                    <Text size="2" weight="medium" className="text-brand-seafoam dark:text-brand-mint">
                       AI Suggestions
                     </Text>
                   </div>
@@ -763,7 +763,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                     <button
                       key={suggestion.id}
                       onClick={() => applySuggestedReply(suggestion)}
-                      className="w-full text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-border hover:border-lime-400 hover:shadow-sm transition-all group"
+                      className="w-full text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-border hover:border-brand-mint hover:shadow-sm transition-all group"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <Text size="2" className="flex-1">
@@ -780,7 +780,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1">
                           <div
-                            className="bg-lime-500 h-1 rounded-full"
+                            className="bg-brand-seafoam h-1 rounded-full"
                             style={{ width: `${suggestion.confidence}%` }}
                           />
                         </div>
@@ -818,7 +818,7 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
                   onChange={(e) => setReplyMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendReply()}
                   placeholder="Type a message..."
-                  className="flex-1 px-4 py-2 border border-border rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-lime-500"
+                  className="flex-1 px-4 py-2 border border-border rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-brand-seafoam"
                   disabled={isSending}
                 />
                 <Button

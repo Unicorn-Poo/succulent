@@ -18,8 +18,8 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-									<div className="flex items-center justify-center w-10 h-10 bg-lime-100 dark:bg-lime-900/30 rounded-lg">
-					<Settings className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+									<div className="flex items-center justify-center w-10 h-10 bg-brand-mint/20 dark:bg-brand-seafoam/20 rounded-lg">
+					<Settings className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
 					</div>
 					<div>
 						<Heading size="5">Account Settings</Heading>
@@ -78,7 +78,7 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 												account.profile.name = e.target.value;
 											}
 										}}
-										className="w-full px-3 py-2 border border-border dark:border-border rounded-md focus:outline-none focus:ring-2 focus:ring-lime-500 bg-card dark:text-foreground"
+										className="w-full px-3 py-2 border border-border dark:border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-seafoam bg-card dark:text-foreground"
 										placeholder="Enter your display name"
 									/>
 								</div>
@@ -238,11 +238,11 @@ export const AccountSettings = ({ account, accountGroup, onClose }: AccountSetti
 									</Text>
 								</div>
 
-								<div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
-									<Text size="2" className="text-lime-800 dark:text-lime-300">
+								<div className="p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
+									<Text size="2" className="text-brand-seafoam dark:text-brand-mint">
 										🔑 <strong>API Key Security</strong>
 									</Text>
-									<Text size="2" className="text-lime-700 block mt-1">
+									<Text size="2" className="text-brand-seafoam block mt-1">
 										Your API keys are encrypted and stored securely. They are never shared or exposed to other users.
 									</Text>
 								</div>

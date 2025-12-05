@@ -265,7 +265,7 @@ export default function AccountAnalyticsOverview({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-4">
             <div className="text-center">
-              <Users className="w-6 h-6 text-lime-500 mx-auto mb-2" />
+              <Users className="w-6 h-6 text-brand-seafoam mx-auto mb-2" />
               <Text size="4" weight="bold" className="block">
                 {formatNumber(totalMetrics.followers)}
               </Text>
@@ -390,7 +390,7 @@ export default function AccountAnalyticsOverview({
       {/* Feature Availability Notice */}
       {!analyticsAvailable && (
         <Card>
-          <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+          <div className="p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
             <Text size="2" color="lime">
               💡 Upgrade to a premium Ayrshare plan to unlock detailed analytics, engagement metrics, and advanced insights.
             </Text>

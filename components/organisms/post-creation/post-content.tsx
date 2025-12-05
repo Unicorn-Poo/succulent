@@ -87,8 +87,8 @@ export const PostContent = ({
 						<div
 							className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 ${
 								isDragOver 
-									? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 scale-105' 
-									: 'border-border dark:border-border hover:border-lime-400 dark:hover:border-lime-500'
+									? 'border-brand-seafoam bg-brand-mint/10 dark:bg-brand-seafoam/20 scale-105' 
+									: 'border-border dark:border-border hover:border-brand-mint dark:hover:border-brand-seafoam'
 							}`}
 							onDragEnter={handleDragEnter}
 							onDragLeave={handleDragLeave}
@@ -99,11 +99,11 @@ export const PostContent = ({
 								<div className={`mx-auto mb-4 transition-all duration-300 ${
 									isDragOver ? 'scale-110' : ''
 								}`}>
-									<div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-lime-100 to-green-100 dark:from-lime-900/30 dark:to-green-900/30 rounded-full flex items-center justify-center">
+									<div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-brand-mint/20 to-brand-mint/20 dark:from-brand-seafoam/20/30 dark:to-brand-seafoam/30 rounded-full flex items-center justify-center">
 										{isDragOver ? (
-											<Upload className="w-10 h-10 text-lime-600 dark:text-lime-400 dark:text-lime-400 animate-bounce" />
+											<Upload className="w-10 h-10 text-brand-seafoam dark:text-brand-mint dark:text-brand-mint animate-bounce" />
 										) : (
-											<ImageIcon className="w-10 h-10 text-lime-600 dark:text-lime-400 dark:text-lime-400" />
+											<ImageIcon className="w-10 h-10 text-brand-seafoam dark:text-brand-mint dark:text-brand-mint" />
 										)}
 									</div>
 								</div>
@@ -124,7 +124,7 @@ export const PostContent = ({
 										variant="solid"
 										size="3"
 										onClick={handleImageUpload}
-										className="bg-gradient-to-r from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+										className="bg-gradient-to-r from-brand-seafoam to-brand-mint hover:from-brand-seafoam hover:to-green-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
 									>
 										<Plus className="w-5 h-5 mr-2" />
 										Choose Files
@@ -149,10 +149,10 @@ export const PostContent = ({
 
 							{/* Drag overlay */}
 							{isDragOver && (
-								<div className="absolute inset-0 bg-lime-500/10 border-2 border-lime-500 rounded-2xl flex items-center justify-center">
+								<div className="absolute inset-0 bg-brand-seafoam/10 border-2 border-brand-seafoam rounded-2xl flex items-center justify-center">
 									<div className="text-center">
-										<Upload className="w-12 h-12 text-lime-600 dark:text-lime-400 dark:text-lime-400 mx-auto mb-2 animate-bounce" />
-										<p className="text-lime-700 dark:text-lime-300 font-medium">Drop files to upload</p>
+										<Upload className="w-12 h-12 text-brand-seafoam dark:text-brand-mint dark:text-brand-mint mx-auto mb-2 animate-bounce" />
+										<p className="text-brand-seafoam dark:text-brand-mint font-medium">Drop files to upload</p>
 									</div>
 								</div>
 							)}
@@ -169,14 +169,14 @@ export const PostContent = ({
 						value={contextText || post.variants[activeTab]?.text?.toString() || ""}
 						onChange={(e) => handleContentChange(e.target.value)}
 						placeholder={`What's happening? Use double line breaks for threads.`}
-						className="w-full min-h-[150px] p-4 border border-border dark:border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-lime-500 dark:focus:ring-lime-400 bg-card text-foreground placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+						className="w-full min-h-[150px] p-4 border border-border dark:border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-brand-seafoam dark:focus:ring-brand-mint bg-card text-foreground placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
 						rows={6}
 					/>
 					
 					{/* Character count and thread indicator */}
 					<div className="absolute bottom-3 right-3 flex items-center space-x-2">
 						{(isImplicitThread || isExplicitThread) && (
-							<div className="flex items-center bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 dark:text-lime-400 px-2 py-1 rounded-full text-xs">
+							<div className="flex items-center bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint dark:text-brand-mint px-2 py-1 rounded-full text-xs">
 								<FileText className="w-3 h-3 mr-1" />
 								Thread
 							</div>
@@ -195,7 +195,7 @@ export const PostContent = ({
 							size="2"
 							onClick={handleSaveContent}
 							disabled={isSaving}
-							className="bg-lime-500 hover:bg-lime-600 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+							className="bg-brand-seafoam hover:bg-brand-seafoam text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
 						>
 							{isSaving ? (
 								<>

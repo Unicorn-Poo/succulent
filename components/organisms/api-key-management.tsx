@@ -491,7 +491,7 @@ export default function APIKeyManagement() {
           
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-seafoam mx-auto mb-4"></div>
               <Text size="2" color="gray">Loading API keys...</Text>
             </div>
           ) : apiKeys.length === 0 ? (
@@ -580,7 +580,7 @@ export default function APIKeyManagement() {
                       {key.permissions.map((permission) => (
                         <span
                           key={permission}
-                          className="px-2 py-1 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-300 text-xs rounded-md"
+                          className="px-2 py-1 bg-brand-mint/10 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint text-xs rounded-md"
                         >
                           {permission}
                         </span>
@@ -596,7 +596,7 @@ export default function APIKeyManagement() {
 
       {/* API Documentation Link */}
       <Card>
-        <div className="p-4 bg-lime-50 border border-lime-200 rounded-lg">
+        <div className="p-4 bg-brand-mint/10 border border-brand-mint/40 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <Text size="3" weight="medium" className="mb-1 block">

@@ -476,7 +476,7 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
 
           {learningStats ? (
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+              <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
                 <Text size="3" weight="bold" className="block">
                   {learningStats.totalInsights}
                 </Text>
@@ -581,14 +581,14 @@ export default function AIAutopilotDashboard({ accountGroup }: AIAutopilotDashbo
               </div>
 
               {/* Scheduling Info */}
-              <div className="flex items-center justify-between p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg border border-lime-200 dark:border-lime-800">
+              <div className="flex items-center justify-between p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg border border-brand-mint/40 dark:border-brand-seafoam/40">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-lime-600 dark:text-lime-400" />
+                  <Calendar className="w-4 h-4 text-brand-seafoam dark:text-brand-mint" />
                   <div>
-                    <Text size="2" weight="medium" className="text-lime-900 dark:text-lime-100">
+                    <Text size="2" weight="medium" className="text-brand-seafoam dark:text-brand-mint">
                       Optimal posting time
                     </Text>
-                    <Text size="1" className="text-lime-700 dark:text-lime-300">
+                    <Text size="1" className="text-brand-seafoam dark:text-brand-mint">
                       {generatedContent.suggestedPostTime.formattedTime} • {new Date(generatedContent.suggestedPostTime.scheduledDate).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                     </Text>
                   </div>

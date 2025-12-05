@@ -25,7 +25,7 @@ export default function GrowthQuickAccess({
       name: '📊 Activity Dashboard',
       description: 'Monitor automation',
       icon: BarChart3,
-      color: 'from-green-600 to-blue-600'
+      color: 'from-brand-seafoam to-blue-600'
     },
     {
       id: 'autopilot',
@@ -39,7 +39,7 @@ export default function GrowthQuickAccess({
       name: '🏷️ Hashtag Research',
       description: 'Boost reach +25%',
       icon: Search,
-      color: 'from-green-600 to-blue-600'
+      color: 'from-brand-seafoam to-blue-600'
     },
     {
       id: 'comments',
@@ -124,7 +124,7 @@ export default function GrowthQuickAccess({
                   onToolSelect('tools-overview');
                   setIsDropdownOpen(false);
                 }}
-                className="w-full text-center text-sm text-lime-600 dark:text-lime-400 hover:text-lime-800 dark:text-lime-300 font-medium"
+                className="w-full text-center text-sm text-brand-seafoam dark:text-brand-mint hover:text-brand-seafoam dark:text-brand-mint font-medium"
               >
                 View All Growth Tools →
               </button>

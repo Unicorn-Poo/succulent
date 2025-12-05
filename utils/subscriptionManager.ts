@@ -63,7 +63,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionTierType, PlanDefinition> = {
     tier: 'premium',
     name: 'Pro',
     description: 'For creators who need more power and flexibility',
-    price: { monthly: 12, yearly: 120 },
+    price: { monthly: 24, yearly: 200 },
     limits: {
       maxPosts: -1, // unlimited posts
       maxAccountGroups: 3,
@@ -96,7 +96,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionTierType, PlanDefinition> = {
     tier: 'business',
     name: 'Business',
     description: 'For teams and agencies',
-    price: { monthly: 49, yearly: 490 },
+    price: { monthly: 59, yearly: 492 },
     limits: {
       maxPosts: -1, // unlimited
       maxAccountGroups: 10,

@@ -53,12 +53,12 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta
           name="theme-color"
-          content="#84cc16"
+          content="#6BC9A3"
           media="(prefers-color-scheme: light)"
         />
         <meta
           name="theme-color"
-          content="#111827"
+          content="#1a1a1a"
           media="(prefers-color-scheme: dark)"
         />
 

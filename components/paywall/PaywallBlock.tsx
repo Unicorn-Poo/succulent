@@ -126,7 +126,7 @@ export function PaywallBlock({
           <Button
             onClick={handleStartTrial}
             size="3"
-            className="w-full bg-gradient-to-r from-lime-500 to-green-500 hover:from-lime-600 hover:to-green-600 text-white"
+            className="w-full bg-gradient-to-r from-brand-seafoam to-brand-mint hover:from-brand-seafoam hover:to-brand-mint text-white"
           >
             <Star className="w-4 h-4 mr-2" />
             Start 14-Day Free Trial
@@ -171,7 +171,7 @@ export function PaywallBlock({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {upgradeOptions.map((plan) => (
-            <Card key={plan.tier} className={`p-4 ${plan.popular ? 'border-2 border-lime-500' : ''}`}>
+            <Card key={plan.tier} className={`p-4 ${plan.popular ? 'border-2 border-brand-seafoam' : ''}`}>
               <div className="flex items-center justify-between mb-3">
                 <Text size="3" weight="bold">{plan.name}</Text>
                 {plan.popular && (
@@ -193,7 +193,7 @@ export function PaywallBlock({
               <div className="space-y-2 mb-4">
                 {plan.features.slice(0, 5).map((feature, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <Check className="w-3 h-3 text-lime-500" />
+                    <Check className="w-3 h-3 text-brand-seafoam" />
                     <Text size="1">{feature.replace(/-/g, ' ')}</Text>
                   </div>
                 ))}
@@ -288,7 +288,7 @@ export function AnalyticsPaywall({ children }: { children: React.ReactNode }) {
       feature="analytics"
       title="Analytics Dashboard"
       description="Get detailed insights into your post performance, audience engagement, and growth metrics."
-      icon={<Zap className="w-5 h-5 text-lime-500" />}
+      icon={<Zap className="w-5 h-5 text-brand-seafoam" />}
       type="overlay"
       requiredTier="premium"
     >

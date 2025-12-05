@@ -95,11 +95,11 @@ export function PlatformAccountGuard({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
-          <Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300 block mb-1">
+        <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
+          <Text size="2" weight="medium" className="text-brand-seafoam dark:text-brand-mint block mb-1">
             💡 What you can do:
           </Text>
-          <ul className="text-sm text-lime-700 dark:text-lime-300 space-y-1">
+          <ul className="text-sm text-brand-seafoam dark:text-brand-mint space-y-1">
             <li>• Connect accounts on different platforms</li>
             <li>• Upgrade to Business plan for unlimited accounts per platform</li>
             <li>• Remove an existing {platform} account to add a new one</li>
@@ -190,7 +190,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
                 atLimit 
                   ? 'bg-amber-50 border-amber-200' 
                   : count > 0 
-                    ? 'bg-lime-50 border-lime-200'
+                    ? 'bg-brand-mint/10 border-brand-mint/40'
                     : 'bg-muted border-border'
               }`}
             >
@@ -199,7 +199,7 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
                   atLimit 
                     ? 'bg-amber-500' 
                     : count > 0 
-                      ? 'bg-lime-500'
+                      ? 'bg-brand-seafoam'
                       : 'bg-muted-foreground/30'
                 }`}></div>
                 <Text size="1" weight="medium" className="capitalize">
@@ -214,11 +214,11 @@ export function PlatformAccountOverview({ existingAccounts, onUpgradeClick }: Pl
         })}
       </div>
 
-      <div className="p-3 bg-lime-50 dark:bg-lime-900/20 rounded-lg mb-4">
-        <Text size="2" weight="medium" className="text-lime-800 dark:text-lime-300 block mb-1">
+      <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg mb-4">
+        <Text size="2" weight="medium" className="text-brand-seafoam dark:text-brand-mint block mb-1">
           💡 Platform Strategy Tips
         </Text>
-        <Text size="1" className="text-lime-700 dark:text-lime-300">
+        <Text size="1" className="text-brand-seafoam dark:text-brand-mint">
           Focus on 3-5 platforms where your audience is most active. 
           Quality engagement beats quantity every time!
         </Text>

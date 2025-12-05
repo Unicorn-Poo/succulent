@@ -222,7 +222,7 @@ export default function PostQueue({
         );
       case "approved":
         return (
-          <span className="px-2 py-1 rounded-full text-xs bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300">
+          <span className="px-2 py-1 rounded-full text-xs bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint">
             Approved
           </span>
         );
@@ -240,7 +240,7 @@ export default function PostQueue({
         );
       case "posted":
         return (
-          <span className="px-2 py-1 rounded-full text-xs bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300">
+          <span className="px-2 py-1 rounded-full text-xs bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint">
             Posted
           </span>
         );
@@ -381,7 +381,7 @@ export default function PostQueue({
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-lime-500 to-green-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-brand-seafoam to-brand-mint rounded-lg flex items-center justify-center">
               <Inbox className="w-5 h-5 text-white" />
             </div>
             <div>

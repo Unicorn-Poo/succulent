@@ -51,7 +51,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
   const getStatusBadgeColor = () => {
     switch (post.status) {
       case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
-      case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
+      case 'scheduled': return 'bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint';
       case 'draft': return 'bg-muted text-foreground';
       default: return 'bg-muted text-foreground';
     }
@@ -77,7 +77,7 @@ export default function XPreview({ post, account }: XPreviewProps) {
         <div className="flex space-x-3">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-gradient-to-br from-lime-500 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-brand-seafoam to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-white text-lg font-semibold">
                 {account.name.charAt(0).toUpperCase()}
               </span>
@@ -120,11 +120,11 @@ export default function XPreview({ post, account }: XPreviewProps) {
             {/* Actions */}
             <div className="flex items-center justify-between mt-3 max-w-md">
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <MessageCircle className="w-4 h-4 text-muted-foreground group-hover:text-lime-500" />
+                <div className="p-2 rounded-full group-hover:bg-brand-mint/10 transition-colors">
+                  <MessageCircle className="w-4 h-4 text-muted-foreground group-hover:text-brand-seafoam" />
                 </div>
                 {post.engagement && post.engagement.comments > 0 && post.status === 'published' && (
-                  <span className="text-sm text-muted-foreground group-hover:text-lime-500">
+                  <span className="text-sm text-muted-foreground group-hover:text-brand-seafoam">
                     {formatEngagement(post.engagement.comments)}
                   </span>
                 )}
@@ -157,8 +157,8 @@ export default function XPreview({ post, account }: XPreviewProps) {
               </div>
               
               <div className="flex items-center space-x-1 group cursor-pointer">
-                <div className="p-2 rounded-full group-hover:bg-lime-50 transition-colors">
-                  <Share className="w-4 h-4 text-muted-foreground group-hover:text-lime-500" />
+                <div className="p-2 rounded-full group-hover:bg-brand-mint/10 transition-colors">
+                  <Share className="w-4 h-4 text-muted-foreground group-hover:text-brand-seafoam" />
                 </div>
               </div>
             </div>

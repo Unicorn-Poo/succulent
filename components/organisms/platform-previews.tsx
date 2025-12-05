@@ -86,10 +86,10 @@ export const TwitterPreview = ({
 					</div>
 				)}
 				<div className="flex items-center justify-between max-w-md text-muted-foreground">
-					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><MessageCircle className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10 hover:text-brand-seafoam"><MessageCircle className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-green-50 dark:bg-green-900/20 hover:text-green-500"><Repeat2 className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-red-50 dark:bg-red-900/20 hover:text-red-500"><Heart className="w-4 h-4" /></Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50 hover:text-lime-500"><Share className="w-4 h-4" /></Button>
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10 hover:text-brand-seafoam"><Share className="w-4 h-4" /></Button>
 					<Button variant="ghost" size="1" className="hover:bg-muted"><Bookmark className="w-4 h-4" /></Button>
 				</div>
 			</div>
@@ -116,7 +116,7 @@ export const TwitterPreview = ({
 						/>
 						<div className="flex-1">
 							<Text as="p" color="gray" size="2" className="mb-2">
-								Replying to <a href="#" className="text-lime-500">@{replyTo.authorUsername}</a>
+								Replying to <a href="#" className="text-brand-seafoam">@{replyTo.authorUsername}</a>
 							</Text>
 							<div className="whitespace-pre-wrap">{displayContent}</div>
 						</div>
@@ -382,15 +382,15 @@ export const FacebookPreview = ({
 
 				{/* Actions */}
 				<div className="flex items-center justify-between pt-2 border-t">
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<Heart className="w-4 h-4 mr-2" />
 						Like
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<MessageCircle className="w-4 h-4 mr-2" />
 						Comment
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<Share className="w-4 h-4 mr-2" />
 						Share
 					</Button>
@@ -479,19 +479,19 @@ export const LinkedInPreview = ({
 
 				{/* Actions */}
 				<div className="flex items-center justify-between pt-3 border-t">
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<Heart className="w-4 h-4 mr-2" />
 						Like
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<MessageCircle className="w-4 h-4 mr-2" />
 						Comment
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<Repeat2 className="w-4 h-4 mr-2" />
 						Repost
 					</Button>
-					<Button variant="ghost" size="1" className="hover:bg-lime-50">
+					<Button variant="ghost" size="1" className="hover:bg-brand-mint/10">
 						<Send className="w-4 h-4 mr-2" />
 						Send
 					</Button>

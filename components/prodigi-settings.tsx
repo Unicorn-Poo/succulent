@@ -239,7 +239,7 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 		<Card className="p-6">
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-3">
-					<Package className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+					<Package className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
 					<div>
 						<Text size="4" weight="bold" className="mb-1 block">
 							Prodigi Integration
@@ -255,9 +255,9 @@ export const ProdigiSettings = ({ accountGroup }: ProdigiSettingsProps) => {
 			</div>
 
 			{isConnected && (
-				<div className="mb-6 p-4 bg-lime-50 dark:bg-lime-900/20 rounded-lg">
+				<div className="mb-6 p-4 bg-brand-mint/10 dark:bg-brand-seafoam/20 rounded-lg">
 					<div className="flex items-center gap-2 mb-2">
-						<AlertCircle className="w-4 h-4 text-lime-600 dark:text-lime-400" />
+						<AlertCircle className="w-4 h-4 text-brand-seafoam dark:text-brand-mint" />
 						<Text size="2" weight="medium" color="blue">
 							{sandboxMode ? "Sandbox Mode Active" : "Live Mode Active"}
 						</Text>

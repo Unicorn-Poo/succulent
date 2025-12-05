@@ -84,7 +84,7 @@ const MetricCard = ({
   return (
     <Card className="p-4 bg-card">
       <div className="flex items-center justify-between mb-2">
-        <div className="p-2 bg-lime-100 dark:bg-lime-900/30 rounded-lg">
+        <div className="p-2 bg-brand-mint/20 dark:bg-brand-seafoam/20 rounded-lg">
           {icon}
         </div>
         {!loading && change !== undefined && (
@@ -160,7 +160,7 @@ const PostPerformanceChart = ({
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-muted rounded-full h-2">
               <div
-                className="bg-lime-600 h-2 rounded-full transition-all duration-300"
+                className="bg-brand-seafoam h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(item.engagement / maxEngagement) * 100}%` }}
               ></div>
             </div>
@@ -299,7 +299,7 @@ const HistoricalTrendsChart = ({
           {chartData.map((day, i) => (
             <div
               key={i}
-              className="flex-1 bg-lime-500 dark:bg-lime-600 rounded-t transition-all hover:bg-lime-400 dark:hover:bg-lime-500 cursor-pointer group relative"
+              className="flex-1 bg-brand-seafoam dark:bg-brand-seafoam rounded-t transition-all hover:bg-brand-mint dark:hover:bg-brand-seafoam cursor-pointer group relative"
               style={{
                 height: `${(day.followers / maxFollowers) * 100}%`,
                 minHeight: "4px",
@@ -429,7 +429,7 @@ const OptimalTimesDisplay = ({
                 .map((time: string, timeIndex: number) => (
                   <div
                     key={timeIndex}
-                    className="bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300 text-xs py-1 px-2 rounded text-center"
+                    className="bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint text-xs py-1 px-2 rounded text-center"
                   >
                     {time}
                   </div>
@@ -1180,7 +1180,7 @@ export default function AnalyticsDashboard({
               ? aggregatedMetrics.followers.toLocaleString()
               : "No data"
           }
-          icon={<Users className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
+          icon={<Users className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />}
           trend={aggregatedMetrics.hasFollowerData ? "neutral" : "neutral"}
           loading={isLoading}
         />
@@ -1191,7 +1191,7 @@ export default function AnalyticsDashboard({
               ? aggregatedMetrics.engagement.toLocaleString()
               : "No posts"
           }
-          icon={<Heart className="w-5 h-5 text-lime-600 dark:text-lime-400" />}
+          icon={<Heart className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />}
           trend={aggregatedMetrics.hasEngagementData ? "up" : "neutral"}
           loading={isLoading}
         />
@@ -1203,7 +1203,7 @@ export default function AnalyticsDashboard({
               : "No data"
           }
           icon={
-            <TrendingUp className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+            <TrendingUp className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
           }
           trend={aggregatedMetrics.hasEngagementData ? "up" : "neutral"}
           loading={isLoading}
@@ -1216,7 +1216,7 @@ export default function AnalyticsDashboard({
               : "No posts"
           }
           icon={
-            <BarChart3 className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+            <BarChart3 className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
           }
           trend="neutral"
           loading={isLoading}
@@ -1279,7 +1279,7 @@ export default function AnalyticsDashboard({
                     ) : (
                       <>
                         {/* Key Follower Stat */}
-                        <div className="bg-lime-50 dark:bg-lime-950/30 rounded-lg p-3 mb-3">
+                        <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20/30 rounded-lg p-3 mb-3">
                           <div className="flex items-center justify-between">
                             <div>
                               <Text size="1" color="gray" className="block">
@@ -1288,7 +1288,7 @@ export default function AnalyticsDashboard({
                               <Text
                                 size="5"
                                 weight="bold"
-                                className="text-lime-700 dark:text-lime-400"
+                                className="text-brand-seafoam dark:text-brand-mint"
                               >
                                 {followers.toLocaleString()}
                               </Text>
@@ -1345,7 +1345,7 @@ export default function AnalyticsDashboard({
               {/* Aggregated Trends */}
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-lime-600" />
+                  <TrendingUp className="w-5 h-5 text-brand-seafoam" />
                   <Text size="4" weight="bold">
                     All Platforms Combined
                   </Text>
@@ -1406,7 +1406,7 @@ export default function AnalyticsDashboard({
               {Object.keys(data.overview).map((platform) => (
                 <Card key={platform} className="p-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <Clock className="w-5 h-5 text-lime-600 dark:text-lime-400" />
+                    <Clock className="w-5 h-5 text-brand-seafoam dark:text-brand-mint" />
                     <Text size="3" weight="medium" className="capitalize">
                       {platform} Optimal Times
                     </Text>

@@ -175,9 +175,9 @@ export default function AccountGroupCreation({ onSave, isOpen, onOpenChange }: A
           )}
 
           {linkingStatus && (
-            <div className="p-3 bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg">
+            <div className="p-3 bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg">
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-lime-600 dark:text-lime-400 animate-spin" />
+                <Loader2 className="w-4 h-4 text-brand-seafoam dark:text-brand-mint animate-spin" />
                 <Text size="2" color="blue">{linkingStatus}</Text>
               </div>
             </div>

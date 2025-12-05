@@ -429,7 +429,7 @@ export default function CSVPostUpload({
 
         <div className="space-y-6 mt-4">
           {/* Template Section */}
-          <div className="bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 rounded-lg p-4">
+          <div className="bg-brand-mint/10 dark:bg-brand-seafoam/20 border border-brand-mint/40 dark:border-brand-seafoam/40 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <Text size="3" weight="medium" className="block mb-1">
@@ -491,7 +491,7 @@ export default function CSVPostUpload({
                   value={csvText}
                   onChange={(e) => handleTextChange(e.target.value)}
                   placeholder="Paste your CSV data here...&#10;&#10;title,content,platforms,scheduledDate,mediaUrls&#10;&quot;My Post&quot;,&quot;Content here&quot;,&quot;instagram,x&quot;,&quot;2024-01-15T14:30:00Z&quot;,&quot;&quot;"
-                  className="w-full h-48 p-3 border border-border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
+                  className="w-full h-48 p-3 border border-border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-brand-seafoam focus:border-brand-seafoam"
                 />
                 <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-4">
@@ -710,7 +710,7 @@ export default function CSVPostUpload({
             <Button
               onClick={handleUpload}
               disabled={(!file && !csvText.trim()) || validPosts.length === 0 || isUploading}
-              className="bg-lime-600 hover:bg-lime-700 text-white"
+              className="bg-brand-seafoam hover:bg-brand-seafoam text-white"
             >
               {isUploading ? (
                 <>

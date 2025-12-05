@@ -7,6 +7,7 @@ import { MyAppAccount } from "@/app/schema";
 import { Button } from "@/components/atoms/button";
 import { User, Settings, LogOut, Shield, Menu, X } from "lucide-react";
 import { useSubscription } from "@/utils/subscriptionManager";
+import { useAuthModal } from "@/components/organisms/passphrase-ui";
 import { useState, useEffect } from "react";
 
 export function Navigation() {
@@ -33,6 +34,8 @@ export function Navigation() {
     }
   }, [showDropdown, showMobileMenu]);
 
+  const authModal = useAuthModal();
+
   if (!me) {
     return (
       <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-card border-b dark:border-border">
@@ -49,11 +52,14 @@ export function Navigation() {
           </Link>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4">
-          <Link href="/auth/signin">
-            <Button variant="outline" size="1" className="sm:text-base">
-              Sign In
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            size="1" 
+            className="sm:text-base"
+            onClick={() => authModal?.setShowAuthModal(true)}
+          >
+            Sign In
+          </Button>
         </div>
       </nav>
     );

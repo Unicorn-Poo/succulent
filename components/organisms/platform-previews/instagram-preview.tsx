@@ -50,7 +50,7 @@ export default function InstagramPreview({ post, account }: InstagramPreviewProp
   const getStatusBadgeColor = () => {
     switch (post.status) {
       case 'published': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
-      case 'scheduled': return 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300';
+      case 'scheduled': return 'bg-brand-mint/20 dark:bg-brand-seafoam/20 text-brand-seafoam dark:text-brand-mint';
       case 'draft': return 'bg-muted text-foreground';
       default: return 'bg-muted text-foreground';
     }
