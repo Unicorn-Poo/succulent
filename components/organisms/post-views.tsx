@@ -376,7 +376,7 @@ export function PostGridView({
                               alt={platform}
                               width={16}
                               height={16}
-                              className="opacity-70 hover:opacity-100 transition-opacity"
+                              className="opacity-70 hover:opacity-100 transition-opacity dark:invert"
                               title={platform}
                             />
                           );
@@ -692,7 +692,7 @@ export function PostImageView({
                           alt={platform}
                           width={14}
                           height={14}
-                          className="opacity-90"
+                          className="opacity-90 invert"
                           title={platform}
                         />
                       );
@@ -977,7 +977,7 @@ export function PostSuccinctView({
                                 alt={platform}
                                 width={14}
                                 height={14}
-                                className="opacity-70"
+                                className="opacity-70 dark:invert"
                                 title={platform}
                               />
                             );

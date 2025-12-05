@@ -876,7 +876,7 @@ export default function AccountGroupPage() {
                               platformFilter.length === 0 ||
                               platformFilter.includes(platform)
                                 ? "invert"
-                                : ""
+                                : "dark:invert"
                             }
                           />
                         </button>
