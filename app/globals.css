@@ -251,7 +251,11 @@ body {
   background: transparent !important;
 }
 
-.dark .rt-TabsTrigger[data-state="active"],
+.dark .rt-TabsTrigger[data-state="active"] {
+  color: rgb(190 242 100) !important; /* Lime-300 for better visibility */
+  border-bottom-color: rgb(190 242 100) !important;
+}
+
 @media (prefers-color-scheme: dark) {
   .rt-TabsTrigger[data-state="active"] {
     color: rgb(190 242 100) !important; /* Lime-300 for better visibility */
@@ -277,4 +281,248 @@ body {
 
 .dark .rt-Text[data-accent-color] {
   color: rgb(190 242 100); /* Lime accent in dark mode */
+}
+
+/* Radix UI Card - Dark Mode Support */
+.dark .rt-Card,
+.dark .rt-Box {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-Card,
+  .rt-Box {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+}
+
+/* Radix UI Button - Lime Color Scheme */
+.rt-Button[data-accent-color="blue"],
+.rt-Button:not([data-accent-color]) {
+  --accent-9: rgb(132 204 22) !important;
+  --accent-10: rgb(101 163 13) !important;
+  --accent-a3: rgba(132, 204, 22, 0.15) !important;
+}
+
+.dark .rt-Button[data-accent-color="blue"],
+.dark .rt-Button:not([data-accent-color]) {
+  --accent-9: rgb(163 230 53) !important;
+  --accent-10: rgb(190 242 100) !important;
+  --accent-a3: rgba(163, 230, 53, 0.2) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-Button[data-accent-color="blue"],
+  .rt-Button:not([data-accent-color]) {
+    --accent-9: rgb(163 230 53) !important;
+    --accent-10: rgb(190 242 100) !important;
+    --accent-a3: rgba(163, 230, 53, 0.2) !important;
+  }
+}
+
+/* Radix UI Dialog - Dark Mode Support */
+.dark .rt-DialogContent {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-DialogContent {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+}
+
+/* Radix UI Badge - Dark Mode Text Fix */
+.dark .rt-Badge {
+  color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-Badge {
+    color: inherit;
+  }
+}
+
+/* Radix UI Select - Dark Mode */
+.dark .rt-SelectContent,
+.dark .rt-SelectTrigger {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-SelectContent,
+  .rt-SelectTrigger {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+}
+
+/* ============================================
+   COMPREHENSIVE DARK MODE SUPPORT
+   ============================================ */
+
+/* Radix UI Tooltip - Dark Mode */
+.dark .rt-TooltipContent,
+.dark .rt-PopoverContent,
+.dark .rt-DropdownMenuContent,
+.dark .rt-ContextMenuContent {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-TooltipContent,
+  .rt-PopoverContent,
+  .rt-DropdownMenuContent,
+  .rt-ContextMenuContent {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+}
+
+/* Radix UI Avatar - Dark Mode */
+.dark .rt-AvatarRoot,
+.dark .rt-AvatarFallback {
+  background-color: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rt-AvatarRoot,
+  .rt-AvatarFallback {
+    background-color: var(--muted) !important;
+    color: var(--foreground) !important;
+  }
+}
+
+/* Gradient Background Utilities - Dark Mode Variants */
+/* These override Tailwind bg-*-50 classes in dark mode */
+.dark .bg-lime-50,
+.dark .bg-green-50,
+.dark .bg-blue-50,
+.dark .bg-purple-50,
+.dark .bg-orange-50,
+.dark .bg-red-50,
+.dark .bg-yellow-50,
+.dark .bg-pink-50,
+.dark .bg-indigo-50,
+.dark .bg-gray-50 {
+  background-color: var(--muted) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-lime-50,
+  .bg-green-50,
+  .bg-blue-50,
+  .bg-purple-50,
+  .bg-orange-50,
+  .bg-red-50,
+  .bg-yellow-50,
+  .bg-pink-50,
+  .bg-indigo-50,
+  .bg-gray-50 {
+    background-color: var(--muted) !important;
+  }
+}
+
+/* Gradient backgrounds - Dark Mode */
+.dark .from-blue-50,
+.dark .from-green-50,
+.dark .from-purple-50,
+.dark .from-orange-50,
+.dark .from-lime-50 {
+  --tw-gradient-from: var(--muted) !important;
+}
+
+.dark .to-blue-100,
+.dark .to-green-100,
+.dark .to-purple-100,
+.dark .to-orange-100,
+.dark .to-lime-100 {
+  --tw-gradient-to: var(--secondary) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .from-blue-50,
+  .from-green-50,
+  .from-purple-50,
+  .from-orange-50,
+  .from-lime-50 {
+    --tw-gradient-from: var(--muted) !important;
+  }
+  
+  .to-blue-100,
+  .to-green-100,
+  .to-purple-100,
+  .to-orange-100,
+  .to-lime-100 {
+    --tw-gradient-to: var(--secondary) !important;
+  }
+}
+
+/* Radix UI Input Fields - Dark Mode */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  input,
+  textarea,
+  select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+}
+
+/* Ensure all text is readable */
+.dark .text-gray-800,
+.dark .text-gray-900,
+.dark .text-lime-800,
+.dark .text-green-800,
+.dark .text-blue-800 {
+  color: var(--foreground) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-gray-800,
+  .text-gray-900,
+  .text-lime-800,
+  .text-green-800,
+  .text-blue-800 {
+    color: var(--foreground) !important;
+  }
+}
+
+/* Border colors in dark mode */
+.dark .border-lime-200,
+.dark .border-green-200,
+.dark .border-blue-200,
+.dark .border-purple-200,
+.dark .border-orange-200 {
+  border-color: var(--border) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .border-lime-200,
+  .border-green-200,
+  .border-blue-200,
+  .border-purple-200,
+  .border-orange-200 {
+    border-color: var(--border) !important;
+  }
 }

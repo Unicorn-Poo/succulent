@@ -42,6 +42,13 @@ interface AnalyticsData {
   totalPosts: number;
   totalEngagement: number;
   lastUpdated: string;
+  liveData?: {
+    followers: number;
+    following: number;
+    engagementRate: number;
+    avgLikes: number;
+    avgComments: number;
+  };
 }
 
 export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
@@ -64,6 +71,27 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
     setError(null);
 
     try {
+      // Fetch live analytics for real follower/engagement data
+      let liveData = null;
+      try {
+        const liveResponse = await fetch(`/api/analytics/live?profileKey=${encodeURIComponent(account.profileKey)}&platform=${account.platform}`);
+        if (liveResponse.ok) {
+          const liveResult = await liveResponse.json();
+          if (liveResult.success && liveResult.platforms[account.platform]) {
+            const platformData = liveResult.platforms[account.platform];
+            liveData = {
+              followers: platformData.followers,
+              following: platformData.following,
+              engagementRate: platformData.engagement.rate,
+              avgLikes: Math.round(platformData.engagement.likes / Math.max(platformData.posts, 1)),
+              avgComments: Math.round(platformData.engagement.comments / Math.max(platformData.posts, 1))
+            };
+          }
+        }
+      } catch {
+        // Live data is optional, continue with post history
+      }
+
       const params = new URLSearchParams({
         platforms: account.platform,
         limit: '100',
@@ -92,14 +120,20 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
       setAnalytics({
         posts: result.data.posts || [],
         totalPosts: result.data.totalCount || 0,
-        totalEngagement: calculateTotalEngagement(result.data.posts || []),
-        lastUpdated: result.data.lastUpdated || new Date().toISOString()
+        totalEngagement: liveData 
+          ? (liveData.avgLikes + liveData.avgComments) * (result.data.totalCount || 0)
+          : calculateTotalEngagement(result.data.posts || []),
+        lastUpdated: result.data.lastUpdated || new Date().toISOString(),
+        liveData: liveData || undefined
       });
       setLastRefresh(new Date());
 
       // Show import feedback
       if (result.import && result.import.imported > 0) {
         setError(`✅ Imported ${result.import.imported} posts with analytics data!`);
+        setTimeout(() => setError(null), 4000);
+      } else if (liveData) {
+        setError(`📊 Live data: ${liveData.followers.toLocaleString()} followers, ${liveData.engagementRate}% engagement`);
         setTimeout(() => setError(null), 4000);
       } else if (result.import && result.data.posts.length > 0) {
         setError(`📊 Analytics for ${result.data.posts.length} ${account.platform} posts loaded`);
@@ -260,10 +294,26 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-lime-200 dark:border-lime-800">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Followers - Live Data */}
+        <div className="bg-card p-4 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lime-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-lime-500 dark:bg-lime-600 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <Text size="3" weight="bold" className="block">
+                {analytics.liveData?.followers.toLocaleString() || 'N/A'}
+              </Text>
+              <Text size="1" color="gray">Followers</Text>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Posts */}
+        <div className="bg-card p-4 rounded-lg border border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -273,26 +323,32 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 dark:border-green-800">
+        {/* Engagement Rate */}
+        <div className="bg-card p-4 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-500 dark:bg-green-600 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
-              <Text size="3" weight="bold" className="block">{analytics.totalEngagement}</Text>
-              <Text size="1" color="gray">Est. Engagement</Text>
+              <Text size="3" weight="bold" className="block">
+                {analytics.liveData?.engagementRate ? `${analytics.liveData.engagementRate}%` : 'N/A'}
+              </Text>
+              <Text size="1" color="gray">Engagement Rate</Text>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+        {/* Avg Engagement */}
+        <div className="bg-card p-4 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center">
+              <Heart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <Text size="3" weight="bold" className="block">Last 30d</Text>
-              <Text size="1" color="gray">Time Period</Text>
+              <Text size="3" weight="bold" className="block">
+                {analytics.liveData ? `${analytics.liveData.avgLikes} / ${analytics.liveData.avgComments}` : 'N/A'}
+              </Text>
+              <Text size="1" color="gray">Avg Likes / Comments</Text>
             </div>
           </div>
         </div>
@@ -355,20 +411,22 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
                   </div>
                 </div>
 
-                {/* Engagement metrics placeholder - would be real data in full implementation */}
+                {/* Engagement metrics - uses live averages if available */}
                 <div className="flex items-center gap-6 text-sm text-muted-foreground pt-3 border-t border-border">
                   <span className="flex items-center gap-1">
                     <Heart className="w-3 h-3" />
-                    {Math.floor(Math.random() * 50)} likes
+                    ~{analytics.liveData?.avgLikes || '?'} likes
                   </span>
                   <span className="flex items-center gap-1">
                     <MessageCircle className="w-3 h-3" />
-                    {Math.floor(Math.random() * 10)} comments
+                    ~{analytics.liveData?.avgComments || '?'} comments
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Share className="w-3 h-3" />
-                    {Math.floor(Math.random() * 5)} shares
-                  </span>
+                  {analytics.liveData && (
+                    <span className="flex items-center gap-1 text-lime-600 dark:text-lime-400">
+                      <TrendingUp className="w-3 h-3" />
+                      {analytics.liveData.engagementRate}% rate
+                    </span>
+                  )}
                 </div>
               </div>
             );

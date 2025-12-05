@@ -12,6 +12,12 @@ import { AIGrowthEngine } from "./aiGrowthEngine";
 import { BrandPersonaManager, BrandPersona } from "./brandPersonaManager";
 import { getEnhancedOptimalTiming } from "./optimalTimingEngine";
 import { getModelForTask, usageTracker } from "./aiOptimizer";
+import { 
+  getAnalyticsContextForAI, 
+  generateAnalyticsSummaryForAI, 
+  getContentInsightsForAI,
+  AnalyticsContext 
+} from "./analyticsContext";
 
 // Structured content suggestion schema - separates content from metadata
 export const ContentSuggestionSchema = z.object({
@@ -99,6 +105,7 @@ interface AutopilotConfig {
   platforms: string[];
   brandPersonaId?: string;
   accountGroupId: string;
+  profileKey?: string; // Ayrshare profile key for analytics
 }
 
 interface AutopilotState {
@@ -115,6 +122,8 @@ export class AIAutopilot {
   private growthEngine: AIGrowthEngine;
   private brandManager?: BrandPersonaManager;
   private brandPersona?: BrandPersona;
+  private analyticsContext: AnalyticsContext | null = null;
+  private analyticsLastFetched: Date | null = null;
 
   constructor(config: AutopilotConfig) {
     this.config = config;
@@ -129,9 +138,60 @@ export class AIAutopilot {
     // Initialize growth engine for each platform
     this.growthEngine = new AIGrowthEngine(
       config.platforms[0], // Primary platform
-      undefined, // Profile key will be loaded
+      config.profileKey, // Pass profile key for analytics
       config.aggressiveness
     );
+  }
+
+  /**
+   * Fetch and cache analytics context for AI decision making
+   * Refreshes every 5 minutes to avoid excessive API calls
+   */
+  async getAnalyticsContext(): Promise<AnalyticsContext | null> {
+    if (!this.config.profileKey) {
+      return null;
+    }
+
+    // Check if we need to refresh (older than 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (this.analyticsContext && this.analyticsLastFetched && this.analyticsLastFetched > fiveMinutesAgo) {
+      return this.analyticsContext;
+    }
+
+    // Fetch fresh analytics
+    try {
+      this.analyticsContext = await getAnalyticsContextForAI(this.config.profileKey);
+      this.analyticsLastFetched = new Date();
+      return this.analyticsContext;
+    } catch (error) {
+      return this.analyticsContext; // Return cached version on error
+    }
+  }
+
+  /**
+   * Get analytics summary for AI prompts
+   */
+  async getAnalyticsSummaryForAI(): Promise<string> {
+    const context = await this.getAnalyticsContext();
+    if (!context) {
+      return "No analytics data available.";
+    }
+    return generateAnalyticsSummaryForAI(context);
+  }
+
+  /**
+   * Get content insights based on analytics
+   */
+  async getContentInsights(): Promise<{
+    whatWorksWell: string[];
+    areasToImprove: string[];
+    recommendations: string[];
+  } | null> {
+    const context = await this.getAnalyticsContext();
+    if (!context) {
+      return null;
+    }
+    return getContentInsightsForAI(context);
   }
 
   /**
@@ -264,10 +324,15 @@ Be decisive and provide clear reasoning for each recommendation.`,
   /**
    * Generate AI-powered content with structured output (content, timing, pillar)
    * Returns structured data that separates post content from metadata
+   * NOW USES LIVE ANALYTICS for better content recommendations
    */
   async generateStructuredContent(
     prompt: string
   ): Promise<ContentSuggestion> {
+    // Fetch analytics context for data-driven content
+    const analyticsContext = await this.getAnalyticsContext();
+    const contentInsights = analyticsContext ? getContentInsightsForAI(analyticsContext) : null;
+
     // Build brand context with actual content pillars
     let brandContext = "";
     let contentPillars: string[] = [];
@@ -344,9 +409,25 @@ ${samplePosts.slice(0, 2).map((p, i) => `Example ${i + 1}: "${p}"`).join("\n\n")
 - 100-250 characters ideal`,
     };
 
+    // Build analytics insights section
+    let analyticsInsightsSection = "";
+    if (analyticsContext && contentInsights) {
+      const topPost = analyticsContext.topPosts[0];
+      analyticsInsightsSection = `
+=== PERFORMANCE INSIGHTS (use to guide content) ===
+Your audience size: ${analyticsContext.summary.totalFollowers.toLocaleString()} followers
+Avg engagement rate: ${analyticsContext.summary.avgEngagementRate}%
+Best posting times: ${analyticsContext.insights.bestTimeToPost}:00
+${contentInsights.whatWorksWell.length > 0 ? `What works: ${contentInsights.whatWorksWell[0]}` : ''}
+${topPost ? `Top performing post got ${topPost.likes} likes: "${topPost.content.substring(0, 50)}..."` : ''}
+${contentInsights.recommendations.length > 0 ? `Recommendation: ${contentInsights.recommendations[0]}` : ''}
+`;
+    }
+
     const systemPrompt = `You are ${this.brandPersona?.name || 'a social media expert'}. Generate a REAL, ready-to-post piece of content.
 
 ${brandContext}
+${analyticsInsightsSection}
 
 === PLATFORM: ${platform.toUpperCase()} ===
 ${platformGuidance[platform] || platformGuidance.instagram}
@@ -566,25 +647,58 @@ Focus on actionable insights that can be automated.`,
   }
 
   /**
-   * Gather current performance data for AI analysis
+   * Gather current performance data for AI analysis - NOW USES LIVE DATA
    */
   private async gatherPerformanceData(): Promise<any> {
-    // Integrate with your existing analytics
+    // Fetch real analytics context
+    const analyticsContext = await this.getAnalyticsContext();
+    
+    if (analyticsContext) {
+      // Return real analytics data
+      return {
+        timestamp: new Date().toISOString(),
+        platforms: this.config.platforms,
+        recentPosts: analyticsContext.topPosts.slice(0, 10),
+        engagementMetrics: {
+          totalFollowers: analyticsContext.summary.totalFollowers,
+          totalEngagement: analyticsContext.summary.totalEngagement,
+          avgEngagementRate: analyticsContext.summary.avgEngagementRate,
+          topPerformingPlatform: analyticsContext.summary.topPerformingPlatform,
+          byPlatform: Object.fromEntries(
+            Object.entries(analyticsContext.platforms).map(([platform, data]) => [
+              platform,
+              {
+                followers: data.followers,
+                engagementRate: data.engagementRate,
+                avgLikes: data.avgLikesPerPost,
+                avgComments: data.avgCommentsPerPost,
+                bestTimes: data.bestPostingTimes
+              }
+            ])
+          )
+        },
+        audienceInsights: analyticsContext.insights,
+        trends: analyticsContext.trends,
+        contentInsights: await this.getContentInsights()
+      };
+    }
+
+    // Fallback to empty data if analytics not available
     return {
       timestamp: new Date().toISOString(),
       platforms: this.config.platforms,
-      recentPosts: [], // Would fetch from your post history
-      engagementMetrics: {}, // Would fetch from analytics
-      audienceInsights: {}, // Would fetch from audience data
-      competitorData: {}, // Would fetch from competitor analysis
+      recentPosts: [],
+      engagementMetrics: {},
+      audienceInsights: {},
+      competitorData: {},
     };
   }
 
   /**
-   * Build context string for AI analysis
+   * Build context string for AI analysis - NOW INCLUDES LIVE ANALYTICS
    */
   private buildAnalysisContext(performanceData: any): string {
-    return `
+    let context = `
 PERFORMANCE SUMMARY:
 - Platforms: ${this.config.platforms.join(", ")}
 - Recent activity: ${performanceData.recentPosts?.length || 0} posts
@@ -595,9 +709,65 @@ PERFORMANCE SUMMARY:
 CURRENT STRATEGY: ${this.state.currentStrategy}
 TOTAL ACTIONS TAKEN: ${this.state.totalActions}
 SUCCESS RATE: ${this.state.successRate}%
+`;
+
+    // Add real analytics data if available
+    if (performanceData.engagementMetrics?.totalFollowers) {
+      context += `
+LIVE ANALYTICS DATA:
+- Total Followers: ${performanceData.engagementMetrics.totalFollowers.toLocaleString()}
+- Total Engagement: ${performanceData.engagementMetrics.totalEngagement.toLocaleString()}
+- Avg Engagement Rate: ${performanceData.engagementMetrics.avgEngagementRate}%
+- Top Platform: ${performanceData.engagementMetrics.topPerformingPlatform}
+`;
+
+      // Add per-platform metrics
+      if (performanceData.engagementMetrics.byPlatform) {
+        context += `
+PLATFORM BREAKDOWN:`;
+        for (const [platform, metrics] of Object.entries(performanceData.engagementMetrics.byPlatform as Record<string, any>)) {
+          context += `
+  ${platform.toUpperCase()}:
+    - Followers: ${metrics.followers?.toLocaleString() || 'N/A'}
+    - Engagement Rate: ${metrics.engagementRate || 0}%
+    - Avg Likes/Post: ${metrics.avgLikes || 0}
+    - Best Times: ${metrics.bestTimes?.join(', ') || 'Unknown'}`;
+        }
+      }
+    }
+
+    // Add content insights
+    if (performanceData.contentInsights) {
+      const insights = performanceData.contentInsights;
+      context += `
+
+CONTENT INSIGHTS:
+What Works Well:
+${insights.whatWorksWell?.map((i: string) => `  - ${i}`).join('\n') || '  - No data'}
+
+Areas to Improve:
+${insights.areasToImprove?.map((i: string) => `  - ${i}`).join('\n') || '  - No data'}
+
+Recommendations:
+${insights.recommendations?.map((i: string) => `  - ${i}`).join('\n') || '  - No data'}`;
+    }
+
+    // Add trends
+    if (performanceData.trends) {
+      context += `
+
+TRENDS:
+- Follower Growth: ${performanceData.trends.followerGrowth}
+- Engagement Trend: ${performanceData.trends.engagementTrend}
+- Posting Frequency: ${performanceData.trends.postingFrequency}`;
+    }
+
+    context += `
 
 TIMESTAMP: ${new Date().toISOString()}
 `;
+
+    return context;
   }
 
   // Action execution methods
