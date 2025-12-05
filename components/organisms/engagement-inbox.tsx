@@ -22,7 +22,9 @@ import {
   ThumbsDown,
   Minus,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import Image from "next/image";
+import { getPlatformIcon } from "@/utils/platformIcons";
 
 // Unified engagement item type
 interface EngagementItem {
@@ -90,15 +92,6 @@ const TYPE_COLORS: Record<string, string> = {
   review: "yellow",
 };
 
-const PLATFORM_ICONS: Record<string, string> = {
-  twitter: "𝕏",
-  instagram: "📸",
-  facebook: "f",
-  linkedin: "in",
-  google: "G",
-  yelp: "Y",
-};
-
 const SENTIMENT_CONFIG = {
   positive: { icon: ThumbsUp, color: "green", label: "Positive" },
   negative: { icon: ThumbsDown, color: "red", label: "Negative" },
@@ -137,6 +130,16 @@ export default function EngagementInbox({
 
   // Polling state
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  // Filter items by search (memoized for keyboard navigation)
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch =
+        item.sender.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+  }, [items, searchQuery]);
 
   // Fetch engagement items
   const fetchEngagement = useCallback(async () => {
@@ -185,6 +188,81 @@ export default function EngagementInbox({
 
     return () => clearInterval(interval);
   }, [pollInterval, isLoading, fetchEngagement]);
+
+  // Keyboard shortcuts
+  const replyInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle shortcuts when typing in input fields
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        // Only handle Escape in inputs
+        if (e.key === "Escape") {
+          (target as HTMLInputElement).blur();
+        }
+        return;
+      }
+
+      switch (e.key) {
+        case "Escape":
+          // Close selected item or clear selection
+          if (selectedItem) {
+            setSelectedItem(null);
+            setShowSuggestions(false);
+            setSuggestedReplies([]);
+          } else if (selectedItems.size > 0) {
+            setSelectedItems(new Set());
+          }
+          break;
+          
+        case "r":
+          // Refresh
+          if (!e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            fetchEngagement();
+          }
+          break;
+          
+        case "ArrowDown":
+        case "j":
+          // Navigate to next item
+          e.preventDefault();
+          if (filteredItems.length > 0) {
+            const currentIndex = selectedItem 
+              ? filteredItems.findIndex(item => item.id === selectedItem.id)
+              : -1;
+            const nextIndex = Math.min(currentIndex + 1, filteredItems.length - 1);
+            setSelectedItem(filteredItems[nextIndex]);
+          }
+          break;
+          
+        case "ArrowUp":
+        case "k":
+          // Navigate to previous item
+          e.preventDefault();
+          if (filteredItems.length > 0) {
+            const currentIndex = selectedItem 
+              ? filteredItems.findIndex(item => item.id === selectedItem.id)
+              : filteredItems.length;
+            const prevIndex = Math.max(currentIndex - 1, 0);
+            setSelectedItem(filteredItems[prevIndex]);
+          }
+          break;
+          
+        case "Enter":
+          // Focus reply input when an item is selected
+          if (selectedItem && replyInputRef.current) {
+            e.preventDefault();
+            replyInputRef.current.focus();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedItem, selectedItems, filteredItems, fetchEngagement]);
 
   // Fetch AI suggestions
   const fetchAISuggestions = async () => {
@@ -318,47 +396,49 @@ export default function EngagementInbox({
     }
   };
 
-  // Bulk mark as read
+  // Bulk mark as read (optimistic update)
   const handleBulkMarkAsRead = async () => {
     if (selectedItems.size === 0) return;
 
+    // Store previous state for rollback
+    const previousItems = [...items];
+    const itemsToMark = new Set(selectedItems);
+
+    // Optimistic update - mark as read immediately
+    setItems((prev) =>
+      prev.map((item) =>
+        itemsToMark.has(item.id) ? { ...item, isRead: true } : item
+      )
+    );
+    setSelectedItems(new Set());
+
     setIsBulkActionLoading(true);
     try {
-      // Mark DMs as read
-      const dmIds = items
-        .filter((item) => selectedItems.has(item.id) && item.type === "dm" && !item.isRead)
+      // Mark DMs as read via API
+      const dmIds = previousItems
+        .filter((item) => itemsToMark.has(item.id) && item.type === "dm" && !item.isRead)
         .map((item) => item.id);
 
       if (dmIds.length > 0) {
-        await fetch("/api/messages", {
+        const response = await fetch("/api/messages", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messageIds: dmIds, profileKey }),
         });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark as read");
+        }
       }
-
-      // Update local state
-      setItems((prev) =>
-        prev.map((item) =>
-          selectedItems.has(item.id) ? { ...item, isRead: true } : item
-        )
-      );
-
-      setSelectedItems(new Set());
     } catch (err) {
+      // Rollback on error
       console.error("Bulk mark as read error:", err);
+      setItems(previousItems);
+      setError("Failed to mark as read. Please try again.");
     } finally {
       setIsBulkActionLoading(false);
     }
   };
-
-  // Filter items by search
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.sender.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -563,9 +643,76 @@ export default function EngagementInbox({
               <Text size="2" color="gray" className="mt-2">Loading engagement...</Text>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="p-8 text-center">
-              <Mail className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <Text size="2" color="gray">No engagement found</Text>
+            <div className="p-8 text-center space-y-3">
+              {items.length === 0 ? (
+                // No engagement at all
+                <>
+                  <div className="w-16 h-16 bg-lime-100 dark:bg-lime-900/30 rounded-full flex items-center justify-center mx-auto">
+                    <Mail className="w-8 h-8 text-lime-600" />
+                  </div>
+                  <Text size="3" weight="medium" className="block">No engagement yet</Text>
+                  <Text size="2" color="gray" className="block max-w-xs mx-auto">
+                    When followers send you DMs, comment on your posts, or leave reviews, they&apos;ll appear here.
+                  </Text>
+                  <div className="pt-2">
+                    <Text size="1" color="gray" className="block">
+                      💡 Tip: Engage with your audience to encourage more interactions
+                    </Text>
+                  </div>
+                </>
+              ) : statusFilter === "unread" && stats?.unread === 0 ? (
+                // All caught up!
+                <>
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCheck className="w-8 h-8 text-green-600" />
+                  </div>
+                  <Text size="3" weight="medium" className="block">All caught up!</Text>
+                  <Text size="2" color="gray" className="block">
+                    You&apos;ve responded to all your messages.
+                  </Text>
+                  <Button
+                    size="1"
+                    variant="soft"
+                    onClick={() => setStatusFilter("all")}
+                    className="mt-2"
+                  >
+                    View all engagement
+                  </Button>
+                </>
+              ) : searchQuery ? (
+                // No search results
+                <>
+                  <Search className="w-8 h-8 text-muted-foreground mx-auto" />
+                  <Text size="2" color="gray" className="block">
+                    No results for &quot;{searchQuery}&quot;
+                  </Text>
+                  <Button
+                    size="1"
+                    variant="ghost"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    Clear search
+                  </Button>
+                </>
+              ) : (
+                // Filter returned no results
+                <>
+                  <Filter className="w-8 h-8 text-muted-foreground mx-auto" />
+                  <Text size="2" color="gray" className="block">
+                    No {typeFilter !== "all" ? typeFilter + "s" : "engagement"} found
+                  </Text>
+                  <Button
+                    size="1"
+                    variant="ghost"
+                    onClick={() => {
+                      setTypeFilter("all");
+                      setStatusFilter("all");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             filteredItems.map((item) => (
@@ -621,10 +768,14 @@ export default function EngagementInbox({
                           >
                             @{item.sender.username}
                           </Text>
-                          {/* Platform badge */}
-                          <span className="text-[10px] text-muted-foreground">
-                            {PLATFORM_ICONS[item.platform] || item.platform}
-                          </span>
+                          {/* Platform icon */}
+                          <Image
+                            src={getPlatformIcon(item.platform)}
+                            alt={item.platform}
+                            width={12}
+                            height={12}
+                            className="opacity-70 dark:invert"
+                          />
                         </div>
                         <Text size="1" color="gray">
                           {formatTime(item.timestamp)}
@@ -699,7 +850,14 @@ export default function EngagementInbox({
                     <Badge variant="soft" color={TYPE_COLORS[selectedItem.type] as any} size="1">
                       {selectedItem.type.charAt(0).toUpperCase() + selectedItem.type.slice(1)}
                     </Badge>
-                    <Badge variant="soft" size="1">
+                    <Badge variant="soft" size="1" className="flex items-center gap-1">
+                      <Image
+                        src={getPlatformIcon(selectedItem.platform)}
+                        alt={selectedItem.platform}
+                        width={10}
+                        height={10}
+                        className="dark:invert"
+                      />
                       {selectedItem.platform}
                     </Badge>
                     {selectedItem.type === "review" && selectedItem.rating && (
@@ -803,6 +961,7 @@ export default function EngagementInbox({
                   </Button>
                 </Tooltip>
                 <input
+                  ref={replyInputRef}
                   type="text"
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
