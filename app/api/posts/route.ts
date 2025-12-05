@@ -11,6 +11,7 @@ import {
   isBusinessPlanMode,
   INTERNAL_TO_AYRSHARE_PLATFORM,
 } from "@/utils/ayrshareIntegration";
+import { OptimalTimingEngine } from "@/utils/optimalTimingEngine";
 import {
   validateAPIKey,
   logAPIKeyUsage,
@@ -152,7 +153,10 @@ const CreatePostSchema = zod.object({
 
   // Optional fields
   title: zod.string().optional(),
-  scheduledDate: zod.string().datetime().optional(),
+  scheduledDate: zod.union([zod.string().datetime(), zod.literal("auto")]).optional(),
+  
+  // Auto-schedule: let the system determine optimal posting time
+  autoSchedule: zod.boolean().optional(),
 
   // Media attachments - URL-based only
   media: zod
@@ -1614,6 +1618,117 @@ async function updatePostWithAyrshareIds(
 // Removed old publishPost function - logic moved inline for better control
 
 // =============================================================================
+// ⏰ AUTO-SCHEDULING LOGIC
+// =============================================================================
+
+interface AutoScheduleResult {
+  scheduledFor: string;
+  schedulingMethod: "auto-optimal";
+  reason: string;
+  platform: string;
+}
+
+/**
+ * Calculate optimal posting time using the timing engine
+ */
+async function calculateOptimalScheduleTime(
+  platforms: string[],
+  profileKey?: string,
+  existingScheduledPosts?: any[]
+): Promise<AutoScheduleResult> {
+  // Use the first platform for timing (most platforms have similar optimal times)
+  const primaryPlatform = platforms[0] || "instagram";
+  const engine = new OptimalTimingEngine(primaryPlatform, profileKey);
+
+  try {
+    const analysis = await engine.getOptimalTiming();
+    
+    // Get the best time slot
+    const bestTime = analysis.bestTimes[0];
+    
+    if (!bestTime) {
+      // Fallback to a reasonable default (tomorrow at optimal hours based on platform)
+      const defaultHours: Record<string, number> = {
+        instagram: 18, // 6 PM
+        twitter: 12,   // 12 PM
+        x: 12,
+        linkedin: 9,   // 9 AM
+        facebook: 15,  // 3 PM
+        tiktok: 19,    // 7 PM
+      };
+      
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(defaultHours[primaryPlatform] || 12, 0, 0, 0);
+      
+      return {
+        scheduledFor: tomorrow.toISOString(),
+        schedulingMethod: "auto-optimal",
+        reason: `Default optimal time for ${primaryPlatform}`,
+        platform: primaryPlatform,
+      };
+    }
+
+    // Calculate the next occurrence of the best time slot
+    const now = new Date();
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDayIndex = now.getDay();
+    const targetDayIndex = days.indexOf(bestTime.day);
+    
+    let daysUntilTarget = targetDayIndex - currentDayIndex;
+    if (daysUntilTarget < 0) {
+      daysUntilTarget += 7;
+    } else if (daysUntilTarget === 0) {
+      // Same day - check if the hour has passed
+      if (now.getHours() >= bestTime.hour) {
+        daysUntilTarget = 7; // Next week
+      }
+    }
+    
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() + daysUntilTarget);
+    targetDate.setHours(bestTime.hour, 0, 0, 0);
+
+    // Avoid conflicts with existing scheduled posts (add 30 min buffer)
+    if (existingScheduledPosts && existingScheduledPosts.length > 0) {
+      const conflictingPost = existingScheduledPosts.find((post: any) => {
+        const postDate = post.scheduledFor ? new Date(post.scheduledFor) : null;
+        if (!postDate) return false;
+        const timeDiff = Math.abs(targetDate.getTime() - postDate.getTime());
+        return timeDiff < 30 * 60 * 1000; // 30 minutes
+      });
+
+      if (conflictingPost) {
+        // Move to 30 minutes after the conflicting post
+        targetDate.setMinutes(targetDate.getMinutes() + 30);
+      }
+    }
+
+    return {
+      scheduledFor: targetDate.toISOString(),
+      schedulingMethod: "auto-optimal",
+      reason: `Best engagement time for ${primaryPlatform} on ${bestTime.day} at ${bestTime.hour}:00 (score: ${(bestTime.score * 100).toFixed(0)}%)`,
+      platform: primaryPlatform,
+    };
+  } catch (error) {
+    console.error("❌ Error calculating optimal schedule time:", error);
+    
+    // Fallback to tomorrow at noon
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(12, 0, 0, 0);
+    
+    return {
+      scheduledFor: tomorrow.toISOString(),
+      schedulingMethod: "auto-optimal",
+      reason: "Fallback to default time (timing analysis unavailable)",
+      platform: primaryPlatform,
+    };
+  }
+}
+
+// =============================================================================
 // 🌐 API ENDPOINTS
 // =============================================================================
 
@@ -1788,6 +1903,115 @@ export async function POST(request: NextRequest) {
         },
         { status: groupAccess.statusCode || 403 }
       );
+    }
+
+    // ⏰ Handle auto-scheduling
+    let autoScheduleResult: AutoScheduleResult | null = null;
+    const shouldAutoSchedule = requestData.autoSchedule || requestData.scheduledDate === "auto";
+    
+    if (shouldAutoSchedule) {
+      console.log("⏰ [AUTO-SCHEDULE] Calculating optimal posting time...");
+      
+      // Get profile key for timing analysis
+      let profileKeyForTiming: string | undefined;
+      try {
+        const { jazzServerWorker } = await import("@/utils/jazzServer");
+        const { AccountGroup } = await import("@/app/schema");
+        const worker = await jazzServerWorker;
+
+        if (worker) {
+          const accountGroup = await AccountGroup.load(requestData.accountGroupId, {
+            loadAs: worker,
+            resolve: { posts: { $each: { variants: { $each: true } } } },
+          });
+          if (accountGroup?.ayrshareProfileKey) {
+            profileKeyForTiming = accountGroup.ayrshareProfileKey;
+          }
+
+          // Get existing scheduled posts to avoid conflicts
+          const existingPosts = accountGroup?.posts
+            ? Array.from(accountGroup.posts)
+                .filter((p: any) => p?.variants?.base?.status === "scheduled")
+                .map((p: any) => ({
+                  scheduledFor: p?.variants?.base?.scheduledFor,
+                }))
+            : [];
+
+          autoScheduleResult = await calculateOptimalScheduleTime(
+            requestData.platforms,
+            profileKeyForTiming,
+            existingPosts
+          );
+        }
+      } catch (error) {
+        console.warn("⚠️ Error loading account group for auto-scheduling:", error);
+        autoScheduleResult = await calculateOptimalScheduleTime(
+          requestData.platforms,
+          undefined,
+          []
+        );
+      }
+
+      if (autoScheduleResult) {
+        // Replace the "auto" scheduledDate with the calculated time
+        requestData.scheduledDate = autoScheduleResult.scheduledFor;
+        // Don't publish immediately - we're scheduling
+        requestData.publishImmediately = false;
+        
+        console.log("✅ [AUTO-SCHEDULE] Optimal time calculated:", {
+          scheduledFor: autoScheduleResult.scheduledFor,
+          reason: autoScheduleResult.reason,
+        });
+
+        // Log the auto-schedule action to automation logs
+        try {
+          const { jazzServerWorker } = await import("@/utils/jazzServer");
+          const { AccountGroup, AutomationLog } = await import("@/app/schema");
+          const { co } = await import("jazz-tools");
+          const worker = await jazzServerWorker;
+
+          if (worker) {
+            const accountGroup = await AccountGroup.load(requestData.accountGroupId, {
+              loadAs: worker,
+              resolve: { automationLogs: true },
+            });
+
+            if (accountGroup) {
+              // Initialize automationLogs if not present
+              if (!accountGroup.automationLogs) {
+                accountGroup.automationLogs = co.list(AutomationLog).create([], {
+                  owner: accountGroup._owner,
+                });
+              }
+
+              // Add automation log entry
+              const logEntry = AutomationLog.create(
+                {
+                  type: "schedule",
+                  action: `Post auto-scheduled for optimal engagement`,
+                  platform: autoScheduleResult.platform,
+                  status: "success",
+                  timestamp: new Date(),
+                  completedAt: new Date(),
+                  details: JSON.stringify({
+                    scheduledFor: autoScheduleResult.scheduledFor,
+                    reason: autoScheduleResult.reason,
+                    schedulingMethod: autoScheduleResult.schedulingMethod,
+                    platforms: requestData.platforms,
+                  }),
+                },
+                { owner: accountGroup._owner }
+              );
+
+              accountGroup.automationLogs.push(logEntry);
+              console.log("📝 [AUTO-SCHEDULE] Logged to automation logs");
+            }
+          }
+        } catch (logError) {
+          // Don't fail the request if logging fails
+          console.warn("⚠️ Failed to log auto-schedule action:", logError);
+        }
+      }
     }
 
     // 🚀 Create or Load the post
@@ -2171,7 +2395,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          message: "Post created successfully",
+          message: autoScheduleResult 
+            ? "Post created and auto-scheduled successfully" 
+            : "Post created successfully",
           data: {
             postId: result.postId,
             accountGroupId: requestData.accountGroupId,
@@ -2185,6 +2411,15 @@ export async function POST(request: NextRequest) {
             ].filter((p) => PlatformNames.includes(p as any)),
             scheduledDate: requestData.scheduledDate,
             publishedImmediately: requestData.publishImmediately,
+            // Include auto-schedule details if applicable
+            autoSchedule: autoScheduleResult
+              ? {
+                  scheduledFor: autoScheduleResult.scheduledFor,
+                  schedulingMethod: autoScheduleResult.schedulingMethod,
+                  reason: autoScheduleResult.reason,
+                  platform: autoScheduleResult.platform,
+                }
+              : undefined,
             publishingResult: publishResult
               ? {
                   success: publishResult.success,

@@ -73,6 +73,10 @@ import {
 } from "@/components/organisms/post-views";
 import GrowthToolsDropdown from "@/components/organisms/growth-tools-dropdown";
 import GrowthQuickAccess from "@/components/organisms/growth-quick-access";
+import EngagementInbox from "@/components/organisms/engagement-inbox";
+import { Mail, Inbox } from "lucide-react";
+import { useUnreadMessages } from "@/hooks/use-unread-messages";
+import { Badge } from "@radix-ui/themes";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
 
 export default function AccountGroupPage() {
@@ -86,6 +90,7 @@ export default function AccountGroupPage() {
         "analytics",
         "tools",
         "accounts",
+        "engagement",
         "calendar",
         "settings",
       ];
@@ -109,6 +114,7 @@ export default function AccountGroupPage() {
         "analytics",
         "tools",
         "accounts",
+        "engagement",
         "calendar",
         "settings",
       ];
@@ -208,6 +214,12 @@ export default function AccountGroupPage() {
   );
 
   const accountGroup = jazzAccountGroup;
+
+  // Get profile key for unread messages - must be called unconditionally (hooks rule)
+  const profileKey = (jazzAccountGroup as any)?.ayrshareProfileKey || undefined;
+  
+  // Fetch unread message count for notification badge
+  const { unreadCount: unreadMessagesCount } = useUnreadMessages(profileKey, 60000);
 
   if (!accountGroup) {
     return (
@@ -662,6 +674,21 @@ export default function AccountGroupPage() {
                 <Users className="w-4 h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Accounts</span>
                 <span className="sm:hidden">Accts</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="engagement" className="min-h-[44px] relative">
+                <Inbox className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Engagement</span>
+                <span className="sm:hidden">Inbox</span>
+                {unreadMessagesCount > 0 && (
+                  <Badge
+                    color="red"
+                    variant="solid"
+                    size="1"
+                    className="ml-1 min-w-[18px] h-[18px] flex items-center justify-center"
+                  >
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                  </Badge>
+                )}
               </Tabs.Trigger>
               <Tabs.Trigger value="calendar" className="min-h-[44px]">
                 <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
@@ -1241,6 +1268,41 @@ export default function AccountGroupPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </Tabs.Content>
+
+          {/* Engagement Inbox Tab - DMs, Comments, and Reviews */}
+          <Tabs.Content value="engagement" className="mt-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Text size="5" weight="bold">
+                    Engagement Inbox
+                  </Text>
+                  <Text size="2" color="gray" className="mt-1">
+                    Manage DMs, comments, and reviews from all your connected social accounts
+                  </Text>
+                </div>
+              </div>
+              <EngagementInbox
+                profileKey={
+                  (jazzAccountGroup as any)?.ayrshareProfileKey ||
+                  (accountGroup as any)?.ayrshareProfileKey
+                }
+                brandPersona={
+                  jazzAccountGroup?.brandPersona
+                    ? {
+                        tone: jazzAccountGroup.brandPersona.tone || "friendly",
+                        personality: jazzAccountGroup.brandPersona.personality
+                          ? Array.from(jazzAccountGroup.brandPersona.personality)
+                          : [],
+                        writingStyle: jazzAccountGroup.brandPersona.writingStyle || "conversational",
+                        emojiUsage: jazzAccountGroup.brandPersona.emojiUsage || "minimal",
+                      }
+                    : undefined
+                }
+                pollInterval={30000}
+              />
             </div>
           </Tabs.Content>
 
