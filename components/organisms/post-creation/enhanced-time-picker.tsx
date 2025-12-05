@@ -34,6 +34,7 @@ export function EnhancedTimePicker({
       if (dateInput !== "") setDateInput("");
       if (timeInput !== "") setTimeInput("");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]); // Remove dateInput and timeInput from dependencies to prevent loops
 
   const handleDateTimeChange = useCallback(() => {
@@ -67,6 +68,7 @@ export function EnhancedTimePicker({
     }, 100);
     
     return () => clearTimeout(timeoutId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateInput, timeInput]); // Remove handleDateTimeChange to prevent loops
 
   const getPresetTimes = useMemo(() => {

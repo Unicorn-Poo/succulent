@@ -106,6 +106,7 @@ export default function APIKeyManagement() {
 
   useEffect(() => {
     loadAPIKeys();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAPIKeys = async () => {

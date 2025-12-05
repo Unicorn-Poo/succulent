@@ -6,7 +6,7 @@ import { useSubscription } from "@/utils/subscriptionManager";
 import { PaywallBlock, UsageLimitPaywall, AnalyticsPaywall, SchedulingPaywall, BrandManagementPaywall } from "./PaywallBlock";
 import { Card, Text, Badge, Button, Progress } from "@radix-ui/themes";
 import { AlertTriangle, Lock, Star, Zap, Crown, TrendingUp, Users, Database, BarChart3 } from "lucide-react";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useCallback } from "react";
 
 // =============================================================================
 // 🔒 PLAN ENFORCEMENT WRAPPER
@@ -238,7 +238,7 @@ export function UsageTracker({
   const { me } = useAccount(MyAppAccount);
   const subscription = useSubscription(me);
   
-  const trackUsage = () => {
+  const trackUsage = useCallback(() => {
     if (!me) return;
     
     let success = false;
@@ -264,7 +264,7 @@ export function UsageTracker({
     if (onUsageTracked) {
       onUsageTracked(success);
     }
-  };
+  }, [me, trackingType, amount, subscription, onUsageTracked]);
 
   // Track usage when component mounts
   useEffect(() => {

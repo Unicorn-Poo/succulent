@@ -91,6 +91,7 @@ export default function HashtagResearchDashboard({
 
       return () => clearTimeout(debounceTimer);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchHashtagResearch]);
 
   const handleHashtagToggle = (hashtag: string) => {

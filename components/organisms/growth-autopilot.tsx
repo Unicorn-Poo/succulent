@@ -393,6 +393,7 @@ export default function GrowthAutopilot({
     // No valid cache, generate fresh content
     generateAutopilotActions();
     generateGrowthInsights();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.enabled]);
 
   const generateAutopilotActions = useCallback(async () => {
@@ -1327,6 +1328,7 @@ export default function GrowthAutopilot({
         message: `Failed to schedule posts. Check platform connections.`,
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatedPosts, schedulePost]);
 
   // Execute a recommendation by generating posts from it

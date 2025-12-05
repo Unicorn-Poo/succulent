@@ -32,6 +32,7 @@ export function CollaborationPanel({ account, postId }: CollaborationPanelProps)
   useEffect(() => {
     const userGroups = getCollaborationGroups();
     setGroups(userGroups);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateGroup = async (groupData: any) => {

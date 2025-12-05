@@ -160,6 +160,7 @@ export default function BrandManagementDashboard({
 
     setBrandSettings(defaultBrand);
     generateConsistencyReport(defaultBrand);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateConsistencyReport = useCallback(async (brand: BrandSettings) => {

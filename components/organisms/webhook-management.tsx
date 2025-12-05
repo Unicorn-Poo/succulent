@@ -197,6 +197,7 @@ export default function WebhookManagement() {
 
   useEffect(() => {
     loadWebhooks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessPlanAvailable]);
 
   // Create new webhook

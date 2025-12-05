@@ -193,6 +193,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
   // Load data on component mount
   useEffect(() => {
     fetchAccountData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.id, account.isLinked]);
 
   // Handle timeframe changes
@@ -200,6 +201,7 @@ export default function InstagramAccountDashboard({ account, accountGroupId, jaz
     if (account.isLinked && !loading) {
       fetchPostHistory(parseInt(selectedTimeframe));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTimeframe]);
 
   /**

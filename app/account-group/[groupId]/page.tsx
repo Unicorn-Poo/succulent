@@ -74,7 +74,7 @@ import {
 import GrowthToolsDropdown from "@/components/organisms/growth-tools-dropdown";
 import GrowthQuickAccess from "@/components/organisms/growth-quick-access";
 import EngagementInbox from "@/components/organisms/engagement-inbox";
-import { Mail, Inbox } from "lucide-react";
+import { Mail, Inbox, AlertCircle } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/use-unread-messages";
 import { Badge } from "@radix-ui/themes";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
@@ -217,9 +217,12 @@ export default function AccountGroupPage() {
 
   // Get profile key for unread messages - must be called unconditionally (hooks rule)
   const profileKey = (jazzAccountGroup as any)?.ayrshareProfileKey || undefined;
-  
+
   // Fetch unread message count for notification badge
-  const { unreadCount: unreadMessagesCount } = useUnreadMessages(profileKey, 60000);
+  const { unreadCount: unreadMessagesCount } = useUnreadMessages(
+    profileKey,
+    60000
+  );
 
   if (!accountGroup) {
     return (
@@ -675,7 +678,10 @@ export default function AccountGroupPage() {
                 <span className="hidden sm:inline">Accounts</span>
                 <span className="sm:hidden">Accts</span>
               </Tabs.Trigger>
-              <Tabs.Trigger value="engagement" className="min-h-[44px] relative">
+              <Tabs.Trigger
+                value="engagement"
+                className="min-h-[44px] relative"
+              >
                 <Inbox className="w-4 h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Engagement</span>
                 <span className="sm:hidden">Inbox</span>
@@ -703,76 +709,7 @@ export default function AccountGroupPage() {
             </Tabs.List>
           </div>
 
-          {/* Settings Tab - Delete Account Group */}
-          <Tabs.Content value="settings" className="mt-6">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
-                Account Group Settings
-              </h2>
-
-              <div className="border-t border-border pt-6">
-                <h3 className="text-lg font-medium text-red-600 mb-2">
-                  Danger Zone
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Deleting this account group will permanently remove all posts,
-                  accounts, and settings associated with it. This action cannot
-                  be undone.
-                </p>
-                <Button
-                  onClick={async () => {
-                    if (
-                      !confirm(
-                        `Are you sure you want to delete "${
-                          accountGroup.name || "this account group"
-                        }"? This will delete all ${
-                          posts.length
-                        } posts and cannot be undone.`
-                      )
-                    ) {
-                      return;
-                    }
-
-                    if (!jazzAccountGroup || !me?.root?.accountGroups) {
-                      alert(
-                        "Cannot delete account group. Please refresh and try again."
-                      );
-                      return;
-                    }
-
-                    try {
-                      // Find and remove the account group from root
-                      const groupIndex = me.root.accountGroups.findIndex(
-                        (g: any) => g?.id === jazzAccountGroup.id
-                      );
-                      if (groupIndex >= 0) {
-                        me.root.accountGroups.splice(groupIndex, 1);
-                        // Navigate back to home
-                        router.push("/");
-                      } else {
-                        alert(
-                          "Account group not found. It may have already been deleted."
-                        );
-                      }
-                    } catch (error) {
-                      console.error(
-                        "❌ Failed to delete account group:",
-                        error
-                      );
-                      alert(
-                        "Failed to delete account group. Please try again."
-                      );
-                    }
-                  }}
-                  intent="danger"
-                  variant="solid"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account Group
-                </Button>
-              </div>
-            </div>
-          </Tabs.Content>
+          {/* Settings Tab - Moved to end of tabs */}
 
           {/* Posts Tab */}
           <Tabs.Content value="posts" className="mt-6">
@@ -1280,7 +1217,8 @@ export default function AccountGroupPage() {
                     Engagement Inbox
                   </Text>
                   <Text size="2" color="gray" className="mt-1">
-                    Manage DMs, comments, and reviews from all your connected social accounts
+                    Manage DMs, comments, and reviews from all your connected
+                    social accounts
                   </Text>
                 </div>
               </div>
@@ -1294,10 +1232,15 @@ export default function AccountGroupPage() {
                     ? {
                         tone: jazzAccountGroup.brandPersona.tone || "friendly",
                         personality: jazzAccountGroup.brandPersona.personality
-                          ? Array.from(jazzAccountGroup.brandPersona.personality)
+                          ? Array.from(
+                              jazzAccountGroup.brandPersona.personality
+                            )
                           : [],
-                        writingStyle: jazzAccountGroup.brandPersona.writingStyle || "conversational",
-                        emojiUsage: jazzAccountGroup.brandPersona.emojiUsage || "minimal",
+                        writingStyle:
+                          jazzAccountGroup.brandPersona.writingStyle ||
+                          "conversational",
+                        emojiUsage:
+                          jazzAccountGroup.brandPersona.emojiUsage || "minimal",
                       }
                     : undefined
                 }
@@ -1357,6 +1300,70 @@ export default function AccountGroupPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Ayrshare Profile Status - Only show if there's an issue */}
+              {jazzAccountGroup &&
+                (!(jazzAccountGroup as any).ayrshareProfileKey ||
+                  (jazzAccountGroup as any).ayrshareProfileKey?.length ===
+                    40) && (
+                  <Card className="p-4 bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                          <Text size="3" weight="bold" className="block">
+                            Analytics Not Available
+                          </Text>
+                          <Text size="2" color="gray">
+                            {(jazzAccountGroup as any).ayrshareProfileKey
+                              ?.length === 40
+                              ? "Profile needs to be regenerated for analytics to work"
+                              : "Create an Ayrshare profile to enable analytics"}
+                          </Text>
+                        </div>
+                      </div>
+                      <Button
+                        className="bg-lime-600 hover:bg-lime-700 text-white"
+                        onClick={async () => {
+                          try {
+                            const { createAyrshareProfile } = await import(
+                              "@/utils/ayrshareIntegration"
+                            );
+
+                            const profile = await createAyrshareProfile({
+                              title:
+                                jazzAccountGroup.name ||
+                                `Account Group ${accountGroupId}`,
+                            });
+
+                            if (profile.profileKey) {
+                              (jazzAccountGroup as any).ayrshareProfileKey =
+                                profile.profileKey;
+                              (jazzAccountGroup as any).ayrshareProfileTitle =
+                                profile.title || jazzAccountGroup.name;
+                              window.location.reload();
+                            }
+                          } catch (error) {
+                            alert(
+                              `Failed to create profile: ${
+                                error instanceof Error
+                                  ? error.message
+                                  : "Unknown error"
+                              }`
+                            );
+                          }
+                        }}
+                      >
+                        {(jazzAccountGroup as any).ayrshareProfileKey
+                          ?.length === 40
+                          ? "Fix Analytics"
+                          : "Enable Analytics"}
+                      </Button>
+                    </div>
+                  </Card>
+                )}
 
               {/* Account Linking Management */}
               {jazzAccountGroup && (
@@ -1502,7 +1509,7 @@ export default function AccountGroupPage() {
                 <ExternalStoreSettings accountGroup={jazzAccountGroup as any} />
               )}
 
-              {/* Future settings can be added here */}
+              {/* Settings not available message */}
               {!jazzAccountGroup && (
                 <div className="text-center py-12">
                   <Text size="4" weight="medium" className="mb-2 block">
@@ -1513,6 +1520,76 @@ export default function AccountGroupPage() {
                     created with Jazz.
                   </Text>
                 </div>
+              )}
+
+              {/* Danger Zone - Always at bottom */}
+              {jazzAccountGroup && (
+                <Card className="p-6 border-2 border-red-500 dark:border-red-600 bg-red-500/10 dark:bg-red-900/20">
+                  <Text
+                    size="4"
+                    weight="bold"
+                    className="text-red-600 dark:text-red-500 mb-2 block"
+                  >
+                    ⚠️ Danger Zone
+                  </Text>
+                  <Text
+                    size="2"
+                    className="mb-4 block text-red-600/80 dark:text-red-400/80"
+                  >
+                    Deleting this account group will permanently remove all
+                    posts, accounts, and settings associated with it. This
+                    action cannot be undone.
+                  </Text>
+                  <Button
+                    intent="danger"
+                    variant="solid"
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          `Are you sure you want to delete "${
+                            accountGroup.name || "this account group"
+                          }"? This will delete all ${
+                            posts.length
+                          } posts and cannot be undone.`
+                        )
+                      ) {
+                        return;
+                      }
+
+                      if (!jazzAccountGroup || !me?.root?.accountGroups) {
+                        alert(
+                          "Cannot delete account group. Please refresh and try again."
+                        );
+                        return;
+                      }
+
+                      try {
+                        const groupIndex = me.root.accountGroups.findIndex(
+                          (g: any) => g?.id === jazzAccountGroup.id
+                        );
+                        if (groupIndex >= 0) {
+                          me.root.accountGroups.splice(groupIndex, 1);
+                          router.push("/");
+                        } else {
+                          alert(
+                            "Account group not found. It may have already been deleted."
+                          );
+                        }
+                      } catch (error) {
+                        console.error(
+                          "❌ Failed to delete account group:",
+                          error
+                        );
+                        alert(
+                          "Failed to delete account group. Please try again."
+                        );
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account Group
+                  </Button>
+                </Card>
               )}
             </div>
           </Tabs.Content>

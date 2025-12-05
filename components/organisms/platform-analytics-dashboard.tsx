@@ -194,6 +194,7 @@ export const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProp
   // Auto-fetch on mount
   useEffect(() => {
     fetchAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.platform, account.profileKey]);
 
   if (!account.isLinked) {

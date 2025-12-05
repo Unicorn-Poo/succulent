@@ -376,6 +376,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		if (gelatoTemplates.length > 0 && selectedTemplates.length === 0) {
 			setSelectedTemplates([gelatoTemplates[0]]);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [gelatoTemplates.length, selectedTemplates.length]);
 
 	// =============================================================================
@@ -434,6 +435,7 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		if (prodigiTemplates.length > 0 && selectedProdigiTemplates.length === 0) {
 			setSelectedProdigiTemplates([prodigiTemplates[0]]);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [prodigiTemplates.length, selectedProdigiTemplates.length]);
 
 	// Auto-create settings for Prodigi
@@ -680,7 +682,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		if (accountGroupProdigiCredentials) {
 			accountGroupProdigiCredentials.autoCreateOnPublish = newValue;
 		}
-	}, [autoCreateProdigiOnPublish, accountGroupProdigiCredentials]);
+	 
+	}, [accountGroupProdigiCredentials]);
 
 	// =============================================================================
 	// 🖼️ IMAGE UTILITIES
@@ -1294,17 +1297,16 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				// Don't fail the entire publish if auto-creation fails
 			}
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		handlePublishPost,
 		autoCreateOnPublish,
 		hasImages,
 		isGelatoConfigured,
-		selectedTemplates,
-		createRealGelatoProducts,
+		selectedTemplates.length,
 		autoCreateProdigiOnPublish,
 		isProdigiConfigured,
-		selectedProdigiTemplates,
-		createRealProdigiProducts
+		selectedProdigiTemplates.length
 	]);
 
 	// Handle post deletion

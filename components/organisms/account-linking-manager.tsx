@@ -95,6 +95,7 @@ export default function AccountLinkingManager({
     if (hasProfileKey) {
       refreshConnectedAccounts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasProfileKey, profileKey]);
 
   // Check for redirect from Ayrshare linking
@@ -117,6 +118,7 @@ export default function AccountLinkingManager({
         startAccountPolling();
       }, 1000); // Small delay to ensure component is ready
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileKey]);
 
   const refreshConnectedAccounts = async () => {

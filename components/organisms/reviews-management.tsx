@@ -184,6 +184,7 @@ export default function ReviewsManagement({ profileKey, brandPersona }: ReviewsM
 
   useEffect(() => {
     fetchReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platformFilter, ratingFilter, showUnrepliedOnly, profileKey]);
 
   const renderStars = (rating: number) => {

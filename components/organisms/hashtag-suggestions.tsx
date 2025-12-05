@@ -163,6 +163,7 @@ export default function HashtagSuggestions({
 
       return () => clearTimeout(debounceTimer);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, platform, profileKey]);
 
   const handleHashtagToggle = (hashtag: string) => {

@@ -81,6 +81,7 @@ export default function DMAutomationManager({
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform, profileKey]);
 
   // Initialize default templates

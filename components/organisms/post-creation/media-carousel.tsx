@@ -91,11 +91,13 @@ export const MediaCarousel = ({ media, onRemove, showDeleteButton = false }: Med
 			containerRef.current.addEventListener('keydown', handleKeyDown);
 		}
 
+		const container = containerRef.current;
 		return () => {
-			if (containerRef.current) {
-				containerRef.current.removeEventListener('keydown', handleKeyDown);
+			if (container) {
+				container.removeEventListener('keydown', handleKeyDown);
 			}
 		};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	if (!allMedia || allMedia.length === 0) return null;

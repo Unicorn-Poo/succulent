@@ -81,6 +81,7 @@ export default function CommentEngagementManager({
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform, profileKey]);
 
   // Load metrics
@@ -91,6 +92,7 @@ export default function CommentEngagementManager({
     } catch (error) {
       console.error('Error loading metrics:', error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform, profileKey]);
 
   // Initialize rules

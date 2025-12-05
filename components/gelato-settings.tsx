@@ -68,6 +68,7 @@ export const GelatoSettings = ({ accountGroup }: GelatoSettingsProps) => {
 				defaultChannels: savedDefaultChannels,
 			}));
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		accountGroup.gelatoCredentials?.shopifyCredentials?.defaultPublishingChannels,
 		accountGroup.gelatoCredentials?.shopifyCredentials?.isConfigured

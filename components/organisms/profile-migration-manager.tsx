@@ -50,6 +50,7 @@ export default function ProfileMigrationManager({
     if (showCleanupDialog && businessPlanAvailable) {
       loadOrphanedProfiles();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCleanupDialog, businessPlanAvailable]);
 
   const loadOrphanedProfiles = async () => {

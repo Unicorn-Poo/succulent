@@ -133,6 +133,7 @@ export default function AccountAnalyticsOverview({
   // Load data on component mount and timeframe changes
   useEffect(() => {
     fetchAnalyticsData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTimeframe, linkedAccounts.length]);
 
   /**

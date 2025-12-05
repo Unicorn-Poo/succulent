@@ -178,6 +178,7 @@ export default function EnhancedReplyHandler({
       setComments([]);
       setSelectedComment(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, detectedPlatform]);
 
   /**

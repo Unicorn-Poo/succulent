@@ -109,6 +109,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
   // Load avatar when component mounts or account changes
   useEffect(() => {
     getAccountAvatar();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.id, jazzAccountGroup]);
 
   // Jazz import function - creates real Jazz Post objects
@@ -455,6 +456,7 @@ export const PlatformFeedView: React.FC<PlatformFeedViewProps> = ({
     if (account.isLinked) {
       syncPostsWithAyrshare();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account.platform, account.profileKey, account.isLinked, localPosts.length]);
 
   // Transform local posts to match the expected format, filtering for this platform
