@@ -35,7 +35,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" className={isDark ? "dark" : ""}>
+    <html lang="en" className={isDark ? "dark" : ""} suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="Succulent" />
@@ -87,7 +87,7 @@ export default function RootLayout({
         {/* Splash Screens for iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <Theme appearance={isDark ? "dark" : "light"}>
           <JazzAndAuth>
             <div className="min-h-screen bg-background">

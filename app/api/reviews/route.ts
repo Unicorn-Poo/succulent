@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
+export const dynamic = 'force-dynamic';
+
 const AYRSHARE_API_URL = "https://api.ayrshare.com/api";
 
 interface Review {

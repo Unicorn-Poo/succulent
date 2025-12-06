@@ -12,11 +12,8 @@ const nextConfig: NextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Allow production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
+  // Empty turbopack config to acknowledge webpack config from next-pwa
+  turbopack: {},
   images: {
     remotePatterns: [
       {
