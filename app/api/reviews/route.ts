@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const AYRSHARE_API_URL = "https://api.ayrshare.com/api";
 
@@ -42,7 +42,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50");
 
     // Get API key from environment
-    const apiKey = process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
+    const apiKey =
+      process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "Ayrshare API key not configured" },
@@ -65,7 +66,9 @@ export async function GET(request: NextRequest) {
     if (limit) queryParams.append("limit", limit.toString());
 
     // Fetch reviews from Ayrshare
-    const reviewsUrl = `${AYRSHARE_API_URL}/reviews${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const reviewsUrl = `${AYRSHARE_API_URL}/reviews${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
 
     const response = await fetch(reviewsUrl, {
       method: "GET",
@@ -88,7 +91,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Failed to fetch reviews",
-          details: errorData.message || errorData.error || `Status: ${response.status}`,
+          details:
+            errorData.message ||
+            errorData.error ||
+            `Status: ${response.status}`,
         },
         { status: response.status }
       );
@@ -111,9 +117,12 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const stats = {
       total: reviews.length,
-      averageRating: reviews.length > 0
-        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-        : 0,
+      averageRating:
+        reviews.length > 0
+          ? (
+              reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            ).toFixed(1)
+          : 0,
       unreplied: reviews.filter((r) => !r.replied).length,
       byRating: {
         5: reviews.filter((r) => r.rating === 5).length,
@@ -179,7 +188,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from environment
-    const apiKey = process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
+    const apiKey =
+      process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "Ayrshare API key not configured" },
@@ -201,7 +211,10 @@ export async function POST(request: NextRequest) {
 
     if (!replyContent) {
       return NextResponse.json(
-        { error: "Reply content is required (provide reply or set generateAI=true)" },
+        {
+          error:
+            "Reply content is required (provide reply or set generateAI=true)",
+        },
         { status: 400 }
       );
     }
@@ -267,10 +280,15 @@ async function generateAIReply(
   reviewContent: string,
   rating: number,
   authorName?: string,
-  brandPersona?: { tone?: string; personality?: string[]; businessName?: string }
+  brandPersona?: {
+    tone?: string;
+    personality?: string[];
+    businessName?: string;
+  }
 ): Promise<string> {
   const tone = brandPersona?.tone || "professional and warm";
-  const personality = brandPersona?.personality?.join(", ") || "helpful, genuine, appreciative";
+  const personality =
+    brandPersona?.personality?.join(", ") || "helpful, genuine, appreciative";
   const businessName = brandPersona?.businessName || "our team";
 
   const isPositive = rating >= 4;
@@ -304,7 +322,11 @@ Guidelines:
 1. Keep response concise (2-4 sentences)
 2. Be genuine, not corporate or scripted
 3. ${isPositive ? "Thank them warmly and invite them back" : ""}
-4. ${isNegative ? "Apologize sincerely and offer a solution or contact method" : ""}
+4. ${
+    isNegative
+      ? "Apologize sincerely and offer a solution or contact method"
+      : ""
+  }
 5. ${isNeutral ? "Acknowledge feedback and express desire to improve" : ""}
 6. Address them by name if provided
 7. Sign off naturally (avoid "Best regards" etc)
@@ -326,11 +348,17 @@ Response:`;
 
     // Fallback responses
     if (isPositive) {
-      return `Thank you so much${authorName ? `, ${authorName}` : ""}! We're thrilled you had a great experience. Looking forward to seeing you again soon!`;
+      return `Thank you so much${
+        authorName ? `, ${authorName}` : ""
+      }! We're thrilled you had a great experience. Looking forward to seeing you again soon!`;
     } else if (isNegative) {
-      return `We're sorry to hear about your experience${authorName ? `, ${authorName}` : ""}. This isn't the standard we aim for, and we'd love the chance to make it right. Please reach out to us directly so we can help.`;
+      return `We're sorry to hear about your experience${
+        authorName ? `, ${authorName}` : ""
+      }. This isn't the standard we aim for, and we'd love the chance to make it right. Please reach out to us directly so we can help.`;
     } else {
-      return `Thank you for your feedback${authorName ? `, ${authorName}` : ""}! We appreciate you taking the time to share your thoughts and are always looking for ways to improve.`;
+      return `Thank you for your feedback${
+        authorName ? `, ${authorName}` : ""
+      }! We appreciate you taking the time to share your thoughts and are always looking for ways to improve.`;
     }
   }
 }
@@ -384,4 +412,3 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
-

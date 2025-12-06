@@ -1,26 +1,25 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextConfig from "eslint-config-next";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextConfig,
   {
     rules: {
-      // Disable rules that don't block Next.js/Vercel builds
-      "@typescript-eslint/no-explicit-any": "off", // Vercel builds allow 'any'
-      "@typescript-eslint/no-unused-vars": "off", // Allow unused variables
-      // Make unescaped entities a warning instead of error (can't auto-fix, but won't block commits)
-      "react/no-unescaped-entities": ["warn", {
-        "forbid": [">", "}"]
-      }],
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "react/no-unescaped-entities": ["warn", { forbid: [">", "}"] }],
+      // Disable new strict react-hooks rules from Next.js 16
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/exhaustive-deps": "warn",
+      // Downgrade img warning
+      "@next/next/no-img-element": "warn",
+      "import/no-anonymous-default-export": "warn",
     },
+  },
+  {
+    ignores: ["public/sw.js", "public/workbox-*.js", "scripts/**", "cloudflare-worker/**"],
   },
 ];
 
