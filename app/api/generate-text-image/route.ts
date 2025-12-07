@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { openai } from "@ai-sdk/openai";
+import { generateText } from "ai";
 
 interface TextImageRequest {
   text: string;
   platform?: string;
   scheme?: number;
+  useAI?: boolean; // New: use AI to generate a hook/theme
+  brandName?: string;
 }
 
 // Platform-specific dimensions
@@ -18,7 +22,43 @@ const PLATFORM_SIZES: Record<string, { width: number; height: number }> = {
 };
 
 /**
- * Extract the key message from post content
+ * Use AI to generate a punchy hook/theme for the image
+ * This creates something thematic rather than just the first sentence
+ */
+async function generateImageHook(fullContent: string, brandName?: string): Promise<string> {
+  try {
+    const { text } = await generateText({
+      model: openai("gpt-4o-mini"),
+      system: `You create punchy, memorable hooks for social media images.
+      
+Rules:
+- Output ONLY the hook text (5-12 words ideal)
+- Capture the THEME or KEY INSIGHT, not a literal summary
+- Make it quotable and shareable
+- NO hashtags, NO emojis, NO URLs
+- NO em-dashes (—)
+- Think: what would make someone stop scrolling?
+${brandName ? `- Brand voice: ${brandName}` : ""}
+
+Examples of good hooks:
+- "Your morning routine is lying to you"
+- "The gap between wanting and doing"
+- "Simple doesn't mean easy"
+- "What nobody tells you about growth"`,
+      prompt: `Create a punchy image hook for this post:\n\n${fullContent.slice(0, 500)}`,
+      temperature: 0.7,
+    });
+    
+    // Clean and return
+    return text.trim().replace(/^["']|["']$/g, ""); // Remove quotes if AI added them
+  } catch (error) {
+    console.error("AI hook generation failed, falling back to extraction:", error);
+    return extractImageText(fullContent);
+  }
+}
+
+/**
+ * Extract the key message from post content (fallback method)
  * Removes hashtags, mentions, URLs, emojis, and CTAs
  * Returns a clean, punchy quote for the image
  */
@@ -72,15 +112,17 @@ function extractImageText(fullContent: string): string {
   return text;
 }
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/generate-text-image
  * Returns a URL to the Vercel OG text image endpoint
- * Extracts a clean quote from the full post content for the image
+ * Uses AI to generate a thematic hook, or extracts from content
  */
 export async function POST(request: NextRequest) {
   try {
     const body: TextImageRequest = await request.json();
-    const { text, platform = "instagram", scheme } = body;
+    const { text, platform = "instagram", scheme, useAI = true, brandName } = body;
 
     if (!text?.trim()) {
       return NextResponse.json(
@@ -89,8 +131,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract clean image text from full content
-    const imageText = extractImageText(text);
+    // Generate image text - use AI for thematic hook, or fallback to extraction
+    const imageText = useAI 
+      ? await generateImageHook(text, brandName)
+      : extractImageText(text);
 
     // Get the base URL (works in both dev and production)
     const host = request.headers.get("host") || "localhost:3000";

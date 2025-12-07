@@ -929,6 +929,10 @@ export const AccountGroup = co.map({
       ),
     })
   ),
+
+  // 🚫 Skipped Content Hashes - track content that user has skipped/rejected
+  // Used to filter out previously rejected suggestions so they don't reappear
+  skippedContentHashes: z.optional(z.array(z.string())),
 });
 
 export type AccountGroupType = co.loaded<

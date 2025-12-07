@@ -30,6 +30,7 @@ import {
   Upload,
   TrendingUp,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 // Legacy accountGroups import removed - using Jazz account groups instead
@@ -715,20 +716,35 @@ export default function AccountGroupPage() {
           <Tabs.Content value="posts" className="mt-6">
             {posts.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-muted-foreground mb-4">
-                  <p className="text-lg mb-2">No posts yet</p>
-                  <p className="text-sm">
-                    Create your first post to get started!
-                  </p>
+                <div className="w-20 h-20 bg-gradient-to-br from-brand-mint/30 to-brand-lavender/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="w-10 h-10 text-brand-seafoam" />
                 </div>
-                <Button
-                  onClick={() => setShowCreateDialog(true)}
-                  intent="primary"
-                  variant="solid"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Post
-                </Button>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No posts yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Create your first post manually, or let AI generate content based on your brand persona.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Button
+                    onClick={() => setShowCreateDialog(true)}
+                    intent="secondary"
+                    variant="outline"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Manually
+                  </Button>
+                  <Button
+                    onClick={() => handleTabChange("tools")}
+                    intent="primary"
+                    variant="solid"
+                    className="bg-gradient-to-r from-brand-seafoam to-brand-mint"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    AI Generate Posts
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  💡 Set up your Brand Persona in Tools → Brand Persona for better AI-generated content
+                </p>
               </div>
             ) : (
               <div className="space-y-6">

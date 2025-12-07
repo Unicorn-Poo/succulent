@@ -5,8 +5,8 @@ import { Button } from "../atoms/button";
 import { Input } from "../atoms/input";
 import ContentSuggestionCard from "./content-suggestion-card";
 import PostQueue from "./post-queue";
-import { QueuedPost, AutomationLog, ContentFeedback } from "@/app/schema";
-import { co } from "jazz-tools";
+import { QueuedPost, AutomationLog, ContentFeedback, Post, PostVariant, MediaItem, ReplyTo } from "@/app/schema";
+import { co, z } from "jazz-tools";
 
 interface AutopilotSettings {
   enabled: boolean;
@@ -376,10 +376,17 @@ export default function GrowthAutopilot({
 
       // Use cache if less than 24 hours old
       if (hoursSinceGenerated < 24) {
-        // Filter out invalid posts (missing content or platform)
-        const validPosts = (cached.posts || []).filter(
-          (p: any) => p?.content?.trim() && p?.platform
-        );
+        // Filter out invalid posts and previously skipped content
+        const skippedHashes = accountGroup?.skippedContentHashes || [];
+        const validPosts = (cached.posts || []).filter((p: any) => {
+          if (!p?.content?.trim() || !p?.platform) return false;
+          // Filter out skipped content
+          if (skippedHashes.length > 0) {
+            const contentHash = hashContent(p.content);
+            if (skippedHashes.includes(contentHash)) return false;
+          }
+          return true;
+        });
         setGeneratedPosts(validPosts);
         setRecommendations(cached.recommendations || []);
         setStatusMessage(
@@ -639,9 +646,23 @@ export default function GrowthAutopilot({
             priority: a.impact as "high" | "medium" | "low",
           }));
 
-        setGeneratedPosts(posts);
+        // Filter out previously skipped content
+        const skippedHashes = accountGroup?.skippedContentHashes || [];
+        const filteredPosts = posts.filter((p: any) => {
+          if (!p?.content) return false;
+          if (skippedHashes.length > 0) {
+            const contentHash = hashContent(p.content);
+            if (skippedHashes.includes(contentHash)) {
+              console.log(`📝 Filtered out skipped content: ${contentHash}`);
+              return false;
+            }
+          }
+          return true;
+        });
+
+        setGeneratedPosts(filteredPosts);
         setRecommendations(recs);
-        setStatusMessage(`Generated ${posts.length} posts`);
+        setStatusMessage(`Generated ${filteredPosts.length} posts${posts.length !== filteredPosts.length ? ` (${posts.length - filteredPosts.length} skipped)` : ''}`);
 
         // Save to cache
         if (accountGroup) {
@@ -1127,6 +1148,65 @@ export default function GrowthAutopilot({
             )
           );
 
+          // Create Jazz Post so it appears in the posts list
+          try {
+            if (accountGroup?.posts && accountGroup._owner) {
+              // Create title from content pillar or first line
+              const titleContent = post.contentPillar || post.content.split('\n')[0]?.slice(0, 50) || "Autopilot Post";
+              const titleText = co.plainText().create(titleContent, { owner: accountGroup._owner });
+              const contentText = co.plainText().create(post.content, { owner: accountGroup._owner });
+              
+              // Create empty media list
+              const mediaList = co.list(MediaItem).create([], { owner: accountGroup._owner });
+              
+              // Add media items if any
+              if (mediaUrls && mediaUrls.length > 0) {
+                for (const url of mediaUrls) {
+                  const mediaItem = MediaItem.create({
+                    type: url.includes('.mp4') || url.includes('video') ? 'video' : 'image',
+                    url: url,
+                    thumbnailUrl: url,
+                    uploadedAt: new Date(),
+                  }, { owner: accountGroup._owner });
+                  mediaList.push(mediaItem);
+                }
+              }
+              
+              // Create reply to object
+              const replyTo = ReplyTo.create({}, { owner: accountGroup._owner });
+              
+              // Create platform variant
+              const platformVariant = PostVariant.create({
+                text: contentText,
+                postDate: new Date(),
+                media: mediaList,
+                replyTo: replyTo,
+                status: 'scheduled',
+                scheduledFor: new Date(scheduledTime),
+                edited: false,
+                ayrsharePostId: result.postId,
+              }, { owner: accountGroup._owner });
+              
+              // Create variants record
+              const variantsRecord = co.record(z.string(), PostVariant).create({
+                [platformLower]: platformVariant
+              }, { owner: accountGroup._owner });
+              
+              // Create the Post
+              const newPost = Post.create({
+                title: titleText,
+                variants: variantsRecord,
+              }, { owner: accountGroup._owner });
+              
+              // Add to account group
+              accountGroup.posts.push(newPost);
+              console.log(`✅ Jazz post created for scheduled ${platformLower} post`);
+            }
+          } catch (jazzError) {
+            console.error("Failed to create Jazz post:", jazzError);
+            // Continue - the post is still scheduled on Ayrshare
+          }
+
           // Log to automationLogs
           try {
             if (accountGroup?.automationLogs && accountGroup._owner) {
@@ -1437,15 +1517,43 @@ export default function GrowthAutopilot({
     );
   };
 
+  // Helper to generate a simple hash for content
+  const hashContent = (content: string): string => {
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+  };
+
   const rejectAction = (actionId: string, reason?: string) => {
+    const action = pendingActions.find((a) => a.id === actionId);
+    
     setPendingActions((prev) =>
       prev.map((a) => (a.id === actionId ? { ...a, status: "rejected" } : a))
     );
 
+    // Persist skipped content hash to Jazz so it doesn't reappear
+    if (action?.content && accountGroup) {
+      try {
+        const contentHash = hashContent(action.content);
+        if (!accountGroup.skippedContentHashes) {
+          accountGroup.skippedContentHashes = [];
+        }
+        if (!accountGroup.skippedContentHashes.includes(contentHash)) {
+          accountGroup.skippedContentHashes.push(contentHash);
+          console.log(`📝 Skipped content hash saved: ${contentHash}`);
+        }
+      } catch (error) {
+        console.error("Failed to save skipped content hash:", error);
+      }
+    }
+
     // Save feedback for learning
     if (accountGroup?.contentFeedback && reason) {
       try {
-        const action = pendingActions.find((a) => a.id === actionId);
         // Could add to contentFeedback for AI learning
       } catch (error) {
         console.error("Failed to save rejection feedback:", error);
@@ -2067,6 +2175,31 @@ export default function GrowthAutopilot({
                   </Button>
                 </div>
               )}
+              
+              {/* Clear Skipped Posts - show if there are skipped hashes */}
+              {accountGroup?.skippedContentHashes && accountGroup.skippedContentHashes.length > 0 && (
+                <div className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {accountGroup.skippedContentHashes.length} posts hidden (previously skipped)
+                    </span>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      if (accountGroup) {
+                        accountGroup.skippedContentHashes = [];
+                        setNotification({ type: "success", message: "Skipped posts cleared! Refresh to see them again." });
+                      }
+                    }}
+                    variant="outline"
+                    size="1"
+                    className="text-xs"
+                  >
+                    Clear Skipped
+                  </Button>
+                </div>
+              )}
+
               {generatedPosts
                 .filter((p) => p.status === "pending")
                 .map((post) => (
@@ -2214,6 +2347,7 @@ export default function GrowthAutopilot({
                       )}
                       <Button
                         onClick={() => {
+                          // Update local state
                           setGeneratedPosts((prev) =>
                             prev.map((p) =>
                               p.id === post.id
@@ -2221,6 +2355,21 @@ export default function GrowthAutopilot({
                                 : p
                             )
                           );
+                          // Persist skip to Jazz so it doesn't reappear
+                          if (post.content && accountGroup) {
+                            try {
+                              const contentHash = hashContent(post.content);
+                              if (!accountGroup.skippedContentHashes) {
+                                accountGroup.skippedContentHashes = [];
+                              }
+                              if (!accountGroup.skippedContentHashes.includes(contentHash)) {
+                                accountGroup.skippedContentHashes.push(contentHash);
+                                console.log(`📝 Skipped post hash saved: ${contentHash}`);
+                              }
+                            } catch (e) {
+                              console.error("Failed to save skip:", e);
+                            }
+                          }
                         }}
                         variant="outline"
                       >

@@ -12,6 +12,8 @@ import {
 	BarChart3,
 	Trash2,
 	AlertTriangle,
+	Sparkles,
+	Wand2,
 } from "lucide-react";
 import { PostFullyLoaded, GelatoProduct, ProdigiProduct } from "@/app/schema";
 import { co } from "jazz-tools";
@@ -25,6 +27,7 @@ import { ThreadPreview } from "./post-creation/thread-preview";
 import { AddAccountDialog } from "./post-creation/add-account-dialog";
 import { SettingsDialog } from "./post-creation/settings-dialog";
 import HashtagSuggestions from "./hashtag-suggestions";
+import AIAdaptContent from "./ai-adapt-content";
 import { PlatformAuthorizationError } from "./platform-authorization-error";
 import { getOptimalPostTimes, isFeatureAvailable } from "@/utils/ayrshareAnalytics";
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -2188,19 +2191,44 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 							</div>
 						</div>
 
-						<Tabs.Root defaultValue="hashtags">
+						<Tabs.Root defaultValue="adapt">
 							<Tabs.List>
+								<Tabs.Trigger value="adapt">
+									<Sparkles className="w-4 h-4 mr-2" />
+									AI Adapt
+								</Tabs.Trigger>
 								<Tabs.Trigger value="hashtags">
 									<Hash className="w-4 h-4 mr-2" />
-									Hashtag Suggestions
+									Hashtags
 								</Tabs.Trigger>
 								<Tabs.Trigger value="timing">
 									<Clock className="w-4 h-4 mr-2" />
-									Optimal Timing
+									Timing
 								</Tabs.Trigger>
 							</Tabs.List>
 
 							<div className="mt-4">
+								<Tabs.Content value="adapt">
+									<AIAdaptContent
+										baseContent={currentPost.variants.base?.text?.toString() || currentPost.variants[activeTab]?.text?.toString() || ''}
+										selectedPlatforms={selectedPlatforms.filter(p => p !== 'base')}
+										onAdapted={(adaptedContent) => {
+											// Apply adapted content to each platform variant
+											Object.entries(adaptedContent).forEach(([platform, data]) => {
+												if (currentPost.variants[platform]) {
+													const variant = currentPost.variants[platform];
+													if (variant && variant.text) {
+														// Update the text - need to access Jazz plainText properly
+														variant.text.applyDiff?.(data.content) || 
+															(variant.text = co.plainText().create(data.content, { owner: currentPost._owner }));
+														variant.edited = true;
+														variant.lastModified = new Date().toISOString();
+													}
+												}
+											});
+										}}
+									/>
+								</Tabs.Content>
 								<Tabs.Content value="hashtags">
 									<HashtagSuggestions
 										content={currentPost.variants[activeTab]?.text?.toString() || ''}
