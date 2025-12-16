@@ -18,7 +18,7 @@ import {
   Archive,
   Loader2,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Message {
   id: string;
@@ -62,7 +62,7 @@ interface DMInboxProps {
     writingStyle?: string;
     emojiUsage?: string;
   };
-  /** Polling interval in milliseconds. Set to 0 to disable. Default: 30000 (30 seconds) */
+  /** Polling interval in milliseconds. Set to 0 to disable. Default: 1800000 (30 minutes) */
   pollInterval?: number;
 }
 
@@ -80,7 +80,7 @@ const PLATFORM_ICONS: Record<string, string> = {
   linkedin: "in",
 };
 
-export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000 }: DMInboxProps) {
+export default function DMInbox({ profileKey, brandPersona, pollInterval = 1800000 }: DMInboxProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -102,9 +102,16 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
   
   // Polling state
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isVisibleRef = useRef(true);
 
   // Fetch messages from API
   const fetchMessages = useCallback(async () => {
+    // Don't fetch if tab is hidden
+    if (!isVisibleRef.current) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -404,18 +411,67 @@ export default function DMInbox({ profileKey, brandPersona, pollInterval = 30000
     fetchMessages();
   }, [fetchMessages]);
 
+  // Page Visibility API - pause polling when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = !document.hidden;
+      
+      if (document.hidden) {
+        // Tab is hidden - clear interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } else {
+        // Tab is visible - resume polling
+        if (pollInterval > 0 && !intervalRef.current) {
+          fetchMessages(); // Immediate fetch when tab becomes visible
+          intervalRef.current = setInterval(() => {
+            if (!isLoading && isVisibleRef.current) {
+              fetchMessages();
+            }
+          }, pollInterval);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [pollInterval, isLoading, fetchMessages]);
+
   // Set up polling for new messages
   useEffect(() => {
-    if (pollInterval <= 0) return;
-
-    const interval = setInterval(() => {
-      // Only poll if not currently loading to avoid overlap
-      if (!isLoading) {
-        fetchMessages();
+    if (pollInterval <= 0) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-    }, pollInterval);
+      return;
+    }
 
-    return () => clearInterval(interval);
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Only set up polling if tab is visible
+    if (isVisibleRef.current) {
+      intervalRef.current = setInterval(() => {
+        // Only poll if not currently loading to avoid overlap
+        if (!isLoading && isVisibleRef.current) {
+          fetchMessages();
+        }
+      }, pollInterval);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [pollInterval, isLoading, fetchMessages]);
 
   const formatTime = (timestamp: string) => {

@@ -222,7 +222,7 @@ export default function AccountGroupPage() {
   // Fetch unread message count for notification badge
   const { unreadCount: unreadMessagesCount } = useUnreadMessages(
     profileKey,
-    60000
+    1800000
   );
 
   if (!accountGroup) {
@@ -1260,7 +1260,7 @@ export default function AccountGroupPage() {
                       }
                     : undefined
                 }
-                pollInterval={30000}
+                pollInterval={1800000}
               />
             </div>
           </Tabs.Content>

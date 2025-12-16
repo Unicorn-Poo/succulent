@@ -101,7 +101,7 @@ const SENTIMENT_CONFIG = {
 export default function EngagementInbox({
   profileKey,
   brandPersona,
-  pollInterval = 30000,
+  pollInterval = 1800000,
 }: EngagementInboxProps) {
   const [items, setItems] = useState<EngagementItem[]>([]);
   const [stats, setStats] = useState<EngagementStats | null>(null);
@@ -130,6 +130,8 @@ export default function EngagementInbox({
 
   // Polling state
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isVisibleRef = useRef(true);
 
   // Filter items by search (memoized for keyboard navigation)
   const filteredItems = useMemo(() => {
@@ -143,6 +145,11 @@ export default function EngagementInbox({
 
   // Fetch engagement items
   const fetchEngagement = useCallback(async () => {
+    // Don't fetch if tab is hidden
+    if (!isVisibleRef.current) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -176,17 +183,66 @@ export default function EngagementInbox({
     fetchEngagement();
   }, [fetchEngagement]);
 
+  // Page Visibility API - pause polling when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = !document.hidden;
+      
+      if (document.hidden) {
+        // Tab is hidden - clear interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } else {
+        // Tab is visible - resume polling
+        if (pollInterval > 0 && !intervalRef.current) {
+          fetchEngagement(); // Immediate fetch when tab becomes visible
+          intervalRef.current = setInterval(() => {
+            if (!isLoading && isVisibleRef.current) {
+              fetchEngagement();
+            }
+          }, pollInterval);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [pollInterval, isLoading, fetchEngagement]);
+
   // Polling
   useEffect(() => {
-    if (pollInterval <= 0) return;
-
-    const interval = setInterval(() => {
-      if (!isLoading) {
-        fetchEngagement();
+    if (pollInterval <= 0) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-    }, pollInterval);
+      return;
+    }
 
-    return () => clearInterval(interval);
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Only set up polling if tab is visible
+    if (isVisibleRef.current) {
+      intervalRef.current = setInterval(() => {
+        if (!isLoading && isVisibleRef.current) {
+          fetchEngagement();
+        }
+      }, pollInterval);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [pollInterval, isLoading, fetchEngagement]);
 
   // Keyboard shortcuts
