@@ -129,6 +129,26 @@ const PinterestOptionsSchema = zod.object({
   boardName: zod.string().optional(),
 });
 
+const InstagramOptionsSchema = zod
+  .object({
+    isStory: zod.boolean().optional(),
+    isReel: zod.boolean().optional(),
+    shareToFeed: zod.boolean().optional(),
+    coverImageUrl: zod.string().url().optional(),
+  })
+  .passthrough();
+
+const TikTokOptionsSchema = zod
+  .object({
+    privacyLevel: zod
+      .enum(["PUBLIC_TO_EVERYONE", "MUTUAL_FOLLOW_FRIENDS", "SELF_ONLY"])
+      .optional(),
+    disableComment: zod.boolean().optional(),
+    disableDuet: zod.boolean().optional(),
+    disableStitch: zod.boolean().optional(),
+  })
+  .passthrough();
+
 const VariantDetailsSchema = zod
   .object({
     content: zod.string().optional(),
@@ -136,6 +156,8 @@ const VariantDetailsSchema = zod
     twitterOptions: TwitterOptionsSchema.optional(),
     redditOptions: RedditOptionsSchema.optional(),
     pinterestOptions: PinterestOptionsSchema.optional(),
+    instagramOptions: InstagramOptionsSchema.optional(),
+    tiktokOptions: TikTokOptionsSchema.optional(),
   })
   .passthrough();
 
@@ -153,8 +175,10 @@ const CreatePostSchema = zod.object({
 
   // Optional fields
   title: zod.string().optional(),
-  scheduledDate: zod.union([zod.string().datetime(), zod.literal("auto")]).optional(),
-  
+  scheduledDate: zod
+    .union([zod.string().datetime(), zod.literal("auto")])
+    .optional(),
+
   // Auto-schedule: let the system determine optimal posting time
   autoSchedule: zod.boolean().optional(),
 
@@ -182,6 +206,8 @@ const CreatePostSchema = zod.object({
   redditOptions: RedditOptionsSchema.optional(),
   reddit: RedditOptionsSchema.optional(),
   pinterestOptions: PinterestOptionsSchema.optional(),
+  instagramOptions: InstagramOptionsSchema.optional(),
+  tiktokOptions: TikTokOptionsSchema.optional(),
 
   // Reply configuration
   replyTo: zod
@@ -226,6 +252,8 @@ const PLATFORM_OPTION_KEYS: Record<string, string> = {
   twitter: "twitterOptions",
   reddit: "redditOptions",
   pinterest: "pinterestOptions",
+  instagram: "instagramOptions",
+  tiktok: "tiktokOptions",
 };
 
 export function getPlatformOptionsKey(platform: string): string {
@@ -1108,6 +1136,8 @@ export async function preparePublishRequests(
     let twitterOptions: any = undefined;
     let redditOptions: any = undefined;
     let pinterestOptions: any = undefined;
+    let instagramOptions: any = undefined;
+    let tiktokOptions: any = undefined;
 
     if (platform === "x") {
       const overrideTwitterOptions = variantOverride?.twitterOptions;
@@ -1214,6 +1244,20 @@ export async function preparePublishRequests(
       }
     }
 
+    if (platform === "instagram") {
+      instagramOptions =
+        variantOverride?.instagramOptions ??
+        parsedVariantOptions.instagramOptions ??
+        requestData.instagramOptions;
+    }
+
+    if (platform === "tiktok") {
+      tiktokOptions =
+        variantOverride?.tiktokOptions ??
+        parsedVariantOptions.tiktokOptions ??
+        requestData.tiktokOptions;
+    }
+
     // If variant exists (override or saved), create separate request for this platform
     // CRITICAL: variantOverride should always create a separate request, even without saved variant
     if (variantOverride || variant) {
@@ -1259,6 +1303,8 @@ export async function preparePublishRequests(
           twitterOptions: twitterOptions,
           redditOptions: redditOptions,
           pinterestOptions: pinterestOptions,
+          instagramOptions: instagramOptions,
+          tiktokOptions: tiktokOptions,
         },
         platforms: [platform],
       });
@@ -1354,6 +1400,25 @@ export async function preparePublishRequests(
     const ayrsharePlatform =
       INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
 
+    // Extract platform options for variant override
+    const parsedVariantOptions = parsePlatformOptions(variant?.platformOptions);
+    let instagramOptions: any = undefined;
+    let tiktokOptions: any = undefined;
+
+    if (platform === "instagram") {
+      instagramOptions =
+        variantOverride?.instagramOptions ??
+        parsedVariantOptions.instagramOptions ??
+        requestData.instagramOptions;
+    }
+
+    if (platform === "tiktok") {
+      tiktokOptions =
+        variantOverride?.tiktokOptions ??
+        parsedVariantOptions.tiktokOptions ??
+        requestData.tiktokOptions;
+    }
+
     // Log media collection for debugging
     console.log(`📷 [VARIANT OVERRIDE MEDIA] Platform: ${platform}`, {
       hasVariantOverride: !!variantOverride,
@@ -1384,6 +1449,8 @@ export async function preparePublishRequests(
         mediaUrls: clampedMediaUrls.length > 0 ? clampedMediaUrls : undefined,
         scheduleDate: requestData.scheduledDate,
         profileKey: profileKey,
+        instagramOptions: instagramOptions,
+        tiktokOptions: tiktokOptions,
       },
       platforms: [platform],
     });
@@ -1399,10 +1466,14 @@ export async function preparePublishRequests(
     const hasTwitter = trulyWithoutVariants.includes("x");
     const hasReddit = trulyWithoutVariants.includes("reddit");
     const hasPinterest = trulyWithoutVariants.includes("pinterest");
+    const hasInstagram = trulyWithoutVariants.includes("instagram");
+    const hasTikTok = trulyWithoutVariants.includes("tiktok");
 
     let twitterOptions: any = undefined;
     let redditOptions: any = undefined;
     let pinterestOptions: any = undefined;
+    let instagramOptions: any = undefined;
+    let tiktokOptions: any = undefined;
 
     if (hasTwitter) {
       if (requestData.twitterOptions) {
@@ -1498,6 +1569,14 @@ export async function preparePublishRequests(
       }
     }
 
+    if (hasInstagram) {
+      instagramOptions = requestData.instagramOptions;
+    }
+
+    if (hasTikTok) {
+      tiktokOptions = requestData.tiktokOptions;
+    }
+
     // Clamp media for platforms without variants (use minimum limit of all platforms)
     const aggregatedMediaUrls = clampMediaUrlsForPlatforms(
       trulyWithoutVariants,
@@ -1522,6 +1601,8 @@ export async function preparePublishRequests(
         twitterOptions: twitterOptions,
         redditOptions: redditOptions,
         pinterestOptions: pinterestOptions,
+        instagramOptions: instagramOptions,
+        tiktokOptions: tiktokOptions,
       },
       platforms: trulyWithoutVariants,
     });
@@ -1642,26 +1723,26 @@ async function calculateOptimalScheduleTime(
 
   try {
     const analysis = await engine.getOptimalTiming();
-    
+
     // Get the best time slot
     const bestTime = analysis.bestTimes[0];
-    
+
     if (!bestTime) {
       // Fallback to a reasonable default (tomorrow at optimal hours based on platform)
       const defaultHours: Record<string, number> = {
         instagram: 18, // 6 PM
-        twitter: 12,   // 12 PM
+        twitter: 12, // 12 PM
         x: 12,
-        linkedin: 9,   // 9 AM
-        facebook: 15,  // 3 PM
-        tiktok: 19,    // 7 PM
+        linkedin: 9, // 9 AM
+        facebook: 15, // 3 PM
+        tiktok: 19, // 7 PM
       };
-      
+
       const now = new Date();
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(defaultHours[primaryPlatform] || 12, 0, 0, 0);
-      
+
       return {
         scheduledFor: tomorrow.toISOString(),
         schedulingMethod: "auto-optimal",
@@ -1672,10 +1753,18 @@ async function calculateOptimalScheduleTime(
 
     // Calculate the next occurrence of the best time slot
     const now = new Date();
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     const currentDayIndex = now.getDay();
     const targetDayIndex = days.indexOf(bestTime.day);
-    
+
     let daysUntilTarget = targetDayIndex - currentDayIndex;
     if (daysUntilTarget < 0) {
       daysUntilTarget += 7;
@@ -1685,7 +1774,7 @@ async function calculateOptimalScheduleTime(
         daysUntilTarget = 7; // Next week
       }
     }
-    
+
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + daysUntilTarget);
     targetDate.setHours(bestTime.hour, 0, 0, 0);
@@ -1708,17 +1797,19 @@ async function calculateOptimalScheduleTime(
     return {
       scheduledFor: targetDate.toISOString(),
       schedulingMethod: "auto-optimal",
-      reason: `Best engagement time for ${primaryPlatform} on ${bestTime.day} at ${bestTime.hour}:00 (score: ${(bestTime.score * 100).toFixed(0)}%)`,
+      reason: `Best engagement time for ${primaryPlatform} on ${
+        bestTime.day
+      } at ${bestTime.hour}:00 (score: ${(bestTime.score * 100).toFixed(0)}%)`,
       platform: primaryPlatform,
     };
   } catch (error) {
     console.error("❌ Error calculating optimal schedule time:", error);
-    
+
     // Fallback to tomorrow at noon
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(12, 0, 0, 0);
-    
+
     return {
       scheduledFor: tomorrow.toISOString(),
       schedulingMethod: "auto-optimal",
@@ -1907,11 +1998,12 @@ export async function POST(request: NextRequest) {
 
     // ⏰ Handle auto-scheduling
     let autoScheduleResult: AutoScheduleResult | null = null;
-    const shouldAutoSchedule = requestData.autoSchedule || requestData.scheduledDate === "auto";
-    
+    const shouldAutoSchedule =
+      requestData.autoSchedule || requestData.scheduledDate === "auto";
+
     if (shouldAutoSchedule) {
       console.log("⏰ [AUTO-SCHEDULE] Calculating optimal posting time...");
-      
+
       // Get profile key for timing analysis
       let profileKeyForTiming: string | undefined;
       try {
@@ -1920,10 +2012,13 @@ export async function POST(request: NextRequest) {
         const worker = await jazzServerWorker;
 
         if (worker) {
-          const accountGroup = await AccountGroup.load(requestData.accountGroupId, {
-            loadAs: worker,
-            resolve: { posts: { $each: { variants: { $each: true } } } },
-          });
+          const accountGroup = await AccountGroup.load(
+            requestData.accountGroupId,
+            {
+              loadAs: worker,
+              resolve: { posts: { $each: { variants: { $each: true } } } },
+            }
+          );
           if (accountGroup?.ayrshareProfileKey) {
             profileKeyForTiming = accountGroup.ayrshareProfileKey;
           }
@@ -1944,7 +2039,10 @@ export async function POST(request: NextRequest) {
           );
         }
       } catch (error) {
-        console.warn("⚠️ Error loading account group for auto-scheduling:", error);
+        console.warn(
+          "⚠️ Error loading account group for auto-scheduling:",
+          error
+        );
         autoScheduleResult = await calculateOptimalScheduleTime(
           requestData.platforms,
           undefined,
@@ -1957,7 +2055,7 @@ export async function POST(request: NextRequest) {
         requestData.scheduledDate = autoScheduleResult.scheduledFor;
         // Don't publish immediately - we're scheduling
         requestData.publishImmediately = false;
-        
+
         console.log("✅ [AUTO-SCHEDULE] Optimal time calculated:", {
           scheduledFor: autoScheduleResult.scheduledFor,
           reason: autoScheduleResult.reason,
@@ -1971,17 +2069,22 @@ export async function POST(request: NextRequest) {
           const worker = await jazzServerWorker;
 
           if (worker) {
-            const accountGroup = await AccountGroup.load(requestData.accountGroupId, {
-              loadAs: worker,
-              resolve: { automationLogs: true },
-            });
+            const accountGroup = await AccountGroup.load(
+              requestData.accountGroupId,
+              {
+                loadAs: worker,
+                resolve: { automationLogs: true },
+              }
+            );
 
             if (accountGroup) {
               // Initialize automationLogs if not present
               if (!accountGroup.automationLogs) {
-                accountGroup.automationLogs = co.list(AutomationLog).create([], {
-                  owner: accountGroup._owner,
-                });
+                accountGroup.automationLogs = co
+                  .list(AutomationLog)
+                  .create([], {
+                    owner: accountGroup._owner,
+                  });
               }
 
               // Add automation log entry
@@ -2395,8 +2498,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          message: autoScheduleResult 
-            ? "Post created and auto-scheduled successfully" 
+          message: autoScheduleResult
+            ? "Post created and auto-scheduled successfully"
             : "Post created successfully",
           data: {
             postId: result.postId,
