@@ -277,6 +277,94 @@ const PLATFORM_MEDIA_LIMITS: Record<string, number> = {
 
 const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
 
+/**
+ * Download and cache Lunary OG images to prevent different images being generated
+ * at publish time vs schedule time. Returns a FileStream-based media item instead
+ * of a URL-based one.
+ */
+async function downloadAndCacheLunaryImage(
+  lunaryUrl: string,
+  owner: any
+): Promise<any | null> {
+  try {
+    console.log("📥 [LUNARY CACHE] Downloading Lunary OG image:", lunaryUrl);
+
+    // Download the image from Lunary
+    const response = await fetch(lunaryUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Succulent/1.0)",
+        Accept: "image/png, image/jpeg, image/webp, image/*",
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "❌ [LUNARY CACHE] Failed to fetch image:",
+        response.status,
+        response.statusText
+      );
+      return null;
+    }
+
+    const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type") || "image/png";
+
+    if (!contentType.startsWith("image/")) {
+      console.error("❌ [LUNARY CACHE] Invalid content type:", contentType);
+      return null;
+    }
+
+    console.log(
+      "✅ [LUNARY CACHE] Downloaded image:",
+      buffer.byteLength,
+      "bytes, type:",
+      contentType
+    );
+
+    // Convert to blob
+    const blob = new Blob([buffer], { type: contentType });
+
+    // Import required modules
+    const { ImageMedia } = await import("@/app/schema");
+    const { co } = await import("jazz-tools");
+
+    // Create FileStream from blob
+    const imageStream = await co.fileStream().createFromBlob(blob, {
+      owner,
+      onProgress: (progress) => {
+        if (progress === 1) {
+          console.log("✅ [LUNARY CACHE] Image upload completed");
+        }
+      },
+    });
+
+    // Create ImageMedia with the FileStream
+    const imageMedia = ImageMedia.create(
+      {
+        type: "image" as const,
+        image: imageStream,
+        alt: co
+          .plainText()
+          .create(`Image from ${new URL(lunaryUrl).hostname}`, { owner }),
+      },
+      { owner }
+    );
+
+    console.log(
+      "✅ [LUNARY CACHE] Created cached ImageMedia with FileStream:",
+      (imageStream as any)?.publicUrl || "PENDING"
+    );
+
+    return imageMedia;
+  } catch (error) {
+    console.error(
+      "❌ [LUNARY CACHE] Error downloading/caching Lunary image:",
+      error
+    );
+    return null;
+  }
+}
+
 function resolvePublicBaseUrl(): string {
   const candidates = [
     process.env.MEDIA_PROXY_BASE_URL,
@@ -309,16 +397,22 @@ function proxyMediaUrlIfNeeded(url: string): string {
   if (!url || typeof url !== "string") return url;
   if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
     try {
+      // CRITICAL: Preserve the entire URL exactly as-is, including all query parameters
+      // encodeURIComponent will encode the entire URL preserving all query params
       // Instagram requires file extensions in the URL path
       // Create proxy URL with .png extension for Instagram compatibility
       const baseUrl = resolvePublicBaseUrl().replace(/\/$/, ""); // Remove trailing slash
-      const encodedUrl = encodeURIComponent(url);
+      const encodedUrl = encodeURIComponent(url); // This preserves all query params
       // Use path-based URL with extension instead of query param for Instagram compatibility
       const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
-      console.log("✅ [PROXY CREATED]", {
+
+      // Log to verify URL is preserved correctly
+      console.log("✅ [PROXY CREATED - LUNARY]", {
         original: url,
+        originalQueryParams: url.includes("?") ? url.split("?")[1] : "none",
         proxy: proxyUrl,
         baseUrl,
+        note: "URL and all query parameters are preserved via encodeURIComponent",
       });
       return proxyUrl;
     } catch (error) {
@@ -616,6 +710,32 @@ async function createPostInAccountGroup(
           // Determine type from mediaItem or default to image
           const isVideo = mediaItem?.type === "video";
 
+          // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
+          // being generated at publish time vs schedule time
+          if (!isVideo && mediaUrl.includes(LUNARY_OG_IDENTIFIER)) {
+            console.log(
+              "🔍 [LUNARY DETECTED] Found Lunary OG image, downloading and caching:",
+              mediaUrl
+            );
+            const cachedImage = await downloadAndCacheLunaryImage(
+              mediaUrl,
+              groupOwner
+            );
+            if (cachedImage) {
+              baseMediaList.push(cachedImage);
+              console.log(
+                "✅ [LUNARY CACHED] Successfully cached Lunary image as FileStream"
+              );
+              continue; // Skip creating URL-based media item
+            } else {
+              console.warn(
+                "⚠️ [LUNARY CACHE FAILED] Falling back to URL-based media for:",
+                mediaUrl
+              );
+              // Fall through to create URL-based media as fallback
+            }
+          }
+
           if (isVideo) {
             const urlVideoMedia = URLVideoMedia.create(
               {
@@ -709,6 +829,32 @@ async function createPostInAccountGroup(
       const { URLImageMedia } = await import("@/app/schema");
       for (const mediaUrl of urls) {
         try {
+          // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
+          // being generated at publish time vs schedule time
+          if (mediaUrl.includes(LUNARY_OG_IDENTIFIER)) {
+            console.log(
+              "🔍 [LUNARY DETECTED] Found Lunary OG image in variant, downloading and caching:",
+              mediaUrl
+            );
+            const cachedImage = await downloadAndCacheLunaryImage(
+              mediaUrl,
+              groupOwner
+            );
+            if (cachedImage) {
+              mediaList.push(cachedImage);
+              console.log(
+                "✅ [LUNARY CACHED] Successfully cached Lunary image as FileStream"
+              );
+              continue; // Skip creating URL-based media item
+            } else {
+              console.warn(
+                "⚠️ [LUNARY CACHE FAILED] Falling back to URL-based media for:",
+                mediaUrl
+              );
+              // Fall through to create URL-based media as fallback
+            }
+          }
+
           const alt = co
             .plainText()
             .create(altText || request.alt || "", { owner: groupOwner });
@@ -1922,6 +2068,14 @@ export async function POST(request: NextRequest) {
       normalizeRequestOptionAliases(
         requestData as CreatePostRequest & Record<string, any>
       );
+
+      // Debug: Log publishImmediately value
+      console.log("🔍 [DEBUG] Parsed requestData.publishImmediately:", {
+        publishImmediately: requestData.publishImmediately,
+        scheduledDate: requestData.scheduledDate,
+        autoSchedule: requestData.autoSchedule,
+        platforms: requestData.platforms,
+      });
     } catch (error) {
       await logAPIKeyUsage(
         user.account,
@@ -2053,8 +2207,11 @@ export async function POST(request: NextRequest) {
       if (autoScheduleResult) {
         // Replace the "auto" scheduledDate with the calculated time
         requestData.scheduledDate = autoScheduleResult.scheduledFor;
-        // Don't publish immediately - we're scheduling
-        requestData.publishImmediately = false;
+        // Don't publish immediately - we're scheduling (unless explicitly set to true)
+        // Only override if publishImmediately wasn't explicitly set to true
+        if (!requestData.publishImmediately) {
+          requestData.publishImmediately = false;
+        }
 
         console.log("✅ [AUTO-SCHEDULE] Optimal time calculated:", {
           scheduledFor: autoScheduleResult.scheduledFor,
@@ -2211,6 +2368,14 @@ export async function POST(request: NextRequest) {
 
     // 🚀 Publish the post (if immediate or scheduled)
     let publishResult = null;
+    console.log("🔍 [DEBUG] Publishing check:", {
+      resultSuccess: result.success,
+      publishImmediately: requestData.publishImmediately,
+      scheduledDate: requestData.scheduledDate,
+      willPublish:
+        result.success &&
+        (requestData.publishImmediately || requestData.scheduledDate),
+    });
     if (
       result.success &&
       (requestData.publishImmediately || requestData.scheduledDate)

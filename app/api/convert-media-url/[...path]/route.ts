@@ -14,6 +14,11 @@ async function fetchAndServeImage(mediaUrl: string): Promise<Response> {
 
   // Check if it's a Lunary OG image URL
   if (mediaUrl.includes("lunary.app/api/og/")) {
+    console.log("🔍 [LUNARY FETCH] Fetching Lunary OG image at publish time:", {
+      url: mediaUrl,
+      timestamp: new Date().toISOString(),
+      warning: "⚠️ This image may differ from the one shown when scheduled if Lunary generates dynamic images"
+    });
     try {
       // Download the image from Lunary with proper headers
       const response = await fetch(mediaUrl, {
@@ -93,7 +98,19 @@ export async function GET(
 
     try {
       // Decode the URL - it was encoded with encodeURIComponent
+      // CRITICAL: This must preserve all query parameters exactly as-is
       mediaUrl = decodeURIComponent(pathString);
+      
+      // Verify the decoded URL is valid and log for debugging
+      if (mediaUrl.includes("lunary.app/api/og/")) {
+        console.log("🔍 [LUNARY URL DECODED]", {
+          originalEncoded: pathString.substring(0, 100) + "...",
+          decoded: mediaUrl,
+          hasQueryParams: mediaUrl.includes("?"),
+          queryParams: mediaUrl.includes("?") ? mediaUrl.split("?")[1] : "none",
+          timestamp: new Date().toISOString()
+        });
+      }
     } catch {
       console.warn("⚠️ Failed to decode URL from path:", pathString);
       mediaUrl = pathString;

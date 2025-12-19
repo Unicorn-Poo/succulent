@@ -28,16 +28,22 @@ function proxyMediaUrlIfNeeded(url: string): string {
   if (!url || typeof url !== "string") return url;
   if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
     try {
+      // CRITICAL: Preserve the entire URL exactly as-is, including all query parameters
+      // encodeURIComponent will encode the entire URL preserving all query params
       // Instagram requires file extensions in the URL path
       // Create proxy URL with .png extension for Instagram compatibility
       const baseUrl = "https://app.succulent.social";
-      const encodedUrl = encodeURIComponent(url);
+      const encodedUrl = encodeURIComponent(url); // This preserves all query params
       // Use path-based URL with extension instead of query param for Instagram compatibility
       const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
-      console.log("✅ [PROXY CREATED]", {
+      
+      // Log to verify URL is preserved correctly
+      console.log("✅ [PROXY CREATED - LUNARY]", {
         original: url,
+        originalQueryParams: url.includes("?") ? url.split("?")[1] : "none",
         proxy: proxyUrl,
         baseUrl,
+        note: "URL and all query parameters are preserved via encodeURIComponent"
       });
       return proxyUrl;
     } catch (error) {
@@ -57,9 +63,25 @@ function proxyMediaUrlIfNeeded(url: string): string {
 /**
  * Sanitize a media URL - handle encoded spaces and special characters
  * Ayrshare doesn't handle %20 and other encoded chars well in some cases
+ * 
+ * CRITICAL: Don't modify Lunary OG image URLs - they have specific query parameters
+ * that must be preserved exactly as-is to generate the correct image.
  */
 function sanitizeMediaUrl(url: string): string | null {
   try {
+    // CRITICAL FIX: Don't sanitize Lunary OG image URLs - preserve them exactly
+    // Lunary URLs have specific query parameters that must not be modified
+    if (url.includes(LUNARY_OG_IDENTIFIER)) {
+      // Just validate it's a well-formed URL, but don't modify it
+      try {
+        new URL(url);
+        return url; // Return original URL unchanged
+      } catch {
+        console.error(`❌ Invalid Lunary URL: ${url}`);
+        return null;
+      }
+    }
+
     // Try to decode and re-encode to normalize
     let decoded = url;
     try {
