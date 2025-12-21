@@ -824,11 +824,25 @@ export const handleStandardPost = async (postData: PostData) => {
                     `TWITTER: ${error.message} Auto-threading should have been enabled - this may indicate a configuration issue.`
                   );
                 } else if (error.platform === "tiktok") {
-                  postErrors.push(
-                    `TIKTOK: ${error.message} (Code: ${
+                  // Enhanced TikTok error handling
+                  let errorMessage = error.message;
+                  if (
+                    error.code === 398 ||
+                    error.message?.includes("aspect ratio") ||
+                    error.message?.includes("square")
+                  ) {
+                    errorMessage = `TikTok does not allow square images. Use a rectangular (portrait) image instead. If using Lunary OG images, use format=portrait or format=landscape, not format=square.`;
+                  } else if (
+                    error.code === 272 ||
+                    error.message?.includes("authorization")
+                  ) {
+                    errorMessage = `TikTok account authorization expired. Please reconnect your TikTok account at https://app.ayrshare.com/social-accounts`;
+                  } else {
+                    errorMessage = `${error.message} (Code: ${
                       error.code || "N/A"
-                    }) - Check if TikTok account is properly connected at https://app.ayrshare.com/social-accounts`
-                  );
+                    }) - Check if TikTok account is properly connected at https://app.ayrshare.com/social-accounts`;
+                  }
+                  postErrors.push(`TIKTOK: ${errorMessage}`);
                 } else {
                   postErrors.push(
                     `${error.platform.toUpperCase()}: ${error.message} (Code: ${
