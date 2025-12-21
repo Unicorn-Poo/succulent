@@ -36,14 +36,14 @@ function proxyMediaUrlIfNeeded(url: string): string {
       const encodedUrl = encodeURIComponent(url); // This preserves all query params
       // Use path-based URL with extension instead of query param for Instagram compatibility
       const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
-      
+
       // Log to verify URL is preserved correctly
       console.log("✅ [PROXY CREATED - LUNARY]", {
         original: url,
         originalQueryParams: url.includes("?") ? url.split("?")[1] : "none",
         proxy: proxyUrl,
         baseUrl,
-        note: "URL and all query parameters are preserved via encodeURIComponent"
+        note: "URL and all query parameters are preserved via encodeURIComponent",
       });
       return proxyUrl;
     } catch (error) {
@@ -63,7 +63,7 @@ function proxyMediaUrlIfNeeded(url: string): string {
 /**
  * Sanitize a media URL - handle encoded spaces and special characters
  * Ayrshare doesn't handle %20 and other encoded chars well in some cases
- * 
+ *
  * CRITICAL: Don't modify Lunary OG image URLs - they have specific query parameters
  * that must be preserved exactly as-is to generate the correct image.
  */
@@ -351,14 +351,30 @@ export const handleStandardPost = async (postData: PostData) => {
     // First normalize (proxy Lunary URLs, deduplicate)
     const normalizedUrls = normalizeMediaUrls(cleanedBody.mediaUrls);
 
+    // Log Lunary URLs before validation to verify they're preserved
+    const lunaryUrlsBeforeValidation = normalizedUrls.filter((url) =>
+      url.includes("lunary.app/api/og/")
+    );
+    if (lunaryUrlsBeforeValidation.length > 0) {
+      console.log("🔍 [AYRSHARE API] Lunary URLs before validation:", {
+        count: lunaryUrlsBeforeValidation.length,
+        urls: lunaryUrlsBeforeValidation.map((url) => ({
+          url: url,
+          queryParams: url.includes("?") ? url.split("?")[1] : "none",
+          isProxyUrl: url.includes("/api/convert-media-url/"),
+        })),
+      });
+    }
+
     // Then validate URLs are properly formatted and accessible
+    // CRITICAL: new URL() validation doesn't modify the URL - it just checks format
     const validMediaUrls = normalizedUrls.filter((url: string) => {
       if (typeof url !== "string") return false;
       if (!url.startsWith("http://") && !url.startsWith("https://"))
         return false;
-      // Ensure URL is properly encoded
+      // Ensure URL is properly encoded - this validation doesn't modify the URL
       try {
-        new URL(url);
+        new URL(url); // Just validates, doesn't modify
         return true;
       } catch {
         return false;
@@ -378,6 +394,26 @@ export const handleStandardPost = async (postData: PostData) => {
 
     cleanedBody.mediaUrls =
       validMediaUrls.length > 0 ? validMediaUrls : undefined;
+
+    // Log final URLs being sent to Ayrshare
+    if (cleanedBody.mediaUrls && cleanedBody.mediaUrls.length > 0) {
+      const lunaryUrlsFinal = cleanedBody.mediaUrls.filter((url) =>
+        url.includes("lunary.app/api/og/")
+      );
+      if (lunaryUrlsFinal.length > 0) {
+        console.log(
+          "✅ [AYRSHARE API] Final Lunary URLs being sent to Ayrshare:",
+          {
+            count: lunaryUrlsFinal.length,
+            urls: lunaryUrlsFinal.map((url) => ({
+              url: url,
+              queryParams: url.includes("?") ? url.split("?")[1] : "none",
+              note: "These URLs will be fetched by Ayrshare through our proxy endpoint",
+            })),
+          }
+        );
+      }
+    }
   }
 
   // Add twitterOptions back if we have Twitter and they were filtered out

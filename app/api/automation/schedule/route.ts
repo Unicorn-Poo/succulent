@@ -209,17 +209,27 @@ export async function POST(request: NextRequest) {
 
     // Add media if provided
     if (mediaUrls && mediaUrls.length > 0) {
-      // Validate and clean media URLs
+      // CRITICAL: Don't decode URLs - preserve them exactly as-is
+      // Lunary OG image URLs have specific query parameters that must not be modified
+      // Decoding can corrupt query parameters (e.g., + becomes space, then %20)
       const cleanMediaUrls = mediaUrls
         .filter(url => url && typeof url === 'string')
         .map(url => {
-          // Decode any URL-encoded characters
-          try {
-            return decodeURIComponent(url);
-          } catch {
-            return url;
-          }
+          // Just trim whitespace, but don't decode - preserve URL exactly as-is
+          return url.trim();
         });
+      
+      // Log Lunary URLs to verify they're preserved
+      const lunaryUrls = cleanMediaUrls.filter(url => url.includes('lunary.app/api/og/'));
+      if (lunaryUrls.length > 0) {
+        console.log("🔍 [SCHEDULE API] Preserving Lunary URLs exactly as-is:", {
+          count: lunaryUrls.length,
+          urls: lunaryUrls.map(url => ({
+            original: url,
+            queryParams: url.includes("?") ? url.split("?")[1] : "none"
+          }))
+        });
+      }
       
       if (cleanMediaUrls.length > 0) {
         postPayload.mediaUrls = cleanMediaUrls;
