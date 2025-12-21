@@ -34,7 +34,7 @@ export const PLATFORM_CHARACTER_LIMITS = {
 	facebook: 63206,
 	linkedin: 3000,
 	youtube: 5000,
-	threads: 500,
+	threads: 10000,
 	bluesky: 300,
 	tiktok: 2200,
 	pinterest: 500,

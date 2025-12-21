@@ -143,8 +143,8 @@ export const validatePostContent = (content: string, platform: string) => {
 			}
 			break;
 		case 'threads':
-			if (content.length > 500) {
-				errors.push('Threads posts cannot exceed 500 characters');
+			if (content.length > 10000) {
+				errors.push('Threads posts cannot exceed 10,000 characters');
 			}
 			break;
 		case 'youtube':
