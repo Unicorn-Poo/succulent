@@ -123,8 +123,8 @@ export const validatePostContent = (content: string, platform: string) => {
 			}
 			break;
 		case 'tiktok':
-			if (content.length > 150) {
-				errors.push('TikTok posts cannot exceed 150 characters');
+			if (content.length > 2200) {
+				errors.push('TikTok posts cannot exceed 2,200 characters');
 			}
 			break;
 		case 'pinterest':

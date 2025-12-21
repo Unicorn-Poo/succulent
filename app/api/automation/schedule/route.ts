@@ -44,7 +44,9 @@ const PLATFORM_OPTIMAL_HOURS: Record<string, number[]> = {
 function getOptimalSlots(platform: string, daysAhead: number = 7): Date[] {
   const slots: Date[] = [];
   const now = new Date();
-  const hours = PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [9, 12, 17, 20];
+  const hours = PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [
+    9, 12, 17, 20,
+  ];
 
   for (let day = 0; day < daysAhead; day++) {
     for (const hour of hours) {
@@ -71,11 +73,11 @@ function calculateOptimalTime(
   avoidSlots: string[] = []
 ): OptimalTimeResult {
   const allSlots = getOptimalSlots(platform, 14); // Look 2 weeks ahead
-  const avoidSet = new Set(avoidSlots.map(s => new Date(s).toISOString()));
+  const avoidSet = new Set(avoidSlots.map((s) => new Date(s).toISOString()));
 
   // Filter out taken slots
   const availableSlots = allSlots.filter(
-    slot => !avoidSet.has(slot.toISOString())
+    (slot) => !avoidSet.has(slot.toISOString())
   );
 
   if (availableSlots.length === 0) {
@@ -83,14 +85,21 @@ function calculateOptimalTime(
     const fallback = new Date();
     fallback.setDate(fallback.getDate() + 1);
     fallback.setHours(12, 0, 0, 0);
-    return { scheduledTime: fallback, reason: "Fallback slot - all optimal times taken" };
+    return {
+      scheduledTime: fallback,
+      reason: "Fallback slot - all optimal times taken",
+    };
   }
 
-  const selectedSlot = availableSlots[Math.min(slotIndex, availableSlots.length - 1)];
-  
-  const dayName = selectedSlot.toLocaleDateString('en-US', { weekday: 'long' });
-  const timeStr = selectedSlot.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  
+  const selectedSlot =
+    availableSlots[Math.min(slotIndex, availableSlots.length - 1)];
+
+  const dayName = selectedSlot.toLocaleDateString("en-US", { weekday: "long" });
+  const timeStr = selectedSlot.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
   return {
     scheduledTime: selectedSlot,
     reason: `Optimal time for ${platform}: ${dayName} at ${timeStr}`,
@@ -131,45 +140,59 @@ export async function POST(request: NextRequest) {
     if (!content?.trim()) {
       console.error("❌ [SCHEDULE API] Missing content");
       return NextResponse.json(
-        { error: "Content is required", details: "Post content cannot be empty" },
+        {
+          error: "Content is required",
+          details: "Post content cannot be empty",
+        },
         { status: 400 }
       );
     }
-    
+
     if (!platform) {
       console.error("❌ [SCHEDULE API] Missing platform");
       return NextResponse.json(
-        { error: "Platform is required", details: "Specify which platform to post to" },
+        {
+          error: "Platform is required",
+          details: "Specify which platform to post to",
+        },
         { status: 400 }
       );
     }
 
     // Platform-specific validation
     const platformLower = platform.toLowerCase();
-    
+
     // Platforms that REQUIRE media
     const mediaRequiredPlatforms = ["pinterest", "tiktok", "instagram"];
-    if (mediaRequiredPlatforms.includes(platformLower) && (!mediaUrls || mediaUrls.length === 0)) {
-      const platformName = platformLower.charAt(0).toUpperCase() + platformLower.slice(1);
+    if (
+      mediaRequiredPlatforms.includes(platformLower) &&
+      (!mediaUrls || mediaUrls.length === 0)
+    ) {
+      const platformName =
+        platformLower.charAt(0).toUpperCase() + platformLower.slice(1);
       return NextResponse.json(
-        { 
-          error: `${platformName} requires an image`, 
+        {
+          error: `${platformName} requires an image`,
           details: `Add at least one image URL to post to ${platformName}. This is a platform requirement.`,
           requiresMedia: true,
-          platform: platformLower
+          platform: platformLower,
         },
         { status: 400 }
       );
     }
     if (platformLower === "youtube") {
       return NextResponse.json(
-        { error: "YouTube requires video upload", details: "Use the main post creator with video upload for YouTube" },
+        {
+          error: "YouTube requires video upload",
+          details: "Use the main post creator with video upload for YouTube",
+        },
         { status: 400 }
       );
     }
 
     // Get API key
-    const apiKey = process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
+    const apiKey =
+      process.env.AYRSHARE_API_KEY || process.env.NEXT_PUBLIC_AYRSHARE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "Ayrshare API key not configured" },
@@ -213,24 +236,26 @@ export async function POST(request: NextRequest) {
       // Lunary OG image URLs have specific query parameters that must not be modified
       // Decoding can corrupt query parameters (e.g., + becomes space, then %20)
       const cleanMediaUrls = mediaUrls
-        .filter(url => url && typeof url === 'string')
-        .map(url => {
+        .filter((url) => url && typeof url === "string")
+        .map((url) => {
           // Just trim whitespace, but don't decode - preserve URL exactly as-is
           return url.trim();
         });
-      
+
       // Log Lunary URLs to verify they're preserved
-      const lunaryUrls = cleanMediaUrls.filter(url => url.includes('lunary.app/api/og/'));
+      const lunaryUrls = cleanMediaUrls.filter((url) =>
+        url.includes("lunary.app/api/og/")
+      );
       if (lunaryUrls.length > 0) {
         console.log("🔍 [SCHEDULE API] Preserving Lunary URLs exactly as-is:", {
           count: lunaryUrls.length,
-          urls: lunaryUrls.map(url => ({
+          urls: lunaryUrls.map((url) => ({
             original: url,
-            queryParams: url.includes("?") ? url.split("?")[1] : "none"
-          }))
+            queryParams: url.includes("?") ? url.split("?")[1] : "none",
+          })),
         });
       }
-      
+
       if (cleanMediaUrls.length > 0) {
         postPayload.mediaUrls = cleanMediaUrls;
       }
@@ -239,21 +264,23 @@ export async function POST(request: NextRequest) {
     // Platform-specific options
     if (platformLower === "pinterest") {
       postPayload.pinterestOptions = {
-        title: content.split('\n')[0]?.slice(0, 100) || "Pin",
+        title: content.split("\n")[0]?.slice(0, 100) || "Pin",
         // Note: boardId should be set up in Ayrshare dashboard
       };
     }
 
     if (platformLower === "tiktok") {
-      postPayload.tikTokOptions = {
-        // TikTok photo post mode when using images
-        postType: "photo",
+      // CRITICAL FIX: Use lowercase 'tiktokOptions' to match Ayrshare API and rest of codebase
+      // TikTok requires media (video or image), and options are optional
+      postPayload.tiktokOptions = {
+        // TikTok options are optional - Ayrshare will handle media type automatically
+        // Valid options: privacyLevel, disableComment, disableDuet, disableStitch
       };
     }
 
     if (platformLower === "reddit") {
       postPayload.redditOptions = {
-        title: content.split('\n')[0]?.slice(0, 300) || "Post",
+        title: content.split("\n")[0]?.slice(0, 300) || "Post",
         // Subreddit should be configured in Ayrshare dashboard
       };
     }
@@ -345,8 +372,8 @@ export async function GET(request: NextRequest) {
   const count = parseInt(searchParams.get("count") || "10");
 
   const slots = getOptimalSlots(platform, 7);
-  
-  const upcomingSlots = slots.slice(0, count).map(slot => ({
+
+  const upcomingSlots = slots.slice(0, count).map((slot) => ({
     time: slot.toISOString(),
     label: slot.toLocaleString("en-US", {
       weekday: "short",
@@ -361,7 +388,9 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     platform,
-    optimalHours: PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [9, 12, 17, 20],
+    optimalHours: PLATFORM_OPTIMAL_HOURS[platform.toLowerCase()] || [
+      9, 12, 17, 20,
+    ],
     upcomingSlots,
   });
 }
