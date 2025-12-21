@@ -529,8 +529,11 @@ export const handleStandardPost = async (postData: PostData) => {
         result: result,
       });
 
-      // Check for platform-specific issues in successful responses
+      // CRITICAL: Check for platform-specific errors even in "successful" HTTP responses (200 OK)
+      // Ayrshare can return 200 OK but still have errors in result.posts[].errors
       if (result.posts && Array.isArray(result.posts)) {
+        const postErrors: string[] = [];
+
         result.posts.forEach((post: any, index: number) => {
           console.log(`📋 Post ${index + 1} details:`, {
             id: post.id,
@@ -554,7 +557,11 @@ export const handleStandardPost = async (postData: PostData) => {
           }
 
           // Check for platform-specific errors even in "successful" responses
-          if (post.errors && Array.isArray(post.errors)) {
+          if (
+            post.errors &&
+            Array.isArray(post.errors) &&
+            post.errors.length > 0
+          ) {
             post.errors.forEach((error: any) => {
               console.error(`❌ Platform Error in Post ${index + 1}:`, {
                 platform: error.platform,
@@ -597,9 +604,92 @@ export const handleStandardPost = async (postData: PostData) => {
                   );
                 }
               }
+
+              // Collect errors to throw if any found
+              if (error.platform && error.message) {
+                if (error.code === 272) {
+                  postErrors.push(
+                    `${error.platform.toUpperCase()}: Account authorization expired. Please go to https://app.ayrshare.com/social-accounts and reconnect your ${
+                      error.platform
+                    } account.`
+                  );
+                } else if (error.code === 156) {
+                  postErrors.push(
+                    `${error.platform.toUpperCase()}: Account not linked. Please connect your ${
+                      error.platform
+                    } account at https://app.ayrshare.com/social-accounts`
+                  );
+                } else if (error.platform === "tiktok") {
+                  let errorMessage = error.message;
+                  if (
+                    error.code === 398 ||
+                    error.message?.includes("aspect ratio") ||
+                    error.message?.includes("square")
+                  ) {
+                    errorMessage = `TikTok does not allow square images. Use a rectangular (portrait) image instead. If using Lunary OG images, use format=portrait or format=landscape, not format=square.`;
+                  } else if (
+                    error.code === 272 ||
+                    error.message?.includes("authorization")
+                  ) {
+                    errorMessage = `TikTok account authorization expired. Please reconnect your TikTok account at https://app.ayrshare.com/social-accounts`;
+                  } else {
+                    errorMessage = `${error.message} (Code: ${
+                      error.code || "N/A"
+                    }) - Check if TikTok account is properly connected at https://app.ayrshare.com/social-accounts`;
+                  }
+                  postErrors.push(`TIKTOK: ${errorMessage}`);
+                } else {
+                  postErrors.push(
+                    `${error.platform.toUpperCase()}: ${error.message} (Code: ${
+                      error.code || "N/A"
+                    })`
+                  );
+                }
+              }
             });
           }
         });
+
+        // If we found errors in a "successful" response, throw them
+        if (postErrors.length > 0) {
+          console.error(
+            "❌ Post failed despite 200 OK response. Errors:",
+            postErrors
+          );
+          throw new Error(postErrors.join("\n"));
+        }
+      }
+
+      // Also check result.errors array (top-level errors)
+      if (
+        result.errors &&
+        Array.isArray(result.errors) &&
+        result.errors.length > 0
+      ) {
+        const platformErrors = result.errors.map((error: any) => {
+          if (error.platform && error.message) {
+            if (error.code === 272) {
+              return `${error.platform.toUpperCase()}: Account authorization expired. Please go to https://app.ayrshare.com/social-accounts and reconnect your ${
+                error.platform
+              } account.`;
+            }
+            if (error.code === 156) {
+              return `${error.platform.toUpperCase()}: Account not linked. Please connect your ${
+                error.platform
+              } account at https://app.ayrshare.com/social-accounts`;
+            }
+            return `${error.platform.toUpperCase()}: ${error.message}`;
+          }
+          return error.message || "Unknown platform error";
+        });
+
+        if (platformErrors.length > 0) {
+          console.error(
+            "❌ Post failed despite 200 OK response. Top-level errors:",
+            platformErrors
+          );
+          throw new Error(platformErrors.join("\n"));
+        }
       }
 
       // Check for success in different response formats
@@ -735,6 +825,39 @@ export const handleStandardPost = async (postData: PostData) => {
           result.postIds[platform] = postId || result.id;
         });
         console.log("📅 Created postIds for scheduled post:", result.postIds);
+      }
+
+      // CRITICAL: For immediate posts (no scheduleDate), validate we actually have postIds
+      // If Ayrshare returns 200 OK but no postIds for immediate posts, something went wrong
+      if (!postData.scheduleDate && !result.postIds) {
+        console.error(
+          "❌ CRITICAL: Immediate post returned 200 OK but no postIds!"
+        );
+        console.error("❌ This indicates the post was not actually published.");
+        console.error("❌ Response details:", {
+          status: result.status,
+          id: result.id,
+          posts: result.posts,
+          errors: result.errors,
+        });
+
+        // Check if there are any errors we might have missed
+        const hasErrors =
+          (result.errors && result.errors.length > 0) ||
+          (result.posts &&
+            result.posts.some((p: any) => p.errors && p.errors.length > 0));
+
+        if (hasErrors) {
+          // Errors were already handled above, but if we get here, something is wrong
+          throw new Error(
+            "Post failed to publish. Check server logs for details. The post may have been rejected by the platform."
+          );
+        } else {
+          // No errors but also no postIds - this is suspicious
+          throw new Error(
+            "Post request succeeded but no post ID was returned. The post may not have been published. Please check your social media accounts or try again."
+          );
+        }
       }
     }
 
