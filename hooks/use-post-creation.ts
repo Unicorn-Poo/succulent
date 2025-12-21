@@ -118,6 +118,41 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     setPost(post);
   }, [post]);
 
+  // Initialize selectedPlatforms from post variants
+  useEffect(() => {
+    if (post?.variants) {
+      const variantKeys = Object.keys(post.variants);
+      // Always include "base" if it exists, plus any other platform variants
+      const platforms = variantKeys.filter((key) => {
+        // Include base and any valid platform names
+        if (key === "base") return true;
+        // Check if it's a valid platform name
+        return PlatformNames.includes(key as any);
+      });
+
+      // Only update if different to avoid loops
+      if (
+        platforms.length > 0 &&
+        JSON.stringify(platforms.sort()) !==
+          JSON.stringify(selectedPlatforms.sort())
+      ) {
+        console.log(
+          "🔍 Initializing selectedPlatforms from post variants:",
+          platforms
+        );
+        setSelectedPlatforms(platforms);
+      } else if (platforms.length === 0 && selectedPlatforms.length === 0) {
+        // If no variants exist yet, at least include "base"
+        console.log("🔍 No variants found, initializing with base");
+        setSelectedPlatforms(["base"]);
+      }
+    } else if (selectedPlatforms.length === 0) {
+      // If post has no variants at all, initialize with base
+      console.log("🔍 Post has no variants, initializing with base");
+      setSelectedPlatforms(["base"]);
+    }
+  }, [post?.id, post?.variants, selectedPlatforms]); // Include selectedPlatforms to satisfy React Hook rules
+
   // Initialize form state from existing post data
   useEffect(() => {
     if (post?.variants?.base?.scheduledFor) {
@@ -130,7 +165,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         setScheduledDate(existingDate);
       }
     }
-  }, [post?.id]); // Only depend on post ID, not the full post object
+  }, [post?.variants?.base?.scheduledFor, scheduledDate]); // Include all dependencies
 
   // Clean up corrupted variants immediately to prevent Jazz loading errors
   useEffect(() => {
@@ -293,7 +328,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     }
 
     const filtered = allAccounts.filter(([key, account]) => {
-      // Remove 'base' from selectedPlatforms for comparison
+      // Show accounts that are NOT already selected (excluding 'base' from comparison)
       const platformsToMatch = selectedPlatforms.filter((p) => p !== "base");
       const keyMatch = platformsToMatch.includes(key);
       const platformMatch = platformsToMatch.includes(account.platform);
@@ -301,7 +336,8 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         `🔍 Account ${key}:${account.platform} - keyMatch: ${keyMatch}, platformMatch: ${platformMatch}, platformsToMatch:`,
         platformsToMatch
       );
-      return keyMatch || platformMatch;
+      // Return accounts that are NOT already selected
+      return !keyMatch && !platformMatch;
     });
 
     console.log(
