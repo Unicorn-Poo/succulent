@@ -1111,6 +1111,7 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
 
   const mediaUrls: string[] = [];
   const mediaArray = Array.from(variant.media);
+  const baseUrl = resolvePublicBaseUrl().replace(/\/$/, "");
 
   for (const item of mediaArray) {
     const mediaItem = item as any;
@@ -1118,9 +1119,23 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
       const url = mediaItem.url;
       if (
         typeof url === "string" &&
-        (url.startsWith("http://") || url.startsWith("https://"))
+        (url.startsWith("http://") || url.startsWith("https://")) &&
+        !url.startsWith("blob:")
       ) {
         mediaUrls.push(url);
+      }
+      continue;
+    }
+
+    if (mediaItem?.type === "image" || mediaItem?.type === "video") {
+      const fileStream = mediaItem.image || mediaItem.video;
+      const fileStreamId = fileStream?.id;
+      if (
+        typeof fileStreamId === "string" &&
+        fileStreamId.startsWith("co_")
+      ) {
+        const proxyUrl = `${baseUrl}/api/media-proxy/${fileStreamId}`;
+        mediaUrls.push(proxyUrl);
       }
     }
   }

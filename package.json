@@ -12,6 +12,7 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "check": "pnpm type-check && pnpm lint:check",
+    "check:scheduled-media": "node scripts/check-scheduled-media.js",
     "prepare": "husky"
   },
   "lint-staged": {

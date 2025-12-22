@@ -19,12 +19,25 @@ export async function GET(request: NextRequest) {
     if (!variant?.media) return [];
     const mediaUrls: string[] = [];
     const mediaArray = Array.isArray(variant.media) ? variant.media : [];
+    const baseUrl = "https://app.succulent.social";
     for (const item of mediaArray) {
       const mediaItem = item as any;
       if (mediaItem?.type === "url-image" || mediaItem?.type === "url-video") {
         const url = mediaItem.url;
-        if (typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://"))) {
+        if (
+          typeof url === "string" &&
+          (url.startsWith("http://") || url.startsWith("https://")) &&
+          !url.startsWith("blob:")
+        ) {
           mediaUrls.push(url);
+        }
+        continue;
+      }
+      if (mediaItem?.type === "image" || mediaItem?.type === "video") {
+        const fileStream = mediaItem.image || mediaItem.video;
+        const fileStreamId = fileStream?.id;
+        if (typeof fileStreamId === "string" && fileStreamId.startsWith("co_")) {
+          mediaUrls.push(`${baseUrl}/api/media-proxy/${fileStreamId}`);
         }
       }
     }
@@ -44,6 +57,22 @@ export async function GET(request: NextRequest) {
     actual: extracted1,
   });
   if (!test1Pass) results.allPassed = false;
+
+  // Test 1b: Variant with FileStream media
+  const variantWithFileStream = {
+    media: [{ type: "image", image: { id: "co_test123" } }],
+  };
+  const extracted1b = extractMediaUrlsFromVariant(variantWithFileStream);
+  const test1bPass =
+    extracted1b.length === 1 &&
+    extracted1b[0] === "https://app.succulent.social/api/media-proxy/co_test123";
+  results.tests.push({
+    name: "Extract from variant with FileStream media",
+    passed: test1bPass,
+    expected: ["https://app.succulent.social/api/media-proxy/co_test123"],
+    actual: extracted1b,
+  });
+  if (!test1bPass) results.allPassed = false;
 
   // Test 2: Variant without media
   const variantNoMedia = { text: "some text" };
