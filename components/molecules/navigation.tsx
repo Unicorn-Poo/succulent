@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useAccount } from "jazz-tools/react";
+import { useAccount, usePassphraseAuth } from "jazz-tools/react";
 import { MyAppAccount } from "@/app/schema";
 import { Button } from "@/components/atoms/button";
 import { User, Settings, LogOut, Shield, Menu, X } from "lucide-react";
 import { useSubscription } from "@/utils/subscriptionManager";
 import { useAuthModal } from "@/components/organisms/passphrase-ui";
 import { useState, useEffect } from "react";
+import { wordlist } from "@/utils/passphrase-wordlist";
 
 export function Navigation() {
   const { me, logOut } = useAccount(MyAppAccount);
+  const auth = usePassphraseAuth({ wordlist });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const subscription = useSubscription(me);
@@ -36,7 +38,26 @@ export function Navigation() {
 
   const authModal = useAuthModal();
 
-  if (!me) {
+  // Check actual auth state - not just if me exists (Jazz creates anonymous accounts)
+  const isActuallySignedIn = auth.state === "signedIn";
+
+  // Handle sign out - works for both signed in and anonymous accounts
+  const handleSignOut = async () => {
+    try {
+      await logOut();
+      // Clear any Jazz storage to fully reset
+      if (typeof window !== "undefined") {
+        Object.keys(localStorage)
+          .filter((k) => k.includes("jazz"))
+          .forEach((k) => localStorage.removeItem(k));
+      }
+      setShowDropdown(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  if (!isActuallySignedIn) {
     return (
       <nav className="flex items-center justify-between px-4 py-3 sm:p-4 bg-card border-b dark:border-border">
         <div className="flex items-center space-x-4">
@@ -187,7 +208,7 @@ export function Navigation() {
                   )}
 
                   <button
-                    onClick={logOut}
+                    onClick={handleSignOut}
                     className="flex items-center w-full px-4 py-3 text-sm text-foreground hover:bg-muted"
                   >
                     <LogOut size={16} className="mr-3" />
