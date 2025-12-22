@@ -10,7 +10,7 @@ export interface AyrshareLogEntry {
   platform?: string;
   postId?: string;
   ayrsharePostId?: string;
-  status: 'started' | 'success' | 'error' | 'warning';
+  status: "started" | "success" | "error" | "warning";
   data?: any;
   error?: string;
   responseTime?: number;
@@ -25,22 +25,22 @@ export function logAyrshareOperation(entry: AyrshareLogEntry) {
   const logData = {
     ...entry,
     timestamp,
-    service: 'ayrshare',
-    environment: process.env.NODE_ENV || 'development'
+    service: "ayrshare",
+    environment: process.env.NODE_ENV || "development",
   };
 
   // Use different log levels based on status
   switch (entry.status) {
-    case 'error':
+    case "error":
       console.error(`🚨 [AYRSHARE ERROR] ${entry.operation}:`, logData);
       break;
-    case 'warning':
+    case "warning":
       console.warn(`⚠️ [AYRSHARE WARNING] ${entry.operation}:`, logData);
       break;
-    case 'success':
+    case "success":
       console.log(`✅ [AYRSHARE SUCCESS] ${entry.operation}:`, logData);
       break;
-    case 'started':
+    case "started":
       console.log(`🔄 [AYRSHARE STARTED] ${entry.operation}:`, logData);
       break;
     default:
@@ -62,20 +62,24 @@ export function logAyrshareAPICall(
   logAyrshareOperation({
     timestamp: new Date().toISOString(),
     operation: `${operation} - API Request`,
-    status: 'started',
+    status: "started",
     data: {
       url,
       method,
       headers: {
         ...headers,
         // Mask sensitive data
-        'Authorization': headers.Authorization ? `Bearer ${headers.Authorization.slice(-8)}...` : undefined,
-        'Profile-Key': headers['Profile-Key'] ? `${headers['Profile-Key'].slice(0, 8)}...` : undefined
+        Authorization: headers.Authorization
+          ? `Bearer ${headers.Authorization.slice(-8)}...`
+          : undefined,
+        "Profile-Key": headers["Profile-Key"]
+          ? `${headers["Profile-Key"].slice(0, 8)}...`
+          : undefined,
       },
       bodySize: body ? JSON.stringify(body).length : 0,
-      bodyPreview: body ? JSON.stringify(body).substring(0, 500) : undefined
+      bodyPreview: body ? JSON.stringify(body).substring(0, 500) : undefined,
     },
-    requestId
+    requestId,
   });
 }
 
@@ -91,11 +95,11 @@ export function logAyrshareAPIResponse(
   requestId?: string
 ) {
   const isError = status >= 400;
-  
+
   logAyrshareOperation({
     timestamp: new Date().toISOString(),
     operation: `${operation} - API Response`,
-    status: isError ? 'error' : 'success',
+    status: isError ? "error" : "success",
     data: {
       httpStatus: status,
       statusText,
@@ -109,13 +113,15 @@ export function logAyrshareAPIResponse(
       errors: response?.errors,
       platforms: response?.platforms,
       // X/Twitter specific debugging
-      twitterStatus: response?.postIds?.twitter ? 'posted' : 'failed',
+      twitterStatus: response?.postIds?.twitter ? "posted" : "failed",
       twitterId: response?.postIds?.twitter,
-      twitterError: response?.errors?.twitter
+      twitterError: response?.errors?.twitter,
     },
-    error: isError ? response?.message || response?.error || `HTTP ${status}` : undefined,
+    error: isError
+      ? response?.message || response?.error || `HTTP ${status}`
+      : undefined,
     responseTime,
-    requestId
+    requestId,
   });
 }
 
@@ -132,19 +138,19 @@ export function logPlatformPostStatus(
 ) {
   logAyrshareOperation({
     timestamp: new Date().toISOString(),
-    operation: 'Platform Post Status',
+    operation: "Platform Post Status",
     platform,
     postId,
     ayrsharePostId,
-    status: error ? 'error' : 'success',
+    status: error ? "error" : "success",
     data: {
       postStatus: status,
       platform,
       postId,
       ayrsharePostId,
-      ...additionalData
+      ...additionalData,
     },
-    error
+    error,
   });
 }
 
@@ -158,36 +164,36 @@ export function generateRequestId(): string {
 /**
  * Log X/Twitter specific debugging info
  */
-export function logTwitterDebug(
-  operation: string,
-  data: {
-    platforms?: string[];
-    mappedPlatforms?: string[];
-    hasTwitter?: boolean;
-    postLength?: number;
-    needsThreading?: boolean;
-    twitterOptions?: any;
-    scheduledDate?: string;
-    originalPlatforms?: string[];
-    willIncludeTwitter?: boolean;
-  }
-) {
-  logAyrshareOperation({
-    timestamp: new Date().toISOString(),
-    operation: `Twitter Debug - ${operation}`,
-    platform: 'x',
-    status: 'started',
-    data: {
-      ...data,
-      twitterInOriginal: data.platforms?.includes('x') || data.platforms?.includes('twitter'),
-      twitterInMapped: data.mappedPlatforms?.includes('twitter'),
-      platformMapping: data.platforms?.map(p => {
-        const mapped = p === 'x' ? 'twitter' : p;
-        return `${p} -> ${mapped}`;
-      })
-    }
-  });
-}
+// export function logTwitterDebug(
+//   operation: string,
+//   data: {
+//     platforms?: string[];
+//     mappedPlatforms?: string[];
+//     hasTwitter?: boolean;
+//     postLength?: number;
+//     needsThreading?: boolean;
+//     twitterOptions?: any;
+//     scheduledDate?: string;
+//     originalPlatforms?: string[];
+//     willIncludeTwitter?: boolean;
+//   }
+// ) {
+//   logAyrshareOperation({
+//     timestamp: new Date().toISOString(),
+//     operation: `Twitter Debug - ${operation}`,
+//     platform: 'x',
+//     status: 'started',
+//     data: {
+//       ...data,
+//       twitterInOriginal: data.platforms?.includes('x') || data.platforms?.includes('twitter'),
+//       twitterInMapped: data.mappedPlatforms?.includes('twitter'),
+//       platformMapping: data.platforms?.map(p => {
+//         const mapped = p === 'x' ? 'twitter' : p;
+//         return `${p} -> ${mapped}`;
+//       })
+//     }
+//   });
+// }
 
 /**
  * Log post creation workflow
@@ -195,7 +201,7 @@ export function logTwitterDebug(
 export function logPostWorkflow(
   step: string,
   postData: any,
-  status: 'started' | 'success' | 'error',
+  status: "started" | "success" | "error",
   error?: string,
   additionalData?: any
 ) {
@@ -210,8 +216,8 @@ export function logPostWorkflow(
       hasMedia: !!(postData?.mediaUrls?.length || postData?.media?.length),
       isScheduled: !!postData?.scheduleDate || !!postData?.scheduledDate,
       publishImmediately: postData?.publishImmediately,
-      ...additionalData
+      ...additionalData,
     },
-    error
+    error,
   });
 }

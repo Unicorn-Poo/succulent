@@ -13,7 +13,6 @@ import {
   logAyrshareOperation,
   logAyrshareAPICall,
   logAyrshareAPIResponse,
-  logTwitterDebug,
   logPostWorkflow,
   generateRequestId,
 } from "./ayrshareLogger";
@@ -228,16 +227,6 @@ export const handleStandardPost = async (postData: PostData) => {
   // Map platform names for Ayrshare compatibility
   const mappedPlatforms = mapPlatformsForAyrshare(postData.platforms);
 
-  // Enhanced Twitter/X debugging
-  logTwitterDebug("Platform Mapping", {
-    platforms: postData.platforms,
-    mappedPlatforms,
-    hasTwitter: mappedPlatforms.includes("twitter"),
-    postLength: postData.post?.length || 0,
-    twitterOptions: postData.twitterOptions,
-    scheduledDate: postData.scheduleDate,
-  });
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${AYRSHARE_API_KEY}`,
@@ -254,18 +243,6 @@ export const handleStandardPost = async (postData: PostData) => {
   const postLength = postData.post?.length || 0;
   const needsTwitterOptions =
     hasTwitter && !postData.twitterOptions && postLength > 280;
-
-  // Enhanced Twitter debugging with structured logging
-  logTwitterDebug("Threading Analysis", {
-    mappedPlatforms,
-    hasTwitter,
-    postLength,
-    needsThreading: needsTwitterOptions,
-    twitterOptions: postData.twitterOptions,
-    scheduledDate: postData.scheduleDate,
-    originalPlatforms: postData.platforms,
-    willIncludeTwitter: mappedPlatforms.includes("twitter"),
-  });
 
   const requestBody = {
     ...postData,
@@ -308,8 +285,11 @@ export const handleStandardPost = async (postData: PostData) => {
     facebookOptions: postData.facebookOptions,
     // LinkedIn options (Stories)
     linkedinOptions: postData.linkedinOptions,
-    // TikTok options
-    tiktokOptions: postData.tiktokOptions,
+    // TikTok options - ensure posts are public by default
+    // Private/friends-only posts may stay in pending status and never publish
+    tiktokOptions: postData.tiktokOptions || {
+      privacyLevel: "PUBLIC_TO_EVERYONE", // Default to public to ensure posts are visible
+    },
     // YouTube options (Shorts)
     youtubeOptions: postData.youtubeOptions,
   };
@@ -468,7 +448,6 @@ export const handleStandardPost = async (postData: PostData) => {
 
   // Removed pre-publish duplicate checking - let Ayrshare handle duplicates naturally
 
-  // Enhanced logging for Twitter debugging
   console.log("🚀 SENDING TO AYRSHARE API:", {
     url: `${AYRSHARE_API_URL}/post`,
     method: "POST",
@@ -499,6 +478,35 @@ export const handleStandardPost = async (postData: PostData) => {
     cleanedBody,
     requestId
   );
+
+  // CRITICAL: Pre-validate TikTok posts for square images before sending
+  // This prevents silent failures where Ayrshare accepts the post but TikTok rejects it
+  if (
+    mappedPlatforms.includes("tiktok") &&
+    Array.isArray(cleanedBody.mediaUrls) &&
+    cleanedBody.mediaUrls.length > 0
+  ) {
+    const hasSquareImage = cleanedBody.mediaUrls.some((url: string) => {
+      // Check if URL indicates square format (Lunary OG images)
+      try {
+        const decodedUrl = decodeURIComponent(url);
+        return (
+          decodedUrl.includes("format=square") ||
+          url.includes("format%3Dsquare")
+        );
+      } catch {
+        // If decoding fails, just check the original URL
+        return url.includes("format=square") || url.includes("format%3Dsquare");
+      }
+    });
+
+    if (hasSquareImage) {
+      const errorMsg =
+        "TIKTOK: Cannot post square images to TikTok. TikTok requires rectangular (portrait) images. Please use format=portrait or format=landscape for your Lunary OG image, not format=square.";
+      console.error("❌ Pre-validation failed:", errorMsg);
+      throw new Error(errorMsg);
+    }
+  }
 
   try {
     const startTime = Date.now();
@@ -542,19 +550,6 @@ export const handleStandardPost = async (postData: PostData) => {
               post.platforms || post.postIds || mappedPlatforms.join(", "),
             errors: post.errors || "None",
           });
-
-          // Specific Twitter debugging
-          if (post.platforms && (post.platforms.twitter || post.platforms.x)) {
-            console.log(`🐦 TWITTER RESULT for Post ${index + 1}:`, {
-              twitterResult: post.platforms.twitter || post.platforms.x,
-              twitterStatus:
-                post.platforms.twitter?.status || post.platforms.x?.status,
-              twitterId:
-                post.platforms.twitter?.postId || post.platforms.x?.postId,
-              twitterUrl:
-                post.platforms.twitter?.postUrl || post.platforms.x?.postUrl,
-            });
-          }
 
           // Check for platform-specific errors even in "successful" responses
           if (
@@ -703,39 +698,6 @@ export const handleStandardPost = async (postData: PostData) => {
         Object.entries(result.postIds).forEach(([platform, id]) => {
           console.log(`✅ ${platform.toUpperCase()}: ${id}`);
         });
-
-        // Specific Twitter success check
-        if (result.postIds.twitter) {
-          console.log(
-            "🐦 ✅ TWITTER SUCCESS - Post ID:",
-            result.postIds.twitter
-          );
-        } else {
-          console.log("🐦 ❌ TWITTER NOT IN SUCCESS LIST");
-          console.log(
-            "🐦 Available platforms in postIds:",
-            Object.keys(result.postIds)
-          );
-          console.log(
-            "🐦 Expected Twitter based on request platforms:",
-            mappedPlatforms.includes("twitter")
-          );
-          console.log("🐦 Original platforms sent:", postData.platforms);
-          console.log("🐦 Mapped platforms sent:", mappedPlatforms);
-
-          // If we expected Twitter but didn't get it, this is the core issue
-          if (mappedPlatforms.includes("twitter")) {
-            console.error(
-              "🐦 🚨 CRITICAL: Twitter was requested but not in successful posts"
-            );
-            console.error(
-              "🐦 This indicates a Twitter-specific posting failure"
-            );
-            console.error(
-              "🐦 Check: 1) Twitter account connection 2) Profile key permissions 3) Ayrshare account limits"
-            );
-          }
-        }
       } else if (result.id && result.status === "scheduled") {
         // Scheduled posts return single ID and status
         console.log("📅 Scheduled Post Created:", result.id);
@@ -759,12 +721,32 @@ export const handleStandardPost = async (postData: PostData) => {
           statusType: typeof post.status,
           hasErrors: !!post.errors,
           errors: post.errors,
+          hasPostIds: !!post.postIds,
+          postIds: post.postIds,
           shouldSucceed:
             post.status === "scheduled" ||
             post.status === "success" ||
             !post.errors,
         });
         postId = post.id;
+
+        // Check if post has postIds array with pending status
+        let hasPendingPostIds = false;
+        if (post.postIds && Array.isArray(post.postIds)) {
+          hasPendingPostIds = post.postIds.some(
+            (p: any) => p.id === "pending" || p.status === "pending"
+          );
+          if (hasPendingPostIds) {
+            console.warn("⚠️ Post has pending IDs - still processing:", {
+              postIds: post.postIds,
+              platforms: post.postIds.map((p: any) => ({
+                platform: p.platform,
+                id: p.id,
+                status: p.status,
+              })),
+            });
+          }
+        }
 
         // For scheduled posts or successful posts, assume success for all requested platforms
         if (
@@ -773,10 +755,123 @@ export const handleStandardPost = async (postData: PostData) => {
           !post.errors
         ) {
           successPlatforms = mappedPlatforms;
-          console.log(
-            "🐦 ✅ TWITTER SUCCESS (from posts array) - Post ID:",
-            post.id
-          );
+
+          // CRITICAL: For immediate posts with status "success", create postIds from the post ID
+          // Ayrshare sometimes returns immediate posts in posts array format without postIds object
+          if (!postData.scheduleDate && post.status === "success" && post.id) {
+            // Check if we should use postIds from the post object or create from post.id
+            if (
+              post.postIds &&
+              Array.isArray(post.postIds) &&
+              post.postIds.length > 0
+            ) {
+              // Use the postIds from the post object (more accurate)
+              result.postIds = {};
+              let hasPendingIds = false;
+
+              post.postIds.forEach((p: any) => {
+                if (p.platform) {
+                  // Check if this platform has a pending ID
+                  if (p.id === "pending" || p.status === "pending") {
+                    hasPendingIds = true;
+                    console.warn(
+                      `⚠️ Platform ${p.platform} has pending ID - post is still processing`
+                    );
+
+                    // For TikTok, check if we have tikTokId or idShare (share URL)
+                    // These indicate the post was accepted and is processing
+                    if (p.platform === "tiktok") {
+                      const tikTokId = post.tikTokId || p.idShare;
+                      if (tikTokId && tikTokId.startsWith("p_pub_url")) {
+                        // TikTok share URL indicates post is processing but accepted
+                        result.postIds[p.platform] = tikTokId;
+                        console.log(
+                          `✅ Using TikTok share URL as ID: ${tikTokId}`
+                        );
+                      } else {
+                        // Fallback to main post.id
+                        result.postIds[p.platform] = post.id;
+                      }
+                    } else {
+                      // For other platforms, use idShare or post.id as fallback
+                      const fallbackId = p.idShare || post.id;
+                      result.postIds[p.platform] = fallbackId;
+                    }
+                  } else {
+                    // Use the actual ID from postIds array
+                    result.postIds[p.platform] = p.id || post.id;
+                  }
+                }
+              });
+
+              if (hasPendingIds) {
+                result._hasPendingPosts = true;
+                // Check if we have a TikTok share URL (indicates post was accepted)
+                const hasTikTokShareUrl =
+                  post.tikTokId && post.tikTokId.startsWith("p_pub_url");
+
+                // Check if any TikTok-specific errors might be present
+                const tiktokPostId = post.postIds?.find(
+                  (p: any) => p.platform === "tiktok"
+                );
+                const hasSquareImageError = postData.mediaUrls?.some(
+                  (url: string) => {
+                    // Check if URL indicates square format
+                    return (
+                      url.includes("format=square") ||
+                      url.includes("format%3Dsquare")
+                    );
+                  }
+                );
+
+                if (hasSquareImageError) {
+                  // Square image detected - this will definitely fail
+                  result._hasPendingPosts = false; // Not pending, it's a failure
+                  throw new Error(
+                    "TIKTOK: The image you're using is square format. TikTok does not allow square images. Please use a rectangular (portrait) image instead. If using Lunary OG images, change format=square to format=portrait or format=landscape."
+                  );
+                } else if (hasTikTokShareUrl) {
+                  // Has share URL but still pending - might be processing or might have failed
+                  // After 15+ minutes, this likely indicates a failure
+                  result._pendingWarning =
+                    "Post was accepted by TikTok but is taking longer than expected to process. If it's been more than 10 minutes, the post may have failed. Please check: 1) Your TikTok account at https://app.ayrshare.com/social-accounts is properly connected, 2) Your TikTok account isn't restricted, 3) The video meets TikTok requirements (9:16 aspect ratio, under 500MB, 5 seconds to 10 minutes). You can also check your TikTok account directly to see if the post appears there.";
+                } else {
+                  // No share URL and pending - likely failed
+                  result._pendingWarning =
+                    "Post is still processing on TikTok, but this may indicate a failure. Please check: 1) Your TikTok account connection at https://app.ayrshare.com/social-accounts, 2) Your account isn't restricted, 3) Video format requirements are met. Common issues: account not properly linked, account restrictions, or video format problems.";
+                }
+                console.warn(
+                  "⚠️ Post has pending IDs - TikTok is still processing the upload"
+                );
+              }
+
+              console.log(
+                "✅ Created postIds from post.postIds array:",
+                result.postIds
+              );
+            } else {
+              // Fallback: Create postIds object mapping all platforms to this post ID
+              result.postIds = {};
+              mappedPlatforms.forEach((platform) => {
+                result.postIds[platform] = post.id;
+              });
+              console.log(
+                "✅ Created postIds for immediate post from posts array:",
+                result.postIds
+              );
+            }
+          }
+
+          // If post has pending IDs, add a warning to the result
+          if (hasPendingPostIds) {
+            result._hasPendingPosts = true;
+            result._pendingWarning =
+              "Post is still processing. It may take a few minutes to appear on the platform.";
+            console.warn(
+              "⚠️ Post is still processing - some platforms may have pending IDs"
+            );
+          }
+
           console.log("📅 Post status:", post.status);
         } else {
           console.log("❌ Post not marked as successful:", {
@@ -789,6 +884,8 @@ export const handleStandardPost = async (postData: PostData) => {
 
       // Fallback: If we have a successful response (200) but no success platforms detected,
       // and the response shows success/scheduled status, mark as successful
+      // BUT: Only use fallback for scheduled posts, not immediate posts
+      // For immediate posts, we MUST have postIds to confirm success
       if (
         response.ok &&
         successPlatforms.length === 0 &&
@@ -796,14 +893,32 @@ export const handleStandardPost = async (postData: PostData) => {
           result.status === "scheduled" ||
           (result.posts && result.posts.length > 0 && result.posts[0].id))
       ) {
-        console.log("🔄 Fallback success detection triggered");
-        successPlatforms = mappedPlatforms;
-        postId =
-          result.id || (result.posts && result.posts[0] && result.posts[0].id);
-        console.log(
-          "🐦 ✅ TWITTER SUCCESS (fallback detection) - Post ID:",
-          postId
-        );
+        // Only use fallback for scheduled posts
+        if (postData.scheduleDate) {
+          console.log(
+            "🔄 Fallback success detection triggered (scheduled post)"
+          );
+          successPlatforms = mappedPlatforms;
+          postId =
+            result.id ||
+            (result.posts && result.posts[0] && result.posts[0].id);
+          console.log("📅 Scheduled post detected - Post ID:", postId);
+        } else {
+          // For immediate posts, if we don't have postIds, this is a problem
+          console.error(
+            "❌ CRITICAL: Immediate post has no postIds but fallback would mark as success"
+          );
+          console.error(
+            "❌ This should not happen - immediate posts must have postIds"
+          );
+          console.error("❌ Response:", {
+            status: result.status,
+            id: result.id,
+            posts: result.posts,
+            postIds: result.postIds,
+            requestedPlatforms: mappedPlatforms,
+          });
+        }
       }
 
       // Final platform summary
@@ -816,6 +931,115 @@ export const handleStandardPost = async (postData: PostData) => {
       );
       console.log("  - Post ID:", postId || result.id || "None");
       console.log("  - Status:", result.status || "Unknown");
+      console.log(
+        "  - Actual postIds from Ayrshare:",
+        result.postIds || "None"
+      );
+
+      // CRITICAL: Validate that all requested platforms are in the success response
+      // For immediate posts, check if all platforms have postIds
+      if (!postData.scheduleDate) {
+        if (result.postIds) {
+          // We have postIds - validate all requested platforms are present
+          const requestedPlatforms = new Set(mappedPlatforms);
+          const successfulPlatforms = new Set(Object.keys(result.postIds));
+          const missingPlatforms = mappedPlatforms.filter(
+            (platform) => !result.postIds[platform]
+          );
+
+          console.log("🔍 Platform validation:", {
+            requested: Array.from(requestedPlatforms),
+            successful: Array.from(successfulPlatforms),
+            missing: missingPlatforms,
+            postIds: result.postIds,
+          });
+
+          if (missingPlatforms.length > 0) {
+            console.error("❌ CRITICAL: Some platforms were not published:", {
+              requested: Array.from(requestedPlatforms),
+              successful: Array.from(successfulPlatforms),
+              missing: missingPlatforms,
+              postIds: result.postIds,
+            });
+
+            // Check if there are errors for the missing platforms
+            const missingPlatformErrors: string[] = [];
+            if (result.posts && Array.isArray(result.posts)) {
+              result.posts.forEach((post: any) => {
+                if (post.errors && Array.isArray(post.errors)) {
+                  post.errors.forEach((error: any) => {
+                    // Map Ayrshare platform names back to internal names for comparison
+                    const errorPlatform =
+                      error.platform === "twitter" ? "x" : error.platform;
+                    if (
+                      error.platform &&
+                      missingPlatforms.includes(errorPlatform)
+                    ) {
+                      if (error.code === 272) {
+                        missingPlatformErrors.push(
+                          `${error.platform.toUpperCase()}: Account authorization expired. Please reconnect at https://app.ayrshare.com/social-accounts`
+                        );
+                      } else if (error.code === 156) {
+                        missingPlatformErrors.push(
+                          `${error.platform.toUpperCase()}: Account not linked. Please connect at https://app.ayrshare.com/social-accounts`
+                        );
+                      } else if (
+                        error.platform === "tiktok" &&
+                        (error.code === 398 ||
+                          error.message?.includes("aspect ratio") ||
+                          error.message?.includes("square"))
+                      ) {
+                        missingPlatformErrors.push(
+                          `TIKTOK: Image aspect ratio error - TikTok does not allow square images. Use a rectangular (portrait) image instead. If using Lunary OG images, use format=portrait or format=landscape, not format=square.`
+                        );
+                      } else {
+                        missingPlatformErrors.push(
+                          `${error.platform.toUpperCase()}: ${
+                            error.message
+                          } (Code: ${error.code || "N/A"})`
+                        );
+                      }
+                    }
+                  });
+                }
+              });
+            }
+
+            if (missingPlatformErrors.length > 0) {
+              throw new Error(
+                `Post partially failed. Some platforms were not published:\n${missingPlatformErrors.join(
+                  "\n"
+                )}`
+              );
+            } else {
+              throw new Error(
+                `Post partially failed. The following platforms were not published: ${missingPlatforms.join(
+                  ", "
+                )}. Check your Ayrshare account connections at https://app.ayrshare.com/social-accounts`
+              );
+            }
+          }
+        } else {
+          // No postIds for immediate post - this is a problem
+          console.error(
+            "❌ CRITICAL: Immediate post returned 200 OK but no postIds!"
+          );
+          console.error(
+            "❌ This indicates the post was not actually published."
+          );
+          console.error("❌ Response details:", {
+            status: result.status,
+            id: result.id,
+            posts: result.posts,
+            errors: result.errors,
+            requestedPlatforms: mappedPlatforms,
+          });
+
+          throw new Error(
+            "Post request succeeded but no post ID was returned. The post may not have been published. Please check your social media accounts or try again."
+          );
+        }
+      }
 
       // Create proper response format for scheduled posts
       if (successPlatforms.length > 0 && !result.postIds) {

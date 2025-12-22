@@ -315,10 +315,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
             status: account.status || "linked",
           };
 
-          console.log(
-            `🔍 Available account: platform=${platform}, data=`,
-            accountData
-          );
           return [platform, accountData];
         });
       } else {
@@ -332,10 +328,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       const platformsToMatch = selectedPlatforms.filter((p) => p !== "base");
       const keyMatch = platformsToMatch.includes(key);
       const platformMatch = platformsToMatch.includes(account.platform);
-      console.log(
-        `🔍 Account ${key}:${account.platform} - keyMatch: ${keyMatch}, platformMatch: ${platformMatch}, platformsToMatch:`,
-        platformsToMatch
-      );
       // Return accounts that are NOT already selected
       return !keyMatch && !platformMatch;
     });
@@ -345,10 +337,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       allAccounts.map(([key, account]) => `${key}:${account.platform}`)
     );
     console.log("🔍 Selected platforms:", selectedPlatforms);
-    console.log(
-      "🔍 Available accounts after filtering:",
-      filtered.map(([key, account]) => `${key}:${account.platform}`)
-    );
 
     return filtered;
   }, [accountGroup.accounts, selectedPlatforms]);
@@ -692,7 +680,15 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         results = await handleStandardPost(basePostData);
       }
 
-      setSuccess("Post published successfully!");
+      // Check if post is still processing (has pending IDs)
+      if (results?._hasPendingPosts) {
+        setSuccess(
+          results._pendingWarning ||
+            "Post is still processing. It may take a few minutes to appear on the platform."
+        );
+      } else {
+        setSuccess("Post published successfully!");
+      }
     } catch (error) {
       // Check if this is a platform authorization error
       const errorMessage =

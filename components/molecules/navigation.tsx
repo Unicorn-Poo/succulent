@@ -73,9 +73,9 @@ export function Navigation() {
           </Link>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4">
-          <Button 
-            variant="outline" 
-            size="1" 
+          <Button
+            variant="outline"
+            size="1"
             className="sm:text-base"
             onClick={() => authModal?.setShowAuthModal(true)}
           >
