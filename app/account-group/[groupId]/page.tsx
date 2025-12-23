@@ -1,6 +1,11 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+  usePathname,
+} from "next/navigation";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Dialog,
   TextField,
@@ -80,9 +85,16 @@ import { useUnreadMessages } from "@/hooks/use-unread-messages";
 import { Badge } from "@radix-ui/themes";
 // import SmartTitleInput from "@/components/organisms/smart-title-input";
 
+const normalizePlatformKey = (platform: string) =>
+  platform?.toString().toLowerCase().trim();
+
 export default function AccountGroupPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const searchKey = searchParams.toString();
+  const lastSyncedSearchKey = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.replace("#", "");
@@ -225,27 +237,7 @@ export default function AccountGroupPage() {
     1800000
   );
 
-  if (!accountGroup) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Account Group Not Found
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            The account group you&apos;re looking for doesn&apos;t exist.
-          </p>
-          <Link href="/">
-            <Button>
-              <Home className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const isMissingAccountGroup = !accountGroup;
 
   const safeArrayAccess = (collaborativeArray: any): any[] => {
     try {
@@ -353,6 +345,58 @@ export default function AccountGroupPage() {
 
   const accounts = getAccountsArray();
   const posts = getPostsArray();
+  const listQuery = searchKey;
+  const validPostsFilters = useMemo(
+    () => ["all", "draft", "scheduled", "published"] as const,
+    []
+  );
+  const validPostViews: PostViewType[] = useMemo(
+    () => ["grid", "image", "succinct"],
+    []
+  );
+  const updateFilterParams = useCallback(
+    (
+      nextPostsFilter: (typeof validPostsFilters)[number],
+      nextPlatformFilter: string[]
+    ) => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextPostsFilter === "all") {
+        nextParams.delete("status");
+      } else {
+        nextParams.set("status", nextPostsFilter);
+      }
+
+      if (nextPlatformFilter.length === 0) {
+        nextParams.delete("platforms");
+      } else {
+        nextParams.set("platforms", nextPlatformFilter.join(","));
+      }
+
+      const hash = typeof window !== "undefined" ? window.location.hash : "";
+      const query = nextParams.toString();
+      router.replace(`${pathname}${query ? `?${query}` : ""}${hash}`, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
+  const handlePostViewChange = useCallback(
+    (nextView: PostViewType) => {
+      setPostView(nextView);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextView === "grid") {
+        nextParams.delete("view");
+      } else {
+        nextParams.set("view", nextView);
+      }
+      const hash = typeof window !== "undefined" ? window.location.hash : "";
+      const query = nextParams.toString();
+      router.replace(`${pathname}${query ? `?${query}` : ""}${hash}`, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
 
   // Transform accounts to the format expected by analytics components
   const transformedAccounts = accounts.map((account: any) => ({
@@ -365,10 +409,27 @@ export default function AccountGroupPage() {
   }));
 
   // Extract connected platforms for post views
-  const connectedPlatforms = accounts
-    .filter((acc: any) => acc.isLinked)
-    .map((acc: any) => acc.platform)
-    .filter((platform: string) => platform && platform !== "unknown");
+  const connectedPlatforms = useMemo(
+    () =>
+      accounts
+        .filter((acc: any) => acc.isLinked)
+        .map((acc: any) => normalizePlatformKey(acc.platform))
+        .filter((platform: string) => platform && platform !== "unknown"),
+    [accounts]
+  );
+  const availablePlatforms = useMemo(() => {
+    const postPlatforms = posts.flatMap((post: any) => {
+      const variants = post?.variants ? Object.keys(post.variants) : [];
+      return variants.filter((key) => key !== "base");
+    });
+    return Array.from(
+      new Set(
+        [...connectedPlatforms, ...postPlatforms]
+          .map((platform) => normalizePlatformKey(platform))
+          .filter((platform) => platform && platform !== "unknown")
+      )
+    );
+  }, [connectedPlatforms, posts]);
 
   const handleCreatePost = () => {
     if (!newPostTitle.trim()) return;
@@ -466,22 +527,31 @@ export default function AccountGroupPage() {
     if (platformFilter.length === 0) return true;
 
     const variantPlatforms = post.variants
-      ? Object.keys(post.variants).filter((key: string) => key !== "base")
+      ? Object.keys(post.variants)
+          .filter((key: string) => key !== "base")
+          .map((platform) => normalizePlatformKey(platform))
+          .filter((platform) => platform && platform !== "unknown")
       : [];
     const postPlatforms =
       variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
 
     // Check if post has any of the selected platforms
-    return platformFilter.some((p) => postPlatforms.includes(p));
+    const normalizedFilter = platformFilter
+      .map((platform) => normalizePlatformKey(platform))
+      .filter((platform) => platform && platform !== "unknown");
+    return normalizedFilter.some((platform) => postPlatforms.includes(platform));
   };
 
   // Toggle platform in filter
   const togglePlatformFilter = (platform: string) => {
-    setPlatformFilter((prev) =>
-      prev.includes(platform)
-        ? prev.filter((p) => p !== platform)
-        : [...prev, platform]
-    );
+    const normalizedPlatform = normalizePlatformKey(platform);
+    setPlatformFilter((prev) => {
+      const next = prev.includes(normalizedPlatform)
+        ? prev.filter((p) => p !== normalizedPlatform)
+        : [...prev, normalizedPlatform];
+      updateFilterParams(postsFilter, next);
+      return next;
+    });
   };
 
   // Select all filtered posts
@@ -508,6 +578,79 @@ export default function AccountGroupPage() {
   const handleClearSelection = () => {
     setSelectedPosts(new Set());
   };
+
+  useEffect(() => {
+    if (lastSyncedSearchKey.current === searchKey) return;
+    const statusParam = searchParams.get("status") || "all";
+    const platformsParam = searchParams.get("platforms");
+    const viewParam = searchParams.get("view") || "grid";
+    const normalizedStatus = validPostsFilters.includes(
+      statusParam as (typeof validPostsFilters)[number]
+    )
+      ? (statusParam as (typeof validPostsFilters)[number])
+      : "all";
+    const normalizedView = validPostViews.includes(viewParam as PostViewType)
+      ? (viewParam as PostViewType)
+      : "grid";
+
+    const requestedPlatforms = platformsParam
+      ? platformsParam
+          .split(",")
+          .map((value) => normalizePlatformKey(value))
+          .filter((platform) => platform && platform !== "unknown")
+      : [];
+
+    const normalizedPlatforms =
+      availablePlatforms.length > 0
+        ? requestedPlatforms.filter((platform) =>
+            availablePlatforms.includes(platform)
+          )
+        : requestedPlatforms;
+
+    if (normalizedStatus !== postsFilter) {
+      setPostsFilter(normalizedStatus);
+    }
+
+    if (normalizedView !== postView) {
+      setPostView(normalizedView);
+    }
+
+    const platformKey = normalizedPlatforms.sort().join(",");
+    const currentKey = platformFilter.slice().sort().join(",");
+    if (platformKey !== currentKey) {
+      setPlatformFilter(normalizedPlatforms);
+    }
+
+    lastSyncedSearchKey.current = searchKey;
+  }, [
+    availablePlatforms,
+    searchKey,
+    searchParams,
+    validPostsFilters,
+    validPostViews,
+  ]);
+
+  if (isMissingAccountGroup) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Account Group Not Found
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            The account group you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Link href="/">
+            <Button>
+              <Home className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Handle bulk deletion
   const handleBulkDelete = async () => {
@@ -719,9 +862,12 @@ export default function AccountGroupPage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-brand-mint/30 to-brand-lavender/30 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Sparkles className="w-10 h-10 text-brand-seafoam" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">No posts yet</h3>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  No posts yet
+                </h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Create your first post manually, or let AI generate content based on your brand persona.
+                  Create your first post manually, or let AI generate content
+                  based on your brand persona.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Button
@@ -743,7 +889,8 @@ export default function AccountGroupPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
-                  💡 Set up your Brand Persona in Tools → Brand Persona for better AI-generated content
+                  💡 Set up your Brand Persona in Tools → Brand Persona for
+                  better AI-generated content
                 </p>
               </div>
             ) : (
@@ -794,7 +941,12 @@ export default function AccountGroupPage() {
                           variant={postsFilter === key ? "solid" : "outline"}
                           intent={postsFilter === key ? "primary" : "secondary"}
                           size="1"
-                          onClick={() => setPostsFilter(key as any)}
+                          onClick={() => {
+                            const nextFilter =
+                              key as (typeof validPostsFilters)[number];
+                            setPostsFilter(nextFilter);
+                            updateFilterParams(nextFilter, platformFilter);
+                          }}
                         >
                           <Icon className="w-3 h-3 mr-1" />
                           {label}
@@ -804,7 +956,7 @@ export default function AccountGroupPage() {
 
                     {/* Platform Filter - Multi-select */}
                     <div className="flex items-center gap-1 flex-wrap">
-                      {connectedPlatforms.map((platform) => (
+                      {availablePlatforms.map((platform) => (
                         <button
                           key={platform}
                           onClick={() => togglePlatformFilter(platform)}
@@ -836,7 +988,10 @@ export default function AccountGroupPage() {
                       ))}
                       {platformFilter.length > 0 && (
                         <button
-                          onClick={() => setPlatformFilter([])}
+                          onClick={() => {
+                            setPlatformFilter([]);
+                            updateFilterParams(postsFilter, []);
+                          }}
                           className="text-xs text-muted-foreground hover:text-foreground ml-1"
                         >
                           Clear
@@ -847,7 +1002,7 @@ export default function AccountGroupPage() {
                     {/* View Selector */}
                     <PostViewSelector
                       currentView={postView}
-                      onViewChange={setPostView}
+                      onViewChange={handlePostViewChange}
                     />
                   </div>
                 </div>
@@ -903,6 +1058,7 @@ export default function AccountGroupPage() {
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
                     platformFilter={platformFilter}
+                    listQuery={listQuery}
                     selectedPosts={selectedPosts}
                     onPostSelect={handlePostSelect}
                     connectedPlatforms={connectedPlatforms}
@@ -916,6 +1072,7 @@ export default function AccountGroupPage() {
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
                     platformFilter={platformFilter}
+                    listQuery={listQuery}
                     selectedPosts={selectedPosts}
                     onPostSelect={handlePostSelect}
                     connectedPlatforms={connectedPlatforms}
@@ -929,6 +1086,7 @@ export default function AccountGroupPage() {
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
                     platformFilter={platformFilter}
+                    listQuery={listQuery}
                     selectedPosts={selectedPosts}
                     onPostSelect={handlePostSelect}
                     onSelectAll={handleSelectAll}

@@ -31,7 +31,7 @@ import {
   PostData,
   fetchPostContent,
 } from "../utils/apiHandlers";
-import { isBusinessPlanMode } from "../utils/ayrshareIntegration";
+import { AYRSHARE_PLATFORM_MAP, isBusinessPlanMode } from "../utils/ayrshareIntegration";
 
 type SeriesType = "reply" | "thread" | null;
 
@@ -592,59 +592,118 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     try {
       const platforms = selectedPlatforms.filter((p) => p !== "base");
       const postText = post.variants[activeTab]?.text?.toString() || "";
+      const baseText = post.variants.base?.text?.toString() || "";
 
-      if (!postText.trim()) {
+      if (!postText.trim() && !baseText.trim()) {
         throw new Error("Post content cannot be empty");
       }
 
-      // Extract media URLs from the active variant
-      const mediaUrls =
-        post.variants[activeTab]?.media
-          ?.map((item: any, index: number) => {
-            // Handle URL-based media from API posts
-            if (item?.type === "url-image" || item?.type === "url-video") {
-              const url = item.url;
-              return typeof url === "string" ? url : null;
-            }
-
-            // Handle uploaded images - convert FileStream to proxy URL
-            if (item?.type === "image" && item.image) {
-              const fileStream = item.image;
-              const fileStreamId = fileStream?.id;
-
-              if (
-                typeof fileStreamId === "string" &&
-                fileStreamId.startsWith("co_")
-              ) {
-                return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+      const extractMediaUrlsFromVariant = (variant: any): string[] => {
+        const mediaUrls =
+          variant?.media
+            ?.map((item: any) => {
+              if (item?.type === "url-image" || item?.type === "url-video") {
+                const url = item.url;
+                return typeof url === "string" ? url : null;
               }
-              return null;
-            }
 
-            // Handle uploaded videos - convert FileStream to proxy URL
-            if (item?.type === "video" && item.video) {
-              const fileStream = item.video;
-              const fileStreamId = fileStream?.id;
-
-              if (
-                typeof fileStreamId === "string" &&
-                fileStreamId.startsWith("co_")
-              ) {
-                return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+              if (item?.type === "image" && item.image) {
+                const fileStreamId = item.image?.id;
+                if (
+                  typeof fileStreamId === "string" &&
+                  fileStreamId.startsWith("co_")
+                ) {
+                  return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+                }
               }
+
+              if (item?.type === "video" && item.video) {
+                const fileStreamId = item.video?.id;
+                if (
+                  typeof fileStreamId === "string" &&
+                  fileStreamId.startsWith("co_")
+                ) {
+                  return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+                }
+              }
+
               return null;
-            }
+            })
+            .filter(
+              (url: string | null): url is string => typeof url === "string"
+            ) || [];
 
-            return null;
-          })
-          .filter(
-            (url: string | null): url is string => typeof url === "string"
-          ) || [];
+        return mediaUrls.filter(
+          (url: string) => url.startsWith("http://") || url.startsWith("https://")
+        );
+      };
 
-      // Final validation: ensure all URLs are valid
-      const publicMediaUrls = mediaUrls.filter(
-        (url: string) => url.startsWith("http://") || url.startsWith("https://")
-      );
+      const parsePlatformOptions = (variant: any) => {
+        const rawOptions = variant?.platformOptions;
+        if (!rawOptions) return {};
+        try {
+          const textValue =
+            typeof rawOptions === "string"
+              ? rawOptions
+              : rawOptions?.toString?.();
+          return textValue ? JSON.parse(textValue) : {};
+        } catch (error) {
+          console.warn("⚠️ Failed to parse platform options:", error);
+          return {};
+        }
+      };
+
+      const applyPublishResultsToPost = (
+        platform: string,
+        results: any,
+        resolvedStatus: "scheduled" | "published",
+        scheduledFor?: Date | null
+      ) => {
+        const postIds: Record<string, string> = {};
+
+        if (results?.postIds) {
+          Object.assign(postIds, results.postIds);
+        } else if (results?.id) {
+          postIds[platform] = results.id;
+        } else if (results?.posts && Array.isArray(results.posts)) {
+          const firstPost = results.posts[0];
+          if (firstPost?.postIds && Array.isArray(firstPost.postIds)) {
+            firstPost.postIds.forEach((p: any) => {
+              if (p?.platform && (p?.id || p?.idShare)) {
+                postIds[p.platform] = p.id || p.idShare;
+              }
+            });
+          } else if (firstPost?.id) {
+            postIds[platform] = firstPost.id;
+          }
+        }
+
+        const baseVariant = post.variants.base;
+        if (baseVariant) {
+          baseVariant.status = resolvedStatus;
+          if (resolvedStatus === "published") {
+            baseVariant.publishedAt = new Date();
+            baseVariant.scheduledFor = undefined;
+          } else if (scheduledFor) {
+            baseVariant.scheduledFor = scheduledFor;
+          }
+        }
+
+        Object.entries(postIds).forEach(([ayrsharePlatform, id]) => {
+          const internalPlatform =
+            AYRSHARE_PLATFORM_MAP[ayrsharePlatform] || ayrsharePlatform;
+          const variant = post.variants[internalPlatform] || baseVariant;
+          if (!variant || !id) return;
+          variant.ayrsharePostId = id;
+          variant.status = resolvedStatus;
+          if (resolvedStatus === "published") {
+            variant.publishedAt = new Date();
+            variant.scheduledFor = undefined;
+          } else if (scheduledFor) {
+            variant.scheduledFor = scheduledFor;
+          }
+        });
+      };
 
       // Check for Twitter/X and set auto-threading options
       const hasTwitter =
@@ -658,26 +717,161 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         ? accountGroup.ayrshareProfileKey
         : undefined;
 
-      const basePostData: PostData = {
-        post: postText,
-        platforms,
-        profileKey,
-        mediaUrls: publicMediaUrls.length > 0 ? publicMediaUrls : undefined,
-        scheduleDate: scheduledDate
-          ? new Date(scheduledDate).toISOString()
-          : undefined,
-        twitterOptions,
+      const baseVariant = post.variants.base;
+      const baseOptions = parsePlatformOptions(baseVariant);
+      const scheduleDate = scheduledDate
+        ? new Date(scheduledDate).toISOString()
+        : undefined;
+
+      const triggerPostStatusSync = async (reason: string) => {
+        try {
+          await fetch("/api/sync-post-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accountGroupId: accountGroup.id, reason }),
+          });
+        } catch (syncError) {
+          console.warn("⚠️ Post status sync failed:", syncError);
+        }
       };
 
       let results;
 
       if (seriesType === "reply" && replyUrl) {
+        const mediaUrls = extractMediaUrlsFromVariant(
+          post.variants[activeTab]
+        );
+        const basePostData: PostData = {
+          post: postText,
+          platforms,
+          profileKey,
+          mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+          scheduleDate: scheduleDate,
+          twitterOptions,
+        };
         results = await handleReplyPost(basePostData, replyUrl);
+        const resolvedStatus =
+          scheduleDate ||
+          results?.status === "scheduled" ||
+          results?.posts?.[0]?.status === "scheduled" ||
+          results?._hasPendingPosts
+            ? "scheduled"
+            : "published";
+        platforms.forEach((platform) => {
+          applyPublishResultsToPost(
+            platform,
+            results,
+            resolvedStatus,
+            scheduledDate
+          );
+        });
       } else if (seriesType === "thread" && contextText?.trim()) {
         const threadPosts = generateThreadPreview(contextText);
+        const mediaUrls = extractMediaUrlsFromVariant(
+          post.variants[activeTab]
+        );
+        const basePostData: PostData = {
+          post: postText,
+          platforms,
+          profileKey,
+          mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+          scheduleDate: scheduleDate,
+          twitterOptions,
+        };
         results = await handleMultiPosts(basePostData, threadPosts);
+        const resolvedStatus =
+          scheduleDate ||
+          results?.status === "scheduled" ||
+          results?.posts?.[0]?.status === "scheduled" ||
+          results?._hasPendingPosts
+            ? "scheduled"
+            : "published";
+        platforms.forEach((platform) => {
+          applyPublishResultsToPost(
+            platform,
+            results,
+            resolvedStatus,
+            scheduledDate
+          );
+        });
       } else {
-        results = await handleStandardPost(basePostData);
+        const errorsByPlatform: string[] = [];
+        let hasPendingPosts = false;
+        let pendingWarning: string | undefined;
+
+        for (const platform of platforms) {
+          try {
+            const variant = post.variants[platform] || baseVariant;
+            const variantText = variant?.text?.toString() || postText;
+            const mediaUrls = extractMediaUrlsFromVariant(variant);
+            const variantOptions = parsePlatformOptions(variant);
+            const mergedOptions = { ...baseOptions, ...variantOptions };
+
+            if (!variantText.trim()) {
+              throw new Error(`Missing content for ${platform}`);
+            }
+
+            if (platform === "tiktok" && mediaUrls.length === 0) {
+              throw new Error(
+                "TikTok requires media. Add a portrait image or video before publishing."
+              );
+            }
+
+            const postData: PostData = {
+              post: variantText,
+              platforms: [platform],
+              profileKey,
+              mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+              scheduleDate,
+              twitterOptions: mergedOptions.twitterOptions || twitterOptions,
+              redditOptions: mergedOptions.redditOptions,
+              pinterestOptions: mergedOptions.pinterestOptions,
+              instagramOptions: mergedOptions.instagramOptions,
+              facebookOptions: mergedOptions.facebookOptions,
+              linkedinOptions: mergedOptions.linkedinOptions,
+              tiktokOptions: mergedOptions.tiktokOptions,
+              youtubeOptions: mergedOptions.youtubeOptions,
+            };
+
+            const platformResult = await handleStandardPost(postData);
+            const resolvedStatus =
+              scheduleDate ||
+              platformResult?.status === "scheduled" ||
+              platformResult?.posts?.[0]?.status === "scheduled" ||
+              platformResult?._hasPendingPosts
+                ? "scheduled"
+                : "published";
+
+            applyPublishResultsToPost(
+              platform,
+              platformResult,
+              resolvedStatus,
+              scheduledDate
+            );
+
+            if (platformResult?._hasPendingPosts) {
+              hasPendingPosts = true;
+              pendingWarning = platformResult?._pendingWarning;
+            }
+          } catch (platformError) {
+            errorsByPlatform.push(
+              `${platform.toUpperCase()}: ${handleApiError(platformError)}`
+            );
+          }
+        }
+
+        if (errorsByPlatform.length > 0) {
+          throw new Error(errorsByPlatform.join("\n"));
+        }
+
+        if (hasPendingPosts) {
+          results = {
+            _hasPendingPosts: true,
+            _pendingWarning: pendingWarning,
+          };
+        } else {
+          results = { success: true };
+        }
       }
 
       // Check if post is still processing (has pending IDs)
@@ -686,8 +880,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           results._pendingWarning ||
             "Post is still processing. It may take a few minutes to appear on the platform."
         );
+        triggerPostStatusSync("pending_publish").catch(() => undefined);
+        setTimeout(() => {
+          triggerPostStatusSync("pending_followup").catch(() => undefined);
+        }, 2 * 60 * 1000);
       } else {
         setSuccess("Post published successfully!");
+        triggerPostStatusSync("publish_complete").catch(() => undefined);
       }
     } catch (error) {
       // Check if this is a platform authorization error
@@ -965,6 +1164,36 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       setErrors([]);
 
       try {
+        const normalizeVideoFile = (inputFile: File) => {
+          const fileName = inputFile.name.toLowerCase();
+          let mimeType = inputFile.type;
+
+          if (!mimeType || !mimeType.startsWith("video/")) {
+            if (fileName.endsWith(".mp4")) {
+              mimeType = "video/mp4";
+            } else if (fileName.endsWith(".mov")) {
+              mimeType = "video/quicktime";
+            } else if (fileName.endsWith(".m4v")) {
+              mimeType = "video/x-m4v";
+            } else if (fileName.endsWith(".avi")) {
+              mimeType = "video/x-msvideo";
+            } else if (fileName.endsWith(".webm")) {
+              mimeType = "video/webm";
+            } else if (fileName.endsWith(".mkv")) {
+              mimeType = "video/x-matroska";
+            }
+          }
+
+          if (mimeType && mimeType !== inputFile.type) {
+            return new File([inputFile], inputFile.name, {
+              type: mimeType,
+              lastModified: inputFile.lastModified,
+            });
+          }
+
+          return inputFile;
+        };
+
         // Process each selected file
         for (const file of Array.from(files)) {
           console.log("📱 Processing file:", {
@@ -1111,7 +1340,10 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           } else {
             console.log("📱 Creating video media for:", file.name);
             // Use the proper async FileStream creation method for video
-            const fileStream = await FileStream.createFromBlob(file, { owner });
+            const normalizedFile = normalizeVideoFile(file);
+            const fileStream = await FileStream.createFromBlob(normalizedFile, {
+              owner,
+            });
 
             mediaItem = VideoMedia.create(
               {

@@ -21,16 +21,503 @@ interface PostViewsProps {
   accountGroupName: string;
   postsFilter: "all" | "draft" | "scheduled" | "published";
   platformFilter?: string[];
+  listQuery?: string;
   selectedPosts: Set<string>;
   onPostSelect: (postId: string, selected: boolean) => void;
   onSelectAll?: () => void;
   connectedPlatforms?: string[];
 }
 
+const normalizePlatformKey = (platform: string) =>
+  platform?.toString().toLowerCase().trim();
+
+const resolvePlatformIcon = (platform: string) => {
+  const normalized = normalizePlatformKey(platform);
+  return (
+    platformIcons[normalized as keyof typeof platformIcons] ||
+    platformIcons.base
+  );
+};
+
+const resolvePostPlatforms = (post: any, connectedPlatforms: string[]) => {
+  const normalizeList = (items: string[]) =>
+    items
+      .map((platform) => normalizePlatformKey(platform))
+      .filter((platform) => platform && platform !== "unknown");
+  const variantPlatforms = post?.variants
+    ? Object.keys(post.variants).filter((key) => key !== "base")
+    : [];
+  const normalizedVariants = normalizeList(variantPlatforms);
+  const normalizedConnected = normalizeList(connectedPlatforms);
+  return normalizedVariants.length > 0 ? normalizedVariants : normalizedConnected;
+};
+
 // Helper function to render media thumbnail
 function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
   const [imageError, setImageError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [resolvedImageUrl, setResolvedImageUrl] = React.useState<string | null>(
+    null
+  );
+  const [resolvedVideoUrl, setResolvedVideoUrl] = React.useState<string | null>(
+    null
+  );
+  const [videoPosterUrl, setVideoPosterUrl] = React.useState<string | null>(
+    null
+  );
+
+  React.useEffect(() => {
+    if (!resolvedImageUrl) return;
+    let isActive = true;
+    const ImageCtor =
+      typeof window !== "undefined" && window.Image ? window.Image : null;
+    if (!ImageCtor) return;
+    const img = new ImageCtor();
+    img.onload = () => {
+      if (isActive) setIsLoading(false);
+    };
+    img.onerror = () => {
+      if (isActive) {
+        setIsLoading(false);
+        setImageError(true);
+      }
+    };
+    img.src = resolvedImageUrl;
+    return () => {
+      isActive = false;
+    };
+  }, [resolvedImageUrl]);
+
+  React.useEffect(() => {
+    let isActive = true;
+    let objectUrl: string | null = null;
+    let videoElement: HTMLVideoElement | null = null;
+
+    const extractCoId = (value: any) => {
+      if (typeof value === "string" && value.startsWith("co_")) {
+        return value;
+      }
+      if (value && typeof value === "object") {
+        const props = Object.getOwnPropertyNames(value);
+        for (const prop of props) {
+          const propValue = value[prop];
+          if (typeof propValue === "string" && propValue.startsWith("co_")) {
+            return propValue;
+          }
+          if (
+            propValue &&
+            typeof propValue === "object" &&
+            typeof propValue.id === "string" &&
+            propValue.id.startsWith("co_")
+          ) {
+            return propValue.id;
+          }
+        }
+
+        const symbols = Object.getOwnPropertySymbols(value);
+        for (const sym of symbols) {
+          const symValue = (value as any)[sym];
+          if (typeof symValue === "string" && symValue.startsWith("co_")) {
+            return symValue;
+          }
+          if (
+            symValue &&
+            typeof symValue === "object" &&
+            typeof symValue.id === "string" &&
+            symValue.id.startsWith("co_")
+          ) {
+            return symValue.id;
+          }
+        }
+      }
+      return undefined;
+    };
+
+    const resolveFileStreamUrl = async (fileStream: any) => {
+      let stream = fileStream;
+      try {
+        if (stream && typeof stream.load === "function") {
+          const loadedStream = await stream.load();
+          if (loadedStream) {
+            stream = loadedStream;
+          }
+        }
+      } catch (error) {
+        console.warn("⚠️ Failed to load FileStream ref:", error);
+      }
+
+      const fileStreamString =
+        typeof stream === "string"
+          ? stream
+          : typeof stream?.toString === "function"
+          ? stream.toString()
+          : undefined;
+      const stringMatch =
+        typeof fileStreamString === "string"
+          ? fileStreamString.match(/co_[A-Za-z0-9]+/)
+          : null;
+      const fileStreamId =
+        stream?.id ||
+        stream?._id ||
+        stream?.coId ||
+        stream?.refId ||
+        stream?._refId ||
+        stream?._raw?.id ||
+        stream?._raw?.refId ||
+        stream?.ref ||
+        stream?._ref?.id ||
+        (stringMatch ? stringMatch[0] : undefined) ||
+        extractCoId(stream) ||
+        (typeof stream === "string" ? stream : undefined);
+
+      if (
+        fileStreamId &&
+        typeof fileStreamId === "string" &&
+        fileStreamId.startsWith("co_")
+      ) {
+        return `/api/media-proxy/${fileStreamId}`;
+      }
+
+      const publicUrlValue =
+        typeof stream?.publicUrl === "function"
+          ? stream.publicUrl()
+          : stream?.publicUrl;
+      const urlValue =
+        typeof stream?.url === "function" ? stream.url() : stream?.url;
+      const publicUrl = publicUrlValue || urlValue;
+      if (typeof publicUrl === "string" && publicUrl.startsWith("http")) {
+        return publicUrl;
+      }
+
+      try {
+        if (typeof stream.getBlobURL === "function") {
+          return await stream.getBlobURL();
+        }
+        if (typeof stream.createObjectURL === "function") {
+          return stream.createObjectURL();
+        }
+
+        let blob: Blob | null = null;
+        if (typeof stream.getBlob === "function") {
+          blob = await stream.getBlob();
+        } else if (typeof stream.toBlob === "function") {
+          blob = await stream.toBlob();
+        } else if (typeof stream.asBlob === "function") {
+          blob = await stream.asBlob();
+        } else if (stream._raw && (stream._raw.blob || stream._raw.data)) {
+          blob = stream._raw.blob || stream._raw.data;
+        } else if (stream.blob) {
+          blob = stream.blob;
+        }
+
+        if (blob) {
+          objectUrl = URL.createObjectURL(blob);
+          return objectUrl;
+        }
+      } catch (error) {
+        console.error("❌ Failed to resolve FileStream media URL:", error);
+      }
+
+      return null;
+    };
+
+    const capturePoster = (videoUrl: string) =>
+      new Promise<string | null>((resolve) => {
+        if (typeof document === "undefined") {
+          resolve(null);
+          return;
+        }
+        const video = document.createElement("video");
+        videoElement = video;
+        video.crossOrigin = "anonymous";
+        video.preload = "metadata";
+        video.muted = true;
+        video.playsInline = true;
+
+        const cleanup = () => {
+          if (videoElement) {
+            videoElement.src = "";
+            videoElement.load();
+            videoElement = null;
+          }
+        };
+
+        const onError = () => {
+          cleanup();
+          resolve(null);
+        };
+
+        const onSeeked = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            const width = video.videoWidth || 320;
+            const height = video.videoHeight || 180;
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              cleanup();
+              resolve(null);
+              return;
+            }
+            ctx.drawImage(video, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            cleanup();
+            resolve(dataUrl);
+          } catch (error) {
+            cleanup();
+            resolve(null);
+          }
+        };
+
+        const onLoaded = () => {
+          try {
+            if (video.readyState >= 2) {
+              video.currentTime = 0;
+            }
+          } catch (error) {
+            onError();
+          }
+        };
+
+        video.addEventListener("loadeddata", onLoaded, { once: true });
+        video.addEventListener("seeked", onSeeked, { once: true });
+        video.addEventListener("error", onError, { once: true });
+        video.src = videoUrl;
+        video.load();
+      });
+
+    const resolveVideo = async () => {
+      if (!mediaItem) return;
+      const isVideoType =
+        mediaItem.type === "url-video" || mediaItem.type === "video";
+      if (!isVideoType) return;
+
+      if (mediaItem.url && typeof mediaItem.url === "string") {
+        setResolvedVideoUrl(mediaItem.url);
+        const poster = await capturePoster(mediaItem.url);
+        if (isActive && poster) setVideoPosterUrl(poster);
+        return;
+      }
+
+      if (mediaItem.video) {
+        const videoUrl = await resolveFileStreamUrl(mediaItem.video);
+        if (videoUrl) {
+          if (isActive) setResolvedVideoUrl(videoUrl);
+          const poster = await capturePoster(videoUrl);
+          if (isActive && poster) setVideoPosterUrl(poster);
+        }
+      }
+    };
+
+    setResolvedVideoUrl(null);
+    setVideoPosterUrl(null);
+    resolveVideo();
+
+    return () => {
+      isActive = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      if (videoElement) {
+        videoElement.src = "";
+        videoElement.load();
+        videoElement = null;
+      }
+    };
+  }, [mediaItem]);
+
+  React.useEffect(() => {
+    let isActive = true;
+    let objectUrl: string | null = null;
+
+    const resolveImageUrl = async () => {
+      if (!mediaItem) return;
+
+      if (
+        (mediaItem.type === "url-image" || mediaItem.type === "image") &&
+        mediaItem.url
+      ) {
+        if (mediaItem.url.includes("lunary.app/api/og/")) {
+          if (isActive) setResolvedImageUrl(mediaItem.url);
+          return;
+        }
+
+        const isExternalUrl =
+          mediaItem.url.startsWith("http") &&
+          (typeof window === "undefined" ||
+            !mediaItem.url.includes(window.location.hostname));
+        const imageUrl = isExternalUrl
+          ? `/api/image-proxy?url=${encodeURIComponent(mediaItem.url)}`
+          : mediaItem.url;
+        if (isActive) setResolvedImageUrl(imageUrl);
+        return;
+      }
+
+      if (mediaItem.type === "image" && mediaItem.image) {
+        let fileStream = mediaItem.image;
+        try {
+          if (fileStream && typeof fileStream.load === "function") {
+            const loadedStream = await fileStream.load();
+            if (loadedStream) {
+              fileStream = loadedStream;
+            }
+          }
+        } catch (error) {
+          console.warn("⚠️ Failed to load FileStream ref:", error);
+        }
+
+        const extractCoId = (value: any) => {
+          if (typeof value === "string" && value.startsWith("co_")) {
+            return value;
+          }
+          if (value && typeof value === "object") {
+            const props = Object.getOwnPropertyNames(value);
+            for (const prop of props) {
+              const propValue = value[prop];
+              if (
+                typeof propValue === "string" &&
+                propValue.startsWith("co_")
+              ) {
+                return propValue;
+              }
+              if (
+                propValue &&
+                typeof propValue === "object" &&
+                typeof propValue.id === "string" &&
+                propValue.id.startsWith("co_")
+              ) {
+                return propValue.id;
+              }
+            }
+
+            const symbols = Object.getOwnPropertySymbols(value);
+            for (const sym of symbols) {
+              const symValue = (value as any)[sym];
+              if (typeof symValue === "string" && symValue.startsWith("co_")) {
+                return symValue;
+              }
+              if (
+                symValue &&
+                typeof symValue === "object" &&
+                typeof symValue.id === "string" &&
+                symValue.id.startsWith("co_")
+              ) {
+                return symValue.id;
+              }
+            }
+          }
+          return undefined;
+        };
+
+        const fileStreamString =
+          typeof fileStream === "string"
+            ? fileStream
+            : typeof fileStream?.toString === "function"
+            ? fileStream.toString()
+            : undefined;
+        const stringMatch =
+          typeof fileStreamString === "string"
+            ? fileStreamString.match(/co_[A-Za-z0-9]+/)
+            : null;
+        const fileStreamId =
+          fileStream?.id ||
+          fileStream?._id ||
+          fileStream?.coId ||
+          fileStream?.refId ||
+          fileStream?._refId ||
+          fileStream?._raw?.id ||
+          fileStream?._raw?.refId ||
+          fileStream?.ref ||
+          fileStream?._ref?.id ||
+          (stringMatch ? stringMatch[0] : undefined) ||
+          extractCoId(fileStream) ||
+          (typeof fileStream === "string" ? fileStream : undefined);
+        if (
+          fileStreamId &&
+          typeof fileStreamId === "string" &&
+          fileStreamId.startsWith("co_")
+        ) {
+          if (isActive) {
+            setResolvedImageUrl(`/api/media-proxy/${fileStreamId}`);
+          }
+          return;
+        }
+
+        const publicUrlValue =
+          typeof fileStream?.publicUrl === "function"
+            ? fileStream.publicUrl()
+            : fileStream?.publicUrl;
+        const urlValue =
+          typeof fileStream?.url === "function"
+            ? fileStream.url()
+            : fileStream?.url;
+        const publicUrl = publicUrlValue || urlValue;
+        if (typeof publicUrl === "string" && publicUrl.startsWith("http")) {
+          if (isActive) setResolvedImageUrl(publicUrl);
+          return;
+        }
+
+        try {
+          if (typeof fileStream.getBlobURL === "function") {
+            const blobUrl = await fileStream.getBlobURL();
+            if (isActive) setResolvedImageUrl(blobUrl);
+            return;
+          }
+
+          if (typeof fileStream.createObjectURL === "function") {
+            const blobUrl = fileStream.createObjectURL();
+            if (isActive) setResolvedImageUrl(blobUrl);
+            return;
+          }
+
+          let blob: Blob | null = null;
+          if (typeof fileStream.getBlob === "function") {
+            blob = await fileStream.getBlob();
+          } else if (typeof fileStream.toBlob === "function") {
+            blob = await fileStream.toBlob();
+          } else if (typeof fileStream.asBlob === "function") {
+            blob = await fileStream.asBlob();
+          } else if (
+            fileStream._raw &&
+            (fileStream._raw.blob || fileStream._raw.data)
+          ) {
+            blob = fileStream._raw.blob || fileStream._raw.data;
+          } else if (fileStream.blob) {
+            blob = fileStream.blob;
+          }
+
+          if (blob) {
+            objectUrl = URL.createObjectURL(blob);
+            if (isActive) setResolvedImageUrl(objectUrl);
+          }
+        } catch (error) {
+          console.error("❌ Failed to resolve FileStream image URL:", error);
+        }
+      }
+
+      if (
+        (mediaItem.type === "image" || mediaItem.type === "url-image") &&
+        mediaItem.url &&
+        typeof mediaItem.url === "string"
+      ) {
+        if (isActive) setResolvedImageUrl(mediaItem.url);
+        return;
+      }
+    };
+
+    setImageError(false);
+    setIsLoading(true);
+    setResolvedImageUrl(null);
+    resolveImageUrl();
+
+    return () => {
+      isActive = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [mediaItem]);
 
   if (!mediaItem) {
     return (
@@ -40,20 +527,7 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
     );
   }
 
-  // Handle URL-based images (API posts use 'url-image' type)
-  if (
-    (mediaItem.type === "url-image" || mediaItem.type === "image") &&
-    mediaItem.url
-  ) {
-    // Use proxy for external images to avoid CORS issues
-    const isExternalUrl =
-      mediaItem.url.startsWith("http") &&
-      (typeof window === "undefined" ||
-        !mediaItem.url.includes(window.location.hostname));
-    const imageUrl = isExternalUrl
-      ? `/api/image-proxy?url=${encodeURIComponent(mediaItem.url)}`
-      : mediaItem.url;
-
+  if (resolvedImageUrl) {
     if (imageError) {
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -71,69 +545,51 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 
     return (
       <div className="relative w-full h-full bg-muted">
-        {isLoading && (
-          <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center z-10">
-            <div className="text-center">
-              <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <span className="text-muted-foreground text-xs">Loading...</span>
-            </div>
-          </div>
-        )}
-        <Image
-          src={imageUrl}
+        <img
+          src={resolvedImageUrl}
           alt={mediaItem.alt?.toString() || mediaItem.alt || "Post media"}
-          fill
-          className={`object-cover ${
-            isLoading ? "opacity-0" : "opacity-100"
-          } transition-opacity duration-200`}
-          onLoadingComplete={() => {
+          className="w-full h-full object-cover relative z-10"
+          onLoad={() => {
             setIsLoading(false);
           }}
           onError={() => {
             setIsLoading(false);
             setImageError(true);
           }}
-          unoptimized
         />
       </div>
     );
   }
 
-  // Handle FileStream images (Jazz collaborative objects)
-  if (mediaItem.type === "image" && mediaItem.image) {
-    const fileStreamId = mediaItem.image?.id;
-    if (
-      fileStreamId &&
-      typeof fileStreamId === "string" &&
-      fileStreamId.startsWith("co_")
-    ) {
-      const proxyUrl = `/api/media-proxy/${fileStreamId}`;
-      return (
-        <div className="relative w-full h-full">
-          <Image
-            src={proxyUrl}
-            alt={mediaItem.alt?.toString() || mediaItem.alt || "Post media"}
-            fill
-            className="object-cover"
-            onError={() => {
-              console.error("❌ Media proxy failed to load:", proxyUrl);
-            }}
-            unoptimized
-          />
+  if (videoPosterUrl) {
+    return (
+      <div className="relative w-full h-full">
+        <img
+          src={videoPosterUrl}
+          alt={
+            mediaItem?.alt?.toString() || mediaItem?.alt || "Video thumbnail"
+          }
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+          <div className="w-8 h-8 bg-card/90 rounded-full flex items-center justify-center">
+            <div className="w-0 h-0 border-l-2 border-l-gray-800 border-y-2 border-y-transparent ml-0.5" />
+          </div>
         </div>
-      );
-    }
+      </div>
+    );
   }
 
   // Handle URL-based videos (API posts use 'url-video' type)
   if (
     (mediaItem.type === "url-video" || mediaItem.type === "video") &&
-    mediaItem.url
+    (mediaItem.url || resolvedVideoUrl)
   ) {
+    const videoUrl = mediaItem.url || resolvedVideoUrl;
     return (
       <div className="relative w-full h-full">
         <video
-          src={mediaItem.url}
+          src={videoUrl}
           className="w-full h-full object-cover"
           muted
           playsInline
@@ -167,6 +623,36 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
     );
   }
 
+  if (mediaItem.type === "image" && mediaItem.image) {
+    console.warn("⚠️ Media thumbnail missing image URL:", {
+      mediaType: mediaItem.type,
+      hasFileStream: !!mediaItem.image,
+      fileStreamKeys:
+        mediaItem.image && typeof mediaItem.image === "object"
+          ? Object.keys(mediaItem.image)
+          : undefined,
+      fileStreamOwnKeys:
+        mediaItem.image && typeof mediaItem.image === "object"
+          ? Object.getOwnPropertyNames(mediaItem.image)
+          : undefined,
+      fileStreamSymbols:
+        mediaItem.image && typeof mediaItem.image === "object"
+          ? Object.getOwnPropertySymbols(mediaItem.image).map((sym) =>
+              sym.toString()
+            )
+          : undefined,
+      fileStreamConstructor:
+        mediaItem.image && typeof mediaItem.image === "object"
+          ? mediaItem.image.constructor?.name
+          : undefined,
+      fileStreamString:
+        mediaItem.image?.toString &&
+        typeof mediaItem.image.toString === "function"
+          ? mediaItem.image.toString()
+          : undefined,
+    });
+  }
+
   // Fallback for unknown media types
   return (
     <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -184,14 +670,13 @@ function postMatchesPlatformFilter(
   // Empty array means "all platforms"
   if (platformFilter.length === 0) return true;
 
-  const variantPlatforms = post.variants
-    ? Object.keys(post.variants).filter((key) => key !== "base")
-    : [];
-  const postPlatforms =
-    variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+  const postPlatforms = resolvePostPlatforms(post, connectedPlatforms);
+  const normalizedFilters = platformFilter
+    .map((platform) => normalizePlatformKey(platform))
+    .filter((platform) => platform && platform !== "unknown");
 
   // Check if post has any of the selected platforms
-  return platformFilter.some((p) => postPlatforms.includes(p));
+  return normalizedFilters.some((platform) => postPlatforms.includes(platform));
 }
 
 // Grid View (existing default view)
@@ -201,10 +686,25 @@ export function PostGridView({
   accountGroupName,
   postsFilter,
   platformFilter = [],
+  listQuery,
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
 }: PostViewsProps) {
+  const safeArrayAccess = (collaborativeArray: any) => {
+    try {
+      if (!collaborativeArray) return [];
+      if (Array.isArray(collaborativeArray)) {
+        return collaborativeArray.filter((item) => item != null);
+      }
+      const array = Array.from(collaborativeArray || []);
+      return array.filter((item) => item != null);
+    } catch (error) {
+      console.error("Error accessing media array:", error);
+      return [];
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "published":
@@ -283,15 +783,26 @@ export function PostGridView({
             post.publishedAt ||
             post.createdAt ||
             new Date();
-          const hasMedia =
-            post.variants?.base?.media && post.variants.base.media.length > 0;
+          let mediaItems: any[] = [];
+          if (post.variants?.base?.media) {
+            mediaItems = safeArrayAccess(post.variants.base.media);
+          }
+          if (mediaItems.length === 0 && post.variants) {
+            for (const variant of Object.values(post.variants)) {
+              const v = variant as any;
+              if (v?.media) {
+                const variantMedia = safeArrayAccess(v.media);
+                if (variantMedia.length > 0) {
+                  mediaItems = variantMedia;
+                  break;
+                }
+              }
+            }
+          }
+          const hasMedia = mediaItems.length > 0;
+          const firstMediaItem = mediaItems[0];
           const isSelected = selectedPosts.has(postId);
-          // Extract platform names from variants (excluding 'base'), fallback to connected platforms
-          const variantPlatforms = post.variants
-            ? Object.keys(post.variants).filter((key) => key !== "base")
-            : [];
-          const postPlatforms =
-            variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+          const postPlatforms = resolvePostPlatforms(post, connectedPlatforms);
 
           return (
             <div
@@ -321,7 +832,9 @@ export function PostGridView({
 
               {/* Clickable content area */}
               <Link
-                href={`/account-group/${accountGroupId}/post/${postId}`}
+                href={`/account-group/${accountGroupId}/post/${postId}${
+                  listQuery ? `?${listQuery}` : ""
+                }`}
                 className="block"
               >
                 {/* Header with status and date */}
@@ -340,9 +853,16 @@ export function PostGridView({
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-brand-seafoam dark:text-brand-mint transition-colors">
+                {/* <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-brand-seafoam dark:text-brand-mint transition-colors">
                   {postTitle}
-                </h3>
+                </h3> */}
+
+                {/* Media preview */}
+                {hasMedia && firstMediaItem && (
+                  <div className="mb-3 w-16 h-16 rounded-md overflow-hidden bg-muted">
+                    <MediaThumbnail mediaItem={firstMediaItem} />
+                  </div>
+                )}
 
                 {/* Content Preview */}
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
@@ -355,7 +875,7 @@ export function PostGridView({
                     {hasMedia && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span>📎</span>
-                        <span>{post.variants.base.media.length} media</span>
+                        <span>{mediaItems.length} media</span>
                       </div>
                     )}
                   </div>
@@ -365,10 +885,7 @@ export function PostGridView({
                     {postPlatforms.length > 0 && (
                       <div className="flex items-center gap-1.5">
                         {postPlatforms.map((platform: string) => {
-                          const iconPath =
-                            platformIcons[
-                              platform as keyof typeof platformIcons
-                            ] || platformIcons.base;
+                          const iconPath = resolvePlatformIcon(platform);
                           return (
                             <Image
                               key={platform}
@@ -539,6 +1056,7 @@ export function PostImageView({
   accountGroupName,
   postsFilter,
   platformFilter = [],
+  listQuery,
   selectedPosts,
   onPostSelect,
   connectedPlatforms = [],
@@ -586,12 +1104,7 @@ export function PostImageView({
             post.content ||
             "";
           const postStatus = getPostStatus(post);
-          // Extract platform names from variants (excluding 'base'), fallback to connected platforms
-          const variantPlatforms = post.variants
-            ? Object.keys(post.variants).filter((key) => key !== "base")
-            : [];
-          const postPlatforms =
-            variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+          const postPlatforms = resolvePostPlatforms(post, connectedPlatforms);
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
           let mediaItems: any[] = [];
@@ -682,9 +1195,7 @@ export function PostImageView({
                 {postPlatforms.length > 0 && (
                   <div className="flex items-center gap-1 bg-black bg-opacity-70 rounded-full px-2 py-1">
                     {postPlatforms.map((platform: string) => {
-                      const iconPath =
-                        platformIcons[platform as keyof typeof platformIcons] ||
-                        platformIcons.base;
+                      const iconPath = resolvePlatformIcon(platform);
                       return (
                         <Image
                           key={platform}
@@ -703,11 +1214,13 @@ export function PostImageView({
 
               {/* Clickable content area */}
               <Link
-                href={`/account-group/${accountGroupId}/post/${postId}`}
+                href={`/account-group/${accountGroupId}/post/${postId}${
+                  listQuery ? `?${listQuery}` : ""
+                }`}
                 className="block w-full h-full relative"
               >
                 {/* Media content - behind overlay */}
-                <div className="w-full h-full bg-muted relative z-0 overflow-hidden">
+                <div className="w-full h-full bg-transparent relative z-0 overflow-hidden">
                   {hasMedia ? (
                     <ImageCarousel mediaItems={mediaItems} postId={postId} />
                   ) : (
@@ -727,7 +1240,7 @@ export function PostImageView({
                 </div>
 
                 {/* Hover overlay with post info - Only show on hover */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-end pointer-events-none z-20">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-end pointer-events-none z-20">
                   <div className="w-full p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
                     <h4 className="font-medium text-sm line-clamp-2 mb-1">
                       {postTitle}
@@ -760,6 +1273,7 @@ export function PostSuccinctView({
   accountGroupName,
   postsFilter,
   platformFilter = [],
+  listQuery,
   selectedPosts,
   onPostSelect,
   onSelectAll,
@@ -856,12 +1370,7 @@ export function PostSuccinctView({
           post.publishedAt ||
           post.createdAt ||
           new Date();
-        // Extract platform names from variants (excluding 'base'), fallback to connected platforms
-        const variantPlatforms = post.variants
-          ? Object.keys(post.variants).filter((key) => key !== "base")
-          : [];
-        const postPlatforms =
-          variantPlatforms.length > 0 ? variantPlatforms : connectedPlatforms;
+        const postPlatforms = resolvePostPlatforms(post, connectedPlatforms);
 
         // Get media items properly using safeArrayAccess
         const safeArrayAccess = (collaborativeArray: any) => {
@@ -936,7 +1445,9 @@ export function PostSuccinctView({
 
               {/* Post content */}
               <Link
-                href={`/account-group/${accountGroupId}/post/${postId}`}
+                href={`/account-group/${accountGroupId}/post/${postId}${
+                  listQuery ? `?${listQuery}` : ""
+                }`}
                 className="flex-1 min-w-0 group-hover:text-brand-seafoam dark:text-brand-mint transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -965,14 +1476,11 @@ export function PostSuccinctView({
                       {/* Platform icons */}
                       {postPlatforms.length > 0 && (
                         <div className="flex items-center gap-1">
-                          {postPlatforms.map((platform: string) => {
-                            const iconPath =
-                              platformIcons[
-                                platform as keyof typeof platformIcons
-                              ] || platformIcons.base;
-                            return (
-                              <Image
-                                key={platform}
+                        {postPlatforms.map((platform: string) => {
+                          const iconPath = resolvePlatformIcon(platform);
+                          return (
+                            <Image
+                              key={platform}
                                 src={iconPath}
                                 alt={platform}
                                 width={14}

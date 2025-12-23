@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 // Legacy accountGroups import removed - using Jazz account groups instead
 import PostCreationComponent from "@/components/organisms/post-creation";
@@ -12,9 +12,14 @@ import { MyAppAccount } from "@/app/schema";
 export default function PostPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const accountGroupId = params.groupId as string;
   const postId = params.postId as string;
+  const listQuery = searchParams.toString();
+  const listHref = `/account-group/${accountGroupId}${
+    listQuery ? `?${listQuery}` : ""
+  }`;
 
   const { me } = useAccount(MyAppAccount, {
     resolve: {
@@ -139,9 +144,7 @@ export default function PostPage() {
                 : "📍 Demo Account Group"}
             </p>
           </div>
-          <Button
-            onClick={() => router.push(`/account-group/${params.groupId}`)}
-          >
+          <Button onClick={() => router.push(listHref)}>
             <Users className="w-4 h-4 mr-2" />
             Back to Account Group
           </Button>
@@ -156,7 +159,7 @@ export default function PostPage() {
       <div className="mb-6">
         <Button
           variant="soft"
-          onClick={() => router.push(`/account-group/${accountGroupId}`)}
+          onClick={() => router.push(listHref)}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
