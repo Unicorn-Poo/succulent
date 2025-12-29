@@ -65,12 +65,14 @@ async function startWorkerWithoutInbox(options: WorkerInitOptions) {
     node = context.node as any;
 
     const account = context.account as any;
-    if (account?._refs?.profile?.load) {
-      try {
+    try {
+      if (typeof account?.ensureLoaded === "function") {
+        await account.ensureLoaded({ resolve: { profile: true } });
+      } else if (account?._refs?.profile?.load) {
         await account._refs.profile.load();
-      } catch (error) {
-        console.warn("⚠️ Failed to preload worker profile:", error);
       }
+    } catch (error) {
+      console.warn("⚠️ Failed to preload worker profile:", error);
     }
 
     return {
@@ -230,6 +232,8 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
             const fallbackWorker = fallbackResult?.worker || fallbackResult;
             if (fallbackWorker) {
               globalState.__jazzServerWorker = fallbackWorker;
+              globalState.__jazzServerInitError = null;
+              globalState.__jazzServerInitErrorAt = null;
               return fallbackWorker;
             }
           } catch (fallbackError) {
