@@ -17,13 +17,15 @@ export async function GET(request: NextRequest) {
     console.log('🔧 Environment variables check:', envCheck);
     
     // Try to initialize worker
-    const { jazzServerWorker } = await import('@/utils/jazzServer');
+    const { jazzServerWorker, getServerWorkerInitState } = await import('@/utils/jazzServer');
     const worker = await jazzServerWorker;
+    const initState = getServerWorkerInitState();
     
     if (!worker) {
       return NextResponse.json({
         success: false,
         error: 'Jazz worker not available',
+        initState,
         envCheck,
         suggestion: 'Check that JAZZ_WORKER_ACCOUNT and JAZZ_WORKER_SECRET are set in your .env.local file'
       }, { status: 500 });
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       envCheck,
+      initState,
       workerInfo,
       transactionTest,
       message: 'Jazz worker is available and configured'

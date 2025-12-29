@@ -21,6 +21,7 @@ import {
 import {
   validateReplyUrl,
   detectPlatformFromUrl,
+  hasPendingAyrsharePost,
 } from "../utils/postValidation";
 import { generateThreadPreview, ThreadPost } from "../utils/threadUtils";
 import {
@@ -117,6 +118,39 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
   useEffect(() => {
     setPost(post);
   }, [post]);
+
+  useEffect(() => {
+    if (!accountGroup?.id || !currentPost) return;
+    if (!hasPendingAyrsharePost(currentPost)) return;
+    let isActive = true;
+
+    const syncStatuses = async () => {
+      try {
+        await fetch("/api/sync-post-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accountGroupId: accountGroup.id,
+            reason: "pending_poll",
+          }),
+        });
+      } catch (error) {
+        console.warn("⚠️ Pending post sync failed:", error);
+      }
+    };
+
+    syncStatuses();
+    const interval = setInterval(() => {
+      if (isActive) {
+        syncStatuses();
+      }
+    }, 180000);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [accountGroup?.id, currentPost]);
 
   // Initialize selectedPlatforms from post variants
   useEffect(() => {
@@ -598,44 +632,132 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         throw new Error("Post content cannot be empty");
       }
 
-      const extractMediaUrlsFromVariant = (variant: any): string[] => {
+      const extractMediaUrlsFromVariant = async (
+        variant: any
+      ): Promise<string[]> => {
+        const extractFileStreamId = (fileStream: any) => {
+          const extractCoId = (value: any) => {
+            if (!value || typeof value !== "object") return undefined;
+            const symbols = Object.getOwnPropertySymbols(value);
+            for (const symbol of symbols) {
+              const symbolValue = (value as any)[symbol];
+              if (
+                typeof symbolValue === "string" &&
+                symbolValue.startsWith("co_")
+              ) {
+                return symbolValue;
+              }
+              if (
+                symbolValue &&
+                typeof symbolValue === "object" &&
+                typeof symbolValue.id === "string" &&
+                symbolValue.id.startsWith("co_")
+              ) {
+                return symbolValue.id;
+              }
+            }
+            return undefined;
+          };
+
+          if (typeof fileStream === "string" && fileStream.startsWith("co_")) {
+            return fileStream;
+          }
+          const fileStreamString =
+            typeof fileStream?.toString === "function"
+              ? fileStream.toString()
+              : undefined;
+          const stringMatch =
+            typeof fileStreamString === "string"
+              ? fileStreamString.match(/co_[A-Za-z0-9]+/)
+              : null;
+          return (
+            fileStream?.id ||
+            fileStream?._id ||
+            fileStream?.coId ||
+            fileStream?.refId ||
+            fileStream?._refId ||
+            fileStream?._raw?.id ||
+            fileStream?._raw?.refId ||
+            fileStream?.ref ||
+            fileStream?._ref?.id ||
+            (stringMatch ? stringMatch[0] : undefined) ||
+            extractCoId(fileStream)
+          );
+        };
+
+        const resolveFileStreamUrl = async (fileStream: any) => {
+          if (!fileStream) return null;
+          let stream = fileStream;
+          try {
+            if (typeof stream.load === "function") {
+              const loaded = await stream.load();
+              if (loaded) {
+                stream = loaded;
+              }
+            }
+          } catch (error) {
+            console.warn("⚠️ Failed to load FileStream ref:", error);
+          }
+
+          const fileStreamId = extractFileStreamId(stream);
+          if (
+            typeof fileStreamId === "string" &&
+            fileStreamId.startsWith("co_")
+          ) {
+            return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+          }
+
+          const publicUrlValue =
+            typeof stream?.publicUrl === "function"
+              ? stream.publicUrl()
+              : stream?.publicUrl;
+          const urlValue =
+            typeof stream?.url === "function" ? stream.url() : stream?.url;
+          const directUrl = publicUrlValue || urlValue;
+          if (typeof directUrl === "string" && directUrl.startsWith("http")) {
+            return directUrl;
+          }
+
+          if (typeof stream === "string" && stream.startsWith("http")) {
+            return stream;
+          }
+
+          return null;
+        };
+
         const mediaUrls =
-          variant?.media
-            ?.map((item: any) => {
+          (await Promise.all(
+            variant?.media?.map(async (item: any) => {
               if (item?.type === "url-image" || item?.type === "url-video") {
                 const url = item.url;
                 return typeof url === "string" ? url : null;
               }
 
               if (item?.type === "image" && item.image) {
-                const fileStreamId = item.image?.id;
-                if (
-                  typeof fileStreamId === "string" &&
-                  fileStreamId.startsWith("co_")
-                ) {
-                  return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
-                }
+                return resolveFileStreamUrl(item.image);
               }
 
               if (item?.type === "video" && item.video) {
-                const fileStreamId = item.video?.id;
-                if (
-                  typeof fileStreamId === "string" &&
-                  fileStreamId.startsWith("co_")
-                ) {
-                  return `https://app.succulent.social/api/media-proxy/${fileStreamId}`;
+                return resolveFileStreamUrl(item.video);
+              }
+
+              if (item?.type === "image" || item?.type === "video") {
+                const fileStreamRef = item?._refs?.image || item?._refs?.video;
+                if (fileStreamRef) {
+                  return resolveFileStreamUrl(fileStreamRef);
                 }
               }
 
               return null;
-            })
-            .filter(
-              (url: string | null): url is string => typeof url === "string"
-            ) || [];
+            }) || []
+          )) as Array<string | null>;
 
-        return mediaUrls.filter(
-          (url: string) => url.startsWith("http://") || url.startsWith("https://")
-        );
+        return mediaUrls
+          .filter((url): url is string => typeof url === "string")
+          .filter(
+            (url: string) =>
+              url.startsWith("http://") || url.startsWith("https://")
+          );
       };
 
       const parsePlatformOptions = (variant: any) => {
@@ -738,7 +860,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       let results;
 
       if (seriesType === "reply" && replyUrl) {
-        const mediaUrls = extractMediaUrlsFromVariant(
+        const mediaUrls = await extractMediaUrlsFromVariant(
           post.variants[activeTab]
         );
         const basePostData: PostData = {
@@ -767,7 +889,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         });
       } else if (seriesType === "thread" && contextText?.trim()) {
         const threadPosts = generateThreadPreview(contextText);
-        const mediaUrls = extractMediaUrlsFromVariant(
+        const mediaUrls = await extractMediaUrlsFromVariant(
           post.variants[activeTab]
         );
         const basePostData: PostData = {
@@ -803,7 +925,20 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           try {
             const variant = post.variants[platform] || baseVariant;
             const variantText = variant?.text?.toString() || postText;
-            const mediaUrls = extractMediaUrlsFromVariant(variant);
+            let mediaUrls = await extractMediaUrlsFromVariant(variant);
+            if (
+              mediaUrls.length === 0 &&
+              variant &&
+              baseVariant &&
+              variant !== baseVariant
+            ) {
+              const baseMediaUrls = await extractMediaUrlsFromVariant(
+                baseVariant
+              );
+              if (baseMediaUrls.length > 0) {
+                mediaUrls = baseMediaUrls;
+              }
+            }
             const variantOptions = parsePlatformOptions(variant);
             const mergedOptions = { ...baseOptions, ...variantOptions };
 
@@ -1406,7 +1541,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     isScheduling,
     isSaving,
     errors,
+    setErrors,
     success,
+    setSuccess,
     threadPosts,
     selectedPlatforms,
     showPreviewModal,

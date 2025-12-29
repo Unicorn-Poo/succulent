@@ -95,6 +95,9 @@ async function main() {
         console.log(
           `\nMedia details for ${post.id} | ${variant.platform} | ${post.title}`
         );
+        if (variant.ayrsharePostId) {
+          console.log(`- ayrsharePostId=${variant.ayrsharePostId}`);
+        }
         for (const detail of variant.mediaDetails) {
           console.log(
             `- type=${detail.type} url=${detail.url || "none"} image=${

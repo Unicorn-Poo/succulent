@@ -64,7 +64,7 @@ import {
   PlatformFeedView,
   PlatformAnalyticsDashboard,
 } from "@/components/organisms";
-import { getPostStatus } from "@/utils/postValidation";
+import { getPostStatus, hasPendingAyrsharePost } from "@/utils/postValidation";
 import { platformLabels } from "@/utils/postConstants";
 import { getPlatformIcon, getPlatformLabel } from "@/utils/platformIcons";
 import Image from "next/image";
@@ -578,6 +578,43 @@ export default function AccountGroupPage() {
   const handleClearSelection = () => {
     setSelectedPosts(new Set());
   };
+
+  const hasPendingPosts = useMemo(
+    () => posts.some((post) => hasPendingAyrsharePost(post)),
+    [posts]
+  );
+
+  useEffect(() => {
+    if (!accountGroup?.id || !hasPendingPosts) return;
+    let isActive = true;
+
+    const syncStatuses = async () => {
+      try {
+        await fetch("/api/sync-post-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accountGroupId: accountGroup.id,
+            reason: "pending_poll",
+          }),
+        });
+      } catch (error) {
+        console.warn("⚠️ Pending post sync failed:", error);
+      }
+    };
+
+    syncStatuses();
+    const interval = setInterval(() => {
+      if (isActive) {
+        syncStatuses();
+      }
+    }, 180000);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [accountGroup?.id, hasPendingPosts]);
 
   useEffect(() => {
     if (lastSyncedSearchKey.current === searchKey) return;

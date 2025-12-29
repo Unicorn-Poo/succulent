@@ -12,7 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/atoms/button";
-import { getPostStatus } from "@/utils/postValidation";
+import { getPostDisplayStatus, getPostStatus } from "@/utils/postValidation";
 import { platformIcons } from "@/utils/postConstants";
 
 interface PostViewsProps {
@@ -711,6 +711,8 @@ export function PostGridView({
         return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
       case "scheduled":
         return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
+      case "processing":
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
       case "draft":
         return "bg-muted text-foreground";
       default:
@@ -724,6 +726,8 @@ export function PostGridView({
         return "✓";
       case "scheduled":
         return "⏰";
+      case "processing":
+        return "⏳";
       case "draft":
         return "📝";
       default:
@@ -773,7 +777,7 @@ export function PostGridView({
             post.variants?.base?.text ||
             post.content ||
             "";
-          const postStatus = getPostStatus(post);
+          const postStatus = getPostDisplayStatus(post);
           // Prioritize scheduled date, then published date, then created date
           const postDate =
             post.variants?.base?.scheduledFor ||
@@ -1103,7 +1107,7 @@ export function PostImageView({
             post.variants?.base?.text ||
             post.content ||
             "";
-          const postStatus = getPostStatus(post);
+          const postStatus = getPostDisplayStatus(post);
           const postPlatforms = resolvePostPlatforms(post, connectedPlatforms);
           // Get all media items from base variant or check all variants
           // Handle Jazz collaborative lists properly
@@ -1325,7 +1329,7 @@ export function PostSuccinctView({
   const filteredPosts = sortedPosts.filter((post) => {
     // Status filter
     if (postsFilter !== "all") {
-      const postStatus = getPostStatus(post);
+          const postStatus = getPostDisplayStatus(post);
       if (postStatus !== postsFilter) return false;
     }
     // Platform filter
@@ -1360,7 +1364,7 @@ export function PostSuccinctView({
           post.variants?.base?.text ||
           post.content ||
           "";
-        const postStatus = getPostStatus(post);
+        const postStatus = getPostDisplayStatus(post);
         // Prioritize scheduled date, then published date, then created date
         const postDate =
           post.variants?.base?.scheduledFor ||

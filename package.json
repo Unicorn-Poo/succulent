@@ -13,6 +13,7 @@
     "test": "jest",
     "check": "pnpm type-check && pnpm lint:check",
     "check:scheduled-media": "node scripts/check-scheduled-media.js",
+    "reschedule:scheduled-media": "node scripts/reschedule-scheduled-media.js",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -32,6 +33,8 @@
     "@vercel/og": "^0.8.5",
     "ai": "^5.0.82",
     "clsx": "^2.1.1",
+    "cojson": "0.17.5",
+    "cojson-transport-ws": "0.17.5",
     "html-react-parser": "^5.2.5",
     "jazz-tools": "^0.17.5",
     "lucide-react": "^0.515.0",

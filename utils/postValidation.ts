@@ -178,13 +178,18 @@ export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
     return 'published';
   }
 
+  // PRIORITY 1.25: Pending Ayrshare share IDs should be treated as scheduled/processing
+  if (hasPendingAyrsharePost(post)) {
+    return 'scheduled';
+  }
+
   // PRIORITY 1.5: Check if post has ayrsharePostId (indicates it was published to Ayrshare)
   // If a variant has ayrsharePostId but no scheduledFor, it's likely published
   if (post.variants) {
     for (const variant of Object.values(post.variants)) {
       const v = variant as any;
       // If variant has ayrsharePostId and no scheduledFor, it was published
-      if (v?.ayrsharePostId && !v?.scheduledFor) {
+      if (v?.ayrsharePostId && !v?.scheduledFor && !hasPendingAyrsharePost(post)) {
         return 'published';
       }
       // If variant has ayrsharePostId AND scheduledFor in the future, it's scheduled
@@ -255,4 +260,23 @@ export function getPostStatus(post: any): 'draft' | 'scheduled' | 'published' {
 
   // Only default to draft if we truly can't determine the status
   return 'draft';
-} 
+}
+
+export function hasPendingAyrsharePost(post: any): boolean {
+  if (!post?.variants) return false;
+  return Object.values(post.variants).some((variant: any) => {
+    const postId = variant?.ayrsharePostId;
+    if (!postId || typeof postId !== "string") return false;
+    if (variant?.publishedAt) return false;
+    return postId.startsWith("p_pub_url~");
+  });
+}
+
+export function getPostDisplayStatus(
+  post: any
+): 'draft' | 'scheduled' | 'published' | 'processing' {
+  if (hasPendingAyrsharePost(post)) {
+    return 'processing';
+  }
+  return getPostStatus(post);
+}

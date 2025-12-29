@@ -64,8 +64,13 @@ export async function syncPostStatusesForAccountGroup(
     for (const ayrsharePost of ayrshareHistory) {
       if (ayrsharePost.id) {
         // Determine overall status from postIds array
-        const hasSuccessfulPost = ayrsharePost.postIds.some(p => p.status === 'success');
-        const hasPendingPost = ayrsharePost.postIds.some(p => p.status === 'pending');
+        const postIdsArray = Array.isArray(ayrsharePost.postIds)
+          ? ayrsharePost.postIds
+          : [];
+        const hasSuccessfulPost = postIdsArray.some(
+          (p) => p?.status === "success"
+        );
+        const hasPendingPost = postIdsArray.some((p) => p?.status === "pending");
         
         let overallStatus: string;
         if (hasSuccessfulPost) {

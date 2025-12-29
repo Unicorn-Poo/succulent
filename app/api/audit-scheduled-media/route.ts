@@ -6,6 +6,7 @@ type VariantAudit = {
   platform: string;
   status: string | undefined;
   scheduledFor: Date | undefined;
+  ayrsharePostId?: string;
   mediaItemCount: number;
   resolvedMediaUrls: string[];
   fileStreamIds: string[];
@@ -27,11 +28,104 @@ function resolveBaseUrl(request: NextRequest): string {
   }
 }
 
-function extractMediaUrlsFromVariant(variant: any, baseUrl: string): {
+async function extractFileStreamId(fileStream: any): Promise<string | undefined> {
+  if (!fileStream) return undefined;
+  if (typeof fileStream === "string" && fileStream.startsWith("co_")) {
+    return fileStream;
+  }
+
+  const extractCoId = (value: any) => {
+    if (!value || typeof value !== "object") return undefined;
+    const symbols = Object.getOwnPropertySymbols(value);
+    for (const symbol of symbols) {
+      const symbolValue = (value as any)[symbol];
+      if (
+        typeof symbolValue === "string" &&
+        symbolValue.startsWith("co_")
+      ) {
+        return symbolValue;
+      }
+      if (
+        symbolValue &&
+        typeof symbolValue === "object" &&
+        typeof symbolValue.id === "string" &&
+        symbolValue.id.startsWith("co_")
+      ) {
+        return symbolValue.id;
+      }
+    }
+    return undefined;
+  };
+
+  let stream = fileStream;
+  try {
+    if (typeof stream.load === "function") {
+      const loadedStream = await stream.load();
+      if (loadedStream) {
+        stream = loadedStream;
+      }
+    }
+  } catch (error) {
+    console.warn("⚠️ Failed to load FileStream ref:", error);
+  }
+
+  const fileStreamString =
+    typeof stream?.toString === "function" ? stream.toString() : undefined;
+  const stringMatch =
+    typeof fileStreamString === "string"
+      ? fileStreamString.match(/co_[A-Za-z0-9]+/)
+      : null;
+
+  const fileStreamId =
+    stream?.id ||
+    stream?._id ||
+    stream?.coId ||
+    stream?.refId ||
+    stream?._refId ||
+    stream?._raw?.id ||
+    stream?._raw?.refId ||
+    stream?.ref ||
+    stream?._ref?.id ||
+    (stringMatch ? stringMatch[0] : undefined) ||
+    extractCoId(stream) ||
+    extractCoId(fileStream);
+
+  return typeof fileStreamId === "string" ? fileStreamId : undefined;
+}
+
+async function resolveFileStreamUrl(
+  fileStream: any,
+  baseUrl: string
+): Promise<string | undefined> {
+  if (!fileStream) return undefined;
+  const normalizedBase = baseUrl.replace(/\/$/, "");
+  const fileStreamId = await extractFileStreamId(fileStream);
+  if (fileStreamId && fileStreamId.startsWith("co_")) {
+    return `${normalizedBase}/api/media-proxy/${fileStreamId}`;
+  }
+
+  const publicUrlValue =
+    typeof fileStream?.publicUrl === "function"
+      ? fileStream.publicUrl()
+      : fileStream?.publicUrl;
+  const urlValue =
+    typeof fileStream?.url === "function" ? fileStream.url() : fileStream?.url;
+  const publicUrl = publicUrlValue || urlValue;
+  if (typeof publicUrl === "string" && publicUrl.startsWith("http")) {
+    return publicUrl;
+  }
+
+  return undefined;
+}
+
+async function extractMediaUrlsFromVariant(
+  variant: any,
+  baseUrl: string
+): Promise<{
   urls: string[];
   fileStreamIds: string[];
   urlMediaCount: number;
-} {
+}> {
   if (!variant?.media) {
     return { urls: [], fileStreamIds: [], urlMediaCount: 0 };
   }
@@ -41,7 +135,6 @@ function extractMediaUrlsFromVariant(variant: any, baseUrl: string): {
   let urlMediaCount = 0;
 
   const mediaArray = Array.from(variant.media);
-  const normalizedBase = baseUrl.replace(/\/$/, "");
 
   for (const item of mediaArray) {
     const mediaItem = item as any;
@@ -59,14 +152,23 @@ function extractMediaUrlsFromVariant(variant: any, baseUrl: string): {
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
-      const fileStream = mediaItem.image || mediaItem.video;
-      const fileStreamId = fileStream?.id;
-      if (
-        typeof fileStreamId === "string" &&
-        fileStreamId.startsWith("co_")
-      ) {
+      const fileStream =
+        mediaItem.image ||
+        mediaItem.video ||
+        mediaItem?._refs?.image ||
+        mediaItem?._refs?.video;
+      const fileStreamId = await extractFileStreamId(fileStream);
+      if (fileStreamId && fileStreamId.startsWith("co_")) {
         fileStreamIds.push(fileStreamId);
-        mediaUrls.push(`${normalizedBase}/api/media-proxy/${fileStreamId}`);
+        const resolvedUrl = await resolveFileStreamUrl(fileStream, baseUrl);
+        if (resolvedUrl) {
+          mediaUrls.push(resolvedUrl);
+        }
+      } else {
+        const resolvedUrl = await resolveFileStreamUrl(fileStream, baseUrl);
+        if (resolvedUrl) {
+          mediaUrls.push(resolvedUrl);
+        }
       }
     }
   }
@@ -140,7 +242,7 @@ export async function GET(request: NextRequest) {
           variants: {
             $each: {
               text: true,
-              media: { $each: true },
+              media: { $each: { type: true, url: true, image: true, video: true } },
               replyTo: true,
             },
           },
@@ -192,7 +294,7 @@ export async function GET(request: NextRequest) {
 
         const mediaItems = variant.media ? Array.from(variant.media) : [];
         const { urls, fileStreamIds, urlMediaCount } =
-          extractMediaUrlsFromVariant(variant, baseUrl);
+          await extractMediaUrlsFromVariant(variant, baseUrl);
 
         results.summary.scheduledVariants += 1;
         if (mediaItems.length > 0) {
@@ -205,23 +307,28 @@ export async function GET(request: NextRequest) {
         }
 
         const mediaDetails = includeMediaDetails
-          ? mediaItems.map((mediaItem: any) => ({
-              type: mediaItem?.type,
-              url: mediaItem?.url,
-              hasImage: !!mediaItem?.image,
-              hasVideo: !!mediaItem?.video,
-              fileStreamId:
-                mediaItem?.image?.id ||
-                mediaItem?.video?.id ||
-                mediaItem?.image?._id ||
-                mediaItem?.video?._id,
-            }))
+          ? await Promise.all(
+              mediaItems.map(async (mediaItem: any) => ({
+                type: mediaItem?.type,
+                url: mediaItem?.url,
+                hasImage: !!(mediaItem?.image || mediaItem?._refs?.image),
+                hasVideo: !!(mediaItem?.video || mediaItem?._refs?.video),
+                fileStreamId:
+                  (await extractFileStreamId(
+                    mediaItem?.image ||
+                      mediaItem?.video ||
+                      mediaItem?._refs?.image ||
+                      mediaItem?._refs?.video
+                  )) || undefined,
+              }))
+            )
           : undefined;
 
         scheduledVariants.push({
           platform,
           status,
           scheduledFor,
+          ayrsharePostId: variant.ayrsharePostId,
           mediaItemCount: mediaItems.length,
           resolvedMediaUrls: urls,
           fileStreamIds,

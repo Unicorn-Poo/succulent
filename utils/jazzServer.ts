@@ -1,6 +1,90 @@
+import { WebSocketPeerWithReconnection } from "cojson-transport-ws";
+import { WasmCrypto } from "cojson/crypto/WasmCrypto";
+import { createJazzContextFromExistingCredentials, randomSessionProvider } from "jazz-tools";
 import { startWorker } from "jazz-tools/worker";
 
 import { MyAppAccount } from "@/app/schema";
+
+type WorkerInitOptions = {
+  accountID?: string;
+  accountSecret?: string;
+  syncServer?: string;
+  AccountSchema?: any;
+};
+
+async function startWorkerWithoutInbox(options: WorkerInitOptions) {
+  const {
+    accountID = process.env.JAZZ_WORKER_ACCOUNT,
+    accountSecret = process.env.JAZZ_WORKER_SECRET,
+    syncServer = process.env.JAZZ_SYNC_SERVER || "wss://mesh.jazz.tools",
+    AccountSchema = MyAppAccount,
+  } = options;
+
+  let node: any = null;
+  const peersToLoadFrom: any[] = [];
+  const wsPeer = new WebSocketPeerWithReconnection({
+    peer: syncServer,
+    reconnectionTimeout: 100,
+    addPeer: (peer) => {
+      if (node?.syncManager) {
+        node.syncManager.addPeer(peer);
+      } else {
+        peersToLoadFrom.push(peer);
+      }
+    },
+    removePeer: () => {},
+  });
+
+  wsPeer.enable();
+
+  try {
+    if (!accountID) {
+      throw new Error("No accountID provided");
+    }
+    if (!accountSecret) {
+      throw new Error("No accountSecret provided");
+    }
+    if (!accountID.startsWith("co_")) {
+      throw new Error("Invalid accountID");
+    }
+    if (!accountSecret.startsWith("sealerSecret_")) {
+      throw new Error("Invalid accountSecret");
+    }
+
+    const context = await createJazzContextFromExistingCredentials({
+      credentials: {
+        accountID,
+        secret: accountSecret as any,
+      },
+      AccountSchema,
+      sessionProvider: randomSessionProvider,
+      peersToLoadFrom,
+      crypto: await WasmCrypto.create(),
+    });
+
+    node = context.node as any;
+
+    const account = context.account as any;
+    if (account?._refs?.profile?.load) {
+      try {
+        await account._refs.profile.load();
+      } catch (error) {
+        console.warn("⚠️ Failed to preload worker profile:", error);
+      }
+    }
+
+    return {
+      worker: account,
+      done: () => {
+        wsPeer.disable();
+        context.done();
+      },
+    };
+  } catch (error) {
+    wsPeer.disable();
+    throw error;
+  }
+}
 
 /**
  * Initialize Jazz Server Worker Instance
@@ -8,18 +92,37 @@ import { MyAppAccount } from "@/app/schema";
  * Includes retry logic and timeout handling for network issues
  */
 export async function initializeJazzServer(retries = 3, delay = 2000) {
-  try {
-    // Check if required environment variables are available
-    if (!process.env.JAZZ_WORKER_ACCOUNT || !process.env.JAZZ_WORKER_SECRET) {
-      console.log(
-        "⚠️ Jazz server worker environment variables not configured. Server-side Jazz features will be disabled."
-      );
-      console.log("📝 Required environment variables:");
-      console.log("   - JAZZ_WORKER_ACCOUNT: Your Jazz worker account ID");
-      console.log("   - JAZZ_WORKER_SECRET: Your Jazz worker secret key");
-      console.log("   - JAZZ_SYNC_SERVER (optional): Jazz sync server URL");
-      return null;
-    }
+  const globalState = globalThis as {
+    __jazzServerWorkerPromise?: Promise<any> | null;
+    __jazzServerWorker?: any;
+    __jazzServerInitError?: string | null;
+    __jazzServerInitErrorAt?: string | null;
+  };
+
+  if (globalState.__jazzServerWorker) {
+    return globalState.__jazzServerWorker;
+  }
+
+  if (globalState.__jazzServerWorkerPromise) {
+    return globalState.__jazzServerWorkerPromise;
+  }
+
+  const initPromise = (async () => {
+    try {
+      // Check if required environment variables are available
+      if (
+        !process.env.JAZZ_WORKER_ACCOUNT ||
+        !process.env.JAZZ_WORKER_SECRET
+      ) {
+        console.log(
+          "⚠️ Jazz server worker environment variables not configured. Server-side Jazz features will be disabled."
+        );
+        console.log("📝 Required environment variables:");
+        console.log("   - JAZZ_WORKER_ACCOUNT: Your Jazz worker account ID");
+        console.log("   - JAZZ_WORKER_SECRET: Your Jazz worker secret key");
+        console.log("   - JAZZ_SYNC_SERVER (optional): Jazz sync server URL");
+        return null;
+      }
 
     console.log("🔧 Initializing Jazz server worker with:", {
       accountID: process.env.JAZZ_WORKER_ACCOUNT,
@@ -30,6 +133,7 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
 
     let lastError: Error | null = null;
     let worker: any = null;
+    let triedInboxFallback = false;
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -87,6 +191,9 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
           );
         }
 
+        globalState.__jazzServerWorker = worker;
+        globalState.__jazzServerInitError = null;
+        globalState.__jazzServerInitErrorAt = null;
         return worker;
       } catch (attemptError) {
         lastError =
@@ -97,6 +204,42 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
           `❌ Attempt ${attempt}/${retries} failed:`,
           lastError.message
         );
+        globalState.__jazzServerInitError = lastError.message;
+        globalState.__jazzServerInitErrorAt = new Date().toISOString();
+
+        if (
+          lastError.message.includes("Account profile should already be loaded") &&
+          globalState.__jazzServerWorker
+        ) {
+          return globalState.__jazzServerWorker;
+        }
+        if (
+          lastError.message.includes("Account profile should already be loaded") &&
+          !triedInboxFallback
+        ) {
+          triedInboxFallback = true;
+          console.warn("⚠️ Worker inbox load failed; using fallback init without inbox.");
+          try {
+            const fallbackResult = await startWorkerWithoutInbox({
+              accountID: process.env.JAZZ_WORKER_ACCOUNT,
+              accountSecret: process.env.JAZZ_WORKER_SECRET,
+              syncServer:
+                process.env.JAZZ_SYNC_SERVER || "wss://mesh.jazz.tools",
+              AccountSchema: MyAppAccount,
+            });
+            const fallbackWorker = fallbackResult?.worker || fallbackResult;
+            if (fallbackWorker) {
+              globalState.__jazzServerWorker = fallbackWorker;
+              return fallbackWorker;
+            }
+          } catch (fallbackError) {
+            lastError =
+              fallbackError instanceof Error
+                ? fallbackError
+                : new Error(String(fallbackError));
+            console.error("❌ Fallback worker init failed:", lastError.message);
+          }
+        }
 
         // Check if it's a network/connectivity error that might be temporary
         const isNetworkError =
@@ -128,6 +271,13 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
     throw new Error("Worker initialization failed after all retries");
   } catch (error) {
     console.error("❌ Failed to start Jazz Server Worker:", error);
+    if (error instanceof Error) {
+      globalState.__jazzServerInitError = error.message;
+      globalState.__jazzServerInitErrorAt = new Date().toISOString();
+    } else {
+      globalState.__jazzServerInitError = String(error);
+      globalState.__jazzServerInitErrorAt = new Date().toISOString();
+    }
 
     if (error instanceof Error) {
       if (error.message.includes("read key secret")) {
@@ -161,9 +311,32 @@ export async function initializeJazzServer(retries = 3, delay = 2000) {
     console.log(
       "⚠️ Server-side Jazz features will be disabled. API will use in-memory storage as fallback."
     );
-    return null;
+      return null;
+    }
+  })();
+
+  globalState.__jazzServerWorkerPromise = initPromise;
+  const worker = await initPromise;
+  if (!worker) {
+    globalState.__jazzServerWorkerPromise = null;
   }
+  return worker;
 }
 
 // Export a promise that resolves to the worker (or null if not configured)
 export const jazzServerWorker = initializeJazzServer();
+
+export function getServerWorkerInitState() {
+  const globalState = globalThis as {
+    __jazzServerWorkerPromise?: Promise<any> | null;
+    __jazzServerWorker?: any;
+    __jazzServerInitError?: string | null;
+    __jazzServerInitErrorAt?: string | null;
+  };
+
+  return {
+    hasWorker: !!globalState.__jazzServerWorker,
+    initError: globalState.__jazzServerInitError || null,
+    initErrorAt: globalState.__jazzServerInitErrorAt || null,
+  };
+}

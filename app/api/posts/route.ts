@@ -7,6 +7,7 @@ import {
   handleReplyPost,
   handleMultiPosts,
 } from "@/utils/apiHandlers";
+import { AYRSHARE_API_URL, AYRSHARE_API_KEY } from "@/utils/postConstants";
 import {
   isBusinessPlanMode,
   INTERNAL_TO_AYRSHARE_PLATFORM,
@@ -238,6 +239,10 @@ const CreatePostSchema = zod.object({
 
   // Publishing options
   publishImmediately: zod.boolean().default(false),
+  // Limit publish to explicit platforms (skip inferred variants)
+  limitToPlatforms: zod.boolean().optional(),
+  // Delete existing scheduled post(s) in Ayrshare before rescheduling
+  deleteExistingScheduled: zod.boolean().optional(),
   saveAsDraft: zod.boolean().default(true),
 
   // Business plan options
@@ -427,6 +432,37 @@ function proxyMediaUrlIfNeeded(url: string): string {
     }
   }
   return url;
+}
+
+async function deleteAyrsharePostById(
+  postId: string,
+  profileKey: string | undefined
+): Promise<void> {
+  if (!postId) return;
+  const apiKey = process.env.AYRSHARE_API_KEY || AYRSHARE_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing AYRSHARE_API_KEY for delete operation");
+  }
+  if (!profileKey) {
+    throw new Error("Missing Profile-Key for delete operation");
+  }
+
+  const response = await fetch(`${AYRSHARE_API_URL}/post`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Profile-Key": profileKey,
+    },
+    body: JSON.stringify({ id: postId }),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      `Ayrshare delete failed (${response.status}): ${text || "Unknown error"}`
+    );
+  }
 }
 
 function normalizeMediaUrls(urls?: string[]): string[] {
@@ -1112,6 +1148,51 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
   const mediaUrls: string[] = [];
   const mediaArray = Array.from(variant.media);
   const baseUrl = resolvePublicBaseUrl().replace(/\/$/, "");
+  const extractFileStreamId = (value: any) => {
+    if (!value) return undefined;
+    if (typeof value === "string" && value.startsWith("co_")) {
+      return value;
+    }
+
+    const fileStreamString =
+      typeof value?.toString === "function" ? value.toString() : undefined;
+    const stringMatch =
+      typeof fileStreamString === "string"
+        ? fileStreamString.match(/co_[A-Za-z0-9]+/)
+        : null;
+
+    const symbols =
+      value && typeof value === "object"
+        ? Object.getOwnPropertySymbols(value)
+        : [];
+    for (const symbol of symbols) {
+      const symbolValue = (value as any)[symbol];
+      if (typeof symbolValue === "string" && symbolValue.startsWith("co_")) {
+        return symbolValue;
+      }
+      if (
+        symbolValue &&
+        typeof symbolValue === "object" &&
+        typeof symbolValue.id === "string" &&
+        symbolValue.id.startsWith("co_")
+      ) {
+        return symbolValue.id;
+      }
+    }
+
+    return (
+      value?.id ||
+      value?._id ||
+      value?.coId ||
+      value?.refId ||
+      value?._refId ||
+      value?._raw?.id ||
+      value?._raw?.refId ||
+      value?.ref ||
+      value?._ref?.id ||
+      (stringMatch ? stringMatch[0] : undefined)
+    );
+  };
 
   for (const item of mediaArray) {
     const mediaItem = item as any;
@@ -1128,8 +1209,12 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
-      const fileStream = mediaItem.image || mediaItem.video;
-      const fileStreamId = fileStream?.id;
+      const fileStream =
+        mediaItem.image ||
+        mediaItem.video ||
+        mediaItem?._refs?.image ||
+        mediaItem?._refs?.video;
+      const fileStreamId = extractFileStreamId(fileStream);
       if (
         typeof fileStreamId === "string" &&
         fileStreamId.startsWith("co_")
@@ -1192,9 +1277,9 @@ export async function preparePublishRequests(
   });
 
   // Collect all platforms to process: from requestData.platforms AND post.variants
-  // This ensures variant-only platforms (like Instagram) are included
+  // This ensures variant-only platforms (like Instagram) are included unless limited
   const allPlatformsToProcess = new Set<string>(requestData.platforms);
-  if (post?.variants) {
+  if (!requestData.limitToPlatforms && post?.variants) {
     for (const platform of Object.keys(post.variants)) {
       if (platform !== "base" && PlatformNames.includes(platform as any)) {
         allPlatformsToProcess.add(platform);
@@ -2445,6 +2530,51 @@ export async function POST(request: NextRequest) {
       });
 
       try {
+        if (requestData.deleteExistingScheduled) {
+          if (!finalProfileKey) {
+            throw new Error(
+              "deleteExistingScheduled requires a valid Profile-Key"
+            );
+          }
+
+          const targetPlatforms = requestData.platforms.filter(
+            (platform) => platform !== "base"
+          );
+          const deleteErrors: Array<{ platform: string; error: string }> = [];
+
+          for (const platform of targetPlatforms) {
+            const variant = result.post?.variants?.[platform];
+            const postId = variant?.ayrsharePostId;
+            const isScheduled =
+              variant?.status === "scheduled" || !!variant?.scheduledFor;
+
+            if (!postId || !isScheduled) continue;
+
+            try {
+              await deleteAyrsharePostById(postId, finalProfileKey);
+              console.log(
+                `🗑️ Deleted scheduled Ayrshare post ${postId} for ${platform}`
+              );
+            } catch (deleteError) {
+              deleteErrors.push({
+                platform,
+                error:
+                  deleteError instanceof Error
+                    ? deleteError.message
+                    : "Unknown delete error",
+              });
+            }
+          }
+
+          if (deleteErrors.length > 0) {
+            throw new Error(
+              `Failed to delete scheduled posts: ${deleteErrors
+                .map((e) => `${e.platform} (${e.error})`)
+                .join(", ")}`
+            );
+          }
+        }
+
         // Prepare publish requests - handles variants by creating separate requests per platform
         const publishRequests = await preparePublishRequests(
           requestData,
