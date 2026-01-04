@@ -244,6 +244,7 @@ const CreatePostSchema = zod.object({
   // Delete existing scheduled post(s) in Ayrshare before rescheduling
   deleteExistingScheduled: zod.boolean().optional(),
   saveAsDraft: zod.boolean().default(true),
+  cacheLunaryMedia: zod.boolean().optional(),
 
   // Business plan options
   profileKey: zod.string().optional(), // For Ayrshare Business Plan integration
@@ -251,6 +252,12 @@ const CreatePostSchema = zod.object({
 
 type CreatePostRequest = zod.infer<typeof CreatePostSchema>;
 type VariantOverride = zod.infer<typeof VariantDetailsSchema>;
+
+const VIDEO_EXTENSIONS = [".mp4", ".mov", ".m4v", ".webm"];
+const isVideoUrl = (url: string) => {
+  const cleanedUrl = url.split("?")[0]?.split("#")[0]?.toLowerCase() || "";
+  return VIDEO_EXTENSIONS.some((ext) => cleanedUrl.endsWith(ext));
+};
 
 const PLATFORM_OPTION_KEYS: Record<string, string> = {
   x: "twitterOptions",
@@ -284,10 +291,9 @@ const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
 
 /**
  * Download and cache Lunary OG images to prevent different images being generated
- * at publish time vs schedule time. Returns a FileStream-based media item instead
- * of a URL-based one.
+ * at publish time vs schedule time. Returns a FileStream for re-use.
  */
-async function downloadAndCacheLunaryImage(
+async function downloadAndCacheLunaryImageStream(
   lunaryUrl: string,
   owner: any
 ): Promise<any | null> {
@@ -330,7 +336,6 @@ async function downloadAndCacheLunaryImage(
     const blob = new Blob([buffer], { type: contentType });
 
     // Import required modules
-    const { ImageMedia } = await import("@/app/schema");
     const { co } = await import("jazz-tools");
 
     // Create FileStream from blob
@@ -343,24 +348,12 @@ async function downloadAndCacheLunaryImage(
       },
     });
 
-    // Create ImageMedia with the FileStream
-    const imageMedia = ImageMedia.create(
-      {
-        type: "image" as const,
-        image: imageStream,
-        alt: co
-          .plainText()
-          .create(`Image from ${new URL(lunaryUrl).hostname}`, { owner }),
-      },
-      { owner }
-    );
-
     console.log(
-      "✅ [LUNARY CACHE] Created cached ImageMedia with FileStream:",
+      "✅ [LUNARY CACHE] Created cached FileStream:",
       (imageStream as any)?.publicUrl || "PENDING"
     );
 
-    return imageMedia;
+    return imageStream;
   } catch (error) {
     console.error(
       "❌ [LUNARY CACHE] Error downloading/caching Lunary image:",
@@ -707,7 +700,25 @@ async function createPostInAccountGroup(
 
     // Create all objects owned by the account group (not server worker)
     const groupOwner = accountGroup._owner;
+    const lunaryStreamCache = new Map<string, any>();
+    const getCachedLunaryStream = async (mediaUrl: string) => {
+      if (lunaryStreamCache.has(mediaUrl)) {
+        return lunaryStreamCache.get(mediaUrl);
+      }
+      const imageStream = await downloadAndCacheLunaryImageStream(
+        mediaUrl,
+        groupOwner
+      );
+      if (imageStream) {
+        lunaryStreamCache.set(mediaUrl, imageStream);
+      }
+      return imageStream;
+    };
 
+    const shouldCacheLunary =
+      request.cacheLunaryMedia !== undefined
+        ? request.cacheLunaryMedia
+        : true;
     const titleText = co
       .plainText()
       .create(postData.title || `API Post ${new Date().toISOString()}`, {
@@ -733,7 +744,8 @@ async function createPostInAccountGroup(
     });
 
     if (baseMediaUrls.length > 0) {
-      const { URLImageMedia, URLVideoMedia } = await import("@/app/schema");
+      const { ImageMedia, URLImageMedia, URLVideoMedia } =
+        await import("@/app/schema");
 
       for (const mediaUrl of baseMediaUrls) {
         try {
@@ -744,21 +756,32 @@ async function createPostInAccountGroup(
             .create(mediaItem?.alt || request.alt || "", { owner: groupOwner });
 
           // Determine type from mediaItem or default to image
-          const isVideo = mediaItem?.type === "video";
+          const isVideo =
+            mediaItem?.type === "video" || isVideoUrl(mediaUrl);
 
           // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
           // being generated at publish time vs schedule time
-          if (!isVideo && mediaUrl.includes(LUNARY_OG_IDENTIFIER)) {
+          if (
+            !isVideo &&
+            shouldCacheLunary &&
+            mediaUrl.includes(LUNARY_OG_IDENTIFIER)
+          ) {
             console.log(
               "🔍 [LUNARY DETECTED] Found Lunary OG image, downloading and caching:",
               mediaUrl
             );
-            const cachedImage = await downloadAndCacheLunaryImage(
-              mediaUrl,
-              groupOwner
-            );
-            if (cachedImage) {
-              baseMediaList.push(cachedImage);
+            const cachedStream = await getCachedLunaryStream(mediaUrl);
+            if (cachedStream) {
+              const imageMedia = ImageMedia.create(
+                {
+                  type: "image" as const,
+                  image: cachedStream,
+                  alt: altText,
+                  sourceUrl: mediaUrl,
+                },
+                { owner: groupOwner }
+              );
+              baseMediaList.push(imageMedia);
               console.log(
                 "✅ [LUNARY CACHED] Successfully cached Lunary image as FileStream"
               );
@@ -857,27 +880,44 @@ async function createPostInAccountGroup(
     // Helper function to create media list from URLs
     const createMediaListFromUrls = async (
       urls: string[],
-      altText?: string
+      altText?: string,
+      mediaTypeHints?: CreatePostRequest["media"]
     ) => {
       const mediaList = co.list(MediaItem).create([], { owner: groupOwner });
       if (urls.length === 0) return mediaList;
 
-      const { URLImageMedia } = await import("@/app/schema");
+      const { ImageMedia, URLImageMedia, URLVideoMedia } =
+        await import("@/app/schema");
       for (const mediaUrl of urls) {
         try {
+          const typeHint = mediaTypeHints?.find(
+            (item) => item.url === mediaUrl
+          )?.type;
+          const isVideo = typeHint === "video" || isVideoUrl(mediaUrl);
+
           // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
           // being generated at publish time vs schedule time
-          if (mediaUrl.includes(LUNARY_OG_IDENTIFIER)) {
+          if (
+            !isVideo &&
+            shouldCacheLunary &&
+            mediaUrl.includes(LUNARY_OG_IDENTIFIER)
+          ) {
             console.log(
               "🔍 [LUNARY DETECTED] Found Lunary OG image in variant, downloading and caching:",
               mediaUrl
             );
-            const cachedImage = await downloadAndCacheLunaryImage(
-              mediaUrl,
-              groupOwner
-            );
-            if (cachedImage) {
-              mediaList.push(cachedImage);
+            const cachedStream = await getCachedLunaryStream(mediaUrl);
+            if (cachedStream) {
+              const imageMedia = ImageMedia.create(
+                {
+                  type: "image" as const,
+                  image: cachedStream,
+                  alt: alt,
+                  sourceUrl: mediaUrl,
+                },
+                { owner: groupOwner }
+              );
+              mediaList.push(imageMedia);
               console.log(
                 "✅ [LUNARY CACHED] Successfully cached Lunary image as FileStream"
               );
@@ -894,16 +934,29 @@ async function createPostInAccountGroup(
           const alt = co
             .plainText()
             .create(altText || request.alt || "", { owner: groupOwner });
-          const urlImageMedia = URLImageMedia.create(
-            {
-              type: "url-image",
-              url: mediaUrl,
-              alt: alt,
-              filename: undefined,
-            },
-            { owner: groupOwner }
-          );
-          mediaList.push(urlImageMedia);
+          if (isVideo) {
+            const urlVideoMedia = URLVideoMedia.create(
+              {
+                type: "url-video",
+                url: mediaUrl,
+                alt: alt,
+                filename: undefined,
+              },
+              { owner: groupOwner }
+            );
+            mediaList.push(urlVideoMedia);
+          } else {
+            const urlImageMedia = URLImageMedia.create(
+              {
+                type: "url-image",
+                url: mediaUrl,
+                alt: alt,
+                filename: undefined,
+              },
+              { owner: groupOwner }
+            );
+            mediaList.push(urlImageMedia);
+          }
         } catch (mediaError) {
           console.error("❌ Failed to create URL media item:", mediaError);
         }
@@ -981,7 +1034,8 @@ async function createPostInAccountGroup(
           // Don't just push references - create new items so each variant has its own
           variantMediaList = await createMediaListFromUrls(
             baseMediaUrls,
-            request.alt
+            request.alt,
+            request.media
           );
         }
 
@@ -1000,7 +1054,8 @@ async function createPostInAccountGroup(
         // Create NEW media items from base URLs - don't just push references
         variantMediaList = await createMediaListFromUrls(
           baseMediaUrls,
-          request.alt
+          request.alt,
+          request.media
         );
       }
 
@@ -1209,6 +1264,14 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
+      const sourceUrl = mediaItem?.sourceUrl;
+      if (
+        typeof sourceUrl === "string" &&
+        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
+      ) {
+        mediaUrls.push(sourceUrl);
+        continue;
+      }
       const fileStream =
         mediaItem.image ||
         mediaItem.video ||
@@ -1863,7 +1926,8 @@ export async function preparePublishRequests(
 async function updatePostWithAyrshareIds(
   post: any,
   publishResults: any,
-  platforms: string[]
+  platforms: string[],
+  scheduledDate?: string
 ) {
   try {
     console.log("🔄 Updating post with Ayrshare IDs:", publishResults);
@@ -1907,6 +1971,12 @@ async function updatePostWithAyrshareIds(
       const baseVariant = post.variants.base;
       if (baseVariant) {
         baseVariant.status = isScheduled ? "scheduled" : "published";
+        if (isScheduled && scheduledDate) {
+          const scheduledAt = new Date(scheduledDate);
+          if (!Number.isNaN(scheduledAt.getTime())) {
+            baseVariant.scheduledFor = scheduledAt;
+          }
+        }
         if (!isScheduled) {
           baseVariant.publishedAt = new Date();
           // Clear scheduledFor if published immediately
@@ -1927,6 +1997,12 @@ async function updatePostWithAyrshareIds(
 
           // Update status based on Ayrshare response
           variant.status = isScheduled ? "scheduled" : "published";
+          if (isScheduled && scheduledDate) {
+            const scheduledAt = new Date(scheduledDate);
+            if (!Number.isNaN(scheduledAt.getTime())) {
+              variant.scheduledFor = scheduledAt;
+            }
+          }
           if (!isScheduled) {
             variant.publishedAt = new Date();
             // Clear scheduledFor if published immediately
@@ -2730,6 +2806,7 @@ export async function POST(request: NextRequest) {
               publishResults: ayrshareResults,
               platforms: requestData.platforms,
               isScheduled: isScheduled,
+              scheduledDate: requestData.scheduledDate,
               postTitle: requestData.title || "API Post",
               accountGroup: accountGroup,
             });
@@ -2745,7 +2822,8 @@ export async function POST(request: NextRequest) {
               await updatePostWithAyrshareIds(
                 result.post,
                 ayrshareResults,
-                requestData.platforms
+                requestData.platforms,
+                requestData.scheduledDate
               );
             }
           } catch (updateError) {
@@ -2756,7 +2834,8 @@ export async function POST(request: NextRequest) {
             await updatePostWithAyrshareIds(
               result.post,
               ayrshareResults,
-              requestData.platforms
+              requestData.platforms,
+              requestData.scheduledDate
             );
           }
         }

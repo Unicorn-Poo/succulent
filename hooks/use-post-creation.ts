@@ -733,6 +733,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
                 return typeof url === "string" ? url : null;
               }
 
+              if (
+                (item?.type === "image" || item?.type === "video") &&
+                typeof item?.sourceUrl === "string"
+              ) {
+                return item.sourceUrl;
+              }
+
               if (item?.type === "image" && item.image) {
                 return resolveFileStreamUrl(item.image);
               }

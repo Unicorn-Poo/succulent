@@ -204,12 +204,14 @@ export const ImageMedia = co.map({
   type: z.literal("image"),
   image: co.fileStream(),
   alt: co.optional(co.plainText()),
+  sourceUrl: z.optional(z.string()),
 });
 
 export const VideoMedia = co.map({
   type: z.literal("video"),
   video: co.fileStream(),
   alt: co.optional(co.plainText()),
+  sourceUrl: z.optional(z.string()),
 });
 
 // URL-based media for API posts

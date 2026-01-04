@@ -152,6 +152,14 @@ async function extractMediaUrlsFromVariant(
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
+      const sourceUrl = mediaItem?.sourceUrl;
+      if (
+        typeof sourceUrl === "string" &&
+        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
+      ) {
+        mediaUrls.push(sourceUrl);
+        continue;
+      }
       const fileStream =
         mediaItem.image ||
         mediaItem.video ||
@@ -311,6 +319,7 @@ export async function GET(request: NextRequest) {
               mediaItems.map(async (mediaItem: any) => ({
                 type: mediaItem?.type,
                 url: mediaItem?.url,
+                sourceUrl: mediaItem?.sourceUrl,
                 hasImage: !!(mediaItem?.image || mediaItem?._refs?.image),
                 hasVideo: !!(mediaItem?.video || mediaItem?._refs?.video),
                 fileStreamId:

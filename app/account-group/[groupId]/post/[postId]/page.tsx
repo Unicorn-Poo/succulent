@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 // Legacy accountGroups import removed - using Jazz account groups instead
 import PostCreationComponent from "@/components/organisms/post-creation";
 import { PostFullyLoaded } from "@/app/schema";
@@ -20,6 +20,9 @@ export default function PostPage() {
   const listHref = `/account-group/${accountGroupId}${
     listQuery ? `?${listQuery}` : ""
   }`;
+  const [serverPost, setServerPost] = useState<any | null>(null);
+  const [serverPostLoading, setServerPostLoading] = useState(false);
+  const [serverPostError, setServerPostError] = useState<string | null>(null);
 
   const { me } = useAccount(MyAppAccount, {
     resolve: {
@@ -109,7 +112,53 @@ export default function PostPage() {
     return currentPostId === postId;
   });
 
-  if (!accountGroup?.id) {
+  useEffect(() => {
+    if (post || !accountGroupId || !postId) return;
+    let isActive = true;
+    const fetchServerPost = async () => {
+      setServerPostLoading(true);
+      setServerPostError(null);
+      try {
+        const response = await fetch(
+          `/api/posts/list?accountGroupId=${accountGroupId}&limit=200`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch posts (${response.status})`);
+        }
+        const payload = await response.json();
+        const list = Array.isArray(payload?.data?.posts)
+          ? payload.data.posts
+          : [];
+        const match = list.find((item: any) => item?.id === postId);
+        if (isActive) {
+          setServerPost(match || null);
+        }
+      } catch (error) {
+        if (isActive) {
+          setServerPostError(
+            error instanceof Error ? error.message : "Failed to fetch post"
+          );
+        }
+      } finally {
+        if (isActive) {
+          setServerPostLoading(false);
+        }
+      }
+    };
+
+    fetchServerPost();
+    return () => {
+      isActive = false;
+    };
+  }, [accountGroupId, post, postId]);
+
+  const serverMedia = useMemo(() => {
+    if (!serverPost?.media || !Array.isArray(serverPost.media)) return [];
+    return serverPost.media;
+  }, [serverPost]);
+
+  if (!accountGroup?.id && !serverPost) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
@@ -129,6 +178,92 @@ export default function PostPage() {
   }
 
   if (!post) {
+    if (serverPostLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Loading Post…</h2>
+            <p className="text-muted-foreground mb-4">
+              Fetching the latest data from the server.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (serverPost) {
+      const displayTitle = serverPost.title || "Untitled Post";
+      const displayContent = serverPost.content || "";
+      const displayStatus = serverPost.status || "draft";
+      const displayDate =
+        serverPost.scheduledFor ||
+        serverPost.publishedAt ||
+        serverPost.postDate ||
+        serverPost.createdAt;
+      return (
+        <div className="w-full max-w-4xl mx-auto p-6">
+          <div className="mb-6">
+            <Button
+              variant="soft"
+              onClick={() => router.push(listHref)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Account Group
+            </Button>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">
+                {displayTitle}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Status: {displayStatus}
+                {displayDate ? ` • ${new Date(displayDate).toLocaleString()}` : ""}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                This post is visible from the server but hasn&apos;t synced to
+                your local store yet.
+              </p>
+            </div>
+            {displayContent && (
+              <div className="whitespace-pre-line text-foreground">
+                {displayContent}
+              </div>
+            )}
+            {serverMedia.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {serverMedia.map((item: any, index: number) => {
+                  const isVideo =
+                    item?.type === "url-video" ||
+                    typeof item?.url === "string" &&
+                      item.url.match(/\.(mp4|mov|m4v|webm)(\?|#|$)/i);
+                  if (isVideo) {
+                    return (
+                      <video
+                        key={`${item?.url || index}`}
+                        src={item?.url}
+                        controls
+                        className="w-full rounded-md bg-black"
+                      />
+                    );
+                  }
+                  return (
+                    <img
+                      key={`${item?.url || index}`}
+                      src={item?.url}
+                      alt={item?.alt || "Post media"}
+                      className="w-full rounded-md object-cover"
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
@@ -137,6 +272,9 @@ export default function PostPage() {
             The post you&apos;re looking for doesn&apos;t exist in{" "}
             {accountGroup.name}.
           </p>
+          {serverPostError && (
+            <p className="text-sm text-red-600 mb-2">{serverPostError}</p>
+          )}
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">
               {jazzAccountGroup

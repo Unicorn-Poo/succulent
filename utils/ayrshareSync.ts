@@ -355,7 +355,8 @@ async function createMediaItemFromUrl(url: string, owner: any): Promise<any> {
       const videoMedia = VideoMedia.create({
         type: 'video' as const,
         video: videoStream,
-        alt: co.plainText().create(`Video from ${new URL(url).hostname}`, { owner })
+        alt: co.plainText().create(`Video from ${new URL(url).hostname}`, { owner }),
+        sourceUrl: url
       }, { owner });
       
       console.log(`🔗 PERSISTED: Stored original URL in schema field:`, url.substring(0, 80) + '...');
@@ -379,7 +380,8 @@ async function createMediaItemFromUrl(url: string, owner: any): Promise<any> {
       const imageMedia = ImageMedia.create({
         type: 'image' as const,
         image: imageStream,
-        alt: co.plainText().create(`Image from ${new URL(url).hostname}`, { owner })
+        alt: co.plainText().create(`Image from ${new URL(url).hostname}`, { owner }),
+        sourceUrl: url
       }, { owner });
       
       console.log(`🔗 PERSISTED: Stored original URL in schema field:`, url.substring(0, 80) + '...');
@@ -398,7 +400,8 @@ async function createMediaItemFromUrl(url: string, owner: any): Promise<any> {
       
       return ImageMedia.create({
         type: 'image' as const,
-        image: fallbackStream
+        image: fallbackStream,
+        sourceUrl: url
       }, { owner });
     } catch (fallbackError) {
       console.error(`❌ Fallback creation also failed:`, fallbackError);

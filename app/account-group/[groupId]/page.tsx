@@ -161,6 +161,9 @@ export default function AccountGroupPage() {
   const [selectedGrowthTool, setSelectedGrowthTool] = useState<string | null>(
     null
   );
+  const [serverPosts, setServerPosts] = useState<any[]>([]);
+  const [serverPostsLoading, setServerPostsLoading] = useState(false);
+  const [serverPostsError, setServerPostsError] = useState<string | null>(null);
 
   const accountGroupId = params.groupId as string;
 
@@ -343,8 +346,46 @@ export default function AccountGroupPage() {
     });
   };
 
+  const getPostId = (post: any) =>
+    post?.id ||
+    post?.postId ||
+    post?.variants?.base?.id ||
+    post?.variants?.base?.postId;
+
   const accounts = getAccountsArray();
-  const posts = getPostsArray();
+  const localPosts = getPostsArray();
+  const serverOnlyPostIds = useMemo(() => {
+    const ids = new Set<string>();
+    const localIds = new Set<string>();
+    localPosts.forEach((post) => {
+      const id = getPostId(post);
+      if (id) localIds.add(id);
+    });
+    serverPosts.forEach((post) => {
+      const id = getPostId(post);
+      if (id && !localIds.has(id)) {
+        ids.add(id);
+      }
+    });
+    return ids;
+  }, [localPosts, serverPosts]);
+  const posts = useMemo(() => {
+    if (serverPosts.length === 0) return localPosts;
+    const localIds = new Set<string>();
+    localPosts.forEach((post) => {
+      const id = getPostId(post);
+      if (id) localIds.add(id);
+    });
+    const merged = [...localPosts];
+    serverPosts.forEach((post) => {
+      const id = getPostId(post);
+      if (id && !localIds.has(id)) {
+        merged.push(post);
+      }
+    });
+    return merged;
+  }, [localPosts, serverPosts]);
+  const serverOnlyCount = serverOnlyPostIds.size;
   const listQuery = searchKey;
   const validPostsFilters = useMemo(
     () => ["all", "draft", "scheduled", "published"] as const,
@@ -512,6 +553,7 @@ export default function AccountGroupPage() {
 
   // Handle post selection
   const handlePostSelect = (postId: string, selected: boolean) => {
+    if (serverOnlyPostIds.has(postId)) return;
     const newSelection = new Set(selectedPosts);
     if (selected) {
       newSelection.add(postId);
@@ -556,7 +598,7 @@ export default function AccountGroupPage() {
 
   // Select all filtered posts
   const handleSelectAll = () => {
-    const filteredPosts = posts.filter((post) => {
+    const filteredPosts = localPosts.filter((post) => {
       // Status filter
       if (postsFilter !== "all") {
         const postStatus = getPostStatus(post);
@@ -580,9 +622,62 @@ export default function AccountGroupPage() {
   };
 
   const hasPendingPosts = useMemo(
-    () => posts.some((post) => hasPendingAyrsharePost(post)),
-    [posts]
+    () => localPosts.some((post) => hasPendingAyrsharePost(post)),
+    [localPosts]
   );
+
+  const fetchServerPosts = useCallback(async () => {
+    if (!accountGroupId) return;
+    setServerPostsLoading(true);
+    setServerPostsError(null);
+    try {
+      const response = await fetch(
+        `/api/posts/list?accountGroupId=${accountGroupId}&limit=200`,
+        { cache: "no-store" }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch posts (${response.status})`);
+      }
+      const payload = await response.json();
+      const list = Array.isArray(payload?.data?.posts)
+        ? payload.data.posts
+        : [];
+      const mapped = list.map((post: any) => ({
+        id: post.id,
+        title: post.title,
+        variants: {
+          base: {
+            text: post.content || "",
+            media: Array.isArray(post.media)
+              ? post.media.map((item: any) => ({
+                  type: item.type,
+                  url: item.url,
+                  alt: item.alt,
+                  filename: item.filename,
+                }))
+              : [],
+            status: post.status || "draft",
+            scheduledFor: post.scheduledFor,
+            publishedAt: post.publishedAt,
+            postDate: post.postDate || post.createdAt,
+          },
+        },
+        createdAt: post.createdAt || post.postDate,
+        __serverOnly: true,
+      }));
+      setServerPosts(mapped);
+    } catch (error) {
+      setServerPostsError(
+        error instanceof Error ? error.message : "Failed to fetch posts"
+      );
+    } finally {
+      setServerPostsLoading(false);
+    }
+  }, [accountGroupId]);
+
+  useEffect(() => {
+    fetchServerPosts();
+  }, [fetchServerPosts]);
 
   useEffect(() => {
     if (!accountGroup?.id || !hasPendingPosts) return;
@@ -957,10 +1052,32 @@ export default function AccountGroupPage() {
                         } post${filterCounts[postsFilter] !== 1 ? "s" : ""}`;
                       })()}
                     </div>
+                    {serverOnlyCount > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        {serverOnlyCount} remote post
+                        {serverOnlyCount !== 1 ? "s" : ""}
+                      </div>
+                    )}
                   </div>
 
                   {/* Filter Controls and View Selector */}
                   <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="1"
+                        variant="outline"
+                        intent="secondary"
+                        onClick={fetchServerPosts}
+                        disabled={serverPostsLoading}
+                      >
+                        {serverPostsLoading ? "Refreshing..." : "Refresh"}
+                      </Button>
+                      {serverPostsError && (
+                        <span className="text-xs text-red-600">
+                          {serverPostsError}
+                        </span>
+                      )}
+                    </div>
                     {/* Filter Controls */}
                     <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
                       {[
