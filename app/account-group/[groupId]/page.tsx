@@ -790,26 +790,35 @@ export default function AccountGroupPage() {
 
     setIsBulkDeleting(true);
     try {
+      const postsToDelete = Array.from(selectedPosts);
+      const response = await fetch("/api/posts/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountGroupId: jazzAccountGroup.id,
+          postIds: postsToDelete,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to delete posts");
+      }
+
       // Remove selected posts from the account group's posts array
       const postsArray = jazzAccountGroup.posts;
       if (postsArray) {
-        // Get posts to delete by their IDs
-        const postsToDelete = Array.from(selectedPosts);
-
-        // Remove posts in reverse order to avoid index shifting issues
         for (let i = postsArray.length - 1; i >= 0; i--) {
           const post = postsArray[i];
           if (post && postsToDelete.includes(post.id)) {
             postsArray.splice(i, 1);
           }
         }
-
-        console.log(`✅ Successfully deleted ${selectedPosts.size} posts`);
-
-        // Clear selection
-        setSelectedPosts(new Set());
-        setShowBulkDeleteDialog(false);
       }
+
+      console.log(`✅ Successfully deleted ${selectedPosts.size} posts`);
+      setSelectedPosts(new Set());
+      setShowBulkDeleteDialog(false);
     } catch (error) {
       console.error("❌ Failed to delete posts:", error);
       alert("Failed to delete posts. Please try again.");

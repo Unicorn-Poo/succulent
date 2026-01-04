@@ -14,6 +14,7 @@ interface PostUpdateData {
   publishResults: any;
   platforms: string[];
   isScheduled: boolean;
+  scheduledDate?: string;
   postTitle: string;
   accountGroup?: any;
 }
@@ -34,7 +35,15 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
   error?: string;
   notificationSent?: boolean;
 }> {
-  const { jazzPost: post, publishResults, platforms, isScheduled, postTitle, accountGroup } = data;
+  const {
+    jazzPost: post,
+    publishResults,
+    platforms,
+    isScheduled,
+    scheduledDate,
+    postTitle,
+    accountGroup,
+  } = data;
   
   try {
     let updateSuccess = false;
@@ -93,6 +102,12 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
         const baseVariant = post.variants.base;
         if (baseVariant) {
           baseVariant.status = actualIsScheduled ? 'scheduled' : 'published';
+          if (actualIsScheduled && scheduledDate) {
+            const scheduledAt = new Date(scheduledDate);
+            if (!Number.isNaN(scheduledAt.getTime())) {
+              baseVariant.scheduledFor = scheduledAt;
+            }
+          }
           if (!actualIsScheduled) {
             baseVariant.publishedAt = new Date();
             // Clear scheduledFor if published immediately
@@ -109,6 +124,12 @@ export async function updatePostWithResults(data: PostUpdateData): Promise<{
             
             // Use Ayrshare's actual response status (source of truth)
             variant.status = actualIsScheduled ? 'scheduled' : 'published';
+            if (actualIsScheduled && scheduledDate) {
+              const scheduledAt = new Date(scheduledDate);
+              if (!Number.isNaN(scheduledAt.getTime())) {
+                variant.scheduledFor = scheduledAt;
+              }
+            }
             if (!actualIsScheduled) {
               variant.publishedAt = new Date();
               // Clear scheduledFor if published immediately

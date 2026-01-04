@@ -100,11 +100,11 @@ async function main() {
         }
         for (const detail of variant.mediaDetails) {
           console.log(
-            `- type=${detail.type} url=${detail.url || "none"} image=${
-              detail.hasImage
-            } video=${detail.hasVideo} fileStreamId=${
-              detail.fileStreamId || "none"
-            }`
+            `- type=${detail.type} url=${detail.url || "none"} sourceUrl=${
+              detail.sourceUrl || "none"
+            } image=${detail.hasImage} video=${
+              detail.hasVideo
+            } fileStreamId=${detail.fileStreamId || "none"}`
           );
         }
       }

@@ -14,7 +14,6 @@
     "check": "pnpm type-check && pnpm lint:check",
     "check:scheduled-media": "node scripts/check-scheduled-media.js",
     "reschedule:scheduled-media": "node scripts/reschedule-scheduled-media.js",
-    "repair:scheduled-media": "node scripts/repair-scheduled-media.js",
     "prepare": "husky"
   },
   "lint-staged": {

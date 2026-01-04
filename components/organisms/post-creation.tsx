@@ -1318,22 +1318,30 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		
 		setIsDeleting(true);
 		try {
-			// Find and remove the post from the account group's posts array
+			const response = await fetch("/api/posts/delete", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					accountGroupId: accountGroup.id,
+					postId: post.id,
+				}),
+			});
+
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				throw new Error(error.error || "Failed to delete post");
+			}
+
+			// Remove from local posts array for immediate UI update
 			if (accountGroup.posts) {
 				const postIndex = accountGroup.posts.findIndex((p: any) => p?.id === post.id);
 				if (postIndex >= 0) {
-					// Remove from Jazz collaborative array
 					accountGroup.posts.splice(postIndex, 1);
-					console.log(`✅ Post ${post.id} deleted successfully`);
-					
-					// Navigate back to account group
-					window.location.href = `/account-group/${accountGroup.id || 'demo'}`;
-				} else {
-					throw new Error('Post not found in account group');
 				}
-			} else {
-				throw new Error('No posts array found in account group');
 			}
+
+			console.log(`✅ Post ${post.id} deleted successfully`);
+			window.location.href = `/account-group/${accountGroup.id || "demo"}`;
 		} catch (error) {
 			console.error('❌ Failed to delete post:', error);
 			alert('Failed to delete post. Please try again.');
