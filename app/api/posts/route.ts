@@ -894,6 +894,9 @@ async function createPostInAccountGroup(
             (item) => item.url === mediaUrl
           )?.type;
           const isVideo = typeHint === "video" || isVideoUrl(mediaUrl);
+          const alt = co
+            .plainText()
+            .create(altText || request.alt || "", { owner: groupOwner });
 
           // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
           // being generated at publish time vs schedule time
@@ -931,9 +934,6 @@ async function createPostInAccountGroup(
             }
           }
 
-          const alt = co
-            .plainText()
-            .create(altText || request.alt || "", { owner: groupOwner });
           if (isVideo) {
             const urlVideoMedia = URLVideoMedia.create(
               {
@@ -1388,6 +1388,9 @@ export async function preparePublishRequests(
       const variantMediaUrls = extractMediaUrlsFromVariant(variant);
       if (variantMediaUrls.length > 0) {
         mediaUrls = variantMediaUrls;
+      } else if (variant.media && Array.from(variant.media).length > 0) {
+        // Variant has media but none could be resolved; avoid falling back to base.
+        mediaUrls = [];
       } else {
         // No variant media found, fall back to base
         mediaUrls = baseMediaUrls;
@@ -1407,6 +1410,28 @@ export async function preparePublishRequests(
         (url: string) =>
           typeof url === "string" &&
           (url.startsWith("http://") || url.startsWith("https://"))
+      );
+    }
+
+    if (variantOverride?.media?.length && mediaUrls.length === 0) {
+      throw new Error(
+        `Missing variant media URLs for ${platform}. Refusing to fall back to base media.`
+      );
+    }
+    if (variant?.media && Array.from(variant.media).length > 0 && mediaUrls.length === 0) {
+      throw new Error(
+        `Variant media present but unresolved for ${platform}. Refusing to fall back to base media.`
+      );
+    }
+
+    if (variantOverride?.media?.length && mediaUrls.length === 0) {
+      throw new Error(
+        `Missing variant media URLs for ${platform}. Refusing to fall back to base media.`
+      );
+    }
+    if (variant?.media && Array.from(variant.media).length > 0 && mediaUrls.length === 0) {
+      throw new Error(
+        `Variant media present but unresolved for ${platform}. Refusing to fall back to base media.`
       );
     }
 
@@ -1671,6 +1696,9 @@ export async function preparePublishRequests(
       const variantMediaUrls = extractMediaUrlsFromVariant(variant);
       if (variantMediaUrls.length > 0) {
         mediaUrls = variantMediaUrls;
+      } else if (variant.media && Array.from(variant.media).length > 0) {
+        // Variant has media but none could be resolved; avoid falling back to base.
+        mediaUrls = [];
       } else {
         // No variant media found, fall back to base
         mediaUrls = baseMediaUrls;
