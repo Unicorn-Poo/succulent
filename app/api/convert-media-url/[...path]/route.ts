@@ -124,37 +124,42 @@ export async function GET(
 
   // If not in query params, extract from path
   // Format: /api/convert-media-url/[encoded-url].png
-  if (!mediaUrl && path && path.length > 0) {
-    // Join path segments and remove file extension
-    let pathString = path.join("/");
+  if (!mediaUrl) {
+    const proxyPrefix = "/api/convert-media-url/";
+    const rawPath = request.nextUrl.pathname.startsWith(proxyPrefix)
+      ? request.nextUrl.pathname.slice(proxyPrefix.length)
+      : path.join("/");
+    console.log("🔍 Raw encoded path:", rawPath);
 
-    const extensionMatch = pathString.match(/\.(png|jpe?g|webp|gif)$/i);
-    if (extensionMatch) {
-      const ext = extensionMatch[1].toLowerCase();
-      requestedFormat = ext.startsWith("jpg") ? "jpg" : "png";
-      pathString = pathString.slice(0, extensionMatch.index);
-    }
+    if (rawPath) {
+      let pathString = rawPath;
 
-    try {
-      // Decode the URL - it was encoded with encodeURIComponent
-      // CRITICAL: This must preserve all query parameters exactly as-is
-      mediaUrl = decodeURIComponent(pathString);
-
-      // Verify the decoded URL is valid and log for debugging
-      if (mediaUrl.includes("lunary.app/api/og/")) {
-        console.log("🔍 [LUNARY URL DECODED]", {
-          originalEncoded: pathString.substring(0, 100) + "...",
-          decoded: mediaUrl,
-          hasQueryParams: mediaUrl.includes("?"),
-          queryParams: mediaUrl.includes("?") ? mediaUrl.split("?")[1] : "none",
-          timestamp: new Date().toISOString(),
-        });
+      const extensionMatch = pathString.match(/\.(png|jpe?g|webp|gif)$/i);
+      if (extensionMatch) {
+        const ext = extensionMatch[1].toLowerCase();
+        requestedFormat = ext.startsWith("jpg") ? "jpg" : "png";
+        pathString = pathString.slice(0, extensionMatch.index);
       }
-    } catch (decodeError) {
-      console.warn("⚠️ Failed to decode URL from path:", pathString, {
-        error: decodeError instanceof Error ? decodeError.message : decodeError,
-      });
-      mediaUrl = pathString;
+
+      try {
+        mediaUrl = decodeURIComponent(pathString);
+        if (mediaUrl.includes("lunary.app/api/og/")) {
+          console.log("🔍 [LUNARY URL DECODED]", {
+            originalEncoded: pathString.substring(0, 100) + "...",
+            decoded: mediaUrl,
+            hasQueryParams: mediaUrl.includes("?"),
+            queryParams: mediaUrl.includes("?")
+              ? mediaUrl.split("?")[1]
+              : "none",
+            timestamp: new Date().toISOString(),
+          });
+        }
+      } catch (decodeError) {
+        console.warn("⚠️ Failed to decode URL from path:", pathString, {
+          error: decodeError instanceof Error ? decodeError.message : decodeError,
+        });
+        mediaUrl = pathString;
+      }
     }
   }
 
