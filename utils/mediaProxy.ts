@@ -4,6 +4,19 @@ export type MediaFormat = "png" | "jpg";
 export const DEFAULT_MEDIA_FORMAT: MediaFormat = "png";
 export const MEDIA_PROXY_BASE_URL = "https://app.succulent.social";
 
+function toBase64Url(value: string): string {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(value, "utf8").toString("base64url");
+  }
+
+  const utf8 = encodeURIComponent(value).replace(
+    /%([0-9A-F]{2})/g,
+    (_, hex) => String.fromCharCode(parseInt(hex, 16))
+  );
+  const base64 = typeof btoa === "function" ? btoa(utf8) : value;
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
 export function resolvePublicBaseUrl(): string {
   console.log("🌐 [BASE URL RESOLVED]", {
     result: MEDIA_PROXY_BASE_URL,
@@ -17,8 +30,8 @@ export function buildMediaProxyUrl(
   format: MediaFormat = DEFAULT_MEDIA_FORMAT
 ): string {
   const baseUrl = resolvePublicBaseUrl().replace(/\/$/, "");
-  const encodedUrl = encodeURIComponent(url).replace(/\*/g, "%2A");
-  return `${baseUrl}/api/convert-media-url?url=${encodedUrl}&format=${format}`;
+  const encodedUrl = toBase64Url(url);
+  return `${baseUrl}/api/convert-media-url?u=${encodedUrl}&format=${format}`;
 }
 
 export function proxyMediaUrlIfNeeded(

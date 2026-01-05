@@ -7,7 +7,8 @@ import { DEFAULT_MEDIA_FORMAT, MediaFormat } from "@/utils/mediaProxy";
  * This endpoint downloads the media and re-serves it in a format Ayrshare can process
  *
  * Handles URLs like:
- * - /api/convert-media-url?url=https://lunary.app/api/og/... (query param)
+ * - /api/convert-media-url?u=<base64url>&format=png (query param)
+ * - /api/convert-media-url?url=https://lunary.app/api/og/... (legacy query param)
  * - /api/convert-media-url/https%3A%2F%2Flunary.app%2Fapi%2Fog%2F...png (path-based, legacy)
  */
 
@@ -17,6 +18,19 @@ function isValidMediaUrl(value: string): boolean {
     return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
+  }
+}
+
+function decodeBase64Url(value: string): string | null {
+  try {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "="
+    );
+    return Buffer.from(padded, "base64").toString("utf8");
+  } catch {
+    return null;
   }
 }
 
@@ -173,6 +187,13 @@ async function handleRequest(
 
   // Try query param first
   let mediaUrl = url.searchParams.get("url");
+  const encodedParam = url.searchParams.get("u");
+  if (encodedParam) {
+    const decoded = decodeBase64Url(encodedParam);
+    if (decoded) {
+      mediaUrl = decoded;
+    }
+  }
   let requestedFormat: MediaFormat = DEFAULT_MEDIA_FORMAT;
   const formatParam = url.searchParams.get("format");
   if (formatParam === "jpg" || formatParam === "png") {
