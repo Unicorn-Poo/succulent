@@ -222,14 +222,6 @@ async function extractMediaUrlsFromVariant(
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
-      const sourceUrl = mediaItem?.sourceUrl;
-      if (
-        typeof sourceUrl === "string" &&
-        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
-      ) {
-        mediaUrls.push(sourceUrl);
-        continue;
-      }
       const fileStream =
         mediaItem.image ||
         mediaItem.video ||
@@ -238,6 +230,16 @@ async function extractMediaUrlsFromVariant(
       const resolvedUrl = await resolveFileStreamUrl(fileStream, baseUrl);
       if (resolvedUrl) {
         mediaUrls.push(resolvedUrl);
+        continue;
+      }
+
+      const sourceUrl = mediaItem?.sourceUrl;
+      if (
+        typeof sourceUrl === "string" &&
+        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
+      ) {
+        mediaUrls.push(sourceUrl);
+        continue;
       }
     }
   }

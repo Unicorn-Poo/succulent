@@ -1229,14 +1229,6 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
     }
 
     if (mediaItem?.type === "image" || mediaItem?.type === "video") {
-      const sourceUrl = mediaItem?.sourceUrl;
-      if (
-        typeof sourceUrl === "string" &&
-        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
-      ) {
-        mediaUrls.push(sourceUrl);
-        continue;
-      }
       const fileStream =
         mediaItem.image ||
         mediaItem.video ||
@@ -1246,6 +1238,15 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
       if (typeof fileStreamId === "string" && fileStreamId.startsWith("co_")) {
         const proxyUrl = `${baseUrl}/api/media-proxy/${fileStreamId}`;
         mediaUrls.push(proxyUrl);
+        continue;
+      }
+      const sourceUrl = mediaItem?.sourceUrl;
+      if (
+        typeof sourceUrl === "string" &&
+        (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://"))
+      ) {
+        mediaUrls.push(sourceUrl);
+        continue;
       }
     }
   }
