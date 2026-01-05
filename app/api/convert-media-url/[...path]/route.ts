@@ -159,10 +159,10 @@ async function fetchAndServeImage(
   return NextResponse.redirect(mediaUrl);
 }
 
-export async function GET(
+async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
-) {
+): Promise<Response> {
   const { path } = await params;
   console.log("🔎 Proxy hit", {
     url: request.url,
@@ -232,6 +232,24 @@ export async function GET(
   }
 
   return fetchAndServeImage(mediaUrl, requestedFormat);
+}
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  return handleRequest(request, context);
+}
+
+export async function HEAD(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  const response = await handleRequest(request, context);
+  return new Response(null, {
+    status: response.status,
+    headers: response.headers,
+  });
 }
 
 export async function POST(request: NextRequest) {
