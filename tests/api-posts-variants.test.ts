@@ -155,10 +155,9 @@ describe("preparePublishRequests", () => {
 
   it("routes Lunary OG media through the convert-media-url proxy", async () => {
     const lunaryUrl = "https://lunary.app/api/og/cosmic/2025-11-19";
-    // Proxy URL now uses path-based format with .png extension for Instagram compatibility
-    const proxiedUrl = `${MEDIA_PROXY_BASE_URL}/api/convert-media-url/${encodeURIComponent(
+    const proxiedUrl = `${MEDIA_PROXY_BASE_URL}/api/convert-media-url?url=${encodeURIComponent(
       lunaryUrl
-    )}.png`;
+    )}&format=png`;
 
     const publishRequests = await preparePublishRequests(
       {
@@ -183,7 +182,7 @@ describe("preparePublishRequests", () => {
 
     expect(instagramRequest?.postData.mediaUrls).toEqual([
       proxiedUrl,
-      `${MEDIA_PROXY_BASE_URL}/api/convert-media-url/https%3A%2F%2Flunary.app%2Fapi%2Fog%2Fcrystal%3Fdate%3D2025-11-19.png`,
+      `${MEDIA_PROXY_BASE_URL}/api/convert-media-url?url=https%3A%2F%2Flunary.app%2Fapi%2Fog%2Fcrystal%3Fdate%3D2025-11-19&format=png`,
     ]);
   });
 
@@ -207,9 +206,9 @@ describe("preparePublishRequests", () => {
     );
 
     expect(tiktokRequest?.postData.mediaUrls).toEqual([
-      `${MEDIA_PROXY_BASE_URL}/api/convert-media-url/${encodeURIComponent(
+      `${MEDIA_PROXY_BASE_URL}/api/convert-media-url?url=${encodeURIComponent(
         lunaryUrl
-      )}.jpg`,
+      )}&format=jpg`,
     ]);
   });
 

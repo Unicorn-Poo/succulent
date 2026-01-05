@@ -18,7 +18,7 @@ export function buildMediaProxyUrl(
 ): string {
   const baseUrl = resolvePublicBaseUrl().replace(/\/$/, "");
   const encodedUrl = encodeURIComponent(url);
-  return `${baseUrl}/api/convert-media-url/${encodedUrl}.${format}`;
+  return `${baseUrl}/api/convert-media-url?url=${encodedUrl}&format=${format}`;
 }
 
 export function proxyMediaUrlIfNeeded(

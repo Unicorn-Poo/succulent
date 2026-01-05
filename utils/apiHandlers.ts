@@ -24,10 +24,7 @@ const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
 /**
  * Proxy Lunary OG image URLs for Instagram compatibility
  */
-const MEDIA_PROXY_IDENTIFIERS = [
-  "/api/convert-media-url/",
-  "/api/media-proxy/",
-];
+const MEDIA_PROXY_IDENTIFIERS = ["/api/convert-media-url", "/api/media-proxy/"];
 
 /**
  * Sanitize a media URL - handle encoded spaces and special characters
