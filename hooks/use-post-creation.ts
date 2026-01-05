@@ -34,7 +34,10 @@ import {
   PostData,
   fetchPostContent,
 } from "../utils/apiHandlers";
-import { AYRSHARE_PLATFORM_MAP, isBusinessPlanMode } from "../utils/ayrshareIntegration";
+import {
+  AYRSHARE_PLATFORM_MAP,
+  isBusinessPlanMode,
+} from "../utils/ayrshareIntegration";
 import {
   getPreferredMediaFormatForPlatform,
   needsJpgConversion,
@@ -42,6 +45,16 @@ import {
 } from "../utils/mediaProxy";
 
 type SeriesType = "reply" | "thread" | null;
+type AyrshareResult = {
+  success?: boolean;
+  status?: string;
+  posts?: Array<any>;
+  postIds?: Record<string, string>;
+  id?: string;
+  _hasPendingPosts?: boolean;
+  _pendingWarning?: string;
+};
+type AyrshareResultOrArray = AyrshareResult | AyrshareResult[];
 
 interface PostCreationProps {
   post: PostFullyLoaded;
@@ -745,39 +758,38 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           return null;
         };
 
-        const mediaUrls =
-          (await Promise.all(
-            variant?.media?.map(async (item: any) => {
-              if (item?.type === "url-image" || item?.type === "url-video") {
-                const url = item.url;
-                return typeof url === "string" ? url : null;
-              }
+        const mediaUrls = (await Promise.all(
+          variant?.media?.map(async (item: any) => {
+            if (item?.type === "url-image" || item?.type === "url-video") {
+              const url = item.url;
+              return typeof url === "string" ? url : null;
+            }
 
-              if (
-                (item?.type === "image" || item?.type === "video") &&
-                typeof item?.sourceUrl === "string"
-              ) {
-                return item.sourceUrl;
-              }
+            if (
+              (item?.type === "image" || item?.type === "video") &&
+              typeof item?.sourceUrl === "string"
+            ) {
+              return item.sourceUrl;
+            }
 
-              if (item?.type === "image" && item.image) {
-                return resolveFileStreamUrl(item.image);
-              }
+            if (item?.type === "image" && item.image) {
+              return resolveFileStreamUrl(item.image);
+            }
 
-              if (item?.type === "video" && item.video) {
-                return resolveFileStreamUrl(item.video);
-              }
+            if (item?.type === "video" && item.video) {
+              return resolveFileStreamUrl(item.video);
+            }
 
-              if (item?.type === "image" || item?.type === "video") {
-                const fileStreamRef = item?._refs?.image || item?._refs?.video;
-                if (fileStreamRef) {
-                  return resolveFileStreamUrl(fileStreamRef);
-                }
+            if (item?.type === "image" || item?.type === "video") {
+              const fileStreamRef = item?._refs?.image || item?._refs?.video;
+              if (fileStreamRef) {
+                return resolveFileStreamUrl(fileStreamRef);
               }
+            }
 
-              return null;
-            }) || []
-          )) as Array<string | null>;
+            return null;
+          }) || []
+        )) as Array<string | null>;
 
         return mediaUrls
           .filter((url): url is string => typeof url === "string")
@@ -923,7 +935,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         urls: string[],
         platforms: string[]
       ) => {
-        const useJpg = platforms.some((platform) => needsJpgConversion(platform));
+        const useJpg = platforms.some((platform) =>
+          needsJpgConversion(platform)
+        );
         const format = useJpg ? "jpg" : "png";
         return cacheLunaryMediaUrls(urls, format);
       };
@@ -938,15 +952,15 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           : undefined;
         const deleteTargets = platforms
           .map((platform) => {
-            const variant = post.variants[platform] || post.variants.base;
+            const variant = post.variants[platform];
+            if (!variant) return null;
             const isScheduled =
               variant?.status === "scheduled" || !!variant?.scheduledFor;
             const postId = variant?.ayrsharePostId;
             return isScheduled && postId ? { platform, postId } : null;
           })
           .filter(
-            (target): target is { platform: string; postId: string } =>
-              !!target
+            (target): target is { platform: string; postId: string } => !!target
           );
 
         if (deleteTargets.length === 0) return;
@@ -1002,7 +1016,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         }
       };
 
-      let results;
+      const getPrimaryResult = (
+        value: AyrshareResultOrArray | null | undefined
+      ): AyrshareResult | null => {
+        if (!value) return null;
+        return Array.isArray(value) ? value[0] : value;
+      };
+
+      let results: AyrshareResultOrArray | null = null;
 
       if (isReschedule) {
         await deleteScheduledAyrsharePosts(platforms);
@@ -1021,18 +1042,22 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           scheduleDate: scheduleDate,
           twitterOptions,
         };
-        results = await handleReplyPost(basePostData, replyUrl);
+        results = (await handleReplyPost(
+          basePostData,
+          replyUrl
+        )) as AyrshareResult;
+        const primaryResult = getPrimaryResult(results);
         const resolvedStatus =
           scheduleDate ||
-          results?.status === "scheduled" ||
-          results?.posts?.[0]?.status === "scheduled" ||
-          results?._hasPendingPosts
+          primaryResult?.status === "scheduled" ||
+          primaryResult?.posts?.[0]?.status === "scheduled" ||
+          primaryResult?._hasPendingPosts
             ? "scheduled"
             : "published";
         platforms.forEach((platform) => {
           applyPublishResultsToPost(
             platform,
-            results,
+            primaryResult,
             resolvedStatus,
             scheduledDate
           );
@@ -1051,18 +1076,22 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           scheduleDate: scheduleDate,
           twitterOptions,
         };
-        results = await handleMultiPosts(basePostData, threadPosts);
+        results = (await handleMultiPosts(
+          basePostData,
+          threadPosts
+        )) as AyrshareResult[];
+        const primaryResult = getPrimaryResult(results);
         const resolvedStatus =
           scheduleDate ||
-          results?.status === "scheduled" ||
-          results?.posts?.[0]?.status === "scheduled" ||
-          results?._hasPendingPosts
+          primaryResult?.status === "scheduled" ||
+          primaryResult?.posts?.[0]?.status === "scheduled" ||
+          primaryResult?._hasPendingPosts
             ? "scheduled"
             : "published";
         platforms.forEach((platform) => {
           applyPublishResultsToPost(
             platform,
-            results,
+            primaryResult,
             resolvedStatus,
             scheduledDate
           );
@@ -1165,9 +1194,10 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       }
 
       // Check if post is still processing (has pending IDs)
-      if (results?._hasPendingPosts) {
+      const primaryResult = getPrimaryResult(results);
+      if (primaryResult?._hasPendingPosts) {
         setSuccess(
-          results._pendingWarning ||
+          primaryResult._pendingWarning ||
             "Post is still processing. It may take a few minutes to appear on the platform."
         );
         triggerPostStatusSync("pending_publish").catch(() => undefined);
