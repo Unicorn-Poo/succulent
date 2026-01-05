@@ -32,12 +32,14 @@ interface AdaptedContent {
 interface AIAdaptContentProps {
   baseContent: string;
   selectedPlatforms: string[];
+  platformContent?: Record<string, string>;
   onAdapted: (adaptedContent: AdaptedContent) => void;
 }
 
 export default function AIAdaptContent({
   baseContent,
   selectedPlatforms,
+  platformContent,
   onAdapted,
 }: AIAdaptContentProps) {
   const [isAdapting, setIsAdapting] = useState(false);
@@ -90,7 +92,8 @@ export default function AIAdaptContent({
 
   const platformsNeedingAdaptation = selectedPlatforms.filter((p) => {
     const limit = PLATFORM_LIMITS[p.toLowerCase()];
-    return limit && baseContent.length > limit;
+    const contentToCheck = platformContent?.[p] ?? baseContent;
+    return limit && contentToCheck.length > limit;
   });
 
   return (
@@ -116,10 +119,13 @@ export default function AIAdaptContent({
               Content exceeds limits for:
             </Text>
             <Text size="1" className="text-amber-700 dark:text-amber-300">
-              {platformsNeedingAdaptation.map((p) => {
-                const limit = PLATFORM_LIMITS[p.toLowerCase()];
-                return `${p} (${baseContent.length}/${limit} chars)`;
-              }).join(", ")}
+              {platformsNeedingAdaptation
+                .map((p) => {
+                  const limit = PLATFORM_LIMITS[p.toLowerCase()];
+                  const contentToCheck = platformContent?.[p] ?? baseContent;
+                  return `${p} (${contentToCheck.length}/${limit} chars)`;
+                })
+                .join(", ")}
             </Text>
           </div>
         </div>
@@ -192,17 +198,17 @@ export default function AIAdaptContent({
                         {platform}
                       </Text>
                     </div>
-                    <Text
-                      size="1"
-                      className={
-                        data.withinLimit
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
-                      }
-                    >
-                      {data.charCount}/{limit || "∞"} chars
-                      {data.withinLimit ? " ✓" : " ⚠"}
-                    </Text>
+            <Text
+              size="1"
+              className={
+                data.withinLimit
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }
+            >
+              {data.charCount}/{limit || "∞"} chars
+              {data.withinLimit ? " ✓" : " ⚠"}
+            </Text>
                   </div>
                   <Text size="1" color="gray" className="line-clamp-3 block">
                     {data.content}
@@ -234,4 +240,3 @@ export default function AIAdaptContent({
     </div>
   );
 }
-

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
+import { DEFAULT_MEDIA_FORMAT, MediaFormat } from "@/utils/mediaProxy";
 
 /**
  * Convert problematic media URLs to Ayrshare-compatible formats
@@ -9,7 +11,10 @@ import { NextRequest, NextResponse } from "next/server";
  * - /api/convert-media-url?url=https://lunary.app/api/og/... (query param)
  */
 
-async function fetchAndServeImage(mediaUrl: string): Promise<Response> {
+async function fetchAndServeImage(
+  mediaUrl: string,
+  format: MediaFormat = DEFAULT_MEDIA_FORMAT
+): Promise<Response> {
   console.log("🔄 Converting media URL for Ayrshare compatibility:", mediaUrl);
 
   // Check if it's a Lunary OG image URL
@@ -34,26 +39,45 @@ async function fetchAndServeImage(mediaUrl: string): Promise<Response> {
         );
       }
 
-      const buffer = await response.arrayBuffer();
-      const contentType = response.headers.get("content-type") || "image/png";
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const originalContentType =
+        response.headers.get("content-type") || "image/png";
 
-      // Validate that we got an image
-      if (!contentType.startsWith("image/")) {
-        throw new Error(`Invalid content type: ${contentType}. Expected image.`);
+      if (!originalContentType.startsWith("image/")) {
+        throw new Error(
+          `Invalid content type: ${originalContentType}. Expected image.`
+        );
       }
 
       console.log(
         "✅ Downloaded image:",
         buffer.byteLength,
         "bytes, type:",
-        contentType
+        originalContentType
       );
 
-      // Return the image directly with proper headers for Ayrshare
-      return new Response(buffer, {
+      let outputBuffer = buffer;
+      let outputContentType = originalContentType;
+      if (format === "jpg") {
+        try {
+          outputBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+          outputContentType = "image/jpeg";
+          console.log(
+            "🎨 Converted image to JPEG for TikTok compatibility",
+            outputBuffer.byteLength
+          );
+        } catch (conversionError) {
+          console.warn(
+            "⚠️ Failed to convert image to JPG, serving original instead:",
+            conversionError
+          );
+        }
+      }
+
+      return new Response(outputBuffer, {
         headers: {
-          "Content-Type": contentType,
-          "Content-Length": buffer.byteLength.toString(),
+          "Content-Type": outputContentType,
+          "Content-Length": outputBuffer.byteLength.toString(),
           "Cache-Control": "public, max-age=3600",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
@@ -86,6 +110,11 @@ export async function GET(
 
   // Try query param first
   let mediaUrl = url.searchParams.get("url");
+  let requestedFormat: MediaFormat = DEFAULT_MEDIA_FORMAT;
+  const formatParam = url.searchParams.get("format");
+  if (formatParam === "jpg" || formatParam === "png") {
+    requestedFormat = formatParam as MediaFormat;
+  }
 
   // If not in query params, extract from path
   // Format: /api/convert-media-url/[encoded-url].png
@@ -93,8 +122,12 @@ export async function GET(
     // Join path segments and remove file extension
     let pathString = path.join("/");
 
-    // Remove file extension (.png, .jpg, etc.)
-    pathString = pathString.replace(/\.(png|jpg|jpeg|webp|gif)$/i, "");
+    const extensionMatch = pathString.match(/\.(png|jpe?g|webp|gif)$/i);
+    if (extensionMatch) {
+      const ext = extensionMatch[1].toLowerCase();
+      requestedFormat = ext.startsWith("jpg") ? "jpg" : "png";
+      pathString = pathString.slice(0, extensionMatch.index);
+    }
 
     try {
       // Decode the URL - it was encoded with encodeURIComponent
@@ -121,12 +154,12 @@ export async function GET(
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  return fetchAndServeImage(mediaUrl);
+  return fetchAndServeImage(mediaUrl, requestedFormat);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { mediaUrl } = await request.json();
+    const { mediaUrl, format } = await request.json();
 
     if (!mediaUrl) {
       return NextResponse.json(
@@ -135,7 +168,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return fetchAndServeImage(mediaUrl);
+    const requestedFormat =
+      format === "jpg" ? "jpg" : format === "png" ? "png" : DEFAULT_MEDIA_FORMAT;
+    return fetchAndServeImage(mediaUrl, requestedFormat);
   } catch (error) {
     console.error("❌ Media conversion error:", error);
     return NextResponse.json(
@@ -160,4 +195,3 @@ export async function OPTIONS() {
     },
   });
 }
-

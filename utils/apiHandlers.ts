@@ -16,6 +16,7 @@ import {
   logPostWorkflow,
   generateRequestId,
 } from "./ayrshareLogger";
+import { proxyMediaUrlIfNeeded } from "./mediaProxy";
 // Removed duplicate handling - Ayrshare handles duplicates appropriately
 
 const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
@@ -23,41 +24,10 @@ const LUNARY_OG_IDENTIFIER = "lunary.app/api/og/";
 /**
  * Proxy Lunary OG image URLs for Instagram compatibility
  */
-function proxyMediaUrlIfNeeded(url: string): string {
-  if (!url || typeof url !== "string") return url;
-  if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
-    try {
-      // CRITICAL: Preserve the entire URL exactly as-is, including all query parameters
-      // encodeURIComponent will encode the entire URL preserving all query params
-      // Instagram requires file extensions in the URL path
-      // Create proxy URL with .png extension for Instagram compatibility
-      const baseUrl = "https://app.succulent.social";
-      const encodedUrl = encodeURIComponent(url); // This preserves all query params
-      // Use path-based URL with extension instead of query param for Instagram compatibility
-      const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
-
-      // Log to verify URL is preserved correctly
-      console.log("✅ [PROXY CREATED - LUNARY]", {
-        original: url,
-        originalQueryParams: url.includes("?") ? url.split("?")[1] : "none",
-        proxy: proxyUrl,
-        baseUrl,
-        note: "URL and all query parameters are preserved via encodeURIComponent",
-      });
-      return proxyUrl;
-    } catch (error) {
-      console.warn(
-        "⚠️ Failed to build media proxy URL, using original media:",
-        {
-          url,
-          error,
-        }
-      );
-      return url;
-    }
-  }
-  return url;
-}
+const MEDIA_PROXY_IDENTIFIERS = [
+  "/api/convert-media-url/",
+  "/api/media-proxy/",
+];
 
 /**
  * Sanitize a media URL - handle encoded spaces and special characters
@@ -68,6 +38,10 @@ function proxyMediaUrlIfNeeded(url: string): string {
  */
 function sanitizeMediaUrl(url: string): string | null {
   try {
+    if (MEDIA_PROXY_IDENTIFIERS.some((identifier) => url.includes(identifier))) {
+      return url;
+    }
+
     // CRITICAL FIX: Don't sanitize Lunary OG image URLs - preserve them exactly
     // Lunary URLs have specific query parameters that must not be modified
     if (url.includes(LUNARY_OG_IDENTIFIER)) {

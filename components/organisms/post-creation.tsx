@@ -2217,25 +2217,50 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 
 							<div className="mt-4">
 								<Tabs.Content value="adapt">
-									<AIAdaptContent
-										baseContent={currentPost.variants.base?.text?.toString() || currentPost.variants[activeTab]?.text?.toString() || ''}
-										selectedPlatforms={selectedPlatforms.filter(p => p !== 'base')}
-										onAdapted={(adaptedContent) => {
-											// Apply adapted content to each platform variant
-											Object.entries(adaptedContent).forEach(([platform, data]) => {
-												if (currentPost.variants[platform]) {
-													const variant = currentPost.variants[platform];
-													if (variant && variant.text) {
-														// Update the text - need to access Jazz plainText properly
-														variant.text.applyDiff?.(data.content) || 
-															(variant.text = co.plainText().create(data.content, { owner: currentPost._owner }));
-														variant.edited = true;
-														variant.lastModified = new Date().toISOString();
-													}
+									{(() => {
+										const variantPlatformSelection = selectedPlatforms.filter(
+											(p) => p !== "base"
+										);
+										return (
+											<AIAdaptContent
+												baseContent={
+													currentPost.variants.base?.text?.toString() ||
+													currentPost.variants[activeTab]?.text?.toString() ||
+													""
 												}
-											});
-										}}
-									/>
+												selectedPlatforms={variantPlatformSelection}
+												platformContent={variantPlatformSelection.reduce(
+													(acc, platform) => {
+														const variantText = currentPost.variants[platform]?.text?.toString?.();
+														if (variantText) {
+															acc[platform] = variantText;
+														}
+														return acc;
+													},
+													{} as Record<string, string>
+												)}
+												onAdapted={(adaptedContent) => {
+													Object.entries(adaptedContent).forEach(
+														([platform, data]) => {
+															if (currentPost.variants[platform]) {
+																const variant = currentPost.variants[platform];
+																if (variant && variant.text) {
+																	variant.text.applyDiff?.(data.content) ||
+																		(variant.text = co
+																			.plainText()
+																			.create(data.content, {
+																				owner: currentPost._owner,
+																			}));
+																	variant.edited = true;
+																	variant.lastModified = new Date().toISOString();
+																}
+															}
+														}
+													);
+												}}
+											/>
+										);
+									})()}
 								</Tabs.Content>
 								<Tabs.Content value="hashtags">
 									<HashtagSuggestions

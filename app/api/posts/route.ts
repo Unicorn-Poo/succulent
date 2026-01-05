@@ -21,6 +21,14 @@ import {
 } from "@/utils/apiKeyManager";
 import { findExistingPost } from "@/utils/postListHelpers";
 import type { PostLike } from "@/utils/postListHelpers";
+import {
+  MediaFormat,
+  DEFAULT_MEDIA_FORMAT,
+  getPreferredMediaFormatForPlatform,
+  needsJpgConversion,
+  proxyMediaUrlIfNeeded,
+  resolvePublicBaseUrl,
+} from "@/utils/mediaProxy";
 // Removed workaround storage imports - using proper Jazz integration
 
 // Force dynamic rendering to prevent build-time static analysis issues
@@ -364,70 +372,6 @@ async function downloadAndCacheLunaryImageStream(
   }
 }
 
-function resolvePublicBaseUrl(): string {
-  const candidates = [
-    process.env.MEDIA_PROXY_BASE_URL,
-    process.env.NEXT_PUBLIC_MEDIA_PROXY_URL,
-    process.env.NEXT_PUBLIC_SITE_URL,
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXT_PUBLIC_API_BASE_URL,
-    process.env.APP_BASE_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === "string") {
-      const trimmed = candidate.trim();
-      if (!trimmed) continue;
-      const result =
-        trimmed.startsWith("http://") || trimmed.startsWith("https://")
-          ? trimmed
-          : `https://${trimmed}`;
-      console.log("🌐 [BASE URL RESOLVED]", { result, from: candidate });
-      return result;
-    }
-  }
-
-  console.warn("⚠️ [BASE URL FALLBACK] Using localhost - no env vars found");
-  return "http://localhost:3000";
-}
-
-function proxyMediaUrlIfNeeded(url: string): string {
-  if (!url || typeof url !== "string") return url;
-  if (/^https?:\/\//i.test(url) && url.includes(LUNARY_OG_IDENTIFIER)) {
-    try {
-      // CRITICAL: Preserve the entire URL exactly as-is, including all query parameters
-      // encodeURIComponent will encode the entire URL preserving all query params
-      // Instagram requires file extensions in the URL path
-      // Create proxy URL with .png extension for Instagram compatibility
-      const baseUrl = resolvePublicBaseUrl().replace(/\/$/, ""); // Remove trailing slash
-      const encodedUrl = encodeURIComponent(url); // This preserves all query params
-      // Use path-based URL with extension instead of query param for Instagram compatibility
-      const proxyUrl = `${baseUrl}/api/convert-media-url/${encodedUrl}.png`;
-
-      // Log to verify URL is preserved correctly
-      console.log("✅ [PROXY CREATED - LUNARY]", {
-        original: url,
-        originalQueryParams: url.includes("?") ? url.split("?")[1] : "none",
-        proxy: proxyUrl,
-        baseUrl,
-        note: "URL and all query parameters are preserved via encodeURIComponent",
-      });
-      return proxyUrl;
-    } catch (error) {
-      console.warn(
-        "⚠️ Failed to build media proxy URL, using original media:",
-        {
-          url,
-          error,
-        }
-      );
-      return url;
-    }
-  }
-  return url;
-}
-
 async function deleteAyrsharePostById(
   postId: string,
   profileKey: string | undefined
@@ -459,7 +403,10 @@ async function deleteAyrsharePostById(
   }
 }
 
-function normalizeMediaUrls(urls?: string[]): string[] {
+function normalizeMediaUrls(
+  urls?: string[],
+  format: MediaFormat = DEFAULT_MEDIA_FORMAT
+): string[] {
   if (!urls || urls.length === 0) return [];
   const normalized: string[] = [];
   const seen = new Set<string>();
@@ -468,7 +415,7 @@ function normalizeMediaUrls(urls?: string[]): string[] {
     if (typeof rawUrl !== "string") continue;
     const trimmed = rawUrl.trim();
     if (!trimmed) continue;
-    const proxied = proxyMediaUrlIfNeeded(trimmed);
+    const proxied = proxyMediaUrlIfNeeded(trimmed, format);
     if (seen.has(proxied)) continue;
     seen.add(proxied);
     normalized.push(proxied);
@@ -487,8 +434,12 @@ function getMediaLimitForPlatform(platform: string): number {
   return PLATFORM_MEDIA_LIMITS.default;
 }
 
-function clampMediaUrlsForPlatform(platform: string, urls: string[]): string[] {
-  const normalizedUrls = normalizeMediaUrls(urls);
+function clampMediaUrlsForPlatform(
+  platform: string,
+  urls: string[],
+  format: MediaFormat = DEFAULT_MEDIA_FORMAT
+): string[] {
+  const normalizedUrls = normalizeMediaUrls(urls, format);
   const limit = getMediaLimitForPlatform(platform);
   if (!Number.isFinite(limit)) {
     return normalizedUrls;
@@ -503,9 +454,10 @@ function clampMediaUrlsForPlatform(platform: string, urls: string[]): string[] {
 
 function clampMediaUrlsForPlatforms(
   platforms: string[],
-  urls: string[]
+  urls: string[],
+  format: MediaFormat = DEFAULT_MEDIA_FORMAT
 ): string[] {
-  const normalizedUrls = normalizeMediaUrls(urls);
+  const normalizedUrls = normalizeMediaUrls(urls, format);
   if (platforms.length === 0) {
     return normalizedUrls;
   }
@@ -717,9 +669,7 @@ async function createPostInAccountGroup(
     };
 
     const shouldCacheLunary =
-      request.cacheLunaryMedia !== undefined
-        ? request.cacheLunaryMedia
-        : true;
+      request.cacheLunaryMedia !== undefined ? request.cacheLunaryMedia : true;
     const titleText = co
       .plainText()
       .create(postData.title || `API Post ${new Date().toISOString()}`, {
@@ -745,8 +695,9 @@ async function createPostInAccountGroup(
     });
 
     if (baseMediaUrls.length > 0) {
-      const { ImageMedia, URLImageMedia, URLVideoMedia } =
-        await import("@/app/schema");
+      const { ImageMedia, URLImageMedia, URLVideoMedia } = await import(
+        "@/app/schema"
+      );
 
       for (const mediaUrl of baseMediaUrls) {
         try {
@@ -757,8 +708,7 @@ async function createPostInAccountGroup(
             .create(mediaItem?.alt || request.alt || "", { owner: groupOwner });
 
           // Determine type from mediaItem or default to image
-          const isVideo =
-            mediaItem?.type === "video" || isVideoUrl(mediaUrl);
+          const isVideo = mediaItem?.type === "video" || isVideoUrl(mediaUrl);
 
           // CRITICAL FIX: Download and cache Lunary OG images to prevent different images
           // being generated at publish time vs schedule time
@@ -887,8 +837,9 @@ async function createPostInAccountGroup(
       const mediaList = co.list(MediaItem).create([], { owner: groupOwner });
       if (urls.length === 0) return mediaList;
 
-      const { ImageMedia, URLImageMedia, URLVideoMedia } =
-        await import("@/app/schema");
+      const { ImageMedia, URLImageMedia, URLVideoMedia } = await import(
+        "@/app/schema"
+      );
       for (const mediaUrl of urls) {
         try {
           const typeHint = mediaTypeHints?.find(
@@ -1028,8 +979,13 @@ async function createPostInAccountGroup(
 
         // Create variant media: use override media if provided, otherwise copy from base
         if (variantNoImage) {
-          variantMediaList = co.list(MediaItem).create([], { owner: groupOwner });
-        } else if (typedVariantData.media && typedVariantData.media.length > 0) {
+          variantMediaList = co
+            .list(MediaItem)
+            .create([], { owner: groupOwner });
+        } else if (
+          typedVariantData.media &&
+          typedVariantData.media.length > 0
+        ) {
           variantMediaList = await createMediaListFromUrls(
             typedVariantData.media,
             request.alt
@@ -1049,11 +1005,11 @@ async function createPostInAccountGroup(
           variantPlatformOptions,
           extractOptionFields(typedVariantData)
         );
-    } else {
-      // No explicit variant data - create fresh copies of base content
-      variantText = co
-        .plainText()
-        .create(baseVariant.text?.toString() || request.content, {
+      } else {
+        // No explicit variant data - create fresh copies of base content
+        variantText = co
+          .plainText()
+          .create(baseVariant.text?.toString() || request.content, {
             owner: groupOwner,
           });
         // Create NEW media items from base URLs - don't just push references
@@ -1283,10 +1239,7 @@ function extractMediaUrlsFromVariant(variant: any): string[] {
         mediaItem?._refs?.image ||
         mediaItem?._refs?.video;
       const fileStreamId = extractFileStreamId(fileStream);
-      if (
-        typeof fileStreamId === "string" &&
-        fileStreamId.startsWith("co_")
-      ) {
+      if (typeof fileStreamId === "string" && fileStreamId.startsWith("co_")) {
         const proxyUrl = `${baseUrl}/api/media-proxy/${fileStreamId}`;
         mediaUrls.push(proxyUrl);
       }
@@ -1446,7 +1399,11 @@ export async function preparePublishRequests(
         `Missing variant media URLs for ${platform}. Refusing to fall back to base media.`
       );
     }
-    if (variant?.media && Array.from(variant.media).length > 0 && mediaUrls.length === 0) {
+    if (
+      variant?.media &&
+      Array.from(variant.media).length > 0 &&
+      mediaUrls.length === 0
+    ) {
       throw new Error(
         `Variant media present but unresolved for ${platform}. Refusing to fall back to base media.`
       );
@@ -1474,9 +1431,14 @@ export async function preparePublishRequests(
     });
 
     // Normalize (proxy) media URLs first, then clamp
-    const normalizedMediaUrls = normalizeMediaUrls(mediaUrls);
+    const preferredFormat = getPreferredMediaFormatForPlatform(platform);
+    const normalizedMediaUrls = normalizeMediaUrls(mediaUrls, preferredFormat);
     const beforeClamp = normalizedMediaUrls.length;
-    mediaUrls = clampMediaUrlsForPlatform(platform, normalizedMediaUrls);
+    mediaUrls = clampMediaUrlsForPlatform(
+      platform,
+      normalizedMediaUrls,
+      preferredFormat
+    );
     if (beforeClamp !== mediaUrls.length) {
       console.log(
         `⚠️ [MEDIA CLAMP] Platform: ${platform}, clamped from ${beforeClamp} to ${mediaUrls.length}`
@@ -1762,11 +1724,13 @@ export async function preparePublishRequests(
     }
 
     // Normalize (proxy) media URLs first, then clamp
-    const cleanedMediaUrls = normalizeMediaUrls(mediaUrls);
+    const preferredFormat = getPreferredMediaFormatForPlatform(platform);
+    const cleanedMediaUrls = normalizeMediaUrls(mediaUrls, preferredFormat);
     const beforeClamp = cleanedMediaUrls.length;
     const clampedMediaUrls = clampMediaUrlsForPlatform(
       platform,
-      cleanedMediaUrls
+      cleanedMediaUrls,
+      preferredFormat
     );
     if (beforeClamp !== clampedMediaUrls.length) {
       console.log(
@@ -1833,24 +1797,64 @@ export async function preparePublishRequests(
     });
   }
 
-  // Create single request for platforms truly without variants
-  if (trulyWithoutVariants.length > 0) {
-    const mappedPlatforms = trulyWithoutVariants.map(
+  const specialFormatPlatforms = trulyWithoutVariants.filter(needsJpgConversion);
+  const groupedPlatforms = trulyWithoutVariants.filter(
+    (platform) => !needsJpgConversion(platform)
+  );
+
+  for (const platform of specialFormatPlatforms) {
+    const preferredFormat = getPreferredMediaFormatForPlatform(platform);
+    const normalized = normalizeMediaUrls(baseMediaUrls, preferredFormat);
+    const clamped = clampMediaUrlsForPlatform(
+      platform,
+      normalized,
+      preferredFormat
+    );
+    const ayrsharePlatform =
+      INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
+
+    const postData: Record<string, any> = {
+      post: baseContent,
+      platforms: [ayrsharePlatform],
+      scheduleDate: requestData.scheduledDate,
+      profileKey,
+    };
+    if (clamped.length > 0) {
+      postData.mediaUrls = clamped;
+    }
+    if (platform === "tiktok" && requestData.tiktokOptions) {
+      postData.tiktokOptions = requestData.tiktokOptions;
+    }
+
+    console.log(
+      `📷 [SPECIAL FORMAT] Platform: ${platform} requires ${preferredFormat}, sending ${
+        clamped.length
+      } URLs`,
+      clamped
+    );
+
+    requests.push({
+      postData,
+      platforms: [platform],
+    });
+  }
+
+  // Create single request for platforms truly without variants (excluding special formats)
+  if (groupedPlatforms.length > 0) {
+    const mappedPlatforms = groupedPlatforms.map(
       (p) => INTERNAL_TO_AYRSHARE_PLATFORM[p] || p
     );
 
     // Determine platform options for grouped request
-    const hasTwitter = trulyWithoutVariants.includes("x");
-    const hasReddit = trulyWithoutVariants.includes("reddit");
-    const hasPinterest = trulyWithoutVariants.includes("pinterest");
-    const hasInstagram = trulyWithoutVariants.includes("instagram");
-    const hasTikTok = trulyWithoutVariants.includes("tiktok");
+    const hasTwitter = groupedPlatforms.includes("x");
+    const hasReddit = groupedPlatforms.includes("reddit");
+    const hasPinterest = groupedPlatforms.includes("pinterest");
+    const hasInstagram = groupedPlatforms.includes("instagram");
 
     let twitterOptions: any = undefined;
     let redditOptions: any = undefined;
     let pinterestOptions: any = undefined;
     let instagramOptions: any = undefined;
-    let tiktokOptions: any = undefined;
 
     if (hasTwitter) {
       if (requestData.twitterOptions) {
@@ -1950,18 +1954,14 @@ export async function preparePublishRequests(
       instagramOptions = requestData.instagramOptions;
     }
 
-    if (hasTikTok) {
-      tiktokOptions = requestData.tiktokOptions;
-    }
-
     // Clamp media for platforms without variants (use minimum limit of all platforms)
     const aggregatedMediaUrls = clampMediaUrlsForPlatforms(
-      trulyWithoutVariants,
+      groupedPlatforms,
       baseMediaUrls
     );
 
     console.log(
-      `📷 [GROUPED MEDIA] Platforms: ${trulyWithoutVariants.join(
+      `📷 [GROUPED MEDIA] Platforms: ${groupedPlatforms.join(
         ", "
       )}, sending ${aggregatedMediaUrls.length} URLs:`,
       aggregatedMediaUrls
@@ -1979,9 +1979,8 @@ export async function preparePublishRequests(
         redditOptions: redditOptions,
         pinterestOptions: pinterestOptions,
         instagramOptions: instagramOptions,
-        tiktokOptions: tiktokOptions,
       },
-      platforms: trulyWithoutVariants,
+      platforms: groupedPlatforms,
     });
   }
 
