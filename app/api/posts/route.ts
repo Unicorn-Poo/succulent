@@ -248,6 +248,10 @@ const CreatePostSchema = zod.object({
 
   // Publishing options
   publishImmediately: zod.boolean().default(false),
+  // Dry-run publish: build Ayrshare payloads but do not call the API
+  dryRunPublish: zod.boolean().optional(),
+  // Omit platform lists from dry-run payloads
+  omitPlatforms: zod.boolean().optional(),
   // Limit publish to explicit platforms (skip inferred variants)
   limitToPlatforms: zod.boolean().optional(),
   // Delete existing scheduled post(s) in Ayrshare before rescheduling
@@ -2298,6 +2302,8 @@ export async function POST(request: NextRequest) {
 
     // 📝 Parse and validate request
     let requestData: CreatePostRequest;
+    let dryRunPublish = false;
+    let omitPlatformsInDryRun = true;
     try {
       const body = await request.json();
       // Normalize platform names: 'twitter' -> 'x' for internal consistency
@@ -2310,6 +2316,8 @@ export async function POST(request: NextRequest) {
       normalizeRequestOptionAliases(
         requestData as CreatePostRequest & Record<string, any>
       );
+      dryRunPublish = requestData.dryRunPublish === true;
+      omitPlatformsInDryRun = requestData.omitPlatforms !== false;
 
       // Debug: Log publishImmediately value
       console.log("🔍 [DEBUG] Parsed requestData.publishImmediately:", {
@@ -2672,7 +2680,7 @@ export async function POST(request: NextRequest) {
       });
 
       try {
-        if (requestData.deleteExistingScheduled) {
+        if (!dryRunPublish && requestData.deleteExistingScheduled) {
           if (!finalProfileKey) {
             throw new Error(
               "deleteExistingScheduled requires a valid Profile-Key"
@@ -2726,163 +2734,202 @@ export async function POST(request: NextRequest) {
           `📦 Prepared ${publishRequests.length} publish request(s) for ${requestData.platforms.length} platform(s)`
         );
 
-        // Aggregate results from all requests
-        const allPostIds: Record<string, string> = {};
-        const allPlatforms: string[] = [];
-        let aggregatedResults: any = null;
-        const errors: Array<{ platform: string; error: string }> = [];
-
-        // Process each publish request
-        for (const { postData, platforms } of publishRequests) {
-          try {
-            console.log(`🚀 Publishing to platforms: ${platforms.join(", ")}`);
-
-            let ayrshareResults: any;
-
-            // Handle special cases (reply, thread) - these should be rare with variants
-            if (requestData.replyTo?.url && platforms.length === 1) {
-              ayrshareResults = await handleReplyPost(
-                postData,
-                requestData.replyTo.url
-              );
-            } else if (
-              requestData.isThread &&
-              requestData.threadPosts &&
-              platforms.length === 1
-            ) {
-              const threadPosts = requestData.threadPosts.map(
-                (tp: { content: string; media?: any[] }, index: number) => ({
-                  content: tp.content,
-                  media: tp.media || [],
-                  characterCount: tp.content.length,
-                  index,
-                  total: requestData.threadPosts!.length,
-                })
-              );
-              ayrshareResults = await handleMultiPosts(postData, threadPosts);
-            } else {
-              // Standard post
-              ayrshareResults = await handleStandardPost(postData);
+        if (dryRunPublish) {
+          const previewRequests = publishRequests.map(
+            ({ postData, platforms }) => {
+              if (!omitPlatformsInDryRun) {
+                return { postData, platforms };
+              }
+              const { platforms: _omit, ...rest } = postData;
+              return {
+                postData: rest,
+                platformCount: platforms.length,
+              };
             }
+          );
 
-            // Aggregate post IDs from response
-            if (ayrshareResults?.postIds) {
-              Object.assign(allPostIds, ayrshareResults.postIds);
-            } else if (ayrshareResults?.id) {
-              // Single ID for scheduled posts - assign to all platforms in this request
-              platforms.forEach((p) => {
-                const ayrsharePlatform = INTERNAL_TO_AYRSHARE_PLATFORM[p] || p;
-                allPostIds[ayrsharePlatform] = ayrshareResults.id;
-              });
-            } else if (
-              ayrshareResults?.posts &&
-              Array.isArray(ayrshareResults.posts)
-            ) {
-              // Posts array format
-              const post = ayrshareResults.posts[0];
-              if (post?.id) {
+          publishResult = {
+            success: true,
+            dryRunPublish: true,
+            results: {
+              requestCount: publishRequests.length,
+              platformsOmitted: omitPlatformsInDryRun,
+              requests: previewRequests,
+            },
+          };
+        } else {
+          // Aggregate results from all requests
+          const allPostIds: Record<string, string> = {};
+          const allPlatforms: string[] = [];
+          let aggregatedResults: any = null;
+          const errors: Array<{ platform: string; error: string }> = [];
+
+          // Process each publish request
+          for (const { postData, platforms } of publishRequests) {
+            try {
+              console.log(`🚀 Publishing to platforms: ${platforms.join(", ")}`);
+
+              let ayrshareResults: any;
+
+              // Handle special cases (reply, thread) - these should be rare with variants
+              if (requestData.replyTo?.url && platforms.length === 1) {
+                ayrshareResults = await handleReplyPost(
+                  postData,
+                  requestData.replyTo.url
+                );
+              } else if (
+                requestData.isThread &&
+                requestData.threadPosts &&
+                platforms.length === 1
+              ) {
+                const threadPosts = requestData.threadPosts.map(
+                  (tp: { content: string; media?: any[] }, index: number) => ({
+                    content: tp.content,
+                    media: tp.media || [],
+                    characterCount: tp.content.length,
+                    index,
+                    total: requestData.threadPosts!.length,
+                  })
+                );
+                ayrshareResults = await handleMultiPosts(postData, threadPosts);
+              } else {
+                // Standard post
+                ayrshareResults = await handleStandardPost(postData);
+              }
+
+              // Aggregate post IDs from response
+              if (ayrshareResults?.postIds) {
+                Object.assign(allPostIds, ayrshareResults.postIds);
+              } else if (ayrshareResults?.id) {
+                // Single ID for scheduled posts - assign to all platforms in this request
                 platforms.forEach((p) => {
                   const ayrsharePlatform =
                     INTERNAL_TO_AYRSHARE_PLATFORM[p] || p;
-                  allPostIds[ayrsharePlatform] = post.id;
+                  allPostIds[ayrsharePlatform] = ayrshareResults.id;
                 });
+              } else if (
+                ayrshareResults?.posts &&
+                Array.isArray(ayrshareResults.posts)
+              ) {
+                // Posts array format
+                const post = ayrshareResults.posts[0];
+                if (post?.id) {
+                  platforms.forEach((p) => {
+                    const ayrsharePlatform =
+                      INTERNAL_TO_AYRSHARE_PLATFORM[p] || p;
+                    allPostIds[ayrsharePlatform] = post.id;
+                  });
+                }
               }
+
+              allPlatforms.push(...platforms);
+
+              // Store first result as aggregated (for status checking)
+              if (!aggregatedResults) {
+                aggregatedResults = ayrshareResults;
+              }
+
+              console.log(
+                `✅ Successfully published to ${platforms.join(", ")}`
+              );
+            } catch (platformError) {
+              const errorMessage =
+                platformError instanceof Error
+                  ? platformError.message
+                  : "Unknown error";
+              console.error(
+                `❌ Failed to publish to ${platforms.join(", ")}:`,
+                errorMessage
+              );
+              errors.push({
+                platform: platforms.join(", "),
+                error: errorMessage,
+              });
+              // Continue with other platforms
             }
-
-            allPlatforms.push(...platforms);
-
-            // Store first result as aggregated (for status checking)
-            if (!aggregatedResults) {
-              aggregatedResults = ayrshareResults;
-            }
-
-            console.log(`✅ Successfully published to ${platforms.join(", ")}`);
-          } catch (platformError) {
-            const errorMessage =
-              platformError instanceof Error
-                ? platformError.message
-                : "Unknown error";
-            console.error(
-              `❌ Failed to publish to ${platforms.join(", ")}:`,
-              errorMessage
-            );
-            errors.push({
-              platform: platforms.join(", "),
-              error: errorMessage,
-            });
-            // Continue with other platforms
           }
-        }
 
-        // Create aggregated result structure
-        const ayrshareResults = {
-          ...aggregatedResults,
-          postIds: allPostIds,
-          platforms: allPlatforms,
-          errors: errors.length > 0 ? errors : undefined,
-        };
+          // Create aggregated result structure
+          const ayrshareResults = {
+            ...aggregatedResults,
+            postIds: allPostIds,
+            platforms: allPlatforms,
+            errors: errors.length > 0 ? errors : undefined,
+          };
 
-        console.log("✅ Post publishing complete:", {
-          totalPlatforms: allPlatforms.length,
-          successfulPlatforms: Object.keys(allPostIds).length,
-          errors: errors.length,
-          postIds: allPostIds,
-        });
+          console.log("✅ Post publishing complete:", {
+            totalPlatforms: allPlatforms.length,
+            successfulPlatforms: Object.keys(allPostIds).length,
+            errors: errors.length,
+            postIds: allPostIds,
+          });
 
-        // Update post with ayrsharePostId from publishing results using reliable updater
-        if (ayrshareResults && result.post) {
-          try {
-            const { updatePostWithResults } = await import(
-              "@/utils/reliablePostUpdater"
-            );
-
-            // Get account group for notifications
-            let accountGroup = null;
+          // Update post with ayrsharePostId from publishing results using reliable updater
+          if (ayrshareResults && result.post) {
             try {
-              const { jazzServerWorker } = await import("@/utils/jazzServer");
-              const { AccountGroup } = await import("@/app/schema");
-              const worker = await jazzServerWorker;
+              const { updatePostWithResults } = await import(
+                "@/utils/reliablePostUpdater"
+              );
 
-              if (worker) {
-                accountGroup = await AccountGroup.load(
-                  requestData.accountGroupId,
-                  {
-                    loadAs: worker,
-                    resolve: {
-                      accounts: { $each: true },
-                    },
-                  }
+              // Get account group for notifications
+              let accountGroup = null;
+              try {
+                const { jazzServerWorker } = await import("@/utils/jazzServer");
+                const { AccountGroup } = await import("@/app/schema");
+                const worker = await jazzServerWorker;
+
+                if (worker) {
+                  accountGroup = await AccountGroup.load(
+                    requestData.accountGroupId,
+                    {
+                      loadAs: worker,
+                      resolve: {
+                        accounts: { $each: true },
+                      },
+                    }
+                  );
+                }
+              } catch (groupError) {
+                console.warn(
+                  "⚠️ Could not load account group for notifications:",
+                  groupError
                 );
               }
-            } catch (groupError) {
-              console.warn(
-                "⚠️ Could not load account group for notifications:",
-                groupError
-              );
-            }
 
-            // Determine if post is scheduled: true only if scheduledDate exists AND publishImmediately is false
-            const isScheduled =
-              !!requestData.scheduledDate && !requestData.publishImmediately;
+              // Determine if post is scheduled: true only if scheduledDate exists AND publishImmediately is false
+              const isScheduled =
+                !!requestData.scheduledDate && !requestData.publishImmediately;
 
-            const updateResult = await updatePostWithResults({
-              jazzPost: result.post,
-              publishResults: ayrshareResults,
-              platforms: requestData.platforms,
-              isScheduled: isScheduled,
-              scheduledDate: requestData.scheduledDate,
-              postTitle: requestData.title || "API Post",
-              accountGroup: accountGroup,
-            });
+              const updateResult = await updatePostWithResults({
+                jazzPost: result.post,
+                publishResults: ayrshareResults,
+                platforms: requestData.platforms,
+                isScheduled: isScheduled,
+                scheduledDate: requestData.scheduledDate,
+                postTitle: requestData.title || "API Post",
+                accountGroup: accountGroup,
+              });
 
-            if (updateResult.success) {
-              console.log("✅ Successfully updated post with reliable updater");
-              if (updateResult.notificationSent) {
-                console.log("📱 Notification sent for post");
+              if (updateResult.success) {
+                console.log("✅ Successfully updated post with reliable updater");
+                if (updateResult.notificationSent) {
+                  console.log("📱 Notification sent for post");
+                }
+              } else {
+                console.error("⚠️ Reliable updater failed:", updateResult.error);
+                // Fallback to old method
+                await updatePostWithAyrshareIds(
+                  result.post,
+                  ayrshareResults,
+                  requestData.platforms,
+                  requestData.scheduledDate
+                );
               }
-            } else {
-              console.error("⚠️ Reliable updater failed:", updateResult.error);
-              // Fallback to old method
+            } catch (updateError) {
+              console.error(
+                "❌ Reliable updater error, falling back to old method:",
+                updateError
+              );
               await updatePostWithAyrshareIds(
                 result.post,
                 ayrshareResults,
@@ -2890,21 +2937,10 @@ export async function POST(request: NextRequest) {
                 requestData.scheduledDate
               );
             }
-          } catch (updateError) {
-            console.error(
-              "❌ Reliable updater error, falling back to old method:",
-              updateError
-            );
-            await updatePostWithAyrshareIds(
-              result.post,
-              ayrshareResults,
-              requestData.platforms,
-              requestData.scheduledDate
-            );
           }
-        }
 
-        publishResult = { success: true, results: ayrshareResults };
+          publishResult = { success: true, results: ayrshareResults };
+        }
       } catch (publishError) {
         console.error(
           "❌ Post created but publishing to Ayrshare failed:",
@@ -2980,6 +3016,7 @@ export async function POST(request: NextRequest) {
               ? {
                   success: publishResult.success,
                   error: publishResult.error,
+                  dryRunPublish: publishResult.dryRunPublish === true,
                   results: publishResult.results,
                 }
               : null,

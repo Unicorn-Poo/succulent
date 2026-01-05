@@ -872,17 +872,60 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         ? new Date(scheduledDate).toISOString()
         : undefined;
       const isReschedule = !!scheduleDate && hasScheduleChange;
-      const proxyMediaUrlsForPlatform = (urls: string[], platform: string) => {
-        const preferredFormat = getPreferredMediaFormatForPlatform(platform);
-        return urls.map((url) => proxyMediaUrlIfNeeded(url, preferredFormat));
+      const lunaryCache = new Map<string, string>();
+      const cacheLunaryMediaUrls = async (
+        urls: string[],
+        format: "png" | "jpg"
+      ) => {
+        if (urls.length === 0) return urls;
+        const results = await Promise.all(
+          urls.map(async (url) => {
+            if (!url.includes("lunary.app/api/og/")) {
+              return url;
+            }
+            const cached = lunaryCache.get(url);
+            if (cached) return cached;
+            try {
+              const response = await fetch("/api/cache-lunary-media", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  accountGroupId: accountGroup.id,
+                  url,
+                  format,
+                }),
+              });
+              if (response.ok) {
+                const data = await response.json();
+                if (data?.proxyUrl) {
+                  lunaryCache.set(url, data.proxyUrl);
+                  return data.proxyUrl;
+                }
+              }
+            } catch (error) {
+              console.warn("⚠️ Failed to cache media, using proxy:", error);
+            }
+            const fallback = proxyMediaUrlIfNeeded(url, format);
+            lunaryCache.set(url, fallback);
+            return fallback;
+          })
+        );
+        return results;
       };
-      const proxyMediaUrlsForPlatforms = (
+      const cacheLunaryMediaUrlsForPlatform = async (
+        urls: string[],
+        platform: string
+      ) => {
+        const preferredFormat = getPreferredMediaFormatForPlatform(platform);
+        return cacheLunaryMediaUrls(urls, preferredFormat);
+      };
+      const cacheLunaryMediaUrlsForPlatforms = async (
         urls: string[],
         platforms: string[]
       ) => {
         const useJpg = platforms.some((platform) => needsJpgConversion(platform));
         const format = useJpg ? "jpg" : "png";
-        return urls.map((url) => proxyMediaUrlIfNeeded(url, format));
+        return cacheLunaryMediaUrls(urls, format);
       };
 
       const deleteScheduledAyrsharePosts = async (platforms: string[]) => {
@@ -966,7 +1009,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       }
 
       if (seriesType === "reply" && replyUrl) {
-        const mediaUrls = proxyMediaUrlsForPlatforms(
+        const mediaUrls = await cacheLunaryMediaUrlsForPlatforms(
           await extractMediaUrlsFromVariant(post.variants[activeTab]),
           platforms
         );
@@ -996,7 +1039,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         });
       } else if (seriesType === "thread" && contextText?.trim()) {
         const threadPosts = generateThreadPreview(contextText);
-        const mediaUrls = proxyMediaUrlsForPlatforms(
+        const mediaUrls = await cacheLunaryMediaUrlsForPlatforms(
           await extractMediaUrlsFromVariant(post.variants[activeTab]),
           platforms
         );
@@ -1047,7 +1090,10 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
                 mediaUrls = baseMediaUrls;
               }
             }
-            mediaUrls = proxyMediaUrlsForPlatform(mediaUrls, platform);
+            mediaUrls = await cacheLunaryMediaUrlsForPlatform(
+              mediaUrls,
+              platform
+            );
             const variantOptions = parsePlatformOptions(variant);
             const mergedOptions = { ...baseOptions, ...variantOptions };
 
@@ -1176,6 +1222,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     replyUrl,
     contextText,
     accountGroup.ayrshareProfileKey,
+    accountGroup.id,
     hasScheduleChange,
   ]);
 
