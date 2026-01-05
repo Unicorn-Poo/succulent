@@ -153,7 +153,8 @@ const TikTokOptionsSchema = zod
 const VariantDetailsSchema = zod
   .object({
     content: zod.string().optional(),
-    media: zod.array(zod.string().url()).optional(),
+    media: zod.array(zod.string().url()).nullable().optional(),
+    noImage: zod.boolean().optional(),
     twitterOptions: TwitterOptionsSchema.optional(),
     redditOptions: RedditOptionsSchema.optional(),
     pinterestOptions: PinterestOptionsSchema.optional(),
@@ -1007,6 +1008,8 @@ async function createPostInAccountGroup(
 
       // If platform has explicit variant data, use it
       if (typedVariantData) {
+        const variantNoImage =
+          typedVariantData.noImage === true || typedVariantData.media === null;
         // Create variant text: use override content if provided, otherwise copy from base
         if (typedVariantData.content) {
           variantText = co
@@ -1024,7 +1027,9 @@ async function createPostInAccountGroup(
         }
 
         // Create variant media: use override media if provided, otherwise copy from base
-        if (typedVariantData.media && typedVariantData.media.length > 0) {
+        if (variantNoImage) {
+          variantMediaList = co.list(MediaItem).create([], { owner: groupOwner });
+        } else if (typedVariantData.media && typedVariantData.media.length > 0) {
           variantMediaList = await createMediaListFromUrls(
             typedVariantData.media,
             request.alt
@@ -1044,11 +1049,11 @@ async function createPostInAccountGroup(
           variantPlatformOptions,
           extractOptionFields(typedVariantData)
         );
-      } else {
-        // No explicit variant data - create fresh copies of base content
-        variantText = co
-          .plainText()
-          .create(baseVariant.text?.toString() || request.content, {
+    } else {
+      // No explicit variant data - create fresh copies of base content
+      variantText = co
+        .plainText()
+        .create(baseVariant.text?.toString() || request.content, {
             owner: groupOwner,
           });
         // Create NEW media items from base URLs - don't just push references
@@ -1373,7 +1378,11 @@ export async function preparePublishRequests(
     // Determine media: variant override > saved variant > base > requestData.imageUrls fallback
     // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
     let mediaUrls: string[] = [];
-    if (variantOverride?.media && variantOverride.media.length > 0) {
+    const variantNoImage =
+      variantOverride?.noImage === true || variantOverride?.media === null;
+    if (variantNoImage) {
+      mediaUrls = [];
+    } else if (variantOverride?.media && variantOverride.media.length > 0) {
       // Variant override explicitly specifies media - use ONLY that
       // Handle both string URLs and media objects with url property
       mediaUrls = variantOverride.media
@@ -1402,6 +1411,7 @@ export async function preparePublishRequests(
 
     // Final fallback: if still no media and requestData.imageUrls exists, use it
     if (
+      !variantNoImage &&
       mediaUrls.length === 0 &&
       requestData.imageUrls &&
       requestData.imageUrls.length > 0
@@ -1413,12 +1423,19 @@ export async function preparePublishRequests(
       );
     }
 
-    if (variantOverride?.media?.length && mediaUrls.length === 0) {
+    if (variantNoImage) {
+      mediaUrls = [];
+    } else if (variantOverride?.media?.length && mediaUrls.length === 0) {
       throw new Error(
         `Missing variant media URLs for ${platform}. Refusing to fall back to base media.`
       );
     }
-    if (variant?.media && Array.from(variant.media).length > 0 && mediaUrls.length === 0) {
+    if (
+      !variantNoImage &&
+      variant?.media &&
+      Array.from(variant.media).length > 0 &&
+      mediaUrls.length === 0
+    ) {
       throw new Error(
         `Variant media present but unresolved for ${platform}. Refusing to fall back to base media.`
       );
@@ -1681,7 +1698,11 @@ export async function preparePublishRequests(
     // Determine media: variant override > saved variant > base > requestData.imageUrls fallback
     // CRITICAL: If variant override has media, use ONLY that media (don't fall back to base)
     let mediaUrls: string[] = [];
-    if (variantOverride?.media && variantOverride.media.length > 0) {
+    const variantOverrideNoImage =
+      variantOverride?.noImage === true || variantOverride?.media === null;
+    if (variantOverrideNoImage) {
+      mediaUrls = [];
+    } else if (variantOverride?.media && variantOverride.media.length > 0) {
       // Variant override explicitly specifies media - use ONLY that
       // Handle both string URLs and media objects with url property
       mediaUrls = variantOverride.media
@@ -1710,6 +1731,7 @@ export async function preparePublishRequests(
 
     // Final fallback: if still no media and requestData.imageUrls exists, use it
     if (
+      !variantOverrideNoImage &&
       mediaUrls.length === 0 &&
       requestData.imageUrls &&
       requestData.imageUrls.length > 0
@@ -1718,6 +1740,24 @@ export async function preparePublishRequests(
         (url: string) =>
           typeof url === "string" &&
           (url.startsWith("http://") || url.startsWith("https://"))
+      );
+    }
+
+    if (variantOverrideNoImage) {
+      mediaUrls = [];
+    } else if (variantOverride?.media?.length && mediaUrls.length === 0) {
+      throw new Error(
+        `Missing variant media URLs for ${platform}. Refusing to fall back to base media.`
+      );
+    }
+    if (
+      !variantOverrideNoImage &&
+      variant?.media &&
+      Array.from(variant.media).length > 0 &&
+      mediaUrls.length === 0
+    ) {
+      throw new Error(
+        `Variant media present but unresolved for ${platform}. Refusing to fall back to base media.`
       );
     }
 
