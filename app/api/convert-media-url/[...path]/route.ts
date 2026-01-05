@@ -22,7 +22,8 @@ async function fetchAndServeImage(
     console.log("🔍 [LUNARY FETCH] Fetching Lunary OG image at publish time:", {
       url: mediaUrl,
       timestamp: new Date().toISOString(),
-      warning: "⚠️ This image may differ from the one shown when scheduled if Lunary generates dynamic images"
+      warning:
+        "⚠️ This image may differ from the one shown when scheduled if Lunary generates dynamic images",
     });
     try {
       // Download the image from Lunary with proper headers
@@ -56,7 +57,7 @@ async function fetchAndServeImage(
         originalContentType
       );
 
-      let outputBuffer = buffer;
+      let outputBuffer: Buffer = buffer;
       let outputContentType = originalContentType;
       if (format === "jpg") {
         try {
@@ -74,7 +75,7 @@ async function fetchAndServeImage(
         }
       }
 
-      return new Response(outputBuffer, {
+      return new Response(Buffer.from(outputBuffer), {
         headers: {
           "Content-Type": outputContentType,
           "Content-Length": outputBuffer.byteLength.toString(),
@@ -106,6 +107,11 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
+  console.log("🔎 Proxy hit", {
+    url: request.url,
+    ua: request.headers.get("user-agent"),
+    forward: request.headers.get("x-forwarded-for"),
+  });
   const url = new URL(request.url);
 
   // Try query param first
@@ -133,7 +139,7 @@ export async function GET(
       // Decode the URL - it was encoded with encodeURIComponent
       // CRITICAL: This must preserve all query parameters exactly as-is
       mediaUrl = decodeURIComponent(pathString);
-      
+
       // Verify the decoded URL is valid and log for debugging
       if (mediaUrl.includes("lunary.app/api/og/")) {
         console.log("🔍 [LUNARY URL DECODED]", {
@@ -141,17 +147,22 @@ export async function GET(
           decoded: mediaUrl,
           hasQueryParams: mediaUrl.includes("?"),
           queryParams: mediaUrl.includes("?") ? mediaUrl.split("?")[1] : "none",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
-    } catch {
-      console.warn("⚠️ Failed to decode URL from path:", pathString);
+    } catch (decodeError) {
+      console.warn("⚠️ Failed to decode URL from path:", pathString, {
+        error: decodeError instanceof Error ? decodeError.message : decodeError,
+      });
       mediaUrl = pathString;
     }
   }
 
   if (!mediaUrl) {
-    return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing url parameter" },
+      { status: 400 }
+    );
   }
 
   return fetchAndServeImage(mediaUrl, requestedFormat);
@@ -169,7 +180,11 @@ export async function POST(request: NextRequest) {
     }
 
     const requestedFormat =
-      format === "jpg" ? "jpg" : format === "png" ? "png" : DEFAULT_MEDIA_FORMAT;
+      format === "jpg"
+        ? "jpg"
+        : format === "png"
+        ? "png"
+        : DEFAULT_MEDIA_FORMAT;
     return fetchAndServeImage(mediaUrl, requestedFormat);
   } catch (error) {
     console.error("❌ Media conversion error:", error);

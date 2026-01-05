@@ -1797,7 +1797,8 @@ export async function preparePublishRequests(
     });
   }
 
-  const specialFormatPlatforms = trulyWithoutVariants.filter(needsJpgConversion);
+  const specialFormatPlatforms =
+    trulyWithoutVariants.filter(needsJpgConversion);
   const groupedPlatforms = trulyWithoutVariants.filter(
     (platform) => !needsJpgConversion(platform)
   );
@@ -1813,7 +1814,7 @@ export async function preparePublishRequests(
     const ayrsharePlatform =
       INTERNAL_TO_AYRSHARE_PLATFORM[platform] || platform;
 
-    const postData: Record<string, any> = {
+    const postData: PostData = {
       post: baseContent,
       platforms: [ayrsharePlatform],
       scheduleDate: requestData.scheduledDate,
@@ -1827,9 +1828,7 @@ export async function preparePublishRequests(
     }
 
     console.log(
-      `📷 [SPECIAL FORMAT] Platform: ${platform} requires ${preferredFormat}, sending ${
-        clamped.length
-      } URLs`,
+      `📷 [SPECIAL FORMAT] Platform: ${platform} requires ${preferredFormat}, sending ${clamped.length} URLs`,
       clamped
     );
 
@@ -1961,9 +1960,9 @@ export async function preparePublishRequests(
     );
 
     console.log(
-      `📷 [GROUPED MEDIA] Platforms: ${groupedPlatforms.join(
-        ", "
-      )}, sending ${aggregatedMediaUrls.length} URLs:`,
+      `📷 [GROUPED MEDIA] Platforms: ${groupedPlatforms.join(", ")}, sending ${
+        aggregatedMediaUrls.length
+      } URLs:`,
       aggregatedMediaUrls
     );
 
@@ -2680,9 +2679,7 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          const targetPlatforms = requestData.platforms.filter(
-            (platform) => platform !== "base"
-          );
+          const targetPlatforms = requestData.platforms;
           const deleteErrors: Array<{ platform: string; error: string }> = [];
 
           for (const platform of targetPlatforms) {
