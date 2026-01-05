@@ -955,7 +955,9 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 		isImplicitThread,
 		platformAuthErrors,
 		showAuthErrorDialog,
-		setShowAuthErrorDialog
+		setShowAuthErrorDialog,
+		isAlreadyScheduled,
+		hasScheduleChange
 	} = usePostCreation({ post, accountGroup });
 
 	// =============================================================================
@@ -1390,6 +1392,8 @@ export default function PostCreationComponent({ post, accountGroup }: PostCreati
 				isScheduling={isScheduling}
 				getReplyDescription={getReplyDescription}
 				isThread={isThread}
+				isAlreadyScheduled={isAlreadyScheduled}
+				hasScheduleChange={hasScheduleChange}
 			/>
 
 			{seriesType === "reply" && (

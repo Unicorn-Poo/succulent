@@ -173,7 +173,7 @@ async function fetchAndServeImage(
   return NextResponse.redirect(mediaUrl);
 }
 
-async function handleRequest(
+export async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<Response> {

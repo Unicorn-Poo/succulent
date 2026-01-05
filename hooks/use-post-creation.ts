@@ -17,6 +17,8 @@ import {
   platformIcons,
   platformLabels,
   PLATFORM_CHARACTER_LIMITS,
+  AYRSHARE_API_URL,
+  AYRSHARE_API_KEY,
 } from "../utils/postConstants";
 import {
   validateReplyUrl,
@@ -33,6 +35,11 @@ import {
   fetchPostContent,
 } from "../utils/apiHandlers";
 import { AYRSHARE_PLATFORM_MAP, isBusinessPlanMode } from "../utils/ayrshareIntegration";
+import {
+  getPreferredMediaFormatForPlatform,
+  needsJpgConversion,
+  proxyMediaUrlIfNeeded,
+} from "../utils/mediaProxy";
 
 type SeriesType = "reply" | "thread" | null;
 
@@ -113,6 +120,19 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
   const [currentPost, setPost] = useState(post);
   const [platformAuthErrors, setPlatformAuthErrors] = useState<any[]>([]);
   const [showAuthErrorDialog, setShowAuthErrorDialog] = useState(false);
+  const baseVariant = currentPost?.variants?.base;
+  const existingScheduledFor = baseVariant?.scheduledFor
+    ? new Date(baseVariant.scheduledFor)
+    : null;
+  const isAlreadyScheduled = Boolean(
+    baseVariant?.ayrsharePostId &&
+      (baseVariant?.status === "scheduled" || existingScheduledFor)
+  );
+  const hasScheduleChange =
+    !!scheduledDate &&
+    isAlreadyScheduled &&
+    !!existingScheduledFor &&
+    scheduledDate.getTime() !== existingScheduledFor.getTime();
 
   // Sync currentPost with post prop changes
   useEffect(() => {
@@ -851,6 +871,81 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       const scheduleDate = scheduledDate
         ? new Date(scheduledDate).toISOString()
         : undefined;
+      const isReschedule = !!scheduleDate && hasScheduleChange;
+      const proxyMediaUrlsForPlatform = (urls: string[], platform: string) => {
+        const preferredFormat = getPreferredMediaFormatForPlatform(platform);
+        return urls.map((url) => proxyMediaUrlIfNeeded(url, preferredFormat));
+      };
+      const proxyMediaUrlsForPlatforms = (
+        urls: string[],
+        platforms: string[]
+      ) => {
+        const useJpg = platforms.some((platform) => needsJpgConversion(platform));
+        const format = useJpg ? "jpg" : "png";
+        return urls.map((url) => proxyMediaUrlIfNeeded(url, format));
+      };
+
+      const deleteScheduledAyrsharePosts = async (platforms: string[]) => {
+        if (!AYRSHARE_API_KEY) {
+          throw new Error("Missing AYRSHARE_API_KEY for delete operation");
+        }
+
+        const profileKey = isBusinessPlanMode()
+          ? accountGroup.ayrshareProfileKey
+          : undefined;
+        const deleteTargets = platforms
+          .map((platform) => {
+            const variant = post.variants[platform] || post.variants.base;
+            const isScheduled =
+              variant?.status === "scheduled" || !!variant?.scheduledFor;
+            const postId = variant?.ayrsharePostId;
+            return isScheduled && postId ? { platform, postId } : null;
+          })
+          .filter(
+            (target): target is { platform: string; postId: string } =>
+              !!target
+          );
+
+        if (deleteTargets.length === 0) return;
+
+        const deleteErrors: string[] = [];
+        for (const target of deleteTargets) {
+          try {
+            const headers: Record<string, string> = {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${AYRSHARE_API_KEY}`,
+            };
+            if (isBusinessPlanMode() && profileKey) {
+              headers["Profile-Key"] = profileKey;
+            }
+            const response = await fetch(`${AYRSHARE_API_URL}/post`, {
+              method: "DELETE",
+              headers,
+              body: JSON.stringify({ id: target.postId }),
+            });
+            if (!response.ok) {
+              const text = await response.text();
+              throw new Error(
+                `Delete failed (${response.status}): ${text || "Unknown error"}`
+              );
+            }
+          } catch (deleteError) {
+            deleteErrors.push(
+              `${target.platform}: ${
+                deleteError instanceof Error
+                  ? deleteError.message
+                  : "Delete failed"
+              }`
+            );
+          }
+        }
+
+        if (deleteErrors.length > 0) {
+          throw new Error(
+            `Failed to delete scheduled posts: ${deleteErrors.join(", ")}`
+          );
+        }
+      };
 
       const triggerPostStatusSync = async (reason: string) => {
         try {
@@ -866,9 +961,14 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
       let results;
 
+      if (isReschedule) {
+        await deleteScheduledAyrsharePosts(platforms);
+      }
+
       if (seriesType === "reply" && replyUrl) {
-        const mediaUrls = await extractMediaUrlsFromVariant(
-          post.variants[activeTab]
+        const mediaUrls = proxyMediaUrlsForPlatforms(
+          await extractMediaUrlsFromVariant(post.variants[activeTab]),
+          platforms
         );
         const basePostData: PostData = {
           post: postText,
@@ -896,8 +996,9 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         });
       } else if (seriesType === "thread" && contextText?.trim()) {
         const threadPosts = generateThreadPreview(contextText);
-        const mediaUrls = await extractMediaUrlsFromVariant(
-          post.variants[activeTab]
+        const mediaUrls = proxyMediaUrlsForPlatforms(
+          await extractMediaUrlsFromVariant(post.variants[activeTab]),
+          platforms
         );
         const basePostData: PostData = {
           post: postText,
@@ -946,6 +1047,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
                 mediaUrls = baseMediaUrls;
               }
             }
+            mediaUrls = proxyMediaUrlsForPlatform(mediaUrls, platform);
             const variantOptions = parsePlatformOptions(variant);
             const mergedOptions = { ...baseOptions, ...variantOptions };
 
@@ -1027,7 +1129,13 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           triggerPostStatusSync("pending_followup").catch(() => undefined);
         }, 2 * 60 * 1000);
       } else {
-        setSuccess("Post published successfully!");
+        setSuccess(
+          isReschedule
+            ? "Post rescheduled successfully!"
+            : scheduleDate
+            ? "Post scheduled successfully!"
+            : "Post published successfully!"
+        );
         triggerPostStatusSync("publish_complete").catch(() => undefined);
       }
     } catch (error) {
@@ -1068,6 +1176,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     replyUrl,
     contextText,
     accountGroup.ayrshareProfileKey,
+    hasScheduleChange,
   ]);
 
   const handleContentChange = useCallback((newContent: string) => {
@@ -1132,29 +1241,34 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       // Save to post object immediately
       if (post?.variants?.base) {
         try {
+          const baseVariant = post.variants.base;
+          const hasExistingSchedule = Boolean(
+            baseVariant?.ayrsharePostId &&
+              (baseVariant?.status === "scheduled" || baseVariant?.scheduledFor)
+          );
+
           if (date) {
-            // Ensure the base variant has the required properties
-            if (
-              post.variants.base.scheduledFor !== undefined ||
-              "scheduledFor" in post.variants.base
-            ) {
-              post.variants.base.scheduledFor = date;
-            }
-            if (
-              post.variants.base.status !== undefined ||
-              "status" in post.variants.base
-            ) {
-              post.variants.base.status = "scheduled";
+            if (!hasExistingSchedule) {
+              // Keep draft schedule metadata only for unscheduled posts
+              if (
+                baseVariant.scheduledFor !== undefined ||
+                "scheduledFor" in baseVariant
+              ) {
+                baseVariant.scheduledFor = date;
+              }
+              if (baseVariant.status !== undefined || "status" in baseVariant) {
+                baseVariant.status = "scheduled";
+              }
             }
           } else {
             if (
-              post.variants.base.scheduledFor !== undefined ||
-              "scheduledFor" in post.variants.base
+              baseVariant.scheduledFor !== undefined ||
+              "scheduledFor" in baseVariant
             ) {
-              post.variants.base.scheduledFor = undefined;
+              baseVariant.scheduledFor = undefined;
             }
-            if (post.variants.base.status === "scheduled") {
-              post.variants.base.status = "draft";
+            if (baseVariant.status === "scheduled") {
+              baseVariant.status = "draft";
             }
           }
         } catch (error) {
@@ -1588,5 +1702,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     platformAuthErrors,
     showAuthErrorDialog,
     setShowAuthErrorDialog,
+    isAlreadyScheduled,
+    hasScheduleChange,
   };
 }

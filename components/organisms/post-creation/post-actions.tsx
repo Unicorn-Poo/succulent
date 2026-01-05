@@ -22,6 +22,8 @@ interface PostActionsProps {
     isScheduling: boolean;
     getReplyDescription: () => string;
     isThread: boolean;
+    isAlreadyScheduled: boolean;
+    hasScheduleChange: boolean;
 }
 
 export const PostActions = ({
@@ -41,10 +43,21 @@ export const PostActions = ({
     handlePublishPost,
     isScheduling,
     getReplyDescription,
-    isThread
+    isThread,
+    isAlreadyScheduled,
+    hasScheduleChange
 }: PostActionsProps) => {
     // Check if any accounts are selected for preview
     const hasSelectedAccounts = selectedPlatforms.filter(p => p !== 'base').length > 0;
+    const publishLabel = scheduledDate
+        ? hasScheduleChange
+            ? "Reschedule"
+            : isAlreadyScheduled
+                ? "Scheduled"
+                : "Schedule"
+        : "Publish";
+    const publishDisabled =
+        isScheduling || (scheduledDate && isAlreadyScheduled && !hasScheduleChange);
     return (
         <Card>
             <div className="p-4 space-y-4">
@@ -165,11 +178,11 @@ export const PostActions = ({
 
                             {/* Publish Button - appears when content is saved and ready to publish */}
                             {showPublishButton && (
-                                                <Button
-                    onClick={handlePublishPost}
-                    disabled={isScheduling}
-                    className="flex items-center gap-2 bg-brand-seafoam hover:bg-brand-seafoam text-white disabled:bg-muted-foreground"
-                >
+                                <Button
+                                    onClick={handlePublishPost}
+                                    disabled={publishDisabled}
+                                    className="flex items-center gap-2 bg-brand-seafoam hover:bg-brand-seafoam text-white disabled:bg-muted-foreground"
+                                >
                                     {isScheduling ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -178,7 +191,7 @@ export const PostActions = ({
                                     ) : (
                                         <>
                                             <Globe className="w-4 h-4" />
-                                            <span className="hidden sm:inline">{scheduledDate ? "Schedule" : "Publish"}</span>
+                                            <span className="hidden sm:inline">{publishLabel}</span>
                                         </>
                                     )}
                                 </Button>
