@@ -88,6 +88,8 @@ import { Badge } from "@radix-ui/themes";
 const normalizePlatformKey = (platform: string) =>
   platform?.toString().toLowerCase().trim();
 
+const POSTS_PAGE_SIZE = 42;
+
 export default function AccountGroupPage() {
   const params = useParams();
   const router = useRouter();
@@ -164,6 +166,15 @@ export default function AccountGroupPage() {
   const [serverPosts, setServerPosts] = useState<any[]>([]);
   const [serverPostsLoading, setServerPostsLoading] = useState(false);
   const [serverPostsError, setServerPostsError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMorePages, setHasMorePages] = useState(false);
+  const [totalServerPosts, setTotalServerPosts] = useState(0);
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [rescheduleStatus, setRescheduleStatus] = useState<string | null>(null);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(totalServerPosts / POSTS_PAGE_SIZE)),
+    [totalServerPosts]
+  );
 
   const accountGroupId = params.groupId as string;
 
@@ -187,13 +198,7 @@ export default function AccountGroupPage() {
               },
             },
             // CRITICAL: Load brand persona for AI content generation
-            brandPersona: {
-              personality: { $each: true },
-              contentPillars: { $each: true },
-              keyMessages: { $each: true },
-              avoidTopics: { $each: true },
-              samplePosts: { $each: true },
-            },
+            brandPersona: true,
             // NOTE: postQueue, automationLogs, contentFeedback are optional
             // They're initialized on-demand in growth-autopilot.tsx when accessed
             // Don't request them in resolve to avoid errors on older account groups
@@ -385,6 +390,26 @@ export default function AccountGroupPage() {
     });
     return merged;
   }, [localPosts, serverPosts]);
+  const postsToShow = useMemo(
+    () => (serverPosts.length > 0 ? serverPosts : posts),
+    [posts, serverPosts]
+  );
+  const usesServerPagination = totalServerPosts > 0;
+  const paginationTotalPosts = usesServerPagination
+    ? totalServerPosts
+    : postsToShow.length;
+  const paginationTotalPages = useMemo(
+    () =>
+      usesServerPagination
+        ? Math.max(1, Math.ceil(totalServerPosts / POSTS_PAGE_SIZE))
+        : 1,
+    [totalServerPosts, usesServerPagination]
+  );
+  const paginationPageNumber = usesServerPagination ? currentPage + 1 : 1;
+  const paginationShowingCount = postsToShow.length;
+  const displayedPosts = useMemo(() => {
+    return serverPosts.length > 0 ? serverPosts : posts;
+  }, [posts, serverPosts]);
   const serverOnlyCount = serverOnlyPostIds.size;
   const listQuery = searchKey;
   const validPostsFilters = useMemo(
@@ -528,13 +553,13 @@ export default function AccountGroupPage() {
       jazzAccountGroup.posts.push(newPost);
 
       // Navigate to the newly created post
-      router.push(`/account-group/${accountGroup.id}/post/${newPost.id}`);
+      router.push(`/account-group/${accountGroup?.id}/post/${newPost.id}`);
     } else {
       // For legacy account groups, use the old approach
       const newPostId = Date.now().toString();
       router.push(
         `/account-group/${
-          accountGroup.id
+          accountGroup?.id as string
         }/post/${newPostId}?title=${encodeURIComponent(
           newPostTitle
         )}&content=${encodeURIComponent(newPostText)}`
@@ -581,7 +606,9 @@ export default function AccountGroupPage() {
     const normalizedFilter = platformFilter
       .map((platform) => normalizePlatformKey(platform))
       .filter((platform) => platform && platform !== "unknown");
-    return normalizedFilter.some((platform) => postPlatforms.includes(platform));
+    return normalizedFilter.some((platform) =>
+      postPlatforms.includes(platform)
+    );
   };
 
   // Toggle platform in filter
@@ -631,10 +658,19 @@ export default function AccountGroupPage() {
     setServerPostsLoading(true);
     setServerPostsError(null);
     try {
-      const response = await fetch(
-        `/api/posts/list?accountGroupId=${accountGroupId}&limit=200`,
-        { cache: "no-store" }
-      );
+      const params = new URLSearchParams();
+      params.set("accountGroupId", accountGroupId);
+      params.set("limit", POSTS_PAGE_SIZE.toString());
+      params.set("offset", (currentPage * POSTS_PAGE_SIZE).toString());
+      if (postsFilter !== "all") {
+        params.set("status", postsFilter);
+      }
+      if (platformFilter.length > 0) {
+        params.set("platforms", platformFilter.join(","));
+      }
+      const response = await fetch(`/api/posts/list?${params.toString()}`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch posts (${response.status})`);
       }
@@ -666,6 +702,9 @@ export default function AccountGroupPage() {
         __serverOnly: true,
       }));
       setServerPosts(mapped);
+      const pagination = payload?.data?.pagination;
+      setTotalServerPosts(pagination?.total ?? 0);
+      setHasMorePages(Boolean(pagination?.hasMore));
     } catch (error) {
       setServerPostsError(
         error instanceof Error ? error.message : "Failed to fetch posts"
@@ -673,11 +712,62 @@ export default function AccountGroupPage() {
     } finally {
       setServerPostsLoading(false);
     }
-  }, [accountGroupId]);
+  }, [accountGroupId, currentPage, postsFilter, platformFilter]);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    if (!hasMorePages) return;
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  const handleBulkReschedule = useCallback(async () => {
+    if (!accountGroupId || selectedPosts.size === 0) return;
+    setIsRescheduling(true);
+    setRescheduleStatus("Rescheduling Ayrshare variants...");
+    try {
+      const postIds = Array.from(selectedPosts);
+      const response = await fetch("/api/posts/reschedule-ayrshare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountGroupId,
+          postIds,
+          dryRun: false,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload?.success) {
+        throw new Error(
+          payload?.error || payload?.details || "Reschedule request failed"
+        );
+      }
+      const entries = payload?.data?.entries ?? [];
+      setRescheduleStatus(
+        `Reschedule submitted (${entries.length} variant${
+          entries.length === 1 ? "" : "s"
+        } processed)`
+      );
+      handleClearSelection();
+      fetchServerPosts();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Reschedule failed";
+      setRescheduleStatus(message);
+    } finally {
+      setIsRescheduling(false);
+    }
+  }, [accountGroupId, fetchServerPosts, handleClearSelection, selectedPosts]);
 
   useEffect(() => {
     fetchServerPosts();
   }, [fetchServerPosts]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [postsFilter, platformFilter]);
 
   useEffect(() => {
     if (!accountGroup?.id || !hasPendingPosts) return;
@@ -1045,14 +1135,14 @@ export default function AccountGroupPage() {
                     <div className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
                       {(() => {
                         const filterCounts = {
-                          all: posts.length,
-                          draft: posts.filter(
+                          all: postsToShow.length,
+                          draft: postsToShow.filter(
                             (p) => getPostStatus(p) === "draft"
                           ).length,
-                          scheduled: posts.filter(
+                          scheduled: postsToShow.filter(
                             (p) => getPostStatus(p) === "scheduled"
                           ).length,
-                          published: posts.filter(
+                          published: postsToShow.filter(
                             (p) => getPostStatus(p) === "published"
                           ).length,
                         };
@@ -1209,14 +1299,31 @@ export default function AccountGroupPage() {
                         <Trash2 className="w-3 h-3 mr-1" />
                         Delete Selected
                       </Button>
+                      <Button
+                        size="1"
+                        variant="solid"
+                        intent="primary"
+                        onClick={handleBulkReschedule}
+                        disabled={isRescheduling}
+                      >
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {isRescheduling
+                          ? "Rescheduling..."
+                          : "Reschedule Ayrshare"}
+                      </Button>
                     </div>
+                    {rescheduleStatus && (
+                      <span className="text-xs text-muted-foreground mt-2 block">
+                        {rescheduleStatus}
+                      </span>
+                    )}
                   </div>
                 )}
 
                 {/* Posts Views */}
                 {postView === "grid" && (
                   <PostGridView
-                    posts={posts}
+                    posts={postsToShow}
                     accountGroupId={accountGroup.id}
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
@@ -1230,7 +1337,7 @@ export default function AccountGroupPage() {
 
                 {postView === "image" && (
                   <PostImageView
-                    posts={posts}
+                    posts={postsToShow}
                     accountGroupId={accountGroup.id}
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
@@ -1244,7 +1351,7 @@ export default function AccountGroupPage() {
 
                 {postView === "succinct" && (
                   <PostSuccinctView
-                    posts={posts}
+                    posts={postsToShow}
                     accountGroupId={accountGroup.id}
                     accountGroupName={accountGroup.name || "Account Group"}
                     postsFilter={postsFilter}
@@ -1258,7 +1365,7 @@ export default function AccountGroupPage() {
                 )}
 
                 {/* Empty state for filtered results */}
-                {posts.filter((post) => {
+                {postsToShow.filter((post) => {
                   // Status filter
                   if (postsFilter !== "all") {
                     const postStatus = getPostStatus(post);
@@ -1296,6 +1403,35 @@ export default function AccountGroupPage() {
                       </p>
                     </div>
                   )}
+
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-4">
+                  <Button
+                    size="1"
+                    variant="outline"
+                    intent="secondary"
+                    onClick={handlePrevPage}
+                    disabled={!usesServerPagination || currentPage === 0}
+                  >
+                    Prev
+                  </Button>
+                  <span>
+                    Page {paginationPageNumber} of {paginationTotalPages}
+                  </span>
+                  <Button
+                    size="1"
+                    variant="outline"
+                    intent="secondary"
+                    onClick={handleNextPage}
+                    disabled={!usesServerPagination || !hasMorePages}
+                  >
+                    Next
+                  </Button>
+                  <span>
+                    Showing {paginationShowingCount} of {paginationTotalPosts}{" "}
+                    post
+                    {paginationTotalPosts !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
             )}
           </Tabs.Content>

@@ -2547,7 +2547,13 @@ export async function POST(request: NextRequest) {
         const existingPost = await Post.load(requestData.postId, {
           loadAs: worker,
           resolve: {
-            variants: { $each: true },
+            variants: {
+              $each: {
+                text: true,
+                media: { $each: true },
+                replyTo: true,
+              },
+            },
           },
         });
 
@@ -2734,6 +2740,22 @@ export async function POST(request: NextRequest) {
         console.log(
           `📦 Prepared ${publishRequests.length} publish request(s) for ${requestData.platforms.length} platform(s)`
         );
+        publishRequests.forEach(({ postData, platforms }, index) => {
+          const preview =
+            typeof postData.post === "string"
+              ? postData.post.slice(0, 160)
+              : "";
+          console.log("🧾 [PUBLISH PAYLOAD]", {
+            index: index + 1,
+            platforms,
+            postLength: postData.post?.length || 0,
+            postPreview: preview,
+            scheduleDate: postData.scheduleDate || null,
+            mediaCount: postData.mediaUrls?.length || 0,
+            firstMediaUrl: postData.mediaUrls?.[0] || null,
+            twitterOptions: postData.twitterOptions || null,
+          });
+        });
 
         if (dryRunPublish) {
           const previewRequests = publishRequests.map(
