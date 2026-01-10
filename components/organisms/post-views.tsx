@@ -293,6 +293,13 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
         mediaItem.type === "url-video" || mediaItem.type === "video";
       if (!isVideoType) return;
 
+      if (mediaItem.proxyUrl) {
+        if (isActive) setResolvedVideoUrl(mediaItem.proxyUrl);
+        const poster = await capturePoster(mediaItem.proxyUrl);
+        if (isActive && poster) setVideoPosterUrl(poster);
+        return;
+      }
+
       if (mediaItem.url && typeof mediaItem.url === "string") {
         setResolvedVideoUrl(mediaItem.url);
         const poster = await capturePoster(mediaItem.url);
@@ -333,6 +340,11 @@ function MediaThumbnail({ mediaItem }: { mediaItem: any }) {
 
     const resolveImageUrl = async () => {
       if (!mediaItem) return;
+
+      if (mediaItem.proxyUrl) {
+        if (isActive) setResolvedImageUrl(mediaItem.proxyUrl);
+        return;
+      }
 
       if (
         (mediaItem.type === "url-image" || mediaItem.type === "image") &&
