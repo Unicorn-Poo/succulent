@@ -131,13 +131,18 @@ export async function POST(request: NextRequest) {
 
       const post = accountGroup.posts[postIndex];
       const variants = post?.variants ? Object.entries(post.variants) : [];
+      const attemptedAyrshareIds = new Set<string>();
 
       for (const [platform, variant] of variants) {
-        if (platform === "base" || !variant) continue;
+        if (!variant) continue;
         const isScheduled =
           variant?.status === "scheduled" || !!variant?.scheduledFor;
         const ayrsharePostId = variant?.ayrsharePostId;
         if (!isScheduled || !ayrsharePostId) continue;
+
+        if (attemptedAyrshareIds.has(ayrsharePostId)) {
+          continue;
+        }
 
         if (!profileKey) {
           errors.push({
@@ -150,6 +155,7 @@ export async function POST(request: NextRequest) {
         try {
           await deleteAyrsharePostById(ayrsharePostId, profileKey);
           unscheduledPosts.push({ platform, id: ayrsharePostId });
+          attemptedAyrshareIds.add(ayrsharePostId);
         } catch (error) {
           errors.push({
             postId: targetId,

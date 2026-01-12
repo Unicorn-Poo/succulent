@@ -134,12 +134,24 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
   const [platformAuthErrors, setPlatformAuthErrors] = useState<any[]>([]);
   const [showAuthErrorDialog, setShowAuthErrorDialog] = useState(false);
   const baseVariant = currentPost?.variants?.base;
+  const scheduledVariants = currentPost?.variants
+    ? Object.entries(currentPost.variants).filter(
+        ([key, variant]) =>
+          key !== "base" &&
+          variant &&
+          (variant.status === "scheduled" || variant.scheduledFor)
+      )
+    : [];
+  const scheduledVariant = scheduledVariants[0]?.[1];
   const existingScheduledFor = baseVariant?.scheduledFor
     ? new Date(baseVariant.scheduledFor)
+    : scheduledVariant?.scheduledFor
+    ? new Date(scheduledVariant.scheduledFor)
     : null;
   const isAlreadyScheduled = Boolean(
-    baseVariant?.ayrsharePostId &&
-      (baseVariant?.status === "scheduled" || existingScheduledFor)
+    (baseVariant?.ayrsharePostId &&
+      (baseVariant?.status === "scheduled" || existingScheduledFor)) ||
+      scheduledVariants.some(([, variant]) => variant?.ayrsharePostId)
   );
   const hasScheduleChange =
     !!scheduledDate &&
@@ -950,9 +962,10 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         const profileKey = isBusinessPlanMode()
           ? accountGroup.ayrshareProfileKey
           : undefined;
+        const baseVariant = post.variants.base;
         const deleteTargets = platforms
           .map((platform) => {
-            const variant = post.variants[platform];
+            const variant = post.variants[platform] || baseVariant;
             if (!variant) return null;
             const isScheduled =
               variant?.status === "scheduled" || !!variant?.scheduledFor;
@@ -962,11 +975,17 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
           .filter(
             (target): target is { platform: string; postId: string } => !!target
           );
+        const seenIds = new Set<string>();
+        const uniqueTargets = deleteTargets.filter((target) => {
+          if (seenIds.has(target.postId)) return false;
+          seenIds.add(target.postId);
+          return true;
+        });
 
-        if (deleteTargets.length === 0) return;
+        if (uniqueTargets.length === 0) return;
 
         const deleteErrors: string[] = [];
-        for (const target of deleteTargets) {
+        for (const target of uniqueTargets) {
           try {
             const headers: Record<string, string> = {
               "Content-Type": "application/json",
