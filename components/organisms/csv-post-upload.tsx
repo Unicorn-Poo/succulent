@@ -56,6 +56,8 @@ export default function CSVPostUpload({
     URL.revokeObjectURL(url);
   };
 
+  const decodeEscapedNewlines = (value: string) => value.replace(/\\n/g, "\n");
+
   const parseCSV = (text: string): ParsedPost[] => {
     console.log('🔍 Raw CSV text:', text);
     
@@ -162,7 +164,7 @@ export default function CSVPostUpload({
               post.title = value;
               break;
             case 'content':
-              post.content = value;
+              post.content = decodeEscapedNewlines(value);
               break;
             case 'platforms':
               // Handle JSON array format like ["x","threads"]
