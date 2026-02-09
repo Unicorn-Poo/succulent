@@ -13,6 +13,7 @@
     "test": "jest",
     "check": "pnpm type-check && pnpm lint:check",
     "check:scheduled-media": "node scripts/check-scheduled-media.js",
+    "check:scheduled-media:full": "node scripts/check-scheduled-media.js --includeAllStatuses=true --includeMediaDetails=true --includeUrls=true",
     "reschedule:scheduled-media": "node scripts/reschedule-scheduled-media.js",
     "prepare": "husky"
   },

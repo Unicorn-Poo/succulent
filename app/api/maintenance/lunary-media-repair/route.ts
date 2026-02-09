@@ -575,12 +575,13 @@ export async function POST(request: NextRequest) {
 
         variantsChecked += 1;
         const lunaryUrls = extractLunaryUrlsFromVariant(variant);
-        if (lunaryUrls.length === 0) continue;
+        const shouldRepair = lunaryUrls.length > 0;
+        if (!shouldRepair && !reschedule) continue;
 
         const replacements: ReplacementResult[] = [];
         let updated = false;
 
-        if (!dryRun) {
+        if (!dryRun && shouldRepair) {
           const format = getPreferredMediaFormatForPlatform(variantPlatform);
           const mediaItems = Array.from(variant.media || []);
           const updatedMedia = co.list(MediaItem).create([], {

@@ -3,37 +3,9 @@ import {
   validateAPIKey,
   validateAccountGroupAccess,
 } from "@/utils/apiKeyManager";
+import { deleteAyrsharePostById } from "@/utils/ayrshareApi";
 
 export const dynamic = "force-dynamic";
-
-async function deleteAyrsharePostById(
-  postId: string,
-  profileKey: string
-): Promise<void> {
-  if (!process.env.AYRSHARE_API_KEY) {
-    throw new Error("Missing AYRSHARE_API_KEY for delete operation");
-  }
-  if (!profileKey) {
-    throw new Error("Missing Profile-Key for delete operation");
-  }
-
-  const response = await fetch("https://api.ayrshare.com/api/post", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.AYRSHARE_API_KEY}`,
-      "Profile-Key": profileKey,
-    },
-    body: JSON.stringify({ id: postId }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Ayrshare delete failed (${response.status}): ${text || "Unknown error"}`
-    );
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -135,8 +107,14 @@ export async function POST(request: NextRequest) {
 
       for (const [platform, variant] of variants) {
         if (!variant) continue;
+        const normalizedStatus =
+          typeof variant.status === "string"
+            ? variant.status.toLowerCase()
+            : undefined;
         const isScheduled =
-          variant?.status === "scheduled" || !!variant?.scheduledFor;
+          normalizedStatus === "scheduled" ||
+          normalizedStatus === "pending" ||
+          !!variant.scheduledFor;
         const ayrsharePostId = variant?.ayrsharePostId;
         if (!isScheduled || !ayrsharePostId) continue;
 
