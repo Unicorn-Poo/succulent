@@ -155,6 +155,7 @@ const TikTokOptionsSchema = zod
     disableComment: zod.boolean().optional(),
     disableDuet: zod.boolean().optional(),
     disableStitch: zod.boolean().optional(),
+    autoAddMusic: zod.boolean().optional(),
   })
   .passthrough();
 

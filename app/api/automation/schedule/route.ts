@@ -270,13 +270,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (platformLower === "tiktok") {
-      // CRITICAL FIX: Use lowercase 'tiktokOptions' to match Ayrshare API and rest of codebase
-      // TikTok requires media (video or image), and options are optional
-      // IMPORTANT: Set privacyLevel to PUBLIC_TO_EVERYONE to ensure posts are visible
-      // Private/friends-only posts may stay in pending status
+      const hasVideo = postPayload.mediaUrls?.some((url: string) =>
+        /\.(mp4|mov|avi|webm|mkv|m4v)(\?|$)/i.test(url)
+      );
       postPayload.tiktokOptions = {
-        privacyLevel: "PUBLIC_TO_EVERYONE", // Ensure post is public and visible
-        // Valid options: privacyLevel, disableComment, disableDuet, disableStitch
+        privacyLevel: "PUBLIC_TO_EVERYONE",
+        ...(hasVideo ? {} : { autoAddMusic: true }),
       };
     }
 

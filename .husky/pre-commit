@@ -1,3 +1,5 @@
+export PATH="/opt/homebrew/bin:$PATH"
+
 pnpm exec lint-staged
 # Type-check runs but won't block commits (Next.js ignores build errors)
 # Run 'pnpm type-check' manually before deploying to catch errors

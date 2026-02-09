@@ -163,6 +163,7 @@ export interface PostData {
     disableComment?: boolean;
     disableDuet?: boolean;
     disableStitch?: boolean;
+    autoAddMusic?: boolean;
   };
   // YouTube options for Shorts
   youtubeOptions?: {
@@ -172,6 +173,12 @@ export interface PostData {
     visibility?: "public" | "unlisted" | "private";
     madeForKids?: boolean;
   };
+}
+
+const VIDEO_EXTENSIONS = /\.(mp4|mov|avi|webm|mkv|m4v)(\?|$)/i;
+
+function hasVideoMedia(mediaUrls?: string[]): boolean {
+  return !!mediaUrls?.some((url) => VIDEO_EXTENSIONS.test(url));
 }
 
 /**
@@ -258,9 +265,13 @@ export const handleStandardPost = async (postData: PostData) => {
     linkedinOptions: postData.linkedinOptions,
     // TikTok options - ensure posts are public by default
     // Private/friends-only posts may stay in pending status and never publish
-    tiktokOptions: postData.tiktokOptions || {
-      privacyLevel: "PUBLIC_TO_EVERYONE", // Default to public to ensure posts are visible
-    },
+    tiktokOptions: (() => {
+      const autoAddMusic = !hasVideoMedia(postData.mediaUrls);
+      if (postData.tiktokOptions) {
+        return { autoAddMusic, ...postData.tiktokOptions };
+      }
+      return { privacyLevel: "PUBLIC_TO_EVERYONE" as const, autoAddMusic };
+    })(),
     // YouTube options (Shorts)
     youtubeOptions: postData.youtubeOptions,
   };
