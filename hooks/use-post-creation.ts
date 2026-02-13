@@ -197,6 +197,42 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     };
   }, [accountGroup?.id, currentPost]);
 
+  const cancelAyrsharePost = useCallback(
+    async (
+      ayrsharePostId: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      if (!AYRSHARE_API_KEY)
+        return { success: false, error: "Missing AYRSHARE_API_KEY" };
+      const profileKey = isBusinessPlanMode()
+        ? accountGroup.ayrshareProfileKey
+        : undefined;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${AYRSHARE_API_KEY}`,
+      };
+      if (isBusinessPlanMode() && profileKey)
+        headers["Profile-Key"] = profileKey;
+      try {
+        const response = await fetch(`${AYRSHARE_API_URL}/post`, {
+          method: "DELETE",
+          headers,
+          body: JSON.stringify({ id: ayrsharePostId }),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          return { success: false, error: `(${response.status}): ${text}` };
+        }
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Delete failed",
+        };
+      }
+    },
+    [accountGroup.ayrshareProfileKey]
+  );
+
   // Initialize selectedPlatforms from post variants
   useEffect(() => {
     if (post?.variants) {
@@ -955,13 +991,6 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
       };
 
       const deleteScheduledAyrsharePosts = async (platforms: string[]) => {
-        if (!AYRSHARE_API_KEY) {
-          throw new Error("Missing AYRSHARE_API_KEY for delete operation");
-        }
-
-        const profileKey = isBusinessPlanMode()
-          ? accountGroup.ayrshareProfileKey
-          : undefined;
         const baseVariant = post.variants.base;
         const deleteTargets = platforms
           .map((platform) => {
@@ -986,32 +1015,10 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
 
         const deleteErrors: string[] = [];
         for (const target of uniqueTargets) {
-          try {
-            const headers: Record<string, string> = {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${AYRSHARE_API_KEY}`,
-            };
-            if (isBusinessPlanMode() && profileKey) {
-              headers["Profile-Key"] = profileKey;
-            }
-            const response = await fetch(`${AYRSHARE_API_URL}/post`, {
-              method: "DELETE",
-              headers,
-              body: JSON.stringify({ id: target.postId }),
-            });
-            if (!response.ok) {
-              const text = await response.text();
-              throw new Error(
-                `Delete failed (${response.status}): ${text || "Unknown error"}`
-              );
-            }
-          } catch (deleteError) {
+          const result = await cancelAyrsharePost(target.postId);
+          if (!result.success) {
             deleteErrors.push(
-              `${target.platform}: ${
-                deleteError instanceof Error
-                  ? deleteError.message
-                  : "Delete failed"
-              }`
+              `${target.platform}: ${result.error || "Delete failed"}`
             );
           }
         }
@@ -1273,6 +1280,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     accountGroup.ayrshareProfileKey,
     accountGroup.id,
     hasScheduleChange,
+    cancelAyrsharePost,
   ]);
 
   const handleContentChange = useCallback((newContent: string) => {
@@ -1315,21 +1323,59 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
     }
   }, [title, post]);
 
-  const handleClearSchedule = useCallback(() => {
+  const handleClearSchedule = useCallback(async () => {
     setScheduledDate(null);
-    // Update the post object to unschedule it
-    if (post?.variants?.base) {
+    setErrors([]);
+
+    // Collect all unique ayrsharePostIds across all variants
+    const ayrshareIds = new Set<string>();
+    if (post?.variants) {
       try {
-        post.variants.base.scheduledFor = undefined;
-        if (post.variants.base.status === "scheduled") {
-          post.variants.base.status = "draft";
+        for (const key of Object.keys(post.variants)) {
+          const variant = post.variants[key];
+          if (!variant) continue;
+          const isScheduled =
+            variant.status === "scheduled" || !!variant.scheduledFor;
+          if (isScheduled && variant.ayrsharePostId) {
+            ayrshareIds.add(variant.ayrsharePostId);
+          }
+        }
+      } catch (error) {
+        console.error("Error collecting ayrshare IDs:", error);
+      }
+    }
+
+    // Cancel each scheduled Ayrshare post
+    const cancelErrors: string[] = [];
+    for (const id of ayrshareIds) {
+      const result = await cancelAyrsharePost(id);
+      if (!result.success) {
+        cancelErrors.push(`Ayrshare cancel failed for ${id}: ${result.error}`);
+      }
+    }
+
+    if (cancelErrors.length > 0) {
+      setErrors(cancelErrors);
+    }
+
+    // Clear local state on ALL variants (base + platform-specific)
+    if (post?.variants) {
+      try {
+        for (const key of Object.keys(post.variants)) {
+          const variant = post.variants[key];
+          if (!variant) continue;
+          variant.scheduledFor = undefined;
+          if (variant.status === "scheduled") {
+            variant.status = "draft";
+          }
+          variant.ayrsharePostId = undefined;
         }
       } catch (error) {
         console.error("Failed to unschedule post:", error);
       }
     }
     setShowSettings(false);
-  }, [post]);
+  }, [post, cancelAyrsharePost]);
 
   const handleScheduleDateChange = useCallback(
     (date: Date | null) => {
@@ -1447,7 +1493,31 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
   );
 
   const handleRemoveAccount = useCallback(
-    (platform: string) => {
+    async (platform: string) => {
+      // Cancel Ayrshare scheduled post for this variant if applicable
+      try {
+        const variant = post.variants[platform];
+        if (variant) {
+          const isScheduled =
+            variant.status === "scheduled" || !!variant.scheduledFor;
+          if (isScheduled && variant.ayrsharePostId) {
+            const result = await cancelAyrsharePost(variant.ayrsharePostId);
+            if (!result.success) {
+              setErrors((prev) => [
+                ...prev,
+                `Warning: Failed to cancel Ayrshare post for ${platform}: ${result.error}. The scheduled post may still fire.`,
+              ]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error cancelling Ayrshare post for platform:",
+          platform,
+          error
+        );
+      }
+
       try {
         // Remove the Jazz variant
         if (post.variants[platform]) {
@@ -1467,7 +1537,7 @@ export function usePostCreation({ post, accountGroup }: PostCreationProps) {
         setActiveTab("base");
       }
     },
-    [activeTab, post]
+    [activeTab, post, cancelAyrsharePost]
   );
 
   const getReplyDescription = useCallback(() => {

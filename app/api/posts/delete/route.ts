@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const postId = body?.postId as string | undefined;
     const postIds = body?.postIds as string[] | undefined;
     const profileKeyOverride = body?.profileKey as string | undefined;
+    const force = body?.force === true;
 
     const ids = postId ? [postId] : Array.isArray(postIds) ? postIds : [];
     if (!accountGroupId || ids.length === 0) {
@@ -92,6 +93,8 @@ export async function POST(request: NextRequest) {
     const unscheduledPosts: Array<{ platform: string; id: string }> = [];
     const errors: Array<{ postId: string; error: string }> = [];
 
+    const keptPosts: Array<{ postId: string; reason: string }> = [];
+
     for (const targetId of ids) {
       const postIndex = accountGroup.posts.findIndex(
         (item: any) => item?.id === targetId
@@ -104,6 +107,8 @@ export async function POST(request: NextRequest) {
       const post = accountGroup.posts[postIndex];
       const variants = post?.variants ? Object.entries(post.variants) : [];
       const attemptedAyrshareIds = new Set<string>();
+      let hasAyrshareFailure = false;
+      let hadAyrsharePosts = false;
 
       for (const [platform, variant] of variants) {
         if (!variant) continue;
@@ -118,6 +123,8 @@ export async function POST(request: NextRequest) {
         const ayrsharePostId = variant?.ayrsharePostId;
         if (!isScheduled || !ayrsharePostId) continue;
 
+        hadAyrsharePosts = true;
+
         if (attemptedAyrshareIds.has(ayrsharePostId)) {
           continue;
         }
@@ -127,6 +134,7 @@ export async function POST(request: NextRequest) {
             postId: targetId,
             error: "Missing Profile-Key for delete operation",
           });
+          hasAyrshareFailure = true;
           continue;
         }
 
@@ -135,6 +143,7 @@ export async function POST(request: NextRequest) {
           unscheduledPosts.push({ platform, id: ayrsharePostId });
           attemptedAyrshareIds.add(ayrsharePostId);
         } catch (error) {
+          hasAyrshareFailure = true;
           errors.push({
             postId: targetId,
             error:
@@ -143,15 +152,25 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      accountGroup.posts.splice(postIndex, 1);
-      deletedPosts.push(targetId);
+      // Only remove from Jazz if all Ayrshare deletions succeeded (or no Ayrshare posts existed), unless force=true
+      if (!hasAyrshareFailure || !hadAyrsharePosts || force) {
+        accountGroup.posts.splice(postIndex, 1);
+        deletedPosts.push(targetId);
+      } else {
+        keptPosts.push({
+          postId: targetId,
+          reason:
+            "Ayrshare deletion failed. Post kept to allow retry. Use force: true to delete anyway.",
+        });
+      }
     }
 
     return NextResponse.json({
-      success: true,
+      success: keptPosts.length === 0,
       data: {
         deletedPosts,
         unscheduledPosts,
+        keptPosts,
         errors,
       },
     });

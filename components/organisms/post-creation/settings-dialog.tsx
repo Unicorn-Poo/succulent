@@ -11,7 +11,7 @@ interface SettingsDialogProps {
     isThread: boolean;
     postingInterval: number;
     setPostingInterval: (interval: number) => void;
-    handleClearSchedule: () => void;
+    handleClearSchedule: () => void | Promise<void>;
 }
 
 export const SettingsDialog = ({

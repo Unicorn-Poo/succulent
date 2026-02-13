@@ -45,7 +45,7 @@ interface PostCreationHeaderProps {
   detectedPlatform: string | null;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  handleRemoveAccount: (platform: string) => void;
+  handleRemoveAccount: (platform: string) => void | Promise<void>;
   availableAccounts: [string, any][];
   setShowAddAccountDialog: (show: boolean) => void;
   post: PostFullyLoaded;
