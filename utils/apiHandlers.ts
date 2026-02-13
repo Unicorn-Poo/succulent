@@ -182,6 +182,51 @@ function hasVideoMedia(mediaUrls?: string[]): boolean {
 }
 
 /**
+ * Transform internal Instagram options to Ayrshare API format.
+ * Internal names → Ayrshare names:
+ *   isStory → stories, isReel (dropped, Reels are auto for video),
+ *   shareToFeed → shareReelsFeed, coverImageUrl → thumbNail
+ */
+function transformInstagramOptions(
+  options: NonNullable<PostData["instagramOptions"]>
+): Record<string, unknown> {
+  const { isStory, isReel, shareToFeed, coverImageUrl, ...rest } = options;
+  return {
+    ...rest,
+    ...(isStory != null && { stories: isStory }),
+    ...(shareToFeed != null && { shareReelsFeed: shareToFeed }),
+    ...(coverImageUrl != null && { thumbNail: coverImageUrl }),
+  };
+}
+
+/**
+ * Transform internal Facebook options to Ayrshare API format.
+ * Internal names → Ayrshare names:
+ *   isStory → stories, isReel → reels
+ */
+function transformFacebookOptions(
+  options: NonNullable<PostData["facebookOptions"]>
+): Record<string, unknown> {
+  const { isStory, isReel, ...rest } = options;
+  return {
+    ...rest,
+    ...(isStory != null && { stories: isStory }),
+    ...(isReel != null && { reels: isReel }),
+  };
+}
+
+/**
+ * Transform internal LinkedIn options to Ayrshare API format.
+ * LinkedIn deprecated Stories in 2021, so isStory is dropped.
+ */
+function transformLinkedInOptions(
+  options: NonNullable<PostData["linkedinOptions"]>
+): Record<string, unknown> {
+  const { isStory, ...rest } = options;
+  return rest;
+}
+
+/**
  * Maps internal platform names to Ayrshare platform names
  */
 const mapPlatformsForAyrshare = (platforms: string[]): string[] => {
@@ -257,12 +302,18 @@ export const handleStandardPost = async (postData: PostData) => {
           return options.boardId || options.boardName ? options : undefined;
         })()
       : undefined,
-    // Instagram options (Stories, Reels)
-    instagramOptions: postData.instagramOptions,
-    // Facebook options (Stories, Reels)
-    facebookOptions: postData.facebookOptions,
-    // LinkedIn options (Stories)
-    linkedinOptions: postData.linkedinOptions,
+    // Instagram options (Stories, Reels) - transform internal names to Ayrshare API names
+    instagramOptions: postData.instagramOptions
+      ? transformInstagramOptions(postData.instagramOptions)
+      : undefined,
+    // Facebook options (Stories, Reels) - Ayrshare uses "faceBookOptions" (capital B)
+    faceBookOptions: postData.facebookOptions
+      ? transformFacebookOptions(postData.facebookOptions)
+      : undefined,
+    // LinkedIn options - Ayrshare uses "linkedInOptions" (capital I)
+    linkedInOptions: postData.linkedinOptions
+      ? transformLinkedInOptions(postData.linkedinOptions)
+      : undefined,
     // TikTok options - ensure posts are public by default
     // Private/friends-only posts may stay in pending status and never publish
     tiktokOptions: (() => {
@@ -283,8 +334,8 @@ export const handleStandardPost = async (postData: PostData) => {
     "redditOptions",
     "pinterestOptions",
     "instagramOptions",
-    "facebookOptions",
-    "linkedinOptions",
+    "faceBookOptions",
+    "linkedInOptions",
     "tiktokOptions",
     "youtubeOptions",
   ];
